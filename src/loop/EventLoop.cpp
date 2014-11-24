@@ -27,13 +27,6 @@ IOPoll* createEventPoll();
 
 EventLoop::EventLoop(uint32_t max_wait_time_ms)
 {
-    FUNCTION<void (void)> f;
-    auto ff = BIND(&EventLoop::loop, this);
-    ff();
-    f = ff;
-    f();
-    std::this_thread::get_id();
-    
     m_stopLoop = false;
     m_poll = createEventPoll();
 }
