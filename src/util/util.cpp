@@ -211,7 +211,7 @@ extern "C" int km_resolve_2_ip(const char* host_name, char *ip_buf, int ip_buf_l
     }
     
     ip_buf[0] = '\0';
-#ifdef WIN32
+#ifdef KUMA_OS_WIN
     if(!ipv6_api_init())
     {
         if(KM_RESOLVE_IPV6 == ipv)
@@ -262,7 +262,7 @@ extern "C" int km_set_sock_addr(const char* addr, unsigned short port,
                                 struct addrinfo* hints, struct sockaddr * sk_addr,
                                 unsigned int sk_addr_len)
 {
-#ifdef WIN32
+#ifdef KUMA_OS_WIN
     if(!ipv6_api_init())
     {
         struct sockaddr_in *sa = (struct sockaddr_in*)sk_addr;
@@ -274,7 +274,7 @@ extern "C" int km_set_sock_addr(const char* addr, unsigned short port,
         }
         else
         {
-#ifndef WIN32
+#ifndef KUMA_OS_WIN
             inet_pton(sa->sin_family, addr, &sa->sin_addr);
 #else
             sa->sin_addr.s_addr = inet_addr(addr);
@@ -304,11 +304,11 @@ extern "C" int km_set_sock_addr(const char* addr, unsigned short port,
 extern "C" int km_get_sock_addr(struct sockaddr * sk_addr, unsigned int sk_addr_len,
                                 char* addr, unsigned int addr_len, unsigned short* port)
 {
-#ifdef WIN32
+#ifdef KUMA_OS_WIN
     if(!ipv6_api_init())
     {
         struct sockaddr_in *sa = (struct sockaddr_in*)sk_addr;
-#ifndef WIN32
+#ifndef KUMA_OS_WIN
         inet_ntop(sa->sin_family, &sa->sin_addr, addr, addr_len);
 #else
         STRNCPY_S(addr, addr_len, inet_ntoa(sa->sin_addr), addr_len-1);

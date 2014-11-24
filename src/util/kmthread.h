@@ -112,7 +112,7 @@ public:
         m_thread_id = (THREAD_ID)m_thread_handle;
 #endif
         return m_thread_handle != (THREAD_HANDLE)NULL;
-#endif // WIN32
+#endif // KUMA_OS_WIN
 #endif // KUMA_HAS_CXX0X
     }
 
@@ -139,7 +139,7 @@ public:
         }
 #else
         pthread_join(m_thread_handle, NULL);
-#endif // WIN32
+#endif // KUMA_OS_WIN
 #endif // KUMA_HAS_CXX0X
     }
 

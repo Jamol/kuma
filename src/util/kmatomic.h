@@ -40,7 +40,7 @@ public :
         return ::InterlockedIncrement(const_cast<long*>(&value_));
 #else
         return (*increment_fn_)(&value_);
-#endif // WIN32
+#endif // KUMA_OS_WIN
     }
 
     long operator++ (int)
@@ -54,7 +54,7 @@ public :
         return ::InterlockedDecrement(const_cast<long*>(&value_));
 #else
         return (*decrement_fn_)(&value_);
-#endif // WIN32
+#endif // KUMA_OS_WIN
     }
 
     long operator-- (int)
@@ -68,7 +68,7 @@ public :
         return ::InterlockedExchangeAdd(const_cast<long*>(&value_), v) + v;
 #else
         return (*exchange_add_fn_)(&value_, v) + v;
-#endif // WIN32
+#endif // KUMA_OS_WIN
     }
 
     long operator-= (long v)
@@ -77,7 +77,7 @@ public :
         return ::InterlockedExchangeAdd(const_cast<long*>(&value_), -v) - v;
 #else
         return (*exchange_add_fn_)(&value_, -v) - v;
-#endif // WIN32
+#endif // KUMA_OS_WIN
     }
 
     bool operator== (long v) const
@@ -116,7 +116,7 @@ public :
         ::InterlockedExchange(const_cast<long*>(&value_), v);
 #else
         (*exchange_fn_)(&value_, v);
-#endif // WIN32
+#endif // KUMA_OS_WIN
         return v;
     }
 
