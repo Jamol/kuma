@@ -15,7 +15,7 @@
 
 #include "internal.h"
 #include "Notifier.h"
-#include "trace.h"
+#include "util/kmtrace.h"
 
 #include <sys/epoll.h>
 
@@ -100,17 +100,17 @@ int EPoll::registerFD(int fd, uint32_t events, IOHandler* handler)
     evt.data.ptr = handler;
     evt.events = getEvents(events);//EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLET;
     if(epoll_ctl(m_epoll_fd, EPOLL_CTL_ADD, fd, &evt) < 0) {
-        KUMA_INFOTRACE("EPollLoop::registerFD error, fd="<<fd<<", errno="<<errno);
+        KUMA_INFOTRACE("EPoll::registerFD error, fd="<<fd<<", errno="<<errno);
         return -1;
     }
-    KUMA_INFOTRACE("EPollLoop::registerFD, fd="<<fd);
+    KUMA_INFOTRACE("EPoll::registerFD, fd="<<fd);
 
     return KUMA_ERROR_NOERR;
 }
 
 int EPoll::unregisterFD(int fd)
 {
-    KUMA_INFOTRACE("EPollLoop::unregisterFD, fd="<<fd);
+    KUMA_INFOTRACE("EPoll::unregisterFD, fd="<<fd);
     epoll_ctl(m_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
     return KUMA_ERROR_NOERR;
 }
@@ -121,7 +121,7 @@ int EPoll::modifyEvents(int fd, uint32_t events, IOHandler* handler)
     evt.data.ptr = handler;
     evt.events = getEvents(events);
     if(epoll_ctl(m_epoll_fd, EPOLL_CTL_MOD, fd, &evt) < 0) {
-        KUMA_INFOTRACE("EPollLoop::modifyEvents error, fd="<<fd<<", errno="<<errno);
+        KUMA_INFOTRACE("EPoll::modifyEvents error, fd="<<fd<<", errno="<<errno);
         return -1;
     }
     return KUMA_ERROR_NOERR;
@@ -134,9 +134,9 @@ int EPoll::wait(uint32_t wait_time_ms)
     int nfds = epoll_wait(m_epoll_fd, events, MAX_EVENT_NUM , wait_time_ms);
     if (nfds < 0) {
         if(errno != EINTR) {
-            KUMA_ERRTRACE("EPollLoop::wait, errno="<<errno);
+            KUMA_ERRTRACE("EPoll::wait, errno="<<errno);
         }
-        KUMA_INFOTRACE("EPollLoop::wait, epoll_wait, nfds="<<nfds<<", errno="<<errno);
+        KUMA_INFOTRACE("EPoll::wait, epoll_wait, nfds="<<nfds<<", errno="<<errno);
     } else {
         for (int i=0; i<nfds; i++) {
             handler = (IOHandler*)events[i].data.ptr;

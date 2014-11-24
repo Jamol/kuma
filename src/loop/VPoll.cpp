@@ -15,7 +15,7 @@
 
 #include "internal.h"
 #include "Notifier.h"
-#include "kmtrace.h"
+#include "util/kmtrace.h"
 
 #include <sys/poll.h>
 
@@ -146,7 +146,7 @@ int VPoll::registerFD(int fd, uint32_t events, IOHandler* handler)
     m_poll_items[fd].index = m_fds_used;
     m_poll_fds[m_fds_used].fd = fd;
     m_poll_fds[m_fds_used].events = getEvents(events);
-    KUMA_INFOTRACE("PollLoop::registerFD, fd="<<fd<<", index="<<m_fds_used);
+    KUMA_INFOTRACE("VPoll::registerFD, fd="<<fd<<", index="<<m_fds_used);
     ++m_fds_used;
     
     return KUMA_ERROR_NOERR;
@@ -154,9 +154,9 @@ int VPoll::registerFD(int fd, uint32_t events, IOHandler* handler)
 
 int VPoll::unregisterFD(int fd)
 {
-    KUMA_INFOTRACE("PollLoop::unregisterFD, fd="<<fd);
+    KUMA_INFOTRACE("VPoll::unregisterFD, fd="<<fd);
     if ((fd < 0) || (fd >= m_fds_alloc) || 0 == m_fds_used) {
-        KUMA_WARNTRACE("PollLoop::unregisterFD, failed, alloced="<<m_fds_alloc<<", used="<<m_fds_used);
+        KUMA_WARNTRACE("VPoll::unregisterFD, failed, alloced="<<m_fds_alloc<<", used="<<m_fds_used);
         return KUMA_ERROR_INVALID_PARAM;
     }
     int pfds_index = m_poll_items[fd].index;
@@ -205,7 +205,7 @@ int VPoll::wait(uint32_t wait_time_ms)
         if(EINTR == errno) {
             errno = 0;
         } else {
-            KUMA_ERRTRACE("PollLoop::wait, errno: "<<errno);
+            KUMA_ERRTRACE("VPoll::wait, errno: "<<errno);
         }
         return KUMA_ERROR_INVALID_STATE;
     }
