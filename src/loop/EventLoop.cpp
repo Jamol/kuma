@@ -23,12 +23,12 @@
 
 KUMA_NS_BEGIN
 
-IOPoll* createEventPoll();
+IOPoll* createIOPoll();
 
 EventLoop::EventLoop(uint32_t max_wait_time_ms)
 {
     m_stopLoop = false;
-    m_poll = createEventPoll();
+    m_poll = createIOPoll();
 }
 
 EventLoop::~EventLoop()
@@ -163,9 +163,7 @@ int EventLoop::postEvent(IEvent* ev)
     return KUMA_ERROR_NOERR;
 }
 
-#ifdef KUMA_OS_WIN
-IOPoll* createSelectPoll();
-#elif defined(KUMA_OS_LINUX)
+#if defined(KUMA_OS_LINUX)
 IOPoll* createEPoll();
 #elif defined(KUMA_OS_MACOS)
 IOPoll* createVPoll();
@@ -173,7 +171,7 @@ IOPoll* createVPoll();
 IOPoll* createSelectPoll();
 #endif
 
-IOPoll* createEventPoll()
+IOPoll* createIOPoll()
 {
 #ifdef KUMA_OS_WIN
     return createSelectPoll();
