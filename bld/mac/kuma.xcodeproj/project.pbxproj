@@ -1,0 +1,336 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		6F29634C1A18AB0D00C3C79B /* kmatomic.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963401A18AB0D00C3C79B /* kmatomic.h */; };
+		6F29634D1A18AB0D00C3C79B /* kmdp.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963411A18AB0D00C3C79B /* kmdp.h */; };
+		6F29634E1A18AB0D00C3C79B /* kmmutex.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963421A18AB0D00C3C79B /* kmmutex.h */; };
+		6F29634F1A18AB0D00C3C79B /* kmqueue.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963431A18AB0D00C3C79B /* kmqueue.h */; };
+		6F2963501A18AB0D00C3C79B /* kmthread.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963441A18AB0D00C3C79B /* kmthread.h */; };
+		6F2963511A18AB0D00C3C79B /* kmtimer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963451A18AB0D00C3C79B /* kmtimer.cpp */; };
+		6F2963521A18AB0D00C3C79B /* kmtimer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963461A18AB0D00C3C79B /* kmtimer.h */; };
+		6F2963531A18AB0D00C3C79B /* kmtrace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963471A18AB0D00C3C79B /* kmtrace.cpp */; };
+		6F2963541A18AB0D00C3C79B /* kmtrace.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963481A18AB0D00C3C79B /* kmtrace.h */; };
+		6F2963551A18AB0D00C3C79B /* refcount.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963491A18AB0D00C3C79B /* refcount.h */; };
+		6F2963561A18AB0D00C3C79B /* util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F29634A1A18AB0D00C3C79B /* util.cpp */; };
+		6F2963571A18AB0D00C3C79B /* util.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F29634B1A18AB0D00C3C79B /* util.h */; };
+		6F29636A1A18AC6E00C3C79B /* EventLoop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963641A18AC6E00C3C79B /* EventLoop.cpp */; };
+		6F29636B1A18AC6E00C3C79B /* EventLoop.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963651A18AC6E00C3C79B /* EventLoop.h */; };
+		6F29636C1A18AC6E00C3C79B /* internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963661A18AC6E00C3C79B /* internal.h */; };
+		6F29636D1A18AC6E00C3C79B /* Notifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963671A18AC6E00C3C79B /* Notifier.h */; };
+		6F29636E1A18AC6E00C3C79B /* VPoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963681A18AC6E00C3C79B /* VPoll.cpp */; };
+		6F29636F1A18AC6E00C3C79B /* SelectPoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963691A18AC6E00C3C79B /* SelectPoll.cpp */; };
+		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		6F2963401A18AB0D00C3C79B /* kmatomic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmatomic.h; path = ../../src/util/kmatomic.h; sourceTree = "<group>"; };
+		6F2963411A18AB0D00C3C79B /* kmdp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmdp.h; path = ../../src/util/kmdp.h; sourceTree = "<group>"; };
+		6F2963421A18AB0D00C3C79B /* kmmutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmmutex.h; path = ../../src/util/kmmutex.h; sourceTree = "<group>"; };
+		6F2963431A18AB0D00C3C79B /* kmqueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmqueue.h; path = ../../src/util/kmqueue.h; sourceTree = "<group>"; };
+		6F2963441A18AB0D00C3C79B /* kmthread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmthread.h; path = ../../src/util/kmthread.h; sourceTree = "<group>"; };
+		6F2963451A18AB0D00C3C79B /* kmtimer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = kmtimer.cpp; path = ../../src/util/kmtimer.cpp; sourceTree = "<group>"; };
+		6F2963461A18AB0D00C3C79B /* kmtimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmtimer.h; path = ../../src/util/kmtimer.h; sourceTree = "<group>"; };
+		6F2963471A18AB0D00C3C79B /* kmtrace.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = kmtrace.cpp; path = ../../src/util/kmtrace.cpp; sourceTree = "<group>"; };
+		6F2963481A18AB0D00C3C79B /* kmtrace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmtrace.h; path = ../../src/util/kmtrace.h; sourceTree = "<group>"; };
+		6F2963491A18AB0D00C3C79B /* refcount.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = refcount.h; path = ../../src/util/refcount.h; sourceTree = "<group>"; };
+		6F29634A1A18AB0D00C3C79B /* util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = util.cpp; path = ../../src/util/util.cpp; sourceTree = "<group>"; };
+		6F29634B1A18AB0D00C3C79B /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = util.h; path = ../../src/util/util.h; sourceTree = "<group>"; };
+		6F2963641A18AC6E00C3C79B /* EventLoop.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EventLoop.cpp; path = loop/EventLoop.cpp; sourceTree = "<group>"; };
+		6F2963651A18AC6E00C3C79B /* EventLoop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EventLoop.h; path = loop/EventLoop.h; sourceTree = "<group>"; };
+		6F2963661A18AC6E00C3C79B /* internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = internal.h; path = loop/internal.h; sourceTree = "<group>"; };
+		6F2963671A18AC6E00C3C79B /* Notifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Notifier.h; path = loop/Notifier.h; sourceTree = "<group>"; };
+		6F2963681A18AC6E00C3C79B /* VPoll.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VPoll.cpp; path = loop/VPoll.cpp; sourceTree = "<group>"; };
+		6F2963691A18AC6E00C3C79B /* SelectPoll.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SelectPoll.cpp; path = loop/SelectPoll.cpp; sourceTree = "<group>"; };
+		6F852DF11985E33000271D87 /* kuma.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = kuma.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
+		6F852E421985EB2B00271D87 /* kuma-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "kuma-Prefix.pch"; sourceTree = SOURCE_ROOT; };
+		6F852E441985EB4700271D87 /* kumaProj.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaProj.xcconfig; sourceTree = "<group>"; };
+		6F852E451985EB4700271D87 /* kumaTarget.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaTarget.xcconfig; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		6F852DEE1985E33000271D87 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		6F2963631A18AC4C00C3C79B /* loop */ = {
+			isa = PBXGroup;
+			children = (
+				6F2963641A18AC6E00C3C79B /* EventLoop.cpp */,
+				6F2963651A18AC6E00C3C79B /* EventLoop.h */,
+				6F2963661A18AC6E00C3C79B /* internal.h */,
+				6F2963671A18AC6E00C3C79B /* Notifier.h */,
+				6F2963681A18AC6E00C3C79B /* VPoll.cpp */,
+				6F2963691A18AC6E00C3C79B /* SelectPoll.cpp */,
+			);
+			name = loop;
+			sourceTree = "<group>";
+		};
+		6F852DE81985E33000271D87 = {
+			isa = PBXGroup;
+			children = (
+				6F852E441985EB4700271D87 /* kumaProj.xcconfig */,
+				6F852E451985EB4700271D87 /* kumaTarget.xcconfig */,
+				6F852DF31985E33000271D87 /* kuma */,
+				6F852DF21985E33000271D87 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		6F852DF21985E33000271D87 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6F852DF11985E33000271D87 /* kuma.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		6F852DF31985E33000271D87 /* kuma */ = {
+			isa = PBXGroup;
+			children = (
+				6F2963631A18AC4C00C3C79B /* loop */,
+				6F852E291985EB0500271D87 /* util */,
+				6F852DF41985E33000271D87 /* Supporting Files */,
+			);
+			name = kuma;
+			path = ../../src;
+			sourceTree = "<group>";
+		};
+		6F852DF41985E33000271D87 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				6F852E421985EB2B00271D87 /* kuma-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		6F852E291985EB0500271D87 /* util */ = {
+			isa = PBXGroup;
+			children = (
+				6F2963401A18AB0D00C3C79B /* kmatomic.h */,
+				6F2963411A18AB0D00C3C79B /* kmdp.h */,
+				6F2963421A18AB0D00C3C79B /* kmmutex.h */,
+				6F2963431A18AB0D00C3C79B /* kmqueue.h */,
+				6F2963441A18AB0D00C3C79B /* kmthread.h */,
+				6F2963451A18AB0D00C3C79B /* kmtimer.cpp */,
+				6F2963461A18AB0D00C3C79B /* kmtimer.h */,
+				6F2963471A18AB0D00C3C79B /* kmtrace.cpp */,
+				6F2963481A18AB0D00C3C79B /* kmtrace.h */,
+				6F2963491A18AB0D00C3C79B /* refcount.h */,
+				6F29634A1A18AB0D00C3C79B /* util.cpp */,
+				6F29634B1A18AB0D00C3C79B /* util.h */,
+			);
+			path = util;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXHeadersBuildPhase section */
+		6F852DEF1985E33000271D87 /* Headers */ = {
+			isa = PBXHeadersBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6F2963571A18AB0D00C3C79B /* util.h in Headers */,
+				6F29634D1A18AB0D00C3C79B /* kmdp.h in Headers */,
+				6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */,
+				6F2963501A18AB0D00C3C79B /* kmthread.h in Headers */,
+				6F29634E1A18AB0D00C3C79B /* kmmutex.h in Headers */,
+				6F2963521A18AB0D00C3C79B /* kmtimer.h in Headers */,
+				6F29636B1A18AC6E00C3C79B /* EventLoop.h in Headers */,
+				6F29636D1A18AC6E00C3C79B /* Notifier.h in Headers */,
+				6F29634C1A18AB0D00C3C79B /* kmatomic.h in Headers */,
+				6F2963551A18AB0D00C3C79B /* refcount.h in Headers */,
+				6F29636C1A18AC6E00C3C79B /* internal.h in Headers */,
+				6F2963541A18AB0D00C3C79B /* kmtrace.h in Headers */,
+				6F29634F1A18AB0D00C3C79B /* kmqueue.h in Headers */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXHeadersBuildPhase section */
+
+/* Begin PBXNativeTarget section */
+		6F852DF01985E33000271D87 /* kuma */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6F852DFE1985E33000271D87 /* Build configuration list for PBXNativeTarget "kuma" */;
+			buildPhases = (
+				6F852DED1985E33000271D87 /* Sources */,
+				6F852DEE1985E33000271D87 /* Frameworks */,
+				6F852DEF1985E33000271D87 /* Headers */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = kuma;
+			productName = kuma;
+			productReference = 6F852DF11985E33000271D87 /* kuma.dylib */;
+			productType = "com.apple.product-type.library.dynamic";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		6F852DE91985E33000271D87 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0510;
+				ORGANIZATIONNAME = wme;
+			};
+			buildConfigurationList = 6F852DEC1985E33000271D87 /* Build configuration list for PBXProject "kuma" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 6F852DE81985E33000271D87;
+			productRefGroup = 6F852DF21985E33000271D87 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6F852DF01985E33000271D87 /* kuma */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		6F852DED1985E33000271D87 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6F2963511A18AB0D00C3C79B /* kmtimer.cpp in Sources */,
+				6F29636E1A18AC6E00C3C79B /* VPoll.cpp in Sources */,
+				6F29636F1A18AC6E00C3C79B /* SelectPoll.cpp in Sources */,
+				6F2963531A18AB0D00C3C79B /* kmtrace.cpp in Sources */,
+				6F29636A1A18AC6E00C3C79B /* EventLoop.cpp in Sources */,
+				6F2963561A18AB0D00C3C79B /* util.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		6F852DFC1985E33000271D87 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		6F852DFD1985E33000271D87 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.9;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		6F852DFF1985E33000271D87 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OBJROOT = ../../objs;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SYMROOT = ../../bin;
+				USER_HEADER_SEARCH_PATHS = ../../src;
+			};
+			name = Debug;
+		};
+		6F852E001985E33000271D87 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OBJROOT = ../../objs;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SYMROOT = ../../bin;
+				USER_HEADER_SEARCH_PATHS = ../../src;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		6F852DEC1985E33000271D87 /* Build configuration list for PBXProject "kuma" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6F852DFC1985E33000271D87 /* Debug */,
+				6F852DFD1985E33000271D87 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6F852DFE1985E33000271D87 /* Build configuration list for PBXNativeTarget "kuma" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6F852DFF1985E33000271D87 /* Debug */,
+				6F852E001985E33000271D87 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 6F852DE91985E33000271D87 /* Project object */;
+}
