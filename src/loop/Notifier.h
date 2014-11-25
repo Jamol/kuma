@@ -49,18 +49,15 @@ public:
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_DGRAM;
         hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-        if(km_set_sock_addr("127.0.0.1", 0, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0)
-        {
+        if(km_set_sock_addr("127.0.0.1", 0, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
             return false;
         }
-        if(bind(fds[READ_FD], (const sockaddr*)&ss_addr, sizeof(sockaddr_in)) != 0)
-        {
+        if(bind(fds[READ_FD], (const sockaddr*)&ss_addr, sizeof(sockaddr_in)) != 0) {
             ::closesocket(fds[READ_FD]);
             ::closesocket(fds[WRITE_FD]);
             return false;
         }
-        if(bind(fds[WRITE_FD], (const sockaddr*)&ss_addr, sizeof(sockaddr_in)) != 0)
-        {
+        if(bind(fds[WRITE_FD], (const sockaddr*)&ss_addr, sizeof(sockaddr_in)) != 0) {
             ::closesocket(fds[READ_FD]);
             ::closesocket(fds[WRITE_FD]);
             return false;

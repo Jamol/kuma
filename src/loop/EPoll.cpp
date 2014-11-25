@@ -45,18 +45,21 @@ private:
 
 EPoll::EPoll()
 {
-    
+    m_epoll_fd = INVALID_FD;
 }
 
 EPoll::~EPoll()
 {
-    
+    if(INVALID_FD != m_epoll_fd) {
+        close(m_epoll_fd);
+        m_epoll_fd = INVALID_FD;
+    }
 }
 
 bool EPoll::init()
 {
     m_epoll_fd = epoll_create(MAX_EPOLL_FDS);
-    if(-1 == m_epoll_fd) {
+    if(INVALID_FD == m_epoll_fd) {
         return false;
     }
     m_notifier.init();
