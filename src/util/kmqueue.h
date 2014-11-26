@@ -26,6 +26,8 @@ public:
     {
         head = new TLNode(E());
         tail = head;
+        en_count = 0;
+        de_count = 0;
     }
     ~KM_Queue()
     {
@@ -53,7 +55,7 @@ public:
         TLNode* node_to_delete = head;
         element = head->next->element;
         head = head->next;
-        --de_count;
+        ++de_count;
         delete node_to_delete;
         return true;
     }
@@ -95,6 +97,8 @@ public:
     {
         head = new TLNode(E());
         tail = head;
+        en_count = 0;
+        de_count = 0;
     }
     ~KM_QueueT()
     {
@@ -131,7 +135,7 @@ public:
         node_to_delete = head;
         element = head->next->element;
         head = head->next;
-        --de_count;
+        ++de_count;
         lockerH.unlock();
         delete node_to_delete;
         return true;
