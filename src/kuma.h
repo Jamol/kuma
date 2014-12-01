@@ -19,6 +19,16 @@ enum{
 #define KUMA_EV_ERROR   (1 << 2)
 #define KUMA_EV_NETWORK (KUMA_EV_READ|KUMA_EV_WRITE|KUMA_EV_ERROR)
 
+class IOHandler
+{
+public:
+    virtual ~IOHandler() {}
+    
+    virtual int acquireRef() = 0;
+    virtual int releaseRef() = 0;
+    virtual int onEvent(unsigned int ev) = 0;
+};
+
 KUMA_NS_END
 
 #endif

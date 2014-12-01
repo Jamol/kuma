@@ -15,7 +15,6 @@
 
 #ifndef __KMTIMER_H__
 #define __KMTIMER_H__
-#include "kmconf.h"
 
 #include "kmmutex.h"
 #include <map>
@@ -24,10 +23,18 @@
 
 namespace komm {;
 
-#define TIMER_VECTOR_BITS	8
-#define TIMER_VECTOR_SIZE	(1 << TIMER_VECTOR_BITS)
-#define TIMER_VECTOR_MASK	(TIMER_VECTOR_SIZE - 1)
-#define TV_COUNT		4
+#define TIMER_VECTOR_BITS   8
+#define TIMER_VECTOR_SIZE   (1 << TIMER_VECTOR_BITS)
+#define TIMER_VECTOR_MASK   (TIMER_VECTOR_SIZE - 1)
+#define TV_COUNT            4
+
+class TimerHandler
+{
+public:
+    virtual ~TimerHandler() {}
+
+    virtual int onTimer() = 0;
+};
 
 class KM_Timer;
 class KM_Timer_Manager;
@@ -37,6 +44,7 @@ class KM_Timer_Node
 public:
     KM_Timer_Node()
     {
+        cancelled_ = false;
         elapse_ = 0;
         start_tick_ = 0;
         timer_ = NULL;
@@ -47,9 +55,8 @@ public:
         prev = NULL;
         next = NULL;
     }
-    void on_timer();
-    void on_detach();
 
+    bool            cancelled_;
     unsigned int	elapse_;
     TICK_COUNT_TYPE start_tick_;
     KM_Timer*	    timer_;
@@ -63,34 +70,29 @@ protected:
 class KM_Timer
 {
 public:
-    KM_Timer();
-    virtual ~KM_Timer();
+    KM_Timer(KM_Timer_Manager* mgr, TimerHandler* hdr);
+    ~KM_Timer();
 
-    virtual void add_reference() = 0;
-    virtual void release_reference() = 0;
-    virtual void on_timer() = 0;
-    virtual bool schedule(unsigned int time_elapse);
-    virtual void schedule_cancel();
-
-    virtual void set_timer_mgr(KM_Timer_Manager* mgr);
-    KM_Timer_Manager* get_timer_mgr();
+    void on_timer();
+    bool schedule(unsigned int time_elapse);
+    void schedule_cancel();
 
     void on_detach()
     {
-        timer_mgr_ = NULL; // may thread conflict
+        m_timer_mgr = NULL; // may thread conflict
     }
 
 private:
-    KM_Timer_Manager*	timer_mgr_;
-    KM_Timer_Node      timer_node_;
+    KM_Timer_Manager*	m_timer_mgr;
+    KM_Timer_Node       m_timer_node;
+    TimerHandler*       m_handler;
 };
 
 class KM_Timer_Manager
 {
 public:
-    KM_Timer_Manager(bool thread_safe=false, unsigned short precision=10/*ms*/);
+    KM_Timer_Manager();
     ~KM_Timer_Manager();
-    bool thread_safe() { return m_mutex != NULL; }
 
     bool schedule(KM_Timer_Node* timer_node, unsigned int time_elapse);
     void schedule_cancel(KM_Timer_Node* timer_node);
@@ -114,7 +116,9 @@ private:
     bool list_empty(KM_Timer_Node* head);
 
 private:
-    KM_Mutex* m_mutex;
+    KM_Mutex m_mutex;
+    KM_Mutex m_running_mutex;
+    KM_Timer_Node*  m_running_node;
     TICK_COUNT_TYPE m_last_tick;
     unsigned int m_timer_count;
     KM_Timer_Node m_tv[TV_COUNT][TIMER_VECTOR_SIZE]; // timer vectors

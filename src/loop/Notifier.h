@@ -62,8 +62,8 @@ public:
             ::closesocket(fds[WRITE_FD]);
             return false;
         }
-        setNonblocking(fds[READ_FD]);
-        setNonblocking(fds[WRITE_FD]);
+        set_nonblocking(fds[READ_FD]);
+        set_nonblocking(fds[WRITE_FD]);
         addr_len = sizeof(ss_addr);
         if(getsockname(fds[READ_FD], (struct sockaddr*)&ss_addr, &addr_len) != 0) {
             ::closesocket(fds[READ_FD]);

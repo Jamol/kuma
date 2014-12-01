@@ -432,7 +432,7 @@ extern "C" int km_parse_transport_address(const char* transport_address,
     return 0;
 }
 
-int setNonblocking(int fd) {
+int set_nonblocking(int fd) {
 #ifdef KUMA_OS_WIN
     int32_t mode = 1;
     ::ioctlsocket(fd, FIONBIO, (ULONG*)&mode);

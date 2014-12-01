@@ -20,6 +20,7 @@
 #include "util/kmthread.h"
 #include "util/kmmutex.h"
 #include "util/kmqueue.h"
+#include "util/kmtimer.h"
 
 KUMA_NS_BEGIN
 
@@ -29,6 +30,7 @@ EventLoop::EventLoop(uint32_t max_wait_time_ms)
 {
     m_stopLoop = false;
     m_poll = createIOPoll();
+    m_timer_mgr = new komm::KM_Timer_Manager();
 }
 
 EventLoop::~EventLoop()
@@ -41,6 +43,8 @@ EventLoop::~EventLoop()
     while (m_eventQueue.dequeue(ev)) {
         delete ev;
     }
+    delete m_timer_mgr;
+    m_timer_mgr = NULL;
 }
 
 bool EventLoop::init()
@@ -116,6 +120,17 @@ int EventLoop::unregisterHandler(int fd, bool close_fd)
     return KUMA_ERROR_NOERR;
 }
 
+komm::KM_Timer* EventLoop::createTimer(komm::TimerHandler* handler)
+{
+    komm::KM_Timer* timer = new komm::KM_Timer(m_timer_mgr, handler);
+    return timer;
+}
+
+void EventLoop::deleteTimer(komm::KM_Timer* timer)
+{
+    delete timer;
+}
+
 void EventLoop::loop()
 {
     while (!m_stopLoop) {
@@ -133,7 +148,7 @@ int EventLoop::registerHandler_i(int fd, uint32_t events, IOHandler* handler)
     if(m_handlerMap.find(fd) != m_handlerMap.end()) {
         return KUMA_ERROR_INVALID_STATE;
     }
-    int ret = m_poll->registerFD(fd, events, handler);
+    int ret = m_poll->register_fd(fd, events, handler);
     if(ret != KUMA_ERROR_NOERR) {
         return ret;
     }
@@ -144,7 +159,7 @@ int EventLoop::registerHandler_i(int fd, uint32_t events, IOHandler* handler)
 
 int EventLoop::unregisterHandler_i(int fd, bool close_fd)
 {
-    m_poll->unregisterFD(fd);
+    m_poll->unregister_fd(fd);
     IOHandlerMap::iterator it = m_handlerMap.find(fd);
     if(it != m_handlerMap.end()) {
         it->second->releaseRef();
@@ -165,7 +180,7 @@ int EventLoop::postEvent(IEvent* ev)
 
 #if defined(KUMA_OS_LINUX)
 IOPoll* createEPoll();
-#elif defined(KUMA_OS_MACOS)
+#elif defined(KUMA_OS_MAC)
 IOPoll* createVPoll();
 #else
 IOPoll* createSelectPoll();
@@ -177,7 +192,7 @@ IOPoll* createIOPoll()
     return createSelectPoll();
 #elif defined(KUMA_OS_LINUX)
     return createEPoll();
-#elif defined(KUMA_OS_MACOS)
+#elif defined(KUMA_OS_MAC)
     return createVPoll();
 #else
     return createSelectPoll();

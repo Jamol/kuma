@@ -13,24 +13,24 @@
 #endif
 
 #ifdef KUMA_HAS_CXX0X
-#include <thread>
+# include <thread>
 # define THREAD_HANDLE          std::thread::native_handle_type
 # define THREAD_ID              std::thread::id
 #else
-#ifdef KUMA_OS_WIN
-# define THREAD_HANDLE          HANDLE
-# define THREAD_ID              unsigned long
-#else // KUMA_OS_WIN
-# ifdef KUMA_OS_MACOS
-#  define GetCurrentThreadId()  pthread_mach_thread_np(pthread_self())
-# else
-#  ifndef GetCurrentThreadId
-#   define GetCurrentThreadId    pthread_self
-#  endif
-# endif // KUMA_OS_MACOS
-# define THREAD_HANDLE          pthread_t
-# define THREAD_ID              unsigned long
-#endif // KUMA_OS_WIN
+# ifdef KUMA_OS_WIN
+#  define THREAD_HANDLE         HANDLE
+#  define THREAD_ID             unsigned long
+# else // KUMA_OS_WIN
+#  ifdef KUMA_OS_MAC
+#   define GetCurrentThreadId() pthread_mach_thread_np(pthread_self())
+#  else
+#   ifndef GetCurrentThreadId
+#    define GetCurrentThreadId  pthread_self
+#   endif
+#  endif // KUMA_OS_MAC
+#  define THREAD_HANDLE         pthread_t
+#  define THREAD_ID             unsigned long
+# endif // KUMA_OS_WIN
 #endif // KUMA_HAS_CXX0X
 
 namespace komm {;

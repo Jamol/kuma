@@ -16,16 +16,22 @@
 #ifndef __KUMA_EVENTLOOP_H__
 #define __KUMA_EVENTLOOP_H__
 #include "kuma.h"
-#include "internal.h"
-#include "util/util.h"
 #include "util/kmmutex.h"
 #include "util/kmqueue.h"
+#include <map>
+
+namespace komm {
+class TimerHandler;
+class KM_Timer;
+class KM_Timer_Manager;
+}
 
 KUMA_NS_BEGIN
 
-typedef komm::KM_QueueT<IEvent*, komm::KM_Mutex>    EventQueue;
-
 class IOPoll;
+class IEvent;
+typedef komm::KM_QueueT<IEvent*, komm::KM_Mutex>    EventQueue;
+typedef std::map<int, IOHandler*>   IOHandlerMap;
 
 class EventLoop
 {
@@ -37,6 +43,8 @@ public:
     bool init();
     int registerHandler(int fd, uint32_t events, IOHandler* handler);
     int unregisterHandler(int fd, bool close_fd);
+    komm::KM_Timer* createTimer(komm::TimerHandler* handler);
+    void deleteTimer(komm::KM_Timer* timer);
     
 public:
     int postEvent(IEvent* ev);
@@ -54,6 +62,8 @@ private:
     
     komm::KM_Mutex  m_mutex;
     EventQueue      m_eventQueue;
+    
+    komm::KM_Timer_Manager* m_timer_mgr;
 };
 
 KUMA_NS_END

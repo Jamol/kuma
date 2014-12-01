@@ -26,7 +26,7 @@
 # include <netinet/tcp.h>
 # include <netinet/in.h>
 
-#elif defined(KUMA_OS_MACOS)
+#elif defined(KUMA_OS_MAC)
 # include <string.h>
 # include <pthread.h>
 # include <unistd.h>
@@ -74,27 +74,15 @@ KUMA_NS_BEGIN
 
 #define INVALID_FD  -1
 
-class IOHandler
-{
-public:
-    virtual ~IOHandler() {}
-    
-    virtual int acquireRef() = 0;
-    virtual int releaseRef() = 0;
-    virtual int onEvent(uint32_t ev) = 0;
-};
-
-typedef std::map<int, IOHandler*>   IOHandlerMap;
-
 class IOPoll
 {
 public:
     virtual ~IOPoll() {}
     
     virtual bool init() = 0;
-    virtual int registerFD(int fd, uint32_t events, IOHandler* handler) = 0;
-    virtual int unregisterFD(int fd) = 0;
-    virtual int modifyEvents(int fd, uint32_t events, IOHandler* handler) = 0;
+    virtual int register_fd(int fd, uint32_t events, IOHandler* handler) = 0;
+    virtual int unregister_fd(int fd) = 0;
+    virtual int modify_events(int fd, uint32_t events, IOHandler* handler) = 0;
     virtual int wait(uint32_t wait_time_ms) = 0;
     virtual void notify() = 0;
 };
@@ -103,7 +91,7 @@ class IEvent
 {
 public:
     virtual ~IEvent() {}
-
+    
     virtual void fire() = 0;
 };
 

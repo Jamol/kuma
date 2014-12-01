@@ -26,9 +26,9 @@ public:
     ~SelectPoll();
     
     virtual bool init();
-    virtual int registerFD(int fd, uint32_t events, IOHandler* handler);
-    virtual int unregisterFD(int fd);
-    virtual int modifyEvents(int fd, uint32_t events, IOHandler* handler);
+    virtual int register_fd(int fd, uint32_t events, IOHandler* handler);
+    virtual int unregister_fd(int fd);
+    virtual int modify_events(int fd, uint32_t events, IOHandler* handler);
     virtual int wait(uint32_t wait_time_ms);
     virtual void notify();
     
@@ -68,13 +68,13 @@ SelectPoll::~SelectPoll()
 bool SelectPoll::init()
 {
     m_notifier.init();
-    registerFD(m_notifier.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, &m_notifier);
+    register_fd(m_notifier.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, &m_notifier);
     return true;
 }
 
-int SelectPoll::registerFD(int fd, uint32_t events, IOHandler* handler)
+int SelectPoll::register_fd(int fd, uint32_t events, IOHandler* handler)
 {
-    KUMA_INFOTRACE("SelectPoll::registerFD, fd="<<fd);
+    KUMA_INFOTRACE("SelectPoll::register_fd, fd="<<fd);
     if (fd >= m_fds_alloc) {
         int tmp_num = m_fds_alloc + 1024;
         if (tmp_num < fd + 1)
@@ -94,11 +94,11 @@ int SelectPoll::registerFD(int fd, uint32_t events, IOHandler* handler)
     return KUMA_ERROR_NOERR;
 }
 
-int SelectPoll::unregisterFD(int fd)
+int SelectPoll::unregister_fd(int fd)
 {
-    KUMA_INFOTRACE("SelectPoll::unregisterFD, fd="<<fd);
+    KUMA_INFOTRACE("SelectPoll::unregister_fd, fd="<<fd);
     if ((fd < 0) || (fd >= m_fds_alloc) || 0 == m_fds_used) {
-        KUMA_WARNTRACE("SelectPoll::unregisterFD, failed, alloced="<<m_fds_alloc<<", used="<<m_fds_used);
+        KUMA_WARNTRACE("SelectPoll::unregister_fd, failed, alloced="<<m_fds_alloc<<", used="<<m_fds_used);
         return KUMA_ERROR_INVALID_PARAM;
     }
     
@@ -108,7 +108,7 @@ int SelectPoll::unregisterFD(int fd)
     return KUMA_ERROR_NOERR;
 }
 
-int SelectPoll::modifyEvents(int fd, uint32_t events, IOHandler* handler)
+int SelectPoll::modify_events(int fd, uint32_t events, IOHandler* handler)
 {
     return KUMA_ERROR_NOERR;
 }

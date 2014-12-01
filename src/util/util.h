@@ -16,8 +16,6 @@
 #ifndef kuma_util_h
 #define kuma_util_h
 
-#define INVALID_FD  -1
-
 #include "kmconf.h"
 
 #ifdef KUMA_OS_WIN
@@ -25,7 +23,7 @@
 #define vsnprintf   _vsnprintf
 #endif
 
-int setNonblocking(int fd);
+int set_nonblocking(int fd);
 
 extern "C" {
     int km_resolve_2_ip(const char* host_name, char *ip_buf, int ip_buf_len, int ipv=0);

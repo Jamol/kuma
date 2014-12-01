@@ -25,7 +25,7 @@ struct IOV {
     unsigned long	iov_len;    /* Length. */
 #endif
     char*			iov_base;  /* Base address. */
-#if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MACOS)
+#if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
     unsigned long	iov_len;    /* Length. */
 #endif
 };
