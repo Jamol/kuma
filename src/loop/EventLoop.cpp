@@ -30,6 +30,7 @@ EventLoop::EventLoop(uint32_t max_wait_time_ms)
 {
     m_stopLoop = false;
     m_poll = createIOPoll();
+    m_max_wait_time_ms = max_wait_time_ms;
     m_timer_mgr = new komm::KM_Timer_Manager();
 }
 
@@ -139,7 +140,12 @@ void EventLoop::loop()
             ev->fire();
             delete ev;
         }
-        m_poll->wait(-1);
+        unsigned long remain_time_ms = m_max_wait_time_ms;
+        m_timer_mgr->check_expire(remain_time_ms);
+        if(remain_time_ms > m_max_wait_time_ms) {
+            remain_time_ms = m_max_wait_time_ms;
+        }
+        m_poll->wait((uint32_t)remain_time_ms);
     }
 }
 

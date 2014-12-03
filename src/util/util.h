@@ -23,7 +23,14 @@
 #define vsnprintf   _vsnprintf
 #endif
 
+#ifndef TICK_COUNT_TYPE
+# define TICK_COUNT_TYPE	unsigned long
+#endif
+
 int set_nonblocking(int fd);
+int find_first_set(unsigned int b);
+TICK_COUNT_TYPE get_tick_count_ms();
+TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_TYPE& start_tick);
 
 extern "C" {
     int km_resolve_2_ip(const char* host_name, char *ip_buf, int ip_buf_len, int ipv=0);

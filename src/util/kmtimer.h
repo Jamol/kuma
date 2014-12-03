@@ -19,7 +19,9 @@
 #include "kmmutex.h"
 #include <map>
 
-#define TICK_COUNT_TYPE	unsigned long
+#ifndef TICK_COUNT_TYPE
+# define TICK_COUNT_TYPE    unsigned long
+#endif
 
 namespace komm {;
 
@@ -44,27 +46,33 @@ class KM_Timer_Node
 public:
     KM_Timer_Node()
     {
-        cancelled_ = false;
-        elapse_ = 0;
-        start_tick_ = 0;
-        timer_ = NULL;
+        cancelled = false;
+        repeat = false;
+        elapse = 0;
+        start_tick = 0;
+        timer = NULL;
         reset();
     }
     void reset()
     {
         prev = NULL;
         next = NULL;
+        tv_index = -1;
+        tl_index = -1;
     }
 
-    bool            cancelled_;
-    unsigned int	elapse_;
-    TICK_COUNT_TYPE start_tick_;
-    KM_Timer*	    timer_;
+    bool            cancelled;
+    bool            repeat;
+    unsigned int	elapse;
+    TICK_COUNT_TYPE start_tick;
+    KM_Timer*	    timer;
 
 protected:
     friend class KM_Timer_Manager;
     KM_Timer_Node* prev;
     KM_Timer_Node* next;
+    int tv_index;
+    int tl_index;
 };
 
 class KM_Timer
@@ -74,7 +82,7 @@ public:
     ~KM_Timer();
 
     void on_timer();
-    bool schedule(unsigned int time_elapse);
+    bool schedule(unsigned int time_elapse, bool repeat = false);
     void schedule_cancel();
 
     void on_detach()
@@ -94,10 +102,10 @@ public:
     KM_Timer_Manager();
     ~KM_Timer_Manager();
 
-    bool schedule(KM_Timer_Node* timer_node, unsigned int time_elapse);
+    bool schedule(KM_Timer_Node* timer_node, unsigned int time_elapse, bool repeat);
     void schedule_cancel(KM_Timer_Node* timer_node);
 
-    int check_expire(unsigned long& remain_time);
+    int check_expire(unsigned long& remain_time_ms);
 
 private:
     bool add_timer(KM_Timer_Node* timer_node, bool from_schedule=false);
@@ -114,6 +122,10 @@ private:
     void list_replace(KM_Timer_Node* old_head, KM_Timer_Node* new_head);
     void list_combine(KM_Timer_Node* from_head, KM_Timer_Node* to_head);
     bool list_empty(KM_Timer_Node* head);
+    
+    void set_tv0_bitmap(unsigned char idx);
+    void clear_tv0_bitmap(unsigned char idx);
+    int find_first_set_in_bitmap(unsigned char idx);
 
 private:
     KM_Mutex m_mutex;
@@ -121,6 +133,7 @@ private:
     KM_Timer_Node*  m_running_node;
     TICK_COUNT_TYPE m_last_tick;
     unsigned int m_timer_count;
+    unsigned int m_tv0_bitmap[8]; // 1 -- have timer in this slot
     KM_Timer_Node m_tv[TV_COUNT][TIMER_VECTOR_SIZE]; // timer vectors
 };
 

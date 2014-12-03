@@ -63,6 +63,7 @@ private:
     komm::KM_Mutex  m_mutex;
     EventQueue      m_eventQueue;
     
+    uint32_t        m_max_wait_time_ms;
     komm::KM_Timer_Manager* m_timer_mgr;
 };
 

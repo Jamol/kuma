@@ -27,6 +27,9 @@
 # include <netdb.h>
 # include <arpa/inet.h>
 # include <fcntl.h>
+# include <errno.h>
+# include <sys/types.h>
+# include <sys/time.h>
 #endif
 
 #ifdef KUMA_OS_WIN
@@ -441,4 +444,46 @@ int set_nonblocking(int fd) {
     fcntl(fd, F_SETFL, flag | O_NONBLOCK | O_ASYNC);
 #endif
     return 0;
+}
+
+int find_first_set(unsigned int b)
+{
+    if(0 == b) {
+        return -1;
+    }
+    int n = 0;
+    if (!(0xffff & b))
+        n += 16;
+    if (!((0xff << n) & b))
+        n += 8;
+    if (!((0xf << n) & b))
+        n += 4;
+    if (!((0x3 << n) & b))
+        n += 2;
+    if (!((0x1 << n) & b))
+        n += 1;
+    return n;
+}
+
+TICK_COUNT_TYPE get_tick_count_ms()
+{
+#if defined(KUMA_OS_WIN)
+    return GetTickCount();
+#else
+    TICK_COUNT_TYPE ret;
+    struct timeval time_val;
+    
+    gettimeofday(&time_val, NULL);
+    ret = time_val.tv_sec * 1000 + time_val.tv_usec / 1000;
+    return ret;
+#endif
+}
+
+TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_TYPE& start_tick)
+{
+    if(now_tick - start_tick > (((TICK_COUNT_TYPE)-1)>>1)) {
+        start_tick = now_tick;
+        return 0;
+    }
+    return now_tick - start_tick;
 }
