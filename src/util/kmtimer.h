@@ -46,7 +46,7 @@ class KM_Timer_Node
 public:
     KM_Timer_Node()
     {
-        cancelled = false;
+        unscheduled = false;
         repeat = false;
         elapse = 0;
         start_tick = 0;
@@ -61,7 +61,7 @@ public:
         tl_index = -1;
     }
 
-    bool            cancelled;
+    bool            unscheduled;
     bool            repeat;
     unsigned int	elapse;
     TICK_COUNT_TYPE start_tick;
@@ -83,7 +83,7 @@ public:
 
     void on_timer();
     bool schedule(unsigned int time_elapse, bool repeat = false);
-    void schedule_cancel();
+    void unschedule();
 
     void on_detach()
     {
@@ -103,9 +103,9 @@ public:
     ~KM_Timer_Manager();
 
     bool schedule(KM_Timer_Node* timer_node, unsigned int time_elapse, bool repeat);
-    void schedule_cancel(KM_Timer_Node* timer_node);
+    void unschedule(KM_Timer_Node* timer_node);
 
-    int check_expire(unsigned long& remain_time_ms);
+    int check_expire(unsigned long* remain_time_ms = NULL);
 
 private:
     bool add_timer(KM_Timer_Node* timer_node, bool from_schedule=false);
@@ -131,6 +131,7 @@ private:
     KM_Mutex m_mutex;
     KM_Mutex m_running_mutex;
     KM_Timer_Node*  m_running_node;
+    KM_Timer_Node*  m_reschedule_node;
     TICK_COUNT_TYPE m_last_tick;
     unsigned int m_timer_count;
     unsigned int m_tv0_bitmap[8]; // 1 -- have timer in this slot

@@ -141,7 +141,7 @@ void EventLoop::loop()
             delete ev;
         }
         unsigned long remain_time_ms = m_max_wait_time_ms;
-        m_timer_mgr->check_expire(remain_time_ms);
+        m_timer_mgr->check_expire(&remain_time_ms);
         if(remain_time_ms > m_max_wait_time_ms) {
             remain_time_ms = m_max_wait_time_ms;
         }
