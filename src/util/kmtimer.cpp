@@ -114,6 +114,9 @@ bool KM_Timer_Manager::schedule(KM_Timer_Node* timer_node, unsigned int time_ela
     timer_node->repeat = repeat;
 
     bool ret = add_timer(timer_node, true);
+    if(m_reschedule_node == timer_node) {
+        m_reschedule_node = NULL;
+    }
     m_mutex.unlock();
     return ret;
 }
