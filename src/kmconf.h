@@ -34,8 +34,16 @@
 # endif
 #endif
 
-#if __cplusplus > 199711L
-# define KUMA_HAS_CXX0X
+#ifdef KUMA_OS_WIN
+# include <memory>
+# ifdef _HAS_CPP0X
+#  define KUMA_HAS_CXX0X
+# else
+# endif
+#else
+# if __cplusplus > 199711L
+#  define KUMA_HAS_CXX0X
+# endif
 #endif
 
 #endif

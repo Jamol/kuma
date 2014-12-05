@@ -103,13 +103,13 @@ bool KM_Timer_Manager::schedule(KM_Timer_Node* timer_node, unsigned int time_ela
     if(timer_pending(timer_node) && time_elapse == timer_node->elapse) {
         return true;
     }
-    uint64_t nowTick = get_tick_count_ms();
+    TICK_COUNT_TYPE now_tick = get_tick_count_ms();
     timer_node->unscheduled = false;
     m_mutex.lock();
     if(timer_pending(timer_node)) {
         remove_timer(timer_node);
     }
-    timer_node->start_tick = nowTick;
+    timer_node->start_tick = now_tick;
     timer_node->elapse = time_elapse;
     timer_node->repeat = repeat;
 

@@ -44,7 +44,7 @@ public:
         pthread_mutexattr_destroy(&mutexattr);
 #endif
     }
-    virtual KM_Mutex()
+    virtual ~KM_Mutex()
     {
 #ifdef KUMA_OS_WIN
         DeleteCriticalSection(&cs_);

@@ -51,6 +51,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 
 #ifdef KUMA_HAS_CXX0X
 # include <functional>

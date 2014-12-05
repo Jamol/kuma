@@ -19,6 +19,7 @@
 #include "util/kmmutex.h"
 #include "util/kmqueue.h"
 #include <map>
+#include <stdint.h>
 
 namespace komm {
 class TimerHandler;
