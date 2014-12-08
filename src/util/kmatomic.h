@@ -3,23 +3,23 @@
 
 #include "kmconf.h"
 #ifdef KUMA_HAS_CXX0X
-#include <atomic>
-#else
-#ifdef KUMA_OS_WIN
-#if _MSC_VER > 1200
-#define _WINSOCKAPI_	// Prevent inclusion of winsock.h in windows.h
-#endif
-#include <windows.h>
-#else
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/time.h>
-#include <string.h>
-#include <pthread.h>
-#endif
+# include <atomic>
+#else // KUMA_HAS_CXX0X
+# ifdef KUMA_OS_WIN
+#  if _MSC_VER > 1200
+#   define _WINSOCKAPI_	// Prevent inclusion of winsock.h in windows.h
+#  endif
+#  include <windows.h>
+# else // KUMA_OS_WIN
+#  include <unistd.h>
+#  include <fcntl.h>
+#  include <errno.h>
+#  include <sys/types.h>
+#  include <sys/stat.h>
+#  include <sys/time.h>
+#  include <string.h>
+#  include <pthread.h>
+# endif // KUMA_OS_WIN
 #endif // KUMA_HAS_CXX0X
 
 namespace komm {;

@@ -1,29 +1,25 @@
 #ifndef __KMTHREAD_H__
 #define __KMTHREAD_H__
+
 #include "kmconf.h"
-
-#ifdef KUMA_OS_WIN
-#if _MSC_VER > 1200
-#define _WINSOCKAPI_	// Prevent inclusion of winsock.h in windows.h
-#endif
-#include <Windows.h>
-#include <process.h>
-#else
-#include <pthread.h>
-#endif
-
 #ifdef KUMA_HAS_CXX0X
 # include <thread>
 # define THREAD_HANDLE          std::thread::native_handle_type
 # define THREAD_ID              std::thread::id
 #else
 # ifdef KUMA_OS_WIN
+#  if _MSC_VER > 1200
+#   define _WINSOCKAPI_	// Prevent inclusion of winsock.h in windows.h
+#  endif
+#  include <Windows.h>
+#  include <process.h>
 #  define THREAD_HANDLE         HANDLE
 #  define THREAD_ID             unsigned long
 # else // KUMA_OS_WIN
+#  include <pthread.h>
 #  ifdef KUMA_OS_MAC
 #   define GetCurrentThreadId() pthread_mach_thread_np(pthread_self())
-#  else
+#  else // KUMA_OS_MAC
 #   ifndef GetCurrentThreadId
 #    define GetCurrentThreadId  pthread_self
 #   endif
