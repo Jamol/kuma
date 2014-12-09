@@ -212,21 +212,21 @@ bool KM_Timer_Manager::list_empty(KM_Timer_Node* head)
     return head->next == head;
 }
 
-void KM_Timer_Manager::set_tv0_bitmap(unsigned char idx)
+void KM_Timer_Manager::set_tv0_bitmap(int idx)
 {
     unsigned char a = idx/(sizeof(m_tv0_bitmap[0])*8);
     unsigned char b = idx%(sizeof(m_tv0_bitmap[0])*8);
     m_tv0_bitmap[a] |= 1 << b;
 }
 
-void KM_Timer_Manager::clear_tv0_bitmap(unsigned char idx)
+void KM_Timer_Manager::clear_tv0_bitmap(int idx)
 {
     unsigned char a = idx/(sizeof(m_tv0_bitmap[0])*8);
     unsigned char b = idx%(sizeof(m_tv0_bitmap[0])*8);
     m_tv0_bitmap[a] &= ~(1 << b);
 }
 
-int KM_Timer_Manager::find_first_set_in_bitmap(unsigned char idx)
+int KM_Timer_Manager::find_first_set_in_bitmap(int idx)
 {
     unsigned char a = idx/(sizeof(m_tv0_bitmap[0])*8);
     unsigned char b = idx%(sizeof(m_tv0_bitmap[0])*8);
@@ -360,12 +360,27 @@ int KM_Timer_Manager::check_expire(unsigned long* remain_time_ms)
     while(cur_jiffies >= next_jiffies)
     {
         int idx = next_jiffies & TIMER_VECTOR_MASK;
+        /*
+        int next_idx = 0;
+        if(0 != idx && (next_idx = find_first_set_in_bitmap(idx)) != idx) {
+            if(-1 == next_idx || next_idx < idx) { // run over 0
+                next_idx = 0; // need cascade timer when index 0
+            }
+            int delta = ((unsigned int)(next_idx-idx))&TIMER_VECTOR_MASK;
+            idx += delta;
+            idx &= TIMER_VECTOR_MASK;
+            next_jiffies += delta;
+            if(next_jiffies > cur_jiffies) {
+                break;
+            }
+        }
+        */
+        ++next_jiffies;
         if (!idx &&
             (!cascade_timer(1, INDEX(0))) &&
             (!cascade_timer(2, INDEX(1)))) {
             cascade_timer(3, INDEX(2));
         }
-        ++next_jiffies;
         list_combine(&m_tv[0][idx], &tmp_head);
         clear_tv0_bitmap(idx);
     }

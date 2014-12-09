@@ -123,9 +123,9 @@ private:
     void list_combine(KM_Timer_Node* from_head, KM_Timer_Node* to_head);
     bool list_empty(KM_Timer_Node* head);
     
-    void set_tv0_bitmap(unsigned char idx);
-    void clear_tv0_bitmap(unsigned char idx);
-    int find_first_set_in_bitmap(unsigned char idx);
+    void set_tv0_bitmap(int idx);
+    void clear_tv0_bitmap(int idx);
+    int find_first_set_in_bitmap(int idx);
 
 private:
     KM_Mutex m_mutex;
