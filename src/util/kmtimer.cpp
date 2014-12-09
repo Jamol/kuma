@@ -361,8 +361,9 @@ int KM_Timer_Manager::check_expire(unsigned long* remain_time_ms)
     {
         int idx = next_jiffies & TIMER_VECTOR_MASK;
         /*
-        int next_idx = 0;
-        if(0 != idx && (next_idx = find_first_set_in_bitmap(idx)) != idx) {
+        int idx_delta = find_first_set_in_bitmap(idx);
+        int next_idx = -1==idx_delta?-1:((idx + idx_delta)&TIMER_VECTOR_MASK);
+        if(0 != idx && next_idx != idx) {
             if(-1 == next_idx || next_idx < idx) { // run over 0
                 next_idx = 0; // need cascade timer when index 0
             }
@@ -374,7 +375,7 @@ int KM_Timer_Manager::check_expire(unsigned long* remain_time_ms)
                 break;
             }
         }
-        */
+         */
         ++next_jiffies;
         if (!idx &&
             (!cascade_timer(1, INDEX(0))) &&
