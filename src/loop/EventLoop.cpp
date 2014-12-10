@@ -31,7 +31,7 @@ EventLoop::EventLoop(uint32_t max_wait_time_ms)
     m_stopLoop = false;
     m_poll = createIOPoll();
     m_max_wait_time_ms = max_wait_time_ms;
-    m_timer_mgr = new komm::KM_Timer_Manager();
+    m_timer_mgr = new KM_Timer_Manager();
 }
 
 EventLoop::~EventLoop()
@@ -67,7 +67,7 @@ int EventLoop::registerHandler(int fd, uint32_t events, IOHandler* handler)
             events = e;
             handler = h;
             if(handler) {
-                handler->acquireRef();
+                handler->acquireReference();
             }
             loop = l;
         }
@@ -75,7 +75,7 @@ int EventLoop::registerHandler(int fd, uint32_t events, IOHandler* handler)
         ~RegisterIOEvent()
         {
             if(handler) {
-                handler->releaseRef();
+                handler->releaseReference();
                 handler = NULL;
             }
         }
@@ -121,13 +121,13 @@ int EventLoop::unregisterHandler(int fd, bool close_fd)
     return KUMA_ERROR_NOERR;
 }
 
-komm::KM_Timer* EventLoop::createTimer(komm::TimerHandler* handler)
+KM_Timer* EventLoop::createTimer(TimerHandler* handler)
 {
-    komm::KM_Timer* timer = new komm::KM_Timer(m_timer_mgr, handler);
+    KM_Timer* timer = new KM_Timer(m_timer_mgr, handler);
     return timer;
 }
 
-void EventLoop::deleteTimer(komm::KM_Timer* timer)
+void EventLoop::deleteTimer(KM_Timer* timer)
 {
     delete timer;
 }
@@ -158,7 +158,7 @@ int EventLoop::registerHandler_i(int fd, uint32_t events, IOHandler* handler)
     if(ret != KUMA_ERROR_NOERR) {
         return ret;
     }
-    handler->acquireRef();
+    handler->acquireReference();
     m_handlerMap.insert(std::make_pair(fd, handler));
     return KUMA_ERROR_NOERR;
 }
@@ -168,7 +168,7 @@ int EventLoop::unregisterHandler_i(int fd, bool close_fd)
     m_poll->unregister_fd(fd);
     IOHandlerMap::iterator it = m_handlerMap.find(fd);
     if(it != m_handlerMap.end()) {
-        it->second->releaseRef();
+        it->second->releaseReference();
         m_handlerMap.erase(it);
     }
     if(close_fd) {

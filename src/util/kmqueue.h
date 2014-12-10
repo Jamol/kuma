@@ -16,7 +16,9 @@
 #ifndef __KMQUEUE_H__
 #define __KMQUEUE_H__
 
-namespace komm {;
+#include "kmdefs.h"
+
+KUMA_NS_BEGIN
 
 template <class E>
 class KM_Queue
@@ -172,6 +174,6 @@ private:
     unsigned int de_count;
 };
     
-}
+KUMA_NS_END
 
 #endif

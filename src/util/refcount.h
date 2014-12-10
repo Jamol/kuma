@@ -3,30 +3,32 @@
 
 #include "kmatomic.h"
 
-namespace komm {;
+KUMA_NS_BEGIN
 
 class KM_RefCount{
 public:
     KM_RefCount() { ref_cnt_ = 0; }
     virtual ~KM_RefCount() {}
 
-    virtual void add_reference()
+    virtual long acquireReference()
     {
-        ++ref_cnt_;
+        return ++ref_cnt_;
     }
-    virtual void release_reference()
+    virtual long releaseReference()
     {
         long ref_cnt_tmp = 0;
         ref_cnt_tmp = --ref_cnt_;
         if(0 == ref_cnt_tmp) {
-            on_ref_zero();
+            onDestroy();
         }
+        return ref_cnt_tmp;
     }
-    virtual void on_ref_zero() { delete this; }
+    virtual void onDestroy() { delete this; }
 
 private:
     KM_Atomic ref_cnt_;
 };
 
-} // namespace komm
+KUMA_NS_END
+
 #endif

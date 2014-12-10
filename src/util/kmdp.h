@@ -16,10 +16,12 @@
 #ifndef __KM_DP_H__
 #define __KM_DP_H__
 #include "kmconf.h"
+#include "kmdefs.h"
 #include "refcount.h"
 #include <vector>
 
-namespace komm {;
+KUMA_NS_BEGIN
+
 struct IOV {
 #ifdef KUMA_OS_WIN
     unsigned long	iov_len;    /* Length. */
@@ -114,7 +116,7 @@ public:
         {// we own the buffer
             if(offset > len) offset = len;
             m_data_block = new KM_Data_Block(buf, len, offset);
-            m_data_block->add_reference();
+            m_data_block->acquireReference();
             m_begin_ptr = buf;
             m_end_ptr = m_begin_ptr + len;
             m_rd_ptr = m_begin_ptr + offset;
@@ -130,7 +132,7 @@ public:
         }
         if(!(m_flag&DP_FLAG_DONT_DELETE) && m_data_block)
         {
-            m_data_block->release_reference();
+            m_data_block->releaseReference();
             m_data_block = NULL;
         }
         m_begin_ptr = m_end_ptr = NULL;
@@ -145,7 +147,7 @@ public:
             return false;
         m_flag &= ~DP_FLAG_DONT_DELETE;
         m_data_block = new KM_Data_Block(buf, len, 0);
-        m_data_block->add_reference();
+        m_data_block->acquireReference();
         m_begin_ptr = buf;
         m_end_ptr = m_begin_ptr + len;
         m_rd_ptr = m_begin_ptr;
@@ -154,13 +156,15 @@ public:
     }
     virtual bool attach_buffer(unsigned char* buf, unsigned int len, unsigned int offset=0)
     {
-        if(offset >= len)
+        if(offset >= len) {
             return false;
-        if(!(m_flag&DP_FLAG_DONT_DELETE) && m_data_block)
-            m_data_block->release_reference();
+        }
+        if(!(m_flag&DP_FLAG_DONT_DELETE) && m_data_block) {
+            m_data_block->releaseReference();
+        }
         m_flag &= ~DP_FLAG_DONT_DELETE;
         m_data_block = new KM_Data_Block(buf, len, offset);
-        m_data_block->add_reference();
+        m_data_block->acquireReference();
         m_begin_ptr = buf;
         m_end_ptr = m_begin_ptr + len;
         m_rd_ptr = m_begin_ptr + offset;
@@ -177,7 +181,7 @@ public:
         if(!(m_flag&DP_FLAG_DONT_DELETE) && m_data_block)
         {
             m_data_block->detach_buffer(buf, len, offset);
-            m_data_block->release_reference();
+            m_data_block->releaseReference();
             offset = (unsigned int)(m_rd_ptr - buf);
         }
         buf = m_begin_ptr;
@@ -337,7 +341,7 @@ public:
         }
         if(!(m_flag&DP_FLAG_DONT_DELETE) && m_data_block)
         {
-            m_data_block->release_reference();
+            m_data_block->releaseReference();
             m_data_block = NULL;
         }
         m_begin_ptr = m_end_ptr = NULL;
@@ -383,7 +387,7 @@ public:
         }
         if(!(m_flag&DP_FLAG_DONT_DELETE) && m_data_block)
         {
-            m_data_block->release_reference();
+            m_data_block->releaseReference();
             m_data_block = NULL;
         }
         m_begin_ptr = m_end_ptr = NULL;
@@ -399,10 +403,10 @@ private:
     KM_Data_Block* data_block() { return m_data_block; }
     void data_block(KM_Data_Block* db) {
         if(m_data_block)
-            m_data_block->release_reference();
+            m_data_block->releaseReference();
         m_data_block = db;
         if(m_data_block)
-            m_data_block->add_reference();
+            m_data_block->acquireReference();
     }
     virtual KM_Data_Packet* duplicate_self(){
         KM_Data_Packet* dup = NULL;
@@ -424,7 +428,7 @@ private:
             dup = new KM_Data_Packet(flag);
             dup->m_data_block = m_data_block;
             if(dup->m_data_block)
-                dup->m_data_block->add_reference();
+                dup->m_data_block->acquireReference();
             dup->m_begin_ptr = m_begin_ptr;
             dup->m_end_ptr = m_end_ptr;
             dup->m_rd_ptr = m_rd_ptr;
@@ -444,6 +448,6 @@ private:
     KM_Data_Packet* m_next;
 };
 
-}
+KUMA_NS_END
 
 #endif

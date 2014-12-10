@@ -32,6 +32,8 @@
 # include <sys/time.h>
 #endif
 
+KUMA_NS_BEGIN
+
 #ifdef KUMA_OS_WIN
 #define STRNCPY_S   strncpy_s
 #define SNPRINTF(d, dl, fmt, ...)    _snprintf_s(d, dl, _TRUNCATE, fmt, ##__VA_ARGS__)
@@ -487,3 +489,5 @@ TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_T
     }
     return now_tick - start_tick;
 }
+
+KUMA_NS_END

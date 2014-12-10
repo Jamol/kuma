@@ -210,15 +210,15 @@ int VPoll::wait(uint32_t wait_time_ms)
         return KUMA_ERROR_INVALID_STATE;
     }
 
-    int cur_pfds_index = m_fds_used - 1;
+    int cur_pfds_index = 0;
     IOHandler* handler = NULL;
-    while(num_revts > 0 && cur_pfds_index >= 0) {
+    while(num_revts > 0 && cur_pfds_index < m_fds_used) {
         if(m_poll_fds[cur_pfds_index].revents) {
             --num_revts;
             handler = m_poll_items[m_poll_fds[cur_pfds_index].fd].handler;
             if(handler) handler->onEvent(get_kuma_events(m_poll_fds[cur_pfds_index].revents));
         }
-        --cur_pfds_index;
+        ++cur_pfds_index;
     }
     return KUMA_ERROR_NOERR;
 }

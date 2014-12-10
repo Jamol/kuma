@@ -81,8 +81,8 @@ public:
         return fds[READ_FD];
     }
     
-    virtual int acquireRef() { return 1; }
-    virtual int releaseRef() { return 1; }
+    virtual long acquireReference() { return 1; }
+    virtual long releaseReference() { return 1; }
     virtual int onEvent(uint32_t ev) {
         char buf[1024];
         recvfrom(fds[READ_FD], buf, sizeof(buf), 0, NULL, NULL);

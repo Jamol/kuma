@@ -8,8 +8,8 @@
 
 #ifndef __kuma__trace__
 #define __kuma__trace__
-#include "kuma.h"
 #include "kmconf.h"
+#include "kmdefs.h"
 #include <sstream>
 
 KUMA_NS_BEGIN
@@ -43,7 +43,7 @@ KUMA_NS_BEGIN
 #define KUMA_DBGTRACE(x)    KUMA_TRACE(KUMA_TRACE_LEVEL_DEBUG, x)
 
 void TracePrint(int level, const char* szMessage, ...);
-        
+
 KUMA_NS_END
         
 #endif /* defined(__kuma__trace__) */

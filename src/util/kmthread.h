@@ -2,6 +2,7 @@
 #define __KMTHREAD_H__
 
 #include "kmconf.h"
+#include "kmdefs.h"
 #ifdef KUMA_HAS_CXX0X
 # include <thread>
 # define THREAD_HANDLE          std::thread::native_handle_type
@@ -29,7 +30,7 @@
 # endif // KUMA_OS_WIN
 #endif // KUMA_HAS_CXX0X
 
-namespace komm {;
+KUMA_NS_BEGIN
 
 class KM_Thread
 {
@@ -203,6 +204,6 @@ private:
 #endif
 };
 
-} // namespace komm
+KUMA_NS_END
 
 #endif

@@ -27,6 +27,7 @@
 		6F6208FB1A26BDB1000DAF4B /* kmconf.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208F81A26BDB1000DAF4B /* kmconf.h */; };
 		6F6208FD1A26BDB1000DAF4B /* kuma.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208FA1A26BDB1000DAF4B /* kuma.h */; };
 		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
+		6FA951421A3808450033C9CF /* kmdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FA951411A3808450033C9CF /* kmdefs.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -53,6 +54,7 @@
 		6F852E421985EB2B00271D87 /* kuma-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "kuma-Prefix.pch"; sourceTree = SOURCE_ROOT; };
 		6F852E441985EB4700271D87 /* kumaProj.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaProj.xcconfig; sourceTree = "<group>"; };
 		6F852E451985EB4700271D87 /* kumaTarget.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaTarget.xcconfig; sourceTree = "<group>"; };
+		6FA951411A3808450033C9CF /* kmdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmdefs.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -100,6 +102,7 @@
 			isa = PBXGroup;
 			children = (
 				6F6208F81A26BDB1000DAF4B /* kmconf.h */,
+				6FA951411A3808450033C9CF /* kmdefs.h */,
 				6F6208FA1A26BDB1000DAF4B /* kuma.h */,
 				6F2963631A18AC4C00C3C79B /* loop */,
 				6F852E291985EB0500271D87 /* util */,
@@ -151,6 +154,7 @@
 				6F29634E1A18AB0D00C3C79B /* kmmutex.h in Headers */,
 				6F2963521A18AB0D00C3C79B /* kmtimer.h in Headers */,
 				6F29636B1A18AC6E00C3C79B /* EventLoop.h in Headers */,
+				6FA951421A3808450033C9CF /* kmdefs.h in Headers */,
 				6F29636D1A18AC6E00C3C79B /* Notifier.h in Headers */,
 				6F6208FD1A26BDB1000DAF4B /* kuma.h in Headers */,
 				6F29634C1A18AB0D00C3C79B /* kmatomic.h in Headers */,

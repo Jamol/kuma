@@ -2,6 +2,7 @@
 #define __KM_ATOMIC_H__
 
 #include "kmconf.h"
+#include "kmdefs.h"
 #ifdef KUMA_HAS_CXX0X
 # include <atomic>
 #else // KUMA_HAS_CXX0X
@@ -22,7 +23,7 @@
 # endif // KUMA_OS_WIN
 #endif // KUMA_HAS_CXX0X
 
-namespace komm {;
+KUMA_NS_BEGIN
 
 #ifdef KUMA_HAS_CXX0X
 typedef std::atomic_long KM_Atomic;
@@ -135,5 +136,6 @@ protected :
 };
 #endif // KUMA_HAS_CXX0X
 
-}
+KUMA_NS_END
+
 #endif

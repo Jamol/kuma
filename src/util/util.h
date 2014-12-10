@@ -17,6 +17,9 @@
 #define kuma_util_h
 
 #include "kmconf.h"
+#include "kmdefs.h"
+
+KUMA_NS_BEGIN
 
 #ifdef KUMA_OS_WIN
 #define snprintf    _snprintf
@@ -31,6 +34,8 @@ int set_nonblocking(int fd);
 int find_first_set(unsigned int b);
 TICK_COUNT_TYPE get_tick_count_ms();
 TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_TYPE& start_tick);
+
+KUMA_NS_END
 
 extern "C" {
     int km_resolve_2_ip(const char* host_name, char *ip_buf, int ip_buf_len, int ipv=0);

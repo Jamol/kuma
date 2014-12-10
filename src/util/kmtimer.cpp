@@ -15,13 +15,14 @@
 
 #include "kmtimer.h"
 
+KUMA_NS_BEGIN
+
 int find_first_set(unsigned int b);
 TICK_COUNT_TYPE get_tick_count_ms();
 TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_TYPE& start_tick);
 
 //////////////////////////////////////////////////////////////////////////
 // KM_Timer
-using namespace komm;
 
 KM_Timer::KM_Timer(KM_Timer_Manager* mgr, TimerHandler* hdr)
 {
@@ -432,4 +433,6 @@ int KM_Timer_Manager::check_expire(unsigned long* remain_time_ms)
 
     return count;
 }
+
+KUMA_NS_END
 

@@ -16,6 +16,7 @@
 #ifndef __KMTIMER_H__
 #define __KMTIMER_H__
 
+#include "kmdefs.h"
 #include "kmmutex.h"
 #include <map>
 
@@ -23,7 +24,7 @@
 # define TICK_COUNT_TYPE    unsigned long
 #endif
 
-namespace komm {;
+KUMA_NS_BEGIN
 
 #define TIMER_VECTOR_BITS   8
 #define TIMER_VECTOR_SIZE   (1 << TIMER_VECTOR_BITS)
@@ -34,7 +35,6 @@ class TimerHandler
 {
 public:
     virtual ~TimerHandler() {}
-
     virtual int onTimer() = 0;
 };
 
@@ -138,6 +138,6 @@ private:
     KM_Timer_Node m_tv[TV_COUNT][TIMER_VECTOR_SIZE]; // timer vectors
 };
 
-}
+KUMA_NS_END
 
 #endif
