@@ -39,9 +39,9 @@ public:
     {
 #ifdef KUMA_HAS_CXX0X
 #else
-        m_thread_id = 0;
+        thread_id_ = 0;
 #ifdef KUMA_OS_WIN
-        m_thread_handle = NULL;
+        thread_handle_ = NULL;
 #endif
 #endif
     }
@@ -51,10 +51,10 @@ public:
 #ifdef KUMA_HAS_CXX0X
 #else
 #ifdef KUMA_OS_WIN
-        if(m_thread_handle)
+        if(thread_handle_)
         {
-            ::CloseHandle(m_thread_handle);
-            m_thread_handle = NULL;
+            ::CloseHandle(thread_handle_);
+            thread_handle_ = NULL;
         }
 #endif
 #endif
@@ -62,13 +62,13 @@ public:
 
 #ifdef KUMA_HAS_CXX0X
     KM_Thread(KM_Thread&& other)
-	: m_thread(std::move(other.m_thread))
+	: thread_(std::move(other.thread_))
 	{
 	}
 
 	KM_Thread& operator=(KM_Thread&& other)
 	{
-        m_thread = std::move(other.m_thread);
+        thread_ = std::move(other.thread_);
         return *this;
 	}
 #endif
@@ -81,7 +81,7 @@ public:
         try
         {
             std::thread thr(&KM_Thread::thread_run_i, this);
-            m_thread = std::move(thr);
+            thread_ = std::move(thr);
         }
         catch(...)
         {
@@ -91,24 +91,24 @@ public:
 #else
 #ifdef KUMA_OS_WIN
         unsigned int thread_id = 0;
-        m_thread_handle = (HANDLE)_beginthreadex(NULL, 0, thread_proc, this, 0, &thread_id);
-        m_thread_id = thread_id;
-        return m_thread_handle != NULL;
+        thread_handle_ = (HANDLE)_beginthreadex(NULL, 0, thread_proc, this, 0, &thread_id);
+        thread_id_ = thread_id;
+        return thread_handle_ != NULL;
 #else
         //pthread_attr_t attr;
         //pthread_attr_init(&attr);
         //pthread_attr_setscope(&attr, PTHREAD_SCOPE_PROCESS);
         //pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
-        int ret = pthread_create(&m_thread_handle, NULL/*&attr*/,
+        int ret = pthread_create(&thread_handle_, NULL/*&attr*/,
             thread_proc, this);
         //pthread_attr_destroy(&attr);
 
 #ifdef MACOS
-        m_thread_id = pthread_mach_thread_np(m_thread_handle);
+        thread_id_ = pthread_mach_thread_np(thread_handle_);
 #else
-        m_thread_id = (THREAD_ID)m_thread_handle;
+        thread_id_ = (THREAD_ID)thread_handle_;
 #endif
-        return m_thread_handle != (THREAD_HANDLE)NULL;
+        return thread_handle_ != (THREAD_HANDLE)NULL;
 #endif // KUMA_OS_WIN
 #endif // KUMA_HAS_CXX0X
     }
@@ -118,7 +118,7 @@ public:
 #ifdef KUMA_HAS_CXX0X
         try
         {
-            m_thread.join();
+            thread_.join();
         }
         catch(...)
         {
@@ -129,13 +129,13 @@ public:
             return ;
         }
 #ifdef KUMA_OS_WIN
-        if(m_thread_handle != NULL) {
-            ::WaitForSingleObject(m_thread_handle, INFINITE);
-            ::CloseHandle(m_thread_handle);
-            m_thread_handle = NULL;
+        if(thread_handle_ != NULL) {
+            ::WaitForSingleObject(thread_handle_, INFINITE);
+            ::CloseHandle(thread_handle_);
+            thread_handle_ = NULL;
         }
 #else
-        pthread_join(m_thread_handle, NULL);
+        pthread_join(thread_handle_, NULL);
 #endif // KUMA_OS_WIN
 #endif // KUMA_HAS_CXX0X
     }
@@ -143,18 +143,18 @@ public:
 	THREAD_HANDLE get_thread_handle()
     {
 #ifdef KUMA_HAS_CXX0X
-        return m_thread.native_handle();
+        return thread_.native_handle();
 #else
-        return m_thread_handle;
+        return thread_handle_;
 #endif
     }
 
 	THREAD_ID get_thread_id()
     {
 #ifdef KUMA_HAS_CXX0X
-        return m_thread.get_id();
+        return thread_.get_id();
 #else
-        return m_thread_id;
+        return thread_id_;
 #endif
     }
 
@@ -185,22 +185,22 @@ private:
 	bool is_self_thread()
     {
 #ifdef KUMA_HAS_CXX0X
-        return m_thread.get_id() == std::this_thread::get_id();
+        return thread_.get_id() == std::this_thread::get_id();
 #else
 #ifdef KUMA_OS_WIN
-        return m_thread_id == GetCurrentThreadId();
+        return thread_id_ == GetCurrentThreadId();
 #else
-        return m_thread_handle == pthread_self();
+        return thread_handle_ == pthread_self();
 #endif
 #endif // KUMA_HAS_CXX0X
     }
 
 private:
 #ifdef KUMA_HAS_CXX0X
-    std::thread     m_thread;
+    std::thread     thread_;
 #else
-	THREAD_ID		m_thread_id;
-	THREAD_HANDLE	m_thread_handle;
+	THREAD_ID		thread_id_;
+	THREAD_HANDLE	thread_handle_;
 #endif
 };
 

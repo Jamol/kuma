@@ -28,29 +28,29 @@ IOPoll* createIOPoll();
 
 EventLoop::EventLoop(uint32_t max_wait_time_ms)
 {
-    m_stopLoop = false;
-    m_poll = createIOPoll();
-    m_max_wait_time_ms = max_wait_time_ms;
-    m_timer_mgr = new KM_Timer_Manager();
+    stopLoop_ = false;
+    poll_ = createIOPoll();
+    max_wait_time_ms_ = max_wait_time_ms;
+    timer_mgr_ = new KM_Timer_Manager();
 }
 
 EventLoop::~EventLoop()
 {
-    if(m_poll) {
-        delete m_poll;
-        m_poll = NULL;
+    if(poll_) {
+        delete poll_;
+        poll_ = NULL;
     }
     IEvent *ev = NULL;
-    while (m_eventQueue.dequeue(ev)) {
+    while (eventQueue_.dequeue(ev)) {
         delete ev;
     }
-    delete m_timer_mgr;
-    m_timer_mgr = NULL;
+    delete timer_mgr_;
+    timer_mgr_ = NULL;
 }
 
 bool EventLoop::init()
 {
-    if(!m_poll->init()) {
+    if(!poll_->init()) {
         return false;
     }
     return true;
@@ -123,7 +123,7 @@ int EventLoop::unregisterHandler(int fd, bool close_fd)
 
 KM_Timer* EventLoop::createTimer(TimerHandler* handler)
 {
-    KM_Timer* timer = new KM_Timer(m_timer_mgr, handler);
+    KM_Timer* timer = new KM_Timer(timer_mgr_, handler);
     return timer;
 }
 
@@ -134,42 +134,42 @@ void EventLoop::deleteTimer(KM_Timer* timer)
 
 void EventLoop::loop()
 {
-    while (!m_stopLoop) {
+    while (!stopLoop_) {
         IEvent *ev = NULL;
-        while (!m_stopLoop && m_eventQueue.dequeue(ev)) {
+        while (!stopLoop_ && eventQueue_.dequeue(ev)) {
             ev->fire();
             delete ev;
         }
-        unsigned long remain_time_ms = m_max_wait_time_ms;
-        m_timer_mgr->check_expire(&remain_time_ms);
-        if(remain_time_ms > m_max_wait_time_ms) {
-            remain_time_ms = m_max_wait_time_ms;
+        unsigned long remain_time_ms = max_wait_time_ms_;
+        timer_mgr_->check_expire(&remain_time_ms);
+        if(remain_time_ms > max_wait_time_ms_) {
+            remain_time_ms = max_wait_time_ms_;
         }
-        m_poll->wait((uint32_t)remain_time_ms);
+        poll_->wait((uint32_t)remain_time_ms);
     }
 }
 
 int EventLoop::registerHandler_i(int fd, uint32_t events, IOHandler* handler)
 {
-    if(m_handlerMap.find(fd) != m_handlerMap.end()) {
+    if(handlerMap_.find(fd) != handlerMap_.end()) {
         return KUMA_ERROR_INVALID_STATE;
     }
-    int ret = m_poll->register_fd(fd, events, handler);
+    int ret = poll_->register_fd(fd, events, handler);
     if(ret != KUMA_ERROR_NOERR) {
         return ret;
     }
     handler->acquireReference();
-    m_handlerMap.insert(std::make_pair(fd, handler));
+    handlerMap_.insert(std::make_pair(fd, handler));
     return KUMA_ERROR_NOERR;
 }
 
 int EventLoop::unregisterHandler_i(int fd, bool close_fd)
 {
-    m_poll->unregister_fd(fd);
-    IOHandlerMap::iterator it = m_handlerMap.find(fd);
-    if(it != m_handlerMap.end()) {
+    poll_->unregister_fd(fd);
+    IOHandlerMap::iterator it = handlerMap_.find(fd);
+    if(it != handlerMap_.end()) {
         it->second->releaseReference();
-        m_handlerMap.erase(it);
+        handlerMap_.erase(it);
     }
     if(close_fd) {
         closesocket(fd);
@@ -179,8 +179,8 @@ int EventLoop::unregisterHandler_i(int fd, bool close_fd)
 
 int EventLoop::postEvent(IEvent* ev)
 {
-    m_eventQueue.enqueue(ev);
-    m_poll->notify();
+    eventQueue_.enqueue(ev);
+    poll_->notify();
     return KUMA_ERROR_NOERR;
 }
 

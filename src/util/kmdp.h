@@ -45,98 +45,98 @@ public:
     typedef unsigned int DP_FLAG;
 
 private:
-    class KM_Data_Block : public KM_RefCount
+    class Kdata_block_ : public KM_RefCount
     {
     public:
-        KM_Data_Block(unsigned char* buf, unsigned int len, unsigned int offset)
+        Kdata_block_(unsigned char* buf, unsigned int size, unsigned int offset)
         {
-            m_buffer = buf;
-            m_length = len;
-            m_offset = offset;
+            buffer_ = buf;
+            size_ = size;
+            offset_ = offset;
         }
-        ~KM_Data_Block()
+        ~Kdata_block_()
         {
-            if(m_buffer)
+            if(buffer_)
             {
-                delete[] m_buffer;
-                m_buffer = NULL;
-                m_length = 0;
-                m_offset = 0;
+                delete[] buffer_;
+                buffer_ = NULL;
+                size_ = 0;
+                offset_ = 0;
             }
         }
-        unsigned char* get_buffer() { return m_buffer+m_offset; }
-        unsigned int get_length() { return m_length-m_offset; }
-        void detach_buffer(unsigned char*& buf, unsigned int& len, unsigned int& offset)
+        unsigned char* get_buffer() { return buffer_+offset_; }
+        unsigned int get_length() { return size_-offset_; }
+        void detach_buffer(unsigned char*& buf, unsigned int& size, unsigned int& offset)
         {
-            buf = m_buffer;
-            len = m_length;
-            offset = m_offset;
-            m_offset = 0;
-            m_length = 0;
-            m_buffer = NULL;
+            buf = buffer_;
+            size = size_;
+            offset = offset_;
+            offset_ = 0;
+            size_ = 0;
+            buffer_ = NULL;
         }
 
     private:
-        KM_Data_Block();
-        KM_Data_Block &operator= (const KM_Data_Block &);
-        KM_Data_Block (const KM_Data_Block &);
+        Kdata_block_();
+        Kdata_block_ &operator= (const Kdata_block_ &);
+        Kdata_block_ (const Kdata_block_ &);
 
     private:
-        unsigned char* m_buffer;
-        unsigned int m_length;
-        unsigned int m_offset;
+        unsigned char* buffer_;
+        unsigned int size_;
+        unsigned int offset_;
     };
 public:
     KM_Data_Packet(DP_FLAG flag=0)
     {
-        m_flag = flag;
-        m_begin_ptr = m_end_ptr = NULL;
-        m_rd_ptr = m_wr_ptr = NULL;
-        m_data_block = NULL;
-        m_next = NULL;
+        flag_ = flag;
+        begin_ptr_ = end_ptr_ = NULL;
+        rd_ptr_ = wr_ptr_ = NULL;
+        data_block_ = NULL;
+        next_ = NULL;
     }
     KM_Data_Packet(unsigned char* buf, unsigned int len, unsigned int offset=0, DP_FLAG flag=DP_FLAG_LIFCYC_STACK|DP_FLAG_DONT_DELETE)
     {
-        m_flag = flag;
-        m_begin_ptr = m_end_ptr = NULL;
-        m_rd_ptr = m_wr_ptr = NULL;
-        m_data_block = NULL;
-        m_next = NULL;
-        if(m_flag&DP_FLAG_DONT_DELETE)
+        flag_ = flag;
+        begin_ptr_ = end_ptr_ = NULL;
+        rd_ptr_ = wr_ptr_ = NULL;
+        data_block_ = NULL;
+        next_ = NULL;
+        if(flag_&DP_FLAG_DONT_DELETE)
         {
             if(offset < len)
             {
-                m_begin_ptr = buf;
-                m_end_ptr = m_begin_ptr + len;
-                m_rd_ptr = m_begin_ptr + offset;
-                m_wr_ptr = m_begin_ptr + offset;
+                begin_ptr_ = buf;
+                end_ptr_ = begin_ptr_ + len;
+                rd_ptr_ = begin_ptr_ + offset;
+                wr_ptr_ = begin_ptr_ + offset;
             }
         }
         else
         {// we own the buffer
             if(offset > len) offset = len;
-            m_data_block = new KM_Data_Block(buf, len, offset);
-            m_data_block->acquireReference();
-            m_begin_ptr = buf;
-            m_end_ptr = m_begin_ptr + len;
-            m_rd_ptr = m_begin_ptr + offset;
-            m_wr_ptr = m_begin_ptr + offset;
+            data_block_ = new Kdata_block_(buf, len, offset);
+            data_block_->acquireReference();
+            begin_ptr_ = buf;
+            end_ptr_ = begin_ptr_ + len;
+            rd_ptr_ = begin_ptr_ + offset;
+            wr_ptr_ = begin_ptr_ + offset;
         }
     }
     virtual ~KM_Data_Packet()
     {
-        if(m_next)
+        if(next_)
         {
-            m_next->release();
-            m_next = NULL;
+            next_->release();
+            next_ = NULL;
         }
-        if(!(m_flag&DP_FLAG_DONT_DELETE) && m_data_block)
+        if(!(flag_&DP_FLAG_DONT_DELETE) && data_block_)
         {
-            m_data_block->releaseReference();
-            m_data_block = NULL;
+            data_block_->releaseReference();
+            data_block_ = NULL;
         }
-        m_begin_ptr = m_end_ptr = NULL;
-        m_rd_ptr = m_wr_ptr = NULL;
+        begin_ptr_ = end_ptr_ = NULL;
+        rd_ptr_ = wr_ptr_ = NULL;
     }
 
     virtual bool alloc_buffer(unsigned int len)
@@ -145,13 +145,13 @@ public:
         unsigned char* buf = new unsigned char[len];
         if(NULL == buf)
             return false;
-        m_flag &= ~DP_FLAG_DONT_DELETE;
-        m_data_block = new KM_Data_Block(buf, len, 0);
-        m_data_block->acquireReference();
-        m_begin_ptr = buf;
-        m_end_ptr = m_begin_ptr + len;
-        m_rd_ptr = m_begin_ptr;
-        m_wr_ptr = m_begin_ptr;
+        flag_ &= ~DP_FLAG_DONT_DELETE;
+        data_block_ = new Kdata_block_(buf, len, 0);
+        data_block_->acquireReference();
+        begin_ptr_ = buf;
+        end_ptr_ = begin_ptr_ + len;
+        rd_ptr_ = begin_ptr_;
+        wr_ptr_ = begin_ptr_;
         return true;
     }
     virtual bool attach_buffer(unsigned char* buf, unsigned int len, unsigned int offset=0)
@@ -159,16 +159,16 @@ public:
         if(offset >= len) {
             return false;
         }
-        if(!(m_flag&DP_FLAG_DONT_DELETE) && m_data_block) {
-            m_data_block->releaseReference();
+        if(!(flag_&DP_FLAG_DONT_DELETE) && data_block_) {
+            data_block_->releaseReference();
         }
-        m_flag &= ~DP_FLAG_DONT_DELETE;
-        m_data_block = new KM_Data_Block(buf, len, offset);
-        m_data_block->acquireReference();
-        m_begin_ptr = buf;
-        m_end_ptr = m_begin_ptr + len;
-        m_rd_ptr = m_begin_ptr + offset;
-        m_wr_ptr = m_end_ptr;
+        flag_ &= ~DP_FLAG_DONT_DELETE;
+        data_block_ = new Kdata_block_(buf, len, offset);
+        data_block_->acquireReference();
+        begin_ptr_ = buf;
+        end_ptr_ = begin_ptr_ + len;
+        rd_ptr_ = begin_ptr_ + offset;
+        wr_ptr_ = end_ptr_;
         return true;
     }
 
@@ -178,29 +178,29 @@ public:
         buf = NULL;
         len = 0;
         offset = 0;
-        if(!(m_flag&DP_FLAG_DONT_DELETE) && m_data_block)
+        if(!(flag_&DP_FLAG_DONT_DELETE) && data_block_)
         {
-            m_data_block->detach_buffer(buf, len, offset);
-            m_data_block->releaseReference();
-            offset = (unsigned int)(m_rd_ptr - buf);
+            data_block_->detach_buffer(buf, len, offset);
+            data_block_->releaseReference();
+            offset = (unsigned int)(rd_ptr_ - buf);
         }
-        buf = m_begin_ptr;
-        offset = (unsigned int)(m_rd_ptr - m_begin_ptr);
-        len = (unsigned int)(m_end_ptr - m_begin_ptr);
-        m_data_block = NULL;
-        m_begin_ptr = m_end_ptr = NULL;
-        m_rd_ptr = m_wr_ptr = NULL;
+        buf = begin_ptr_;
+        offset = (unsigned int)(rd_ptr_ - begin_ptr_);
+        len = (unsigned int)(end_ptr_ - begin_ptr_);
+        data_block_ = NULL;
+        begin_ptr_ = end_ptr_ = NULL;
+        rd_ptr_ = wr_ptr_ = NULL;
     }
 
     unsigned int space()
     {
-        if(m_wr_ptr > m_end_ptr) return 0;
-        return (unsigned int)(m_end_ptr - m_wr_ptr);
+        if(wr_ptr_ > end_ptr_) return 0;
+        return (unsigned int)(end_ptr_ - wr_ptr_);
     }
     unsigned int length()
     {
-        if(m_rd_ptr > m_wr_ptr) return 0;
-        return (unsigned int)(m_wr_ptr - m_rd_ptr);
+        if(rd_ptr_ > wr_ptr_) return 0;
+        return (unsigned int)(wr_ptr_ - rd_ptr_);
     }
     unsigned int read(unsigned char* buf, unsigned int len)
     {
@@ -208,8 +208,8 @@ public:
         if(0 == ret) return 0;
         ret = ret>len?len:ret;
         if(buf)
-            memcpy(buf, m_rd_ptr, ret);
-        m_rd_ptr += ret;
+            memcpy(buf, rd_ptr_, ret);
+        rd_ptr_ += ret;
         return ret;
     }
     unsigned int write(const unsigned char* buf, unsigned int len)
@@ -217,38 +217,38 @@ public:
         unsigned int ret = space();
         if(0 == ret) return 0;
         ret = ret>len?len:ret;
-        memcpy(m_wr_ptr, buf, ret);
-        m_wr_ptr += ret;
+        memcpy(wr_ptr_, buf, ret);
+        wr_ptr_ += ret;
         return ret;
     }
-    unsigned char* rd_ptr() { return m_rd_ptr; }
-    unsigned char* wr_ptr() { return m_wr_ptr; }
-    KM_Data_Packet* next() { return m_next; }
+    unsigned char* rd_ptr() { return rd_ptr_; }
+    unsigned char* wr_ptr() { return wr_ptr_; }
+    KM_Data_Packet* next() { return next_; }
 
     void adv_rd_ptr(unsigned int len)
     {
         if(len > length())
         {
-            if(m_next) m_next->adv_rd_ptr(len-length());
-            m_rd_ptr = m_wr_ptr;
+            if(next_) next_->adv_rd_ptr(len-length());
+            rd_ptr_ = wr_ptr_;
         }
         else
-            m_rd_ptr += len;
+            rd_ptr_ += len;
     }
     void adv_wr_ptr(unsigned int len)
     {
         if(space() == 0)
             return ;
         if(len > space())
-            m_wr_ptr = m_end_ptr;
+            wr_ptr_ = end_ptr_;
         else
-            m_wr_ptr += len;
+            wr_ptr_ += len;
     }
 
     unsigned int total_length()
     {
-        if(m_next)
-            return length()+m_next->total_length();
+        if(next_)
+            return length()+next_->total_length();
         else
             return length();
     }
@@ -268,17 +268,17 @@ public:
     void append(KM_Data_Packet* dp)
     {
         KM_Data_Packet* tail = this;
-        while(tail->m_next)
-            tail = tail->m_next;
+        while(tail->next_)
+            tail = tail->next_;
 
-        tail->m_next = dp;
+        tail->next_ = dp;
     }
 
     virtual KM_Data_Packet* duplicate()
     {
         KM_Data_Packet* dup = duplicate_self();
-        if(m_next)
-            dup->m_next = m_next->duplicate();
+        if(next_)
+            dup->next_ = next_->duplicate();
         return dup;
     }
 
@@ -288,9 +288,9 @@ public:
         {
             unsigned int left_len = 0;
             KM_Data_Packet* dup = NULL;
-            if(m_flag&DP_FLAG_DONT_DELETE)
+            if(flag_&DP_FLAG_DONT_DELETE)
             {
-                DP_FLAG flag = m_flag;
+                DP_FLAG flag = flag_;
                 flag &= ~DP_FLAG_DONT_DELETE;
                 flag &= ~DP_FLAG_LIFCYC_STACK;
                 dup = new KM_Data_Packet(flag);
@@ -309,56 +309,56 @@ public:
             else
             {
                 dup = duplicate_self();
-                dup->m_rd_ptr += offset;
+                dup->rd_ptr_ += offset;
                 if(offset+len <= length())
                 {
-                    dup->m_wr_ptr = dup->m_rd_ptr+len;
+                    dup->wr_ptr_ = dup->rd_ptr_+len;
                 }
                 else
                 {
                     left_len = offset+len-length();
                 }
             }
-            if(m_next && left_len>0)
-                dup->m_next = m_next->subpacket(0, left_len);
+            if(next_ && left_len>0)
+                dup->next_ = next_->subpacket(0, left_len);
             return dup;
         }
-        else if(m_next)
-            return m_next->subpacket(offset-length(), len);
+        else if(next_)
+            return next_->subpacket(offset-length(), len);
         else
             return NULL;
     }
     virtual void reclaim(){
         if(length() > 0)
             return ;
-        KM_Data_Packet* dp = m_next;
+        KM_Data_Packet* dp = next_;
         while(dp && dp->length() == 0)
         {
-            KM_Data_Packet* tmp = dp->m_next;
-            dp->m_next = NULL;
+            KM_Data_Packet* tmp = dp->next_;
+            dp->next_ = NULL;
             dp->release();
             dp = tmp;
         }
-        if(!(m_flag&DP_FLAG_DONT_DELETE) && m_data_block)
+        if(!(flag_&DP_FLAG_DONT_DELETE) && data_block_)
         {
-            m_data_block->releaseReference();
-            m_data_block = NULL;
+            data_block_->releaseReference();
+            data_block_ = NULL;
         }
-        m_begin_ptr = m_end_ptr = NULL;
-        m_rd_ptr = m_wr_ptr = NULL;
-        m_next = dp;
+        begin_ptr_ = end_ptr_ = NULL;
+        rd_ptr_ = wr_ptr_ = NULL;
+        next_ = dp;
         /*
         KM_Data_Packet* dp = this;
         while(dp && dp->length() == 0)
         {
-        if(!(dp->m_flag&DP_FLAG_DONT_DELETE) && dp->m_data_block)
+        if(!(dp->flag_&DP_FLAG_DONT_DELETE) && dp->data_block_)
         {
-        dp->m_data_block->release_reference();
-        dp->m_data_block = NULL;
+        dp->data_block_->release_reference();
+        dp->data_block_ = NULL;
         }
-        dp->m_begin_ptr = dp->m_end_ptr = NULL;
-        dp->m_rd_ptr = dp->m_wr_ptr = NULL;
-        dp = dp->m_next;
+        dp->begin_ptr_ = dp->end_ptr_ = NULL;
+        dp->rd_ptr_ = dp->wr_ptr_ = NULL;
+        dp = dp->next_;
         }*/
     }
     unsigned int get_iovec(IOVEC& iovs){
@@ -380,19 +380,19 @@ public:
     }
     virtual void release()
     {
-        if(m_next)
+        if(next_)
         {
-            m_next->release();
-            m_next = NULL;
+            next_->release();
+            next_ = NULL;
         }
-        if(!(m_flag&DP_FLAG_DONT_DELETE) && m_data_block)
+        if(!(flag_&DP_FLAG_DONT_DELETE) && data_block_)
         {
-            m_data_block->releaseReference();
-            m_data_block = NULL;
+            data_block_->releaseReference();
+            data_block_ = NULL;
         }
-        m_begin_ptr = m_end_ptr = NULL;
-        m_rd_ptr = m_wr_ptr = NULL;
-        if(!(m_flag&DP_FLAG_LIFCYC_STACK))
+        begin_ptr_ = end_ptr_ = NULL;
+        rd_ptr_ = wr_ptr_ = NULL;
+        if(!(flag_&DP_FLAG_LIFCYC_STACK))
             delete this;
     }
 
@@ -400,19 +400,19 @@ private:
     KM_Data_Packet &operator= (const KM_Data_Packet &);
     KM_Data_Packet (const KM_Data_Packet &);
 
-    KM_Data_Block* data_block() { return m_data_block; }
-    void data_block(KM_Data_Block* db) {
-        if(m_data_block)
-            m_data_block->releaseReference();
-        m_data_block = db;
-        if(m_data_block)
-            m_data_block->acquireReference();
+    Kdata_block_* data_block() { return data_block_; }
+    void data_block(Kdata_block_* db) {
+        if(data_block_)
+            data_block_->releaseReference();
+        data_block_ = db;
+        if(data_block_)
+            data_block_->acquireReference();
     }
     virtual KM_Data_Packet* duplicate_self(){
         KM_Data_Packet* dup = NULL;
-        if(m_flag&DP_FLAG_DONT_DELETE)
+        if(flag_&DP_FLAG_DONT_DELETE)
         {
-            DP_FLAG flag = m_flag;
+            DP_FLAG flag = flag_;
             flag &= ~DP_FLAG_DONT_DELETE;
             flag &= ~DP_FLAG_LIFCYC_STACK;
             dup = new KM_Data_Packet(flag);
@@ -423,29 +423,29 @@ private:
         }
         else
         {
-            DP_FLAG flag = m_flag;
+            DP_FLAG flag = flag_;
             flag &= ~DP_FLAG_LIFCYC_STACK;
             dup = new KM_Data_Packet(flag);
-            dup->m_data_block = m_data_block;
-            if(dup->m_data_block)
-                dup->m_data_block->acquireReference();
-            dup->m_begin_ptr = m_begin_ptr;
-            dup->m_end_ptr = m_end_ptr;
-            dup->m_rd_ptr = m_rd_ptr;
-            dup->m_wr_ptr = m_wr_ptr;
+            dup->data_block_ = data_block_;
+            if(dup->data_block_)
+                dup->data_block_->acquireReference();
+            dup->begin_ptr_ = begin_ptr_;
+            dup->end_ptr_ = end_ptr_;
+            dup->rd_ptr_ = rd_ptr_;
+            dup->wr_ptr_ = wr_ptr_;
         }
         return dup;
     }
 
 private:
-    DP_FLAG	m_flag;
-    unsigned char* m_begin_ptr;
-    unsigned char* m_end_ptr;
-    unsigned char* m_rd_ptr;
-    unsigned char* m_wr_ptr;
-    KM_Data_Block* m_data_block;
+    DP_FLAG	flag_;
+    unsigned char* begin_ptr_;
+    unsigned char* end_ptr_;
+    unsigned char* rd_ptr_;
+    unsigned char* wr_ptr_;
+    Kdata_block_* data_block_;
 
-    KM_Data_Packet* m_next;
+    KM_Data_Packet* next_;
 };
 
 KUMA_NS_END

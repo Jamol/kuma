@@ -39,31 +39,31 @@ private:
     uint32_t get_kuma_events(uint32_t events);
     
 private:
-    int         m_epoll_fd;
-    Notifier    m_notifier;
+    int         epoll_fd_;
+    Notifier    notifier_;
 };
 
 EPoll::EPoll()
 {
-    m_epoll_fd = INVALID_FD;
+    epoll_fd_ = INVALID_FD;
 }
 
 EPoll::~EPoll()
 {
-    if(INVALID_FD != m_epoll_fd) {
-        close(m_epoll_fd);
-        m_epoll_fd = INVALID_FD;
+    if(INVALID_FD != epoll_fd_) {
+        close(epoll_fd_);
+        epoll_fd_ = INVALID_FD;
     }
 }
 
 bool EPoll::init()
 {
-    m_epoll_fd = epoll_create(MAX_EPOLL_FDS);
-    if(INVALID_FD == m_epoll_fd) {
+    epoll_fd_ = epoll_create(MAX_EPOLL_FDS);
+    if(INVALID_FD == epoll_fd_) {
         return false;
     }
-    m_notifier.init();
-    register_fd(m_notifier.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, &m_notifier);
+    notifier_.init();
+    register_fd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, &notifier_);
     return true;
 }
 
@@ -102,7 +102,7 @@ int EPoll::register_fd(int fd, uint32_t events, IOHandler* handler)
     struct epoll_event evt = {0};
     evt.data.ptr = handler;
     evt.events = get_events(events);//EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLET;
-    if(epoll_ctl(m_epoll_fd, EPOLL_CTL_ADD, fd, &evt) < 0) {
+    if(epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, fd, &evt) < 0) {
         KUMA_INFOTRACE("EPoll::register_fd error, fd="<<fd<<", errno="<<errno);
         return -1;
     }
@@ -114,7 +114,7 @@ int EPoll::register_fd(int fd, uint32_t events, IOHandler* handler)
 int EPoll::unregister_fd(int fd)
 {
     KUMA_INFOTRACE("EPoll::unregister_fd, fd="<<fd);
-    epoll_ctl(m_epoll_fd, EPOLL_CTL_DEL, fd, NULL);
+    epoll_ctl(epoll_fd_, EPOLL_CTL_DEL, fd, NULL);
     return KUMA_ERROR_NOERR;
 }
 
@@ -123,7 +123,7 @@ int EPoll::modify_events(int fd, uint32_t events, IOHandler* handler)
     struct epoll_event evt = {0};
     evt.data.ptr = handler;
     evt.events = get_events(events);
-    if(epoll_ctl(m_epoll_fd, EPOLL_CTL_MOD, fd, &evt) < 0) {
+    if(epoll_ctl(epoll_fd_, EPOLL_CTL_MOD, fd, &evt) < 0) {
         KUMA_INFOTRACE("EPoll::modify_events error, fd="<<fd<<", errno="<<errno);
         return -1;
     }
@@ -134,7 +134,7 @@ int EPoll::wait(uint32_t wait_time_ms)
 {
     struct epoll_event events[MAX_EVENT_NUM];
     IOHandler* handler = NULL;
-    int nfds = epoll_wait(m_epoll_fd, events, MAX_EVENT_NUM , wait_time_ms);
+    int nfds = epoll_wait(epoll_fd_, events, MAX_EVENT_NUM , wait_time_ms);
     if (nfds < 0) {
         if(errno != EINTR) {
             KUMA_ERRTRACE("EPoll::wait, errno="<<errno);
@@ -151,7 +151,7 @@ int EPoll::wait(uint32_t wait_time_ms)
 
 void EPoll::notify()
 {
-    m_notifier.notify();
+    notifier_.notify();
 }
 
 IOPoll* createEPoll() {

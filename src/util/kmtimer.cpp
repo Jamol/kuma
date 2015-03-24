@@ -26,9 +26,9 @@ TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_T
 
 KM_Timer::KM_Timer(KM_Timer_Manager* mgr, TimerHandler* hdr)
 {
-    m_timer_mgr = mgr;
-    m_handler = hdr;
-    m_timer_node.timer = this;
+    timer_mgr_ = mgr;
+    handler_ = hdr;
+    timer_node_.timer_ = this;
 }
 
 KM_Timer::~KM_Timer()
@@ -38,23 +38,23 @@ KM_Timer::~KM_Timer()
 
 bool KM_Timer::schedule(unsigned int time_elapse, bool repeat)
 {
-    if(m_timer_mgr) {
-        return m_timer_mgr->schedule(&m_timer_node, time_elapse, repeat);
+    if(timer_mgr_) {
+        return timer_mgr_->schedule(&timer_node_, time_elapse, repeat);
     }
     return false;
 }
 
 void KM_Timer::unschedule()
 {
-    if(m_timer_mgr) {
-        m_timer_mgr->unschedule(&m_timer_node);
+    if(timer_mgr_) {
+        timer_mgr_->unschedule(&timer_node_);
     }
 }
 
 void KM_Timer::on_timer()
 {
-    if(m_handler) {
-        m_handler->onTimer();
+    if(handler_) {
+        handler_->onTimer();
     }
 }
 
@@ -62,16 +62,16 @@ void KM_Timer::on_timer()
 // KM_Timer_Manager
 KM_Timer_Manager::KM_Timer_Manager()
 {
-    m_running_node = NULL;
-    m_reschedule_node = NULL;
-    m_timer_count = 0;
-    m_last_tick = 0;
-    memset(&m_tv0_bitmap, 0, sizeof(m_tv0_bitmap));
+    running_node_ = NULL;
+    reschedule_node_ = NULL;
+    timer_count_ = 0;
+    last_tick_ = 0;
+    memset(&tv0_bitmap_, 0, sizeof(tv0_bitmap_));
     for (int i=0; i<TV_COUNT; ++i)
     {
         for (int j=0; j<TIMER_VECTOR_SIZE; ++j)
         {
-            list_init_head(&m_tv[i][j]);
+            list_init_head(&tv_[i][j]);
         }
     }
 }
@@ -80,163 +80,163 @@ KM_Timer_Manager::~KM_Timer_Manager()
 {
     KM_Timer_Node* head = NULL;
     KM_Timer_Node* node = NULL;
-    m_mutex.lock();
+    mutex_.lock();
     for(int i=0; i<TV_COUNT; ++i)
     {
         for (int j=0; j<TIMER_VECTOR_SIZE; ++j)
         {
-            head = &m_tv[i][j];
-            node = head->next;
+            head = &tv_[i][j];
+            node = head->next_;
             while(node != head)
             {
-                if(node->timer) {
-                    node->timer->on_detach();
+                if(node->timer_) {
+                    node->timer_->on_detach();
                 }
-                node = node->next;
+                node = node->next_;
             }
         }
     }
-    m_mutex.unlock();
+    mutex_.unlock();
 }
 
 bool KM_Timer_Manager::schedule(KM_Timer_Node* timer_node, unsigned int time_elapse, bool repeat)
 {
-    if(timer_pending(timer_node) && time_elapse == timer_node->elapse) {
+    if(timer_pending(timer_node) && time_elapse == timer_node->elapse_) {
         return true;
     }
     TICK_COUNT_TYPE now_tick = get_tick_count_ms();
-    timer_node->unscheduled = false;
-    m_mutex.lock();
+    timer_node->unscheduled_ = false;
+    mutex_.lock();
     if(timer_pending(timer_node)) {
         remove_timer(timer_node);
     }
-    timer_node->start_tick = now_tick;
-    timer_node->elapse = time_elapse;
-    timer_node->repeat = repeat;
+    timer_node->start_tick_ = now_tick;
+    timer_node->elapse_ = time_elapse;
+    timer_node->repeat_ = repeat;
 
     bool ret = add_timer(timer_node, true);
-    if(m_reschedule_node == timer_node) {
-        m_reschedule_node = NULL;
+    if(reschedule_node_ == timer_node) {
+        reschedule_node_ = NULL;
     }
-    m_mutex.unlock();
+    mutex_.unlock();
     return ret;
 }
 
 void KM_Timer_Manager::unschedule(KM_Timer_Node* timer_node)
 {
-    if(NULL == timer_node || timer_node->unscheduled) {
+    if(NULL == timer_node || timer_node->unscheduled_) {
         return ;
     }
-    timer_node->unscheduled = true;
+    timer_node->unscheduled_ = true;
     bool cancelled = false;
-    if(m_reschedule_node == timer_node || timer_pending(timer_node)) {
-        m_mutex.lock();
+    if(reschedule_node_ == timer_node || timer_pending(timer_node)) {
+        mutex_.lock();
         if(timer_pending(timer_node)) {
             remove_timer(timer_node);
             cancelled = true;
         } else {
-            if(m_running_node != timer_node) {
+            if(running_node_ != timer_node) {
                 cancelled = true;
             }
-            if(m_reschedule_node == timer_node) {
-                m_reschedule_node = NULL;
+            if(reschedule_node_ == timer_node) {
+                reschedule_node_ = NULL;
             }
         }
-        m_mutex.unlock();
+        mutex_.unlock();
     }
     // check timer running
-    if(!cancelled && m_running_node == timer_node) { // may be running, wait it
-        m_running_mutex.lock();
-        if(m_running_node == timer_node) {
-            m_running_node = NULL;
+    if(!cancelled && running_node_ == timer_node) { // may be running, wait it
+        running_mutex_.lock();
+        if(running_node_ == timer_node) {
+            running_node_ = NULL;
             cancelled = true;
         }
-        m_running_mutex.unlock();
+        running_mutex_.unlock();
     }
     // check again for reschedule timer
-    if(!cancelled && (m_reschedule_node == timer_node || timer_pending(timer_node))) {
-        m_mutex.lock();
+    if(!cancelled && (reschedule_node_ == timer_node || timer_pending(timer_node))) {
+        mutex_.lock();
         if(timer_pending(timer_node)) {
             remove_timer(timer_node);
         }
-        if(m_reschedule_node == timer_node) {
-            m_reschedule_node = NULL;
+        if(reschedule_node_ == timer_node) {
+            reschedule_node_ = NULL;
         }
-        m_mutex.unlock();
+        mutex_.unlock();
     }
 }
 
 void KM_Timer_Manager::list_init_head(KM_Timer_Node* head)
 {
-    head->next = head;
-    head->prev = head;
+    head->next_ = head;
+    head->prev_ = head;
 }
 
 void KM_Timer_Manager::list_add_node(KM_Timer_Node* head, KM_Timer_Node* timer_node)
 {
-    head->prev->next = timer_node;
-    timer_node->prev = head->prev;
-    timer_node->next = head;
-    head->prev = timer_node;
+    head->prev_->next_ = timer_node;
+    timer_node->prev_ = head->prev_;
+    timer_node->next_ = head;
+    head->prev_ = timer_node;
 }
 
 void KM_Timer_Manager::list_remove_node(KM_Timer_Node* timer_node)
 {
-    timer_node->prev->next = timer_node->next;
-    timer_node->next->prev = timer_node->prev;
+    timer_node->prev_->next_ = timer_node->next_;
+    timer_node->next_->prev_ = timer_node->prev_;
     timer_node->reset();
 }
 
 void KM_Timer_Manager::list_replace(KM_Timer_Node* old_head, KM_Timer_Node* new_head)
 {
-    new_head->next = old_head->next;
-    new_head->next->prev = new_head;
-    new_head->prev = old_head->prev;
-    new_head->prev->next = new_head;
+    new_head->next_ = old_head->next_;
+    new_head->next_->prev_ = new_head;
+    new_head->prev_ = old_head->prev_;
+    new_head->prev_->next_ = new_head;
     list_init_head(old_head);
 }
 
 void KM_Timer_Manager::list_combine(KM_Timer_Node* from_head, KM_Timer_Node* to_head)
 {
-    if(from_head->next == from_head) {
+    if(from_head->next_ == from_head) {
         return ;
     }
-    to_head->prev->next = from_head->next;
-    from_head->next->prev = to_head->prev;
-    from_head->prev->next = to_head;
-    to_head->prev = from_head->prev;
+    to_head->prev_->next_ = from_head->next_;
+    from_head->next_->prev_ = to_head->prev_;
+    from_head->prev_->next_ = to_head;
+    to_head->prev_ = from_head->prev_;
     list_init_head(from_head);
 }
 
 bool KM_Timer_Manager::list_empty(KM_Timer_Node* head)
 {
-    return head->next == head;
+    return head->next_ == head;
 }
 
 void KM_Timer_Manager::set_tv0_bitmap(int idx)
 {
-    unsigned char a = idx/(sizeof(m_tv0_bitmap[0])*8);
-    unsigned char b = idx%(sizeof(m_tv0_bitmap[0])*8);
-    m_tv0_bitmap[a] |= 1 << b;
+    unsigned char a = idx/(sizeof(tv0_bitmap_[0])*8);
+    unsigned char b = idx%(sizeof(tv0_bitmap_[0])*8);
+    tv0_bitmap_[a] |= 1 << b;
 }
 
 void KM_Timer_Manager::clear_tv0_bitmap(int idx)
 {
-    unsigned char a = idx/(sizeof(m_tv0_bitmap[0])*8);
-    unsigned char b = idx%(sizeof(m_tv0_bitmap[0])*8);
-    m_tv0_bitmap[a] &= ~(1 << b);
+    unsigned char a = idx/(sizeof(tv0_bitmap_[0])*8);
+    unsigned char b = idx%(sizeof(tv0_bitmap_[0])*8);
+    tv0_bitmap_[a] &= ~(1 << b);
 }
 
 int KM_Timer_Manager::find_first_set_in_bitmap(int idx)
 {
-    unsigned char a = idx/(sizeof(m_tv0_bitmap[0])*8);
-    unsigned char b = idx%(sizeof(m_tv0_bitmap[0])*8);
+    unsigned char a = idx/(sizeof(tv0_bitmap_[0])*8);
+    unsigned char b = idx%(sizeof(tv0_bitmap_[0])*8);
     int pos = -1;
-    pos = find_first_set(m_tv0_bitmap[a] >> b);
+    pos = find_first_set(tv0_bitmap_[a] >> b);
     if(-1 == pos) {
         int i = a + 1;
         for (i &= 7; i != a; ++i, i &= 7) {
-            pos = find_first_set(m_tv0_bitmap[i]);
+            pos = find_first_set(tv0_bitmap_[i]);
             if(-1 == pos) {
                 continue;
             }
@@ -249,7 +249,7 @@ int KM_Timer_Manager::find_first_set_in_bitmap(int idx)
         }
     }
     if(-1 == pos && b > 0) {
-        unsigned int bits = (m_tv0_bitmap[a] << (32 - b)) >> (32 - b);
+        unsigned int bits = (tv0_bitmap_[a] << (32 - b)) >> (32 - b);
         pos = find_first_set(bits);
         if(pos >= 0) {
             pos += 256 - b;
@@ -260,80 +260,80 @@ int KM_Timer_Manager::find_first_set_in_bitmap(int idx)
 
 bool KM_Timer_Manager::add_timer(KM_Timer_Node* timer_node, bool from_schedule)
 {
-    if(0 == m_timer_count) {
-        m_last_tick = timer_node->start_tick;
+    if(0 == timer_count_) {
+        last_tick_ = timer_node->start_tick_;
     }
-    TICK_COUNT_TYPE fire_tick = timer_node->elapse + timer_node->start_tick;
-    if(fire_tick - m_last_tick > (((TICK_COUNT_TYPE)-1)>>1)) // time backward
+    TICK_COUNT_TYPE fire_tick = timer_node->elapse_ + timer_node->start_tick_;
+    if(fire_tick - last_tick_ > (((TICK_COUNT_TYPE)-1)>>1)) // time backward
     {// fire it right now
-        fire_tick = m_last_tick;
+        fire_tick = last_tick_;
     }
-    if(fire_tick == m_last_tick) {
+    if(fire_tick == last_tick_) {
         ++fire_tick; // = next_jiffies
     }
-    TICK_COUNT_TYPE elapse_jiffies = fire_tick - m_last_tick;
+    TICK_COUNT_TYPE elapse_jiffies = fire_tick - last_tick_;
     TICK_COUNT_TYPE fire_jiffies = fire_tick;
     KM_Timer_Node* head;
     if(elapse_jiffies < TIMER_VECTOR_SIZE) {
         int i = fire_jiffies & TIMER_VECTOR_MASK;
-        head = &m_tv[0][i];
+        head = &tv_[0][i];
         set_tv0_bitmap(i);
-        timer_node->tv_index = 0;
-        timer_node->tl_index = i;
+        timer_node->tv_index_ = 0;
+        timer_node->tl_index_ = i;
     }
     else if(elapse_jiffies < 1 << (2*TIMER_VECTOR_BITS)) {
         int i = (fire_jiffies>>TIMER_VECTOR_BITS) & TIMER_VECTOR_MASK;
-        head = &m_tv[1][i];
-        timer_node->tv_index = 1;
-        timer_node->tl_index = i;
+        head = &tv_[1][i];
+        timer_node->tv_index_ = 1;
+        timer_node->tl_index_ = i;
     }
     else if(elapse_jiffies < 1 << (3*TIMER_VECTOR_BITS)) {
         int i = (fire_jiffies>>(2*TIMER_VECTOR_BITS)) & TIMER_VECTOR_MASK;
-        head = &m_tv[2][i];
-        timer_node->tv_index = 2;
-        timer_node->tl_index = i;
+        head = &tv_[2][i];
+        timer_node->tv_index_ = 2;
+        timer_node->tl_index_ = i;
     }
     else if(elapse_jiffies <= 0xFFFFFFFF) {
         int i = (fire_jiffies>>(3*TIMER_VECTOR_BITS)) & TIMER_VECTOR_MASK;
-        head = &m_tv[3][i];
-        timer_node->tv_index = 3;
-        timer_node->tl_index = i;
+        head = &tv_[3][i];
+        timer_node->tv_index_ = 3;
+        timer_node->tl_index_ = i;
     }
     else
     {// don't support elapse larger than 0xffffffff
-        //printf("add_timer, failed, elapse=%lu, start_tick=%lu, last_tick=%lu\n", timer_node->elapse, timer_node->start_tick, m_last_tick);
+        //printf("add_timer, failed, elapse=%lu, start_tick=%lu, last_tick=%lu\n", timer_node->elapse, timer_node->start_tick, last_tick_);
         return false;
     }
     list_add_node(head, timer_node);
     if(from_schedule) {
-        ++m_timer_count;
+        ++timer_count_;
     }
     return true;
 }
 
 void KM_Timer_Manager::remove_timer(KM_Timer_Node* timer_node)
 {
-    if(0 == timer_node->tv_index
-       && timer_node->next != timer_node
-       && timer_node->next == timer_node->prev
-       && timer_node->next == &m_tv[0][timer_node->tl_index]) {
-        clear_tv0_bitmap(timer_node->tl_index);
+    if(0 == timer_node->tv_index_
+       && timer_node->next_ != timer_node
+       && timer_node->next_ == timer_node->prev_
+       && timer_node->next_ == &tv_[0][timer_node->tl_index_]) {
+        clear_tv0_bitmap(timer_node->tl_index_);
     }
     list_remove_node(timer_node);
-    --m_timer_count;
+    --timer_count_;
 }
 
 int KM_Timer_Manager::cascade_timer(int tv_idx, int tl_idx)
 {
     KM_Timer_Node tmp_head;
     list_init_head(&tmp_head);
-    list_replace(&m_tv[tv_idx][tl_idx], &tmp_head);
-    KM_Timer_Node* next_node = tmp_head.next;
+    list_replace(&tv_[tv_idx][tl_idx], &tmp_head);
+    KM_Timer_Node* next_node = tmp_head.next_;
     KM_Timer_Node* tmp_node = NULL;
     while(next_node != &tmp_head)
     {
         tmp_node = next_node;
-        next_node = next_node->next;
+        next_node = next_node->next_;
         add_timer(tmp_node);
     }
 
@@ -343,21 +343,21 @@ int KM_Timer_Manager::cascade_timer(int tv_idx, int tl_idx)
 #define INDEX(N) ((next_jiffies >> ((N+1) * TIMER_VECTOR_BITS)) & TIMER_VECTOR_MASK)
 int KM_Timer_Manager::check_expire(unsigned long* remain_time_ms)
 {
-    if(0 == m_timer_count) {
+    if(0 == timer_count_) {
         return 0;
     }
     TICK_COUNT_TYPE now_tick = get_tick_count_ms();
-    TICK_COUNT_TYPE delta_tick = calc_time_elapse_delta_ms(now_tick, m_last_tick);
+    TICK_COUNT_TYPE delta_tick = calc_time_elapse_delta_ms(now_tick, last_tick_);
     if(0 == delta_tick) {
         return 0;
     }
     TICK_COUNT_TYPE cur_jiffies = now_tick;
-    TICK_COUNT_TYPE next_jiffies = m_last_tick+1;
-    m_last_tick = now_tick;
+    TICK_COUNT_TYPE next_jiffies = last_tick_+1;
+    last_tick_ = now_tick;
     KM_Timer_Node tmp_head;
     list_init_head(&tmp_head);
     
-    m_mutex.lock();
+    mutex_.lock();
     while(cur_jiffies >= next_jiffies)
     {
         int idx = next_jiffies & TIMER_VECTOR_MASK;
@@ -381,37 +381,37 @@ int KM_Timer_Manager::check_expire(unsigned long* remain_time_ms)
             (!cascade_timer(2, INDEX(1)))) {
             cascade_timer(3, INDEX(2));
         }
-        list_combine(&m_tv[0][idx], &tmp_head);
+        list_combine(&tv_[0][idx], &tmp_head);
         clear_tv0_bitmap(idx);
     }
     int count = 0;
     while(!list_empty(&tmp_head))
     {
-        m_running_node = tmp_head.next;
-        if(!m_running_node->unscheduled && m_running_node->repeat) {
-            m_reschedule_node = m_running_node;
+        running_node_ = tmp_head.next_;
+        if(!running_node_->unscheduled_ && running_node_->repeat_) {
+            reschedule_node_ = running_node_;
         }
-        list_remove_node(m_running_node);
-        --m_timer_count;
-        m_mutex.unlock(); // sync nodes in tmp_list with unschedule.
+        list_remove_node(running_node_);
+        --timer_count_;
+        mutex_.unlock(); // sync nodes in tmp_list with unschedule.
         
-        m_running_mutex.lock();
-        if(m_running_node) {
-            if(m_running_node->timer) {
-                m_running_node->timer->on_timer();
+        running_mutex_.lock();
+        if(running_node_) {
+            if(running_node_->timer_) {
+                running_node_->timer_->on_timer();
                 ++count;
             }
         } else { // this timer is unscheduled
-            m_reschedule_node = NULL;
+            reschedule_node_ = NULL;
         }
-        m_running_node = NULL;
-        m_running_mutex.unlock();
+        running_node_ = NULL;
+        running_mutex_.unlock();
         
-        m_mutex.lock();
-        if(m_reschedule_node && !m_reschedule_node->unscheduled && !timer_pending(m_reschedule_node)) {
-            m_reschedule_node->start_tick = get_tick_count_ms();
-            add_timer(m_reschedule_node, true);
-            m_reschedule_node = NULL;
+        mutex_.lock();
+        if(reschedule_node_ && !reschedule_node_->unscheduled_ && !timer_pending(reschedule_node_)) {
+            reschedule_node_->start_tick_ = get_tick_count_ms();
+            add_timer(reschedule_node_, true);
+            reschedule_node_ = NULL;
         }
     }
 
@@ -421,7 +421,7 @@ int KM_Timer_Manager::check_expire(unsigned long* remain_time_ms)
         *remain_time_ms = -1==pos?256:pos;
         
         now_tick = get_tick_count_ms();
-        delta_tick = calc_time_elapse_delta_ms(now_tick, m_last_tick);
+        delta_tick = calc_time_elapse_delta_ms(now_tick, last_tick_);
         if(*remain_time_ms <= delta_tick) {
             *remain_time_ms = 0;
         } else {
@@ -429,7 +429,7 @@ int KM_Timer_Manager::check_expire(unsigned long* remain_time_ms)
         }
     }
 
-    m_mutex.unlock();
+    mutex_.unlock();
 
     return count;
 }

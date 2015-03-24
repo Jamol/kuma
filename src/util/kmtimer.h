@@ -46,33 +46,33 @@ class KM_Timer_Node
 public:
     KM_Timer_Node()
     {
-        unscheduled = false;
-        repeat = false;
-        elapse = 0;
-        start_tick = 0;
-        timer = NULL;
+        unscheduled_ = false;
+        repeat_ = false;
+        elapse_ = 0;
+        start_tick_ = 0;
+        timer_ = NULL;
         reset();
     }
     void reset()
     {
-        prev = NULL;
-        next = NULL;
-        tv_index = -1;
-        tl_index = -1;
+        prev_ = NULL;
+        next_ = NULL;
+        tv_index_ = -1;
+        tl_index_ = -1;
     }
 
-    bool            unscheduled;
-    bool            repeat;
-    unsigned int	elapse;
-    TICK_COUNT_TYPE start_tick;
-    KM_Timer*	    timer;
+    bool            unscheduled_;
+    bool            repeat_;
+    unsigned int	elapse_;
+    TICK_COUNT_TYPE start_tick_;
+    KM_Timer*	    timer_;
 
 protected:
     friend class KM_Timer_Manager;
-    KM_Timer_Node* prev;
-    KM_Timer_Node* next;
-    int tv_index;
-    int tl_index;
+    KM_Timer_Node* prev_;
+    KM_Timer_Node* next_;
+    int tv_index_;
+    int tl_index_;
 };
 
 class KM_Timer
@@ -87,13 +87,13 @@ public:
 
     void on_detach()
     {
-        m_timer_mgr = NULL; // may thread conflict
+        timer_mgr_ = NULL; // may thread conflict
     }
 
 private:
-    KM_Timer_Manager*	m_timer_mgr;
-    KM_Timer_Node       m_timer_node;
-    TimerHandler*       m_handler;
+    KM_Timer_Manager*	timer_mgr_;
+    KM_Timer_Node       timer_node_;
+    TimerHandler*       handler_;
 };
 
 class KM_Timer_Manager
@@ -113,7 +113,7 @@ private:
     int cascade_timer(int tv_idx, int tl_idx);
     bool timer_pending(KM_Timer_Node* timer_node)
     {
-        return timer_node->next != NULL;
+        return timer_node->next_ != NULL;
     }
 
     void list_init_head(KM_Timer_Node* head);
@@ -128,14 +128,14 @@ private:
     int find_first_set_in_bitmap(int idx);
 
 private:
-    KM_Mutex m_mutex;
-    KM_Mutex m_running_mutex;
-    KM_Timer_Node*  m_running_node;
-    KM_Timer_Node*  m_reschedule_node;
-    TICK_COUNT_TYPE m_last_tick;
-    unsigned int m_timer_count;
-    unsigned int m_tv0_bitmap[8]; // 1 -- have timer in this slot
-    KM_Timer_Node m_tv[TV_COUNT][TIMER_VECTOR_SIZE]; // timer vectors
+    KM_Mutex mutex_;
+    KM_Mutex running_mutex_;
+    KM_Timer_Node*  running_node_;
+    KM_Timer_Node*  reschedule_node_;
+    TICK_COUNT_TYPE last_tick_;
+    unsigned int timer_count_;
+    unsigned int tv0_bitmap_[8]; // 1 -- have timer in this slot
+    KM_Timer_Node tv_[TV_COUNT][TIMER_VECTOR_SIZE]; // timer vectors
 };
 
 KUMA_NS_END

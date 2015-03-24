@@ -26,17 +26,16 @@ class KM_Queue
 public:
     KM_Queue()
     {
-        head = new TLNode(E());
-        tail = head;
-        en_count = 0;
-        de_count = 0;
+        head_ = new TLNode(E());
+        tail_ = head_;
+        count_ = 0;
     }
     ~KM_Queue()
     {
         TLNode* node = NULL;
-        while(head) {
-            node = head;
-            head = head->next;
+        while(head_) {
+            node = head_;
+            head_ = head_->next_;
             delete node;
         }
     }
@@ -44,9 +43,9 @@ public:
     void enqueue(const E &element)
     {
         TLNode* node = new TLNode(element);
-        tail->next = node;
-        tail = node;
-        ++en_count;
+        tail_->next_ = node;
+        tail_ = node;
+        ++count_;
     }
 
     bool dequeue(E &element)
@@ -54,41 +53,40 @@ public:
         if(empty()) {
             return false;
         }
-        TLNode* node_to_delete = head;
-        element = head->next->element;
-        head = head->next;
-        ++de_count;
+        TLNode* node_to_delete = head_;
+        element = head_->next_->element_;
+        head_ = head_->next_;
+        --count_;
         delete node_to_delete;
         return true;
     }
     
     bool empty()
     {
-        return NULL == head->next;
+        return NULL == head_->next_;
     }
     
     unsigned int size()
     {
-        return en_count - de_count;
+        return count_;
     }
 
 private:
     class TLNode
     {
     public:
-        TLNode(const E &e) : element(e)
+        TLNode(const E &e) : element_(e)
         {
-            next = NULL;
+            next_ = NULL;
         }
 
-        E element;
-        TLNode* next;
+        E element_;
+        TLNode* next_;
     };
 
-    TLNode* head;
-    TLNode* tail;
-    unsigned int en_count;
-    unsigned int de_count;
+    TLNode* head_;
+    TLNode* tail_;
+    unsigned int count_;
 };
 
 template <class E, class LockType>
@@ -97,18 +95,18 @@ class KM_QueueT
 public:
     KM_QueueT()
     {
-        head = new TLNode(E());
-        tail = head;
-        en_count = 0;
-        de_count = 0;
+        head_ = new TLNode(E());
+        tail_ = head_;
+        en_count_ = 0;
+        de_count_ = 0;
     }
     ~KM_QueueT()
     {
         TLNode* node = NULL;
-        while(head)
+        while(head_)
         {
-            node = head;
-            head = head->next;
+            node = head_;
+            head_ = head_->next_;
             delete node;
         }
     }
@@ -116,11 +114,11 @@ public:
     void enqueue(const E &element)
     {
         TLNode* node = new TLNode(element);
-        lockerT.lock();
-        tail->next = node;
-        tail = node;
-        ++en_count;
-        lockerT.unlock();
+        lockerT_.lock();
+        tail_->next_ = node;
+        tail_ = node;
+        ++en_count_;
+        lockerT_.unlock();
     }
 
     bool dequeue(E &element)
@@ -129,49 +127,49 @@ public:
             return false;
         }
         TLNode* node_to_delete = NULL;
-        lockerH.lock();
+        lockerH_.lock();
         if(empty()) {
-            lockerH.unlock();
+            lockerH_.unlock();
             return false;
         }
-        node_to_delete = head;
-        element = head->next->element;
-        head = head->next;
-        ++de_count;
-        lockerH.unlock();
+        node_to_delete = head_;
+        element = head_->next_->element_;
+        head_ = head_->next_;
+        ++de_count_;
+        lockerH_.unlock();
         delete node_to_delete;
         return true;
     }
     
     bool empty()
     {
-        return NULL == head->next;
+        return NULL == head_->next_;
     }
     
     unsigned int size()
     {
-        return en_count - de_count;
+        return en_count_ - de_count_;
     }
 
 private:
     class TLNode
     {
     public:
-        TLNode(const E &e) : element(e)
+        TLNode(const E &e) : element_(e)
         {
-            next = NULL;
+            next_ = NULL;
         }
 
-        E element;
-        TLNode* next;
+        E element_;
+        TLNode* next_;
     };
 
-    TLNode* head;
-    TLNode* tail;
-    LockType lockerH;
-    LockType lockerT;
-    unsigned int en_count;
-    unsigned int de_count;
+    TLNode* head_;
+    TLNode* tail_;
+    LockType lockerH_;
+    LockType lockerT_;
+    unsigned int en_count_;
+    unsigned int de_count_;
 };
     
 KUMA_NS_END

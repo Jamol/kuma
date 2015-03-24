@@ -32,6 +32,11 @@
 # include <sys/time.h>
 #endif
 
+#ifdef KUMA_HAS_CXX0X
+#include <chrono>
+#include <random>
+#endif
+
 KUMA_NS_BEGIN
 
 #ifdef KUMA_OS_WIN
@@ -469,6 +474,11 @@ int find_first_set(unsigned int b)
 
 TICK_COUNT_TYPE get_tick_count_ms()
 {
+#ifdef KUMA_HAS_CXX0X
+    std::chrono::high_resolution_clock::time_point _now = std::chrono::high_resolution_clock::now();
+    std::chrono::milliseconds _now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(_now.time_since_epoch());
+    return _now_ms.count();
+#else
 #if defined(KUMA_OS_WIN)
     return GetTickCount();
 #else
@@ -478,6 +488,7 @@ TICK_COUNT_TYPE get_tick_count_ms()
     gettimeofday(&time_val, NULL);
     ret = time_val.tv_sec * 1000 + time_val.tv_usec / 1000;
     return ret;
+#endif
 #endif
 }
 

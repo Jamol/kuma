@@ -55,15 +55,15 @@ protected:
     int unregisterHandler_i(int fd, bool close_fd);
     
 private:
-    IOPoll*         m_poll;
-    IOHandlerMap    m_handlerMap;
-    bool            m_stopLoop;
+    IOPoll*         poll_;
+    IOHandlerMap    handlerMap_;
+    bool            stopLoop_;
     
-    KM_Mutex        m_mutex;
-    EventQueue      m_eventQueue;
+    KM_Mutex        mutex_;
+    EventQueue      eventQueue_;
     
-    uint32_t        m_max_wait_time_ms;
-    KM_Timer_Manager* m_timer_mgr;
+    uint32_t        max_wait_time_ms_;
+    KM_Timer_Manager* timer_mgr_;
 };
 
 KUMA_NS_END

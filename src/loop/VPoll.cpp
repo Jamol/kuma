@@ -52,36 +52,36 @@ private:
     };
     
 private:
-    Notifier        m_notifier;
-    PollItem*       m_poll_items;
-    struct pollfd*  m_poll_fds;
-    int             m_fds_alloc;
-    int             m_fds_used;
+    Notifier        notifier_;
+    PollItem*       poll_items_;
+    struct pollfd*  poll_fds_;
+    int             fds_alloc_;
+    int             fds_used_;
 };
 
 VPoll::VPoll()
 {
-    m_poll_fds = NULL;
-    m_fds_alloc = 0;
-    m_fds_used = 0;
+    poll_fds_ = NULL;
+    fds_alloc_ = 0;
+    fds_used_ = 0;
 }
 
 VPoll::~VPoll()
 {
-    if(m_poll_items) {
-        delete[] m_poll_items;
-        m_poll_items = NULL;
+    if(poll_items_) {
+        delete[] poll_items_;
+        poll_items_ = NULL;
     }
-    if(m_poll_fds) {
-        delete[] m_poll_fds;
-        m_poll_fds = NULL;
+    if(poll_fds_) {
+        delete[] poll_fds_;
+        poll_fds_ = NULL;
     }
 }
 
 bool VPoll::init()
 {
-    m_notifier.init();
-    register_fd(m_notifier.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, &m_notifier);
+    notifier_.init();
+    register_fd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, &notifier_);
     return true;
 }
 
@@ -117,37 +117,37 @@ uint32_t VPoll::get_kuma_events(uint32_t events)
 
 int VPoll::register_fd(int fd, uint32_t events, IOHandler* handler)
 {
-    if (fd >= m_fds_alloc) {
-        int tmp_num = m_fds_alloc + 1024;
+    if (fd >= fds_alloc_) {
+        int tmp_num = fds_alloc_ + 1024;
         if (tmp_num < fd + 1)
             tmp_num = fd + 1;
         
         PollItem *newItems = new PollItem[tmp_num];
-        if(m_fds_alloc) {
-            memcpy(newItems, m_poll_items, m_fds_alloc*sizeof(PollItem));
+        if(fds_alloc_) {
+            memcpy(newItems, poll_items_, fds_alloc_*sizeof(PollItem));
         }
         
-        delete[] m_poll_items;
-        m_poll_items = newItems;
+        delete[] poll_items_;
+        poll_items_ = newItems;
         
         pollfd *newpfds = new pollfd[tmp_num];
         memset((uint8_t*)newpfds, 0, tmp_num*sizeof(pollfd));
-        if(m_fds_alloc) {
-            memcpy(newpfds, m_poll_fds, m_fds_alloc*sizeof(pollfd));
+        if(fds_alloc_) {
+            memcpy(newpfds, poll_fds_, fds_alloc_*sizeof(pollfd));
         }
         
-        delete[] m_poll_fds;
-        m_poll_fds = newpfds;
-        m_fds_alloc = tmp_num;
+        delete[] poll_fds_;
+        poll_fds_ = newpfds;
+        fds_alloc_ = tmp_num;
     }
     
-    m_poll_items[fd].fd = fd;
-    m_poll_items[fd].handler = handler;
-    m_poll_items[fd].index = m_fds_used;
-    m_poll_fds[m_fds_used].fd = fd;
-    m_poll_fds[m_fds_used].events = get_events(events);
-    KUMA_INFOTRACE("VPoll::register_fd, fd="<<fd<<", index="<<m_fds_used);
-    ++m_fds_used;
+    poll_items_[fd].fd = fd;
+    poll_items_[fd].handler = handler;
+    poll_items_[fd].index = fds_used_;
+    poll_fds_[fds_used_].fd = fd;
+    poll_fds_[fds_used_].events = get_events(events);
+    KUMA_INFOTRACE("VPoll::register_fd, fd="<<fd<<", index="<<fds_used_);
+    ++fds_used_;
     
     return KUMA_ERROR_NOERR;
 }
@@ -155,52 +155,52 @@ int VPoll::register_fd(int fd, uint32_t events, IOHandler* handler)
 int VPoll::unregister_fd(int fd)
 {
     KUMA_INFOTRACE("VPoll::unregister_fd, fd="<<fd);
-    if ((fd < 0) || (fd >= m_fds_alloc) || 0 == m_fds_used) {
-        KUMA_WARNTRACE("VPoll::unregister_fd, failed, alloced="<<m_fds_alloc<<", used="<<m_fds_used);
+    if ((fd < 0) || (fd >= fds_alloc_) || 0 == fds_used_) {
+        KUMA_WARNTRACE("VPoll::unregister_fd, failed, alloced="<<fds_alloc_<<", used="<<fds_used_);
         return KUMA_ERROR_INVALID_PARAM;
     }
-    int pfds_index = m_poll_items[fd].index;
+    int pfds_index = poll_items_[fd].index;
     
-    m_poll_items[fd].handler = NULL;
-    m_poll_items[fd].fd = INVALID_FD;
-    m_poll_items[fd].index = -1;
+    poll_items_[fd].handler = NULL;
+    poll_items_[fd].fd = INVALID_FD;
+    poll_items_[fd].index = -1;
     
-    if (pfds_index != m_fds_used - 1) {
-        m_poll_fds[pfds_index] = m_poll_fds[m_fds_used - 1];
-        m_poll_items[m_poll_fds[pfds_index].fd].index = pfds_index;
+    if (pfds_index != fds_used_ - 1) {
+        poll_fds_[pfds_index] = poll_fds_[fds_used_ - 1];
+        poll_items_[poll_fds_[pfds_index].fd].index = pfds_index;
     }
-    m_poll_fds[m_fds_used - 1].fd = -1;
-    m_poll_fds[m_fds_used - 1].events = 0;
-    --m_fds_used;
+    poll_fds_[fds_used_ - 1].fd = -1;
+    poll_fds_[fds_used_ - 1].events = 0;
+    --fds_used_;
     return KUMA_ERROR_NOERR;
 }
 
 int VPoll::modify_events(int fd, uint32_t events, IOHandler* handler)
 {
-    if ((fd < 0) || (fd >= m_fds_alloc) || 0 == m_fds_used) {
-        KUMA_WARNTRACE("modify_events, failed, alloced: "<<m_fds_alloc<<", used: "<<m_fds_used);
+    if ((fd < 0) || (fd >= fds_alloc_) || 0 == fds_used_) {
+        KUMA_WARNTRACE("modify_events, failed, alloced: "<<fds_alloc_<<", used: "<<fds_used_);
         return KUMA_ERROR_INVALID_PARAM;
     }
-    if(m_poll_items[fd].fd != fd) {
-        KUMA_WARNTRACE("modify_events, failed, fd: "<<fd<<", m_fd: "<<m_poll_items[fd].fd);
+    if(poll_items_[fd].fd != fd) {
+        KUMA_WARNTRACE("modify_events, failed, fd: "<<fd<<", m_fd: "<<poll_items_[fd].fd);
         return KUMA_ERROR_INVALID_PARAM;
     }
-    int pfds_index = m_poll_items[fd].index;
-    if(pfds_index < 0 || pfds_index >= m_fds_used) {
+    int pfds_index = poll_items_[fd].index;
+    if(pfds_index < 0 || pfds_index >= fds_used_) {
         KUMA_WARNTRACE("modify_events, failed, pfd_index: "<<pfds_index);
         return KUMA_ERROR_INVALID_STATE;
     }
-    if(m_poll_fds[pfds_index].fd != fd) {
-        KUMA_WARNTRACE("modify_events, failed, fd: "<<fd<<", pfds_fd: "<<m_poll_fds[pfds_index].fd);
+    if(poll_fds_[pfds_index].fd != fd) {
+        KUMA_WARNTRACE("modify_events, failed, fd: "<<fd<<", pfds_fd: "<<poll_fds_[pfds_index].fd);
         return KUMA_ERROR_INVALID_PARAM;
     }
-    m_poll_fds[pfds_index].events = get_events(events);
+    poll_fds_[pfds_index].events = get_events(events);
     return KUMA_ERROR_NOERR;
 }
 
 int VPoll::wait(uint32_t wait_time_ms)
 {
-    int num_revts = poll(m_poll_fds, m_fds_used, wait_time_ms);
+    int num_revts = poll(poll_fds_, fds_used_, wait_time_ms);
     if (-1 == num_revts) {
         if(EINTR == errno) {
             errno = 0;
@@ -212,11 +212,11 @@ int VPoll::wait(uint32_t wait_time_ms)
 
     int cur_pfds_index = 0;
     IOHandler* handler = NULL;
-    while(num_revts > 0 && cur_pfds_index < m_fds_used) {
-        if(m_poll_fds[cur_pfds_index].revents) {
+    while(num_revts > 0 && cur_pfds_index < fds_used_) {
+        if(poll_fds_[cur_pfds_index].revents) {
             --num_revts;
-            handler = m_poll_items[m_poll_fds[cur_pfds_index].fd].handler;
-            if(handler) handler->onEvent(get_kuma_events(m_poll_fds[cur_pfds_index].revents));
+            handler = poll_items_[poll_fds_[cur_pfds_index].fd].handler;
+            if(handler) handler->onEvent(get_kuma_events(poll_fds_[cur_pfds_index].revents));
         }
         ++cur_pfds_index;
     }
@@ -225,7 +225,7 @@ int VPoll::wait(uint32_t wait_time_ms)
 
 void VPoll::notify()
 {
-    m_notifier.notify();
+    notifier_.notify();
 }
 
 IOPoll* createVPoll() {
