@@ -27,7 +27,7 @@ KUMA_NS_BEGIN
 
 #ifdef KUMA_HAS_CXX0X
 typedef std::recursive_mutex KM_Mutex;
-typedef std::lock_guard<KM_Mutex> KM_Mutex_Guard;
+typedef std::lock_guard<KM_Mutex> KM_Lock_Guard;
 #else
 
 class KM_Mutex

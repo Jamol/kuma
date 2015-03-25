@@ -121,17 +121,6 @@ int EventLoop::unregisterHandler(int fd, bool close_fd)
     return KUMA_ERROR_NOERR;
 }
 
-KM_Timer* EventLoop::createTimer(TimerHandler* handler)
-{
-    KM_Timer* timer = new KM_Timer(timer_mgr_, handler);
-    return timer;
-}
-
-void EventLoop::deleteTimer(KM_Timer* timer)
-{
-    delete timer;
-}
-
 void EventLoop::loop()
 {
     while (!stopLoop_) {

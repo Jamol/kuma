@@ -42,8 +42,7 @@ public:
     bool init();
     int registerHandler(int fd, uint32_t events, IOHandler* handler);
     int unregisterHandler(int fd, bool close_fd);
-    KM_Timer* createTimer(TimerHandler* handler);
-    void deleteTimer(KM_Timer* timer);
+    KM_Timer_Manager* getTimerMgr() { return timer_mgr_; }
     
 public:
     int postEvent(IEvent* ev);

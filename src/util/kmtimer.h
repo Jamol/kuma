@@ -31,70 +31,7 @@ KUMA_NS_BEGIN
 #define TIMER_VECTOR_MASK   (TIMER_VECTOR_SIZE - 1)
 #define TV_COUNT            4
 
-class TimerHandler
-{
-public:
-    virtual ~TimerHandler() {}
-    virtual int onTimer() = 0;
-};
-
 class KM_Timer;
-class KM_Timer_Manager;
-
-class KM_Timer_Node
-{
-public:
-    KM_Timer_Node()
-    {
-        unscheduled_ = false;
-        repeat_ = false;
-        elapse_ = 0;
-        start_tick_ = 0;
-        timer_ = NULL;
-        reset();
-    }
-    void reset()
-    {
-        prev_ = NULL;
-        next_ = NULL;
-        tv_index_ = -1;
-        tl_index_ = -1;
-    }
-
-    bool            unscheduled_;
-    bool            repeat_;
-    unsigned int	elapse_;
-    TICK_COUNT_TYPE start_tick_;
-    KM_Timer*	    timer_;
-
-protected:
-    friend class KM_Timer_Manager;
-    KM_Timer_Node* prev_;
-    KM_Timer_Node* next_;
-    int tv_index_;
-    int tl_index_;
-};
-
-class KM_Timer
-{
-public:
-    KM_Timer(KM_Timer_Manager* mgr, TimerHandler* hdr);
-    ~KM_Timer();
-
-    void on_timer();
-    bool schedule(unsigned int time_elapse, bool repeat = false);
-    void unschedule();
-
-    void on_detach()
-    {
-        timer_mgr_ = NULL; // may thread conflict
-    }
-
-private:
-    KM_Timer_Manager*	timer_mgr_;
-    KM_Timer_Node       timer_node_;
-    TimerHandler*       handler_;
-};
 
 class KM_Timer_Manager
 {
@@ -102,11 +39,46 @@ public:
     KM_Timer_Manager();
     ~KM_Timer_Manager();
 
-    bool schedule(KM_Timer_Node* timer_node, unsigned int time_elapse, bool repeat);
-    void unschedule(KM_Timer_Node* timer_node);
+    bool schedule_timer(KM_Timer* timer, unsigned int time_elapse, bool repeat);
+    void cancel_timer(KM_Timer* timer);
 
     int check_expire(unsigned long* remain_time_ms = NULL);
 
+public:
+    class KM_Timer_Node
+    {
+    public:
+        KM_Timer_Node()
+        : cancelled_(true)
+        , repeat_(false)
+        , elapse_(0)
+        , start_tick_(0)
+        , timer_(NULL)
+        , tv_index_(-1)
+        , tl_index_(-1)
+        { }
+        void reset()
+        {
+            tv_index_ = -1;
+            tl_index_ = -1;
+            prev_ = NULL;
+            next_ = NULL;
+        }
+        
+        bool            cancelled_;
+        bool            repeat_;
+        unsigned int	elapse_;
+        TICK_COUNT_TYPE start_tick_;
+        KM_Timer*	    timer_;
+        
+    protected:
+        friend class KM_Timer_Manager;
+        int tv_index_;
+        int tl_index_;
+        KM_Timer_Node* prev_;
+        KM_Timer_Node* next_;
+    };
+    
 private:
     bool add_timer(KM_Timer_Node* timer_node, bool from_schedule=false);
     void remove_timer(KM_Timer_Node* timer_node);
@@ -136,6 +108,24 @@ private:
     unsigned int timer_count_;
     unsigned int tv0_bitmap_[8]; // 1 -- have timer in this slot
     KM_Timer_Node tv_[TV_COUNT][TIMER_VECTOR_SIZE]; // timer vectors
+};
+
+class KM_Timer
+{
+public:
+    KM_Timer(KM_Timer_Manager* mgr);
+    virtual ~KM_Timer();
+    
+    bool schedule(unsigned int time_elapse, bool repeat = false);
+    void cancel();
+    
+    virtual void on_timer() = 0;
+    void on_detach();
+    
+private:
+    friend class KM_Timer_Manager;
+    KM_Timer_Manager* timer_mgr_;
+    KM_Timer_Manager::KM_Timer_Node timer_node_; // intrusive list node
 };
 
 KUMA_NS_END
