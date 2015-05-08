@@ -24,8 +24,16 @@ TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_T
 //////////////////////////////////////////////////////////////////////////
 // KM_Timer
 
-KM_Timer::KM_Timer(KM_Timer_Manager* mgr)
-: timer_mgr_(mgr)
+KM_Timer::KM_Timer(KM_Timer_Manager* mgr, TimerCallback& cb)
+: cb_(cb)
+, timer_mgr_(mgr)
+{
+    timer_node_.timer_ = this;
+}
+
+KM_Timer::KM_Timer(KM_Timer_Manager* mgr, TimerCallback&& cb)
+: cb_(std::move(cb))
+, timer_mgr_(mgr)
 {
     timer_node_.timer_ = this;
 }
@@ -395,7 +403,7 @@ int KM_Timer_Manager::check_expire(unsigned long* remain_time_ms)
         running_mutex_.lock();
         if(running_node_) {
             if(running_node_->timer_) {
-                running_node_->timer_->on_timer();
+                running_node_->timer_->cb_();
                 ++count;
             }
         } else { // this timer is cancelled

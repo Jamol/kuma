@@ -7,16 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6F29634C1A18AB0D00C3C79B /* kmatomic.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963401A18AB0D00C3C79B /* kmatomic.h */; };
 		6F29634D1A18AB0D00C3C79B /* kmdp.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963411A18AB0D00C3C79B /* kmdp.h */; };
-		6F29634E1A18AB0D00C3C79B /* kmmutex.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963421A18AB0D00C3C79B /* kmmutex.h */; };
 		6F29634F1A18AB0D00C3C79B /* kmqueue.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963431A18AB0D00C3C79B /* kmqueue.h */; };
-		6F2963501A18AB0D00C3C79B /* kmthread.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963441A18AB0D00C3C79B /* kmthread.h */; };
 		6F2963511A18AB0D00C3C79B /* kmtimer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963451A18AB0D00C3C79B /* kmtimer.cpp */; };
 		6F2963521A18AB0D00C3C79B /* kmtimer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963461A18AB0D00C3C79B /* kmtimer.h */; };
 		6F2963531A18AB0D00C3C79B /* kmtrace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963471A18AB0D00C3C79B /* kmtrace.cpp */; };
 		6F2963541A18AB0D00C3C79B /* kmtrace.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963481A18AB0D00C3C79B /* kmtrace.h */; };
-		6F2963551A18AB0D00C3C79B /* refcount.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963491A18AB0D00C3C79B /* refcount.h */; };
 		6F2963561A18AB0D00C3C79B /* util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F29634A1A18AB0D00C3C79B /* util.cpp */; };
 		6F2963571A18AB0D00C3C79B /* util.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F29634B1A18AB0D00C3C79B /* util.h */; };
 		6F29636A1A18AC6E00C3C79B /* EventLoop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963641A18AC6E00C3C79B /* EventLoop.cpp */; };
@@ -24,23 +20,21 @@
 		6F29636C1A18AC6E00C3C79B /* internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963661A18AC6E00C3C79B /* internal.h */; };
 		6F29636D1A18AC6E00C3C79B /* Notifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963671A18AC6E00C3C79B /* Notifier.h */; };
 		6F29636E1A18AC6E00C3C79B /* VPoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963681A18AC6E00C3C79B /* VPoll.cpp */; };
+		6F3D26CF1AFB0C20004C9683 /* delegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F3D26CE1AFB0C20004C9683 /* delegate.h */; };
 		6F6208FB1A26BDB1000DAF4B /* kmconf.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208F81A26BDB1000DAF4B /* kmconf.h */; };
 		6F6208FD1A26BDB1000DAF4B /* kuma.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208FA1A26BDB1000DAF4B /* kuma.h */; };
 		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
 		6FA951421A3808450033C9CF /* kmdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FA951411A3808450033C9CF /* kmdefs.h */; };
+		6FD044E31AFC7D120064F172 /* SelectPoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FD044E21AFC7D120064F172 /* SelectPoll.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		6F2963401A18AB0D00C3C79B /* kmatomic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmatomic.h; path = ../../src/util/kmatomic.h; sourceTree = "<group>"; };
 		6F2963411A18AB0D00C3C79B /* kmdp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmdp.h; path = ../../src/util/kmdp.h; sourceTree = "<group>"; };
-		6F2963421A18AB0D00C3C79B /* kmmutex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmmutex.h; path = ../../src/util/kmmutex.h; sourceTree = "<group>"; };
 		6F2963431A18AB0D00C3C79B /* kmqueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmqueue.h; path = ../../src/util/kmqueue.h; sourceTree = "<group>"; };
-		6F2963441A18AB0D00C3C79B /* kmthread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmthread.h; path = ../../src/util/kmthread.h; sourceTree = "<group>"; };
 		6F2963451A18AB0D00C3C79B /* kmtimer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = kmtimer.cpp; path = ../../src/util/kmtimer.cpp; sourceTree = "<group>"; };
 		6F2963461A18AB0D00C3C79B /* kmtimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmtimer.h; path = ../../src/util/kmtimer.h; sourceTree = "<group>"; };
 		6F2963471A18AB0D00C3C79B /* kmtrace.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = kmtrace.cpp; path = ../../src/util/kmtrace.cpp; sourceTree = "<group>"; };
 		6F2963481A18AB0D00C3C79B /* kmtrace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmtrace.h; path = ../../src/util/kmtrace.h; sourceTree = "<group>"; };
-		6F2963491A18AB0D00C3C79B /* refcount.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = refcount.h; path = ../../src/util/refcount.h; sourceTree = "<group>"; };
 		6F29634A1A18AB0D00C3C79B /* util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = util.cpp; path = ../../src/util/util.cpp; sourceTree = "<group>"; };
 		6F29634B1A18AB0D00C3C79B /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = util.h; path = ../../src/util/util.h; sourceTree = "<group>"; };
 		6F2963641A18AC6E00C3C79B /* EventLoop.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EventLoop.cpp; path = loop/EventLoop.cpp; sourceTree = "<group>"; };
@@ -48,6 +42,7 @@
 		6F2963661A18AC6E00C3C79B /* internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = internal.h; path = loop/internal.h; sourceTree = "<group>"; };
 		6F2963671A18AC6E00C3C79B /* Notifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Notifier.h; path = loop/Notifier.h; sourceTree = "<group>"; };
 		6F2963681A18AC6E00C3C79B /* VPoll.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VPoll.cpp; path = loop/VPoll.cpp; sourceTree = "<group>"; };
+		6F3D26CE1AFB0C20004C9683 /* delegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = delegate.h; sourceTree = "<group>"; };
 		6F6208F81A26BDB1000DAF4B /* kmconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmconf.h; sourceTree = "<group>"; };
 		6F6208FA1A26BDB1000DAF4B /* kuma.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kuma.h; sourceTree = "<group>"; };
 		6F852DF11985E33000271D87 /* kuma.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = kuma.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -55,6 +50,7 @@
 		6F852E441985EB4700271D87 /* kumaProj.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaProj.xcconfig; sourceTree = "<group>"; };
 		6F852E451985EB4700271D87 /* kumaTarget.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaTarget.xcconfig; sourceTree = "<group>"; };
 		6FA951411A3808450033C9CF /* kmdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmdefs.h; sourceTree = "<group>"; };
+		6FD044E21AFC7D120064F172 /* SelectPoll.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SelectPoll.cpp; path = loop/SelectPoll.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,6 +67,7 @@
 		6F2963631A18AC4C00C3C79B /* loop */ = {
 			isa = PBXGroup;
 			children = (
+				6FD044E21AFC7D120064F172 /* SelectPoll.cpp */,
 				6F2963641A18AC6E00C3C79B /* EventLoop.cpp */,
 				6F2963651A18AC6E00C3C79B /* EventLoop.h */,
 				6F2963661A18AC6E00C3C79B /* internal.h */,
@@ -101,6 +98,7 @@
 		6F852DF31985E33000271D87 /* kuma */ = {
 			isa = PBXGroup;
 			children = (
+				6F3D26CE1AFB0C20004C9683 /* delegate.h */,
 				6F6208F81A26BDB1000DAF4B /* kmconf.h */,
 				6FA951411A3808450033C9CF /* kmdefs.h */,
 				6F6208FA1A26BDB1000DAF4B /* kuma.h */,
@@ -123,16 +121,12 @@
 		6F852E291985EB0500271D87 /* util */ = {
 			isa = PBXGroup;
 			children = (
-				6F2963401A18AB0D00C3C79B /* kmatomic.h */,
 				6F2963411A18AB0D00C3C79B /* kmdp.h */,
-				6F2963421A18AB0D00C3C79B /* kmmutex.h */,
 				6F2963431A18AB0D00C3C79B /* kmqueue.h */,
-				6F2963441A18AB0D00C3C79B /* kmthread.h */,
 				6F2963451A18AB0D00C3C79B /* kmtimer.cpp */,
 				6F2963461A18AB0D00C3C79B /* kmtimer.h */,
 				6F2963471A18AB0D00C3C79B /* kmtrace.cpp */,
 				6F2963481A18AB0D00C3C79B /* kmtrace.h */,
-				6F2963491A18AB0D00C3C79B /* refcount.h */,
 				6F29634A1A18AB0D00C3C79B /* util.cpp */,
 				6F29634B1A18AB0D00C3C79B /* util.h */,
 			);
@@ -150,18 +144,15 @@
 				6F2963571A18AB0D00C3C79B /* util.h in Headers */,
 				6F29634D1A18AB0D00C3C79B /* kmdp.h in Headers */,
 				6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */,
-				6F2963501A18AB0D00C3C79B /* kmthread.h in Headers */,
-				6F29634E1A18AB0D00C3C79B /* kmmutex.h in Headers */,
 				6F2963521A18AB0D00C3C79B /* kmtimer.h in Headers */,
 				6F29636B1A18AC6E00C3C79B /* EventLoop.h in Headers */,
 				6FA951421A3808450033C9CF /* kmdefs.h in Headers */,
 				6F29636D1A18AC6E00C3C79B /* Notifier.h in Headers */,
 				6F6208FD1A26BDB1000DAF4B /* kuma.h in Headers */,
-				6F29634C1A18AB0D00C3C79B /* kmatomic.h in Headers */,
-				6F2963551A18AB0D00C3C79B /* refcount.h in Headers */,
 				6F29636C1A18AC6E00C3C79B /* internal.h in Headers */,
 				6F2963541A18AB0D00C3C79B /* kmtrace.h in Headers */,
 				6F29634F1A18AB0D00C3C79B /* kmqueue.h in Headers */,
+				6F3D26CF1AFB0C20004C9683 /* delegate.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -218,6 +209,7 @@
 			files = (
 				6F2963511A18AB0D00C3C79B /* kmtimer.cpp in Sources */,
 				6F29636E1A18AC6E00C3C79B /* VPoll.cpp in Sources */,
+				6FD044E31AFC7D120064F172 /* SelectPoll.cpp in Sources */,
 				6F2963531A18AB0D00C3C79B /* kmtrace.cpp in Sources */,
 				6F29636A1A18AC6E00C3C79B /* EventLoop.cpp in Sources */,
 				6F2963561A18AB0D00C3C79B /* util.cpp in Sources */,

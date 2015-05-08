@@ -17,7 +17,6 @@
 #define __KM_DP_H__
 #include "kmconf.h"
 #include "kmdefs.h"
-#include "refcount.h"
 #include <vector>
 
 KUMA_NS_BEGIN
@@ -45,21 +44,18 @@ public:
     typedef unsigned int DP_FLAG;
 
 private:
-    class Kdata_block_ : public KM_RefCount
+    class Kdata_block_
     {
     public:
         Kdata_block_(unsigned char* buf, unsigned int size, unsigned int offset)
-        {
-            buffer_ = buf;
-            size_ = size;
-            offset_ = offset;
-        }
+        : buffer_(buf), size_(size), offset_(offset)
+        { }
         ~Kdata_block_()
         {
             if(buffer_)
             {
                 delete[] buffer_;
-                buffer_ = NULL;
+                buffer_ = nullptr;
                 size_ = 0;
                 offset_ = 0;
             }
@@ -73,7 +69,7 @@ private:
             offset = offset_;
             offset_ = 0;
             size_ = 0;
-            buffer_ = NULL;
+            buffer_ = nullptr;
         }
 
     private:
@@ -90,18 +86,18 @@ public:
     KM_Data_Packet(DP_FLAG flag=0)
     {
         flag_ = flag;
-        begin_ptr_ = end_ptr_ = NULL;
-        rd_ptr_ = wr_ptr_ = NULL;
-        data_block_ = NULL;
-        next_ = NULL;
+        begin_ptr_ = end_ptr_ = nullptr;
+        rd_ptr_ = wr_ptr_ = nullptr;
+        data_block_ = nullptr;
+        next_ = nullptr;
     }
     KM_Data_Packet(unsigned char* buf, unsigned int len, unsigned int offset=0, DP_FLAG flag=DP_FLAG_LIFCYC_STACK|DP_FLAG_DONT_DELETE)
     {
         flag_ = flag;
-        begin_ptr_ = end_ptr_ = NULL;
-        rd_ptr_ = wr_ptr_ = NULL;
-        data_block_ = NULL;
-        next_ = NULL;
+        begin_ptr_ = end_ptr_ = nullptr;
+        rd_ptr_ = wr_ptr_ = nullptr;
+        data_block_ = nullptr;
+        next_ = nullptr;
         if(flag_&DP_FLAG_DONT_DELETE)
         {
             if(offset < len)
@@ -115,8 +111,7 @@ public:
         else
         {// we own the buffer
             if(offset > len) offset = len;
-            data_block_ = new Kdata_block_(buf, len, offset);
-            data_block_->acquireReference();
+            data_block_ = std::make_shared<Kdata_block_>(buf, len, offset);
             begin_ptr_ = buf;
             end_ptr_ = begin_ptr_ + len;
             rd_ptr_ = begin_ptr_ + offset;
@@ -128,15 +123,11 @@ public:
         if(next_)
         {
             next_->release();
-            next_ = NULL;
+            next_ = nullptr;
         }
-        if(!(flag_&DP_FLAG_DONT_DELETE) && data_block_)
-        {
-            data_block_->releaseReference();
-            data_block_ = NULL;
-        }
-        begin_ptr_ = end_ptr_ = NULL;
-        rd_ptr_ = wr_ptr_ = NULL;
+        data_block_ = nullptr;
+        begin_ptr_ = end_ptr_ = nullptr;
+        rd_ptr_ = wr_ptr_ = nullptr;
     }
 
     virtual bool alloc_buffer(unsigned int len)
@@ -146,8 +137,7 @@ public:
         if(NULL == buf)
             return false;
         flag_ &= ~DP_FLAG_DONT_DELETE;
-        data_block_ = new Kdata_block_(buf, len, 0);
-        data_block_->acquireReference();
+        data_block_ = std::make_shared<Kdata_block_>(buf, len, 0);
         begin_ptr_ = buf;
         end_ptr_ = begin_ptr_ + len;
         rd_ptr_ = begin_ptr_;
@@ -159,12 +149,8 @@ public:
         if(offset >= len) {
             return false;
         }
-        if(!(flag_&DP_FLAG_DONT_DELETE) && data_block_) {
-            data_block_->releaseReference();
-        }
         flag_ &= ~DP_FLAG_DONT_DELETE;
-        data_block_ = new Kdata_block_(buf, len, offset);
-        data_block_->acquireReference();
+        data_block_ = std::make_shared<Kdata_block_>(buf, len, offset);
         begin_ptr_ = buf;
         end_ptr_ = begin_ptr_ + len;
         rd_ptr_ = begin_ptr_ + offset;
@@ -181,15 +167,16 @@ public:
         if(!(flag_&DP_FLAG_DONT_DELETE) && data_block_)
         {
             data_block_->detach_buffer(buf, len, offset);
-            data_block_->releaseReference();
+            data_block_ = nullptr;
             offset = (unsigned int)(rd_ptr_ - buf);
+            return ;
         }
         buf = begin_ptr_;
         offset = (unsigned int)(rd_ptr_ - begin_ptr_);
         len = (unsigned int)(end_ptr_ - begin_ptr_);
-        data_block_ = NULL;
-        begin_ptr_ = end_ptr_ = NULL;
-        rd_ptr_ = wr_ptr_ = NULL;
+        data_block_ = nullptr;
+        begin_ptr_ = end_ptr_ = nullptr;
+        rd_ptr_ = wr_ptr_ = nullptr;
     }
 
     unsigned int space()
@@ -326,7 +313,7 @@ public:
         else if(next_)
             return next_->subpacket(offset-length(), len);
         else
-            return NULL;
+            return nullptr;
     }
     virtual void reclaim(){
         if(length() > 0)
@@ -335,17 +322,13 @@ public:
         while(dp && dp->length() == 0)
         {
             KM_Data_Packet* tmp = dp->next_;
-            dp->next_ = NULL;
+            dp->next_ = nullptr;
             dp->release();
             dp = tmp;
         }
-        if(!(flag_&DP_FLAG_DONT_DELETE) && data_block_)
-        {
-            data_block_->releaseReference();
-            data_block_ = NULL;
-        }
-        begin_ptr_ = end_ptr_ = NULL;
-        rd_ptr_ = wr_ptr_ = NULL;
+        data_block_ = nullptr;
+        begin_ptr_ = end_ptr_ = nullptr;
+        rd_ptr_ = wr_ptr_ = nullptr;
         next_ = dp;
         /*
         KM_Data_Packet* dp = this;
@@ -385,11 +368,7 @@ public:
             next_->release();
             next_ = NULL;
         }
-        if(!(flag_&DP_FLAG_DONT_DELETE) && data_block_)
-        {
-            data_block_->releaseReference();
-            data_block_ = NULL;
-        }
+        data_block_ = nullptr;
         begin_ptr_ = end_ptr_ = NULL;
         rd_ptr_ = wr_ptr_ = NULL;
         if(!(flag_&DP_FLAG_LIFCYC_STACK))
@@ -400,13 +379,9 @@ private:
     KM_Data_Packet &operator= (const KM_Data_Packet &);
     KM_Data_Packet (const KM_Data_Packet &);
 
-    Kdata_block_* data_block() { return data_block_; }
-    void data_block(Kdata_block_* db) {
-        if(data_block_)
-            data_block_->releaseReference();
+    std::shared_ptr<Kdata_block_>& data_block() { return data_block_; }
+    void data_block(std::shared_ptr<Kdata_block_>& db) {
         data_block_ = db;
-        if(data_block_)
-            data_block_->acquireReference();
     }
     virtual KM_Data_Packet* duplicate_self(){
         KM_Data_Packet* dup = NULL;
@@ -427,8 +402,6 @@ private:
             flag &= ~DP_FLAG_LIFCYC_STACK;
             dup = new KM_Data_Packet(flag);
             dup->data_block_ = data_block_;
-            if(dup->data_block_)
-                dup->data_block_->acquireReference();
             dup->begin_ptr_ = begin_ptr_;
             dup->end_ptr_ = end_ptr_;
             dup->rd_ptr_ = rd_ptr_;
@@ -443,7 +416,7 @@ private:
     unsigned char* end_ptr_;
     unsigned char* rd_ptr_;
     unsigned char* wr_ptr_;
-    Kdata_block_* data_block_;
+    std::shared_ptr<Kdata_block_> data_block_;
 
     KM_Data_Packet* next_;
 };

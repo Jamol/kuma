@@ -15,10 +15,7 @@
 
 #include "EventLoop.h"
 #include "internal.h"
-#include "util/refcount.h"
 #include "util/kmdp.h"
-#include "util/kmthread.h"
-#include "util/kmmutex.h"
 #include "util/kmqueue.h"
 #include "util/kmtimer.h"
 
@@ -40,10 +37,6 @@ EventLoop::~EventLoop()
         delete poll_;
         poll_ = NULL;
     }
-    IEvent *ev = NULL;
-    while (eventQueue_.dequeue(ev)) {
-        delete ev;
-    }
     delete timer_mgr_;
     timer_mgr_ = NULL;
 }
@@ -56,78 +49,42 @@ bool EventLoop::init()
     return true;
 }
 
-int EventLoop::registerHandler(int fd, uint32_t events, IOHandler* handler)
+int EventLoop::registerIOCallback(int fd, uint32_t events, IOCallback &cb)
 {
-    class RegisterIOEvent : public IEvent
-    {
-    public:
-        RegisterIOEvent(int f, uint32_t e, IOHandler* h, EventLoop* l)
-        {
-            fd = f;
-            events = e;
-            handler = h;
-            if(handler) {
-                handler->acquireReference();
-            }
-            loop = l;
+    EventCallback ev([=, &cb] {
+        if(ioCallbacks_.find(fd) != ioCallbacks_.end()) {
+            return ;
         }
-        
-        ~RegisterIOEvent()
-        {
-            if(handler) {
-                handler->releaseReference();
-                handler = NULL;
-            }
+        auto r = ioCallbacks_.emplace(fd, cb);
+        int ret = poll_->register_fd(fd, events, &(r.first->second));
+        if(ret != KUMA_ERROR_NOERR) {
+            ioCallbacks_.erase(r.first);
+            return ;
         }
-        
-        virtual void fire()
-        {
-            loop->registerHandler_i(fd, events, handler);
-        }
-        
-        int fd;
-        uint32_t events;
-        IOHandler* handler;
-        EventLoop* loop;
-    };
-    RegisterIOEvent* e = new RegisterIOEvent(fd, events, handler, this);
-    postEvent(e);
-    return KUMA_ERROR_NOERR;
+    });
+    return runInEventLoop(std::move(ev));
 }
 
-int EventLoop::unregisterHandler(int fd, bool close_fd)
+int EventLoop::unregisterIOCallback(int fd, bool close_fd)
 {
-    class UnregisterIOEvent : public IEvent
-    {
-    public:
-        UnregisterIOEvent(int f, bool c, EventLoop* l)
-        {
-            fd = f;
-            close_fd = c;
-            loop = l;
+    EventCallback ev([=] {
+        poll_->unregister_fd(fd);
+        ioCallbacks_.erase(fd);
+        if(close_fd) {
+            closesocket(fd);
         }
-        
-        virtual void fire()
-        {
-            loop->unregisterHandler_i(fd, close_fd);
-        }
-        
-        int fd;
-        bool close_fd;
-        EventLoop* loop;
-    };
-    UnregisterIOEvent* e = new UnregisterIOEvent(fd, close_fd, this);
-    postEvent(e);
-    return KUMA_ERROR_NOERR;
+    });
+    return runInEventLoop(std::move(ev));
 }
 
 void EventLoop::loop()
 {
     while (!stopLoop_) {
-        IEvent *ev = NULL;
-        while (!stopLoop_ && eventQueue_.dequeue(ev)) {
-            ev->fire();
-            delete ev;
+        EventCallback cb;
+        while (!stopLoop_ && eventQueue_.dequeue(cb)) {
+            if(cb) {
+                cb();
+            }
         }
         unsigned long remain_time_ms = max_wait_time_ms_;
         timer_mgr_->check_expire(&remain_time_ms);
@@ -138,37 +95,16 @@ void EventLoop::loop()
     }
 }
 
-int EventLoop::registerHandler_i(int fd, uint32_t events, IOHandler* handler)
+int EventLoop::runInEventLoop(EventCallback &cb)
 {
-    if(handlerMap_.find(fd) != handlerMap_.end()) {
-        return KUMA_ERROR_INVALID_STATE;
-    }
-    int ret = poll_->register_fd(fd, events, handler);
-    if(ret != KUMA_ERROR_NOERR) {
-        return ret;
-    }
-    handler->acquireReference();
-    handlerMap_.insert(std::make_pair(fd, handler));
+    eventQueue_.enqueue(cb);
+    poll_->notify();
     return KUMA_ERROR_NOERR;
 }
 
-int EventLoop::unregisterHandler_i(int fd, bool close_fd)
+int EventLoop::runInEventLoop(EventCallback &&cb)
 {
-    poll_->unregister_fd(fd);
-    IOHandlerMap::iterator it = handlerMap_.find(fd);
-    if(it != handlerMap_.end()) {
-        it->second->releaseReference();
-        handlerMap_.erase(it);
-    }
-    if(close_fd) {
-        closesocket(fd);
-    }
-    return KUMA_ERROR_NOERR;
-}
-
-int EventLoop::postEvent(IEvent* ev)
-{
-    eventQueue_.enqueue(ev);
+    eventQueue_.enqueue(std::move(cb));
     poll_->notify();
     return KUMA_ERROR_NOERR;
 }

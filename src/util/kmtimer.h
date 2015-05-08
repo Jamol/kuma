@@ -17,7 +17,6 @@
 #define __KMTIMER_H__
 
 #include "kmdefs.h"
-#include "kmmutex.h"
 #include <map>
 
 #ifndef TICK_COUNT_TYPE
@@ -113,17 +112,17 @@ private:
 class KM_Timer
 {
 public:
-    KM_Timer(KM_Timer_Manager* mgr);
-    virtual ~KM_Timer();
+    KM_Timer(KM_Timer_Manager* mgr, TimerCallback& cb);
+    KM_Timer(KM_Timer_Manager* mgr, TimerCallback&& cb);
+    ~KM_Timer();
     
     bool schedule(unsigned int time_elapse, bool repeat = false);
     void cancel();
-    
-    virtual void on_timer() = 0;
     void on_detach();
     
 private:
     friend class KM_Timer_Manager;
+    TimerCallback cb_;
     KM_Timer_Manager* timer_mgr_;
     KM_Timer_Manager::KM_Timer_Node timer_node_; // intrusive list node
 };

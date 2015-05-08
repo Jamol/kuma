@@ -53,17 +53,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#ifdef KUMA_HAS_CXX0X
-# include <functional>
-# define FUNCTION    std::function
-# define BIND        std::bind
-#else
-# include <boost/function.hpp>
-# include <boost/bind.hpp>
-# define FUNCTION    boost::function
-# define BIND        boost::bind
-#endif
-
 #include <map>
 #include <list>
 
@@ -81,19 +70,11 @@ public:
     virtual ~IOPoll() {}
     
     virtual bool init() = 0;
-    virtual int register_fd(int fd, uint32_t events, IOHandler* handler) = 0;
+    virtual int register_fd(int fd, uint32_t events, IOCallback* cb) = 0;
     virtual int unregister_fd(int fd) = 0;
-    virtual int modify_events(int fd, uint32_t events, IOHandler* handler) = 0;
+    virtual int modify_events(int fd, uint32_t events) = 0;
     virtual int wait(uint32_t wait_time_ms) = 0;
     virtual void notify() = 0;
-};
-
-class IEvent
-{
-public:
-    virtual ~IEvent() {}
-    
-    virtual void fire() = 0;
 };
 
 KUMA_NS_END

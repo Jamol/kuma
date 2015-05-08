@@ -26,53 +26,51 @@ public:
     ~SelectPoll();
     
     virtual bool init();
-    virtual int register_fd(int fd, uint32_t events, IOHandler* handler);
+    virtual int register_fd(int fd, uint32_t events, IOCallback* cb);
     virtual int unregister_fd(int fd);
-    virtual int modify_events(int fd, uint32_t events, IOHandler* handler);
+    virtual int modify_events(int fd, uint32_t events);
     virtual int wait(uint32_t wait_time_ms);
     virtual void notify();
     
 private:
-    class SelectItem
+    struct IOItem
     {
-    public:
-        SelectItem() {}
-        
-    public:
-        IOHandler* handler;
+        IOItem() : events(0) {}
+        IOCallback cb;
         uint32_t events;
     };
     
 private:
     Notifier    notifier_;
-    SelectItem* poll_items_;
+    IOItem*     io_items_;
     int         fds_alloc_;
     int         fds_used_;
 };
 
 SelectPoll::SelectPoll()
 {
-    poll_items_ = NULL;
+    io_items_ = NULL;
     fds_alloc_ = 0;
     fds_used_ = 0;
 }
 
 SelectPoll::~SelectPoll()
 {
-    if(poll_items_) {
-        delete[] poll_items_;
-        poll_items_ = NULL;
+    if(io_items_) {
+        delete[] io_items_;
+        io_items_ = NULL;
     }
 }
 
 bool SelectPoll::init()
 {
     notifier_.init();
-    register_fd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, &notifier_);
+    IOCallback cb ([this] (uint32_t ev) { notifier_.onEvent(ev); });
+    register_fd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, &cb);
     return true;
 }
 
-int SelectPoll::register_fd(int fd, uint32_t events, IOHandler* handler)
+int SelectPoll::register_fd(int fd, uint32_t events, IOCallback* cb)
 {
     KUMA_INFOTRACE("SelectPoll::register_fd, fd="<<fd);
     if (fd >= fds_alloc_) {
@@ -80,16 +78,16 @@ int SelectPoll::register_fd(int fd, uint32_t events, IOHandler* handler)
         if (tmp_num < fd + 1)
             tmp_num = fd + 1;
         
-        SelectItem *newItems = new SelectItem[tmp_num];
+        IOItem *newItems = new IOItem[tmp_num];
         if(fds_alloc_ > 0) {
-            memcpy(newItems, poll_items_, fds_alloc_*sizeof(SelectItem));
+            memcpy(newItems, io_items_, fds_alloc_*sizeof(IOItem));
         }
         
-        delete[] poll_items_;
-        poll_items_ = newItems;
+        delete[] io_items_;
+        io_items_ = newItems;
     }
-    poll_items_[fd].handler = handler;
-    poll_items_[fd].events = events;
+    io_items_[fd].cb = *cb;
+    io_items_[fd].events = events;
     ++fds_used_;
     return KUMA_ERROR_NOERR;
 }
@@ -102,13 +100,13 @@ int SelectPoll::unregister_fd(int fd)
         return KUMA_ERROR_INVALID_PARAM;
     }
     
-    poll_items_[fd].handler = NULL;
-    poll_items_[fd].events = 0;
+    io_items_[fd].cb = nullptr;
+    io_items_[fd].events = 0;
     --fds_used_;
     return KUMA_ERROR_NOERR;
 }
 
-int SelectPoll::modify_events(int fd, uint32_t events, IOHandler* handler)
+int SelectPoll::modify_events(int fd, uint32_t events)
 {
     return KUMA_ERROR_NOERR;
 }
@@ -126,14 +124,14 @@ int SelectPoll::wait(uint32_t wait_time_ms)
     }
     int maxfd = 0;
     for (int i=0; i<fds_alloc_; ++i) {
-        if(poll_items_[i].handler != NULL && poll_items_[i].events != 0) {
-            if(poll_items_[i].events|KUMA_EV_READ) {
+        if(io_items_[i].cb && io_items_[i].events != 0) {
+            if(io_items_[i].events|KUMA_EV_READ) {
                 FD_SET(i, &readfds);
             }
-            if(poll_items_[i].events|KUMA_EV_WRITE) {
+            if(io_items_[i].events|KUMA_EV_WRITE) {
                 FD_SET(i, &writefds);
             }
-            if(poll_items_[i].events|KUMA_EV_ERROR) {
+            if(io_items_[i].events|KUMA_EV_ERROR) {
                 FD_SET(i, &exceptfds);
             }
             if(i > maxfd) {
@@ -159,9 +157,9 @@ int SelectPoll::wait(uint32_t wait_time_ms)
             events |= KUMA_EV_ERROR;
             --nready;
         }
-        IOHandler* handler = poll_items_[i].handler;
-        if(handler) {
-            handler->onEvent(events);
+        IOCallback& cb = io_items_[i].cb;
+        if(cb) {
+            cb(events);
         }
     }
     return KUMA_ERROR_NOERR;

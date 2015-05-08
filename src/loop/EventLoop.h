@@ -15,8 +15,7 @@
 
 #ifndef __KUMA_EVENTLOOP_H__
 #define __KUMA_EVENTLOOP_H__
-#include "kuma.h"
-#include "util/kmmutex.h"
+
 #include "util/kmqueue.h"
 #include <map>
 #include <stdint.h>
@@ -24,13 +23,9 @@
 KUMA_NS_BEGIN
 
 class TimerHandler;
-class KM_Timer;
 class KM_Timer_Manager;
 
 class IOPoll;
-class IEvent;
-typedef KM_QueueT<IEvent*, KM_Mutex> EventQueue;
-typedef std::map<int, IOHandler*> IOHandlerMap;
 
 class EventLoop
 {
@@ -40,22 +35,22 @@ public:
 
 public:
     bool init();
-    int registerHandler(int fd, uint32_t events, IOHandler* handler);
-    int unregisterHandler(int fd, bool close_fd);
+    int registerIOCallback(int fd, uint32_t events, IOCallback &cb);
+    int unregisterIOCallback(int fd, bool close_fd);
     KM_Timer_Manager* getTimerMgr() { return timer_mgr_; }
     
 public:
-    int postEvent(IEvent* ev);
+    int runInEventLoop(EventCallback &cb);
+    int runInEventLoop(EventCallback &&cb);
     void loop();
     void stop();
     
-protected:
-    int registerHandler_i(int fd, uint32_t events, IOHandler* handler);
-    int unregisterHandler_i(int fd, bool close_fd);
-    
 private:
+    typedef std::map<int, IOCallback> IOCallbackMap;
+    typedef KM_QueueT<EventCallback, KM_Mutex> EventQueue;
+    
     IOPoll*         poll_;
-    IOHandlerMap    handlerMap_;
+    IOCallbackMap   ioCallbacks_;
     bool            stopLoop_;
     
     KM_Mutex        mutex_;

@@ -28,9 +28,10 @@ public:
     ~EPoll();
     
     virtual bool init();
-    virtual int register_fd(int fd, uint32_t events, IOHandler* handler);
+    virtual int register_fd(int fd, uint32_t events, IOCallback& cb);
+    virtual int register_fd(int fd, uint32_t events, IOCallback&& cb);
     virtual int unregister_fd(int fd);
-    virtual int modify_events(int fd, uint32_t events, IOHandler* handler);
+    virtual int modify_events(int fd, uint32_t events);
     virtual int wait(uint32_t wait_time_ms);
     virtual void notify();
     
@@ -41,11 +42,14 @@ private:
 private:
     int         epoll_fd_;
     Notifier    notifier_;
+    IOCallback  cb_;
 };
 
-EPoll::EPoll()
+EPoll::EPoll
+: epoll_fd_(INVALID_FD)
+()
 {
-    epoll_fd_ = INVALID_FD;
+	
 }
 
 EPoll::~EPoll()
@@ -63,7 +67,8 @@ bool EPoll::init()
         return false;
     }
     notifier_.init();
-    register_fd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, &notifier_);
+    cb_ = [this] (uint32_t ev) { notifier_.onEvent(ev); };
+    register_fd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, _cb);
     return true;
 }
 
@@ -97,10 +102,10 @@ uint32_t EPoll::get_kuma_events(uint32_t events)
     return ev;
 }
 
-int EPoll::register_fd(int fd, uint32_t events, IOHandler* handler)
+int EPoll::register_fd(int fd, uint32_t events, IOCallback* cb)
 {
     struct epoll_event evt = {0};
-    evt.data.ptr = handler;
+    evt.data.ptr = cb;
     evt.events = get_events(events);//EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLET;
     if(epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, fd, &evt) < 0) {
         KUMA_INFOTRACE("EPoll::register_fd error, fd="<<fd<<", errno="<<errno);
@@ -118,7 +123,7 @@ int EPoll::unregister_fd(int fd)
     return KUMA_ERROR_NOERR;
 }
 
-int EPoll::modify_events(int fd, uint32_t events, IOHandler* handler)
+int EPoll::modify_events(int fd, uint32_t events)
 {
     struct epoll_event evt = {0};
     evt.data.ptr = handler;
@@ -133,7 +138,6 @@ int EPoll::modify_events(int fd, uint32_t events, IOHandler* handler)
 int EPoll::wait(uint32_t wait_time_ms)
 {
     struct epoll_event events[MAX_EVENT_NUM];
-    IOHandler* handler = NULL;
     int nfds = epoll_wait(epoll_fd_, events, MAX_EVENT_NUM , wait_time_ms);
     if (nfds < 0) {
         if(errno != EINTR) {
@@ -142,8 +146,8 @@ int EPoll::wait(uint32_t wait_time_ms)
         KUMA_INFOTRACE("EPoll::wait, epoll_wait, nfds="<<nfds<<", errno="<<errno);
     } else {
         for (int i=0; i<nfds; i++) {
-            handler = (IOHandler*)events[i].data.ptr;
-            if(handler) handler->onEvent(get_kuma_events(events[i].events));
+            IOCallback* cb = (IOCallback*)events[i].data.ptr;
+            if(cb) (*cb)(get_kuma_events(events[i].events));
         }
     }
     return KUMA_ERROR_NOERR;

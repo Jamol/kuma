@@ -63,8 +63,8 @@ enum{
 typedef int (WSAAPI *pf_getaddrinfo)(
     _In_opt_  PCSTR pNodeName,
     _In_opt_  PCSTR pServiceName,
-    _In_opt_  const ADDRINFOA *pHints,
-    _Out_     PADDRINFOA *ppResult
+    _In_opt_  const addrinfo *pHints,
+    _Out_     addrinfo **ppResult
 );
 
 typedef int (WSAAPI *pf_getnameinfo)(
@@ -197,16 +197,16 @@ int km_resolve_2_ip_v4(const char* host_name, char *ip_buf, int ip_buf_len)
     if(he && he->h_addr_list && he->h_addr_list[0])
     {
 #ifndef KUMA_OS_WIN
-        char tmp[INET_ADDRSTRLEN] = {0};
-        ::inet_ntop(AF_INET, he->h_addr_list[0], tmp, sizeof(tmp));
+        inet_ntop(AF_INET, he->h_addr_list[0], ip_buf, ip_buf_len);
+        return 0;
 #else
         char* tmp = (char*)inet_ntoa((in_addr&)(*he->h_addr_list[0]));
-#endif
         if(tmp)
         {
             STRNCPY_S(ip_buf, ip_buf_len, tmp, strlen(tmp));
             return 0;
         }
+#endif
     }
     
     ip_buf[0] = 0;
@@ -230,13 +230,13 @@ extern "C" int km_resolve_2_ip(const char* host_name, char *ip_buf, int ip_buf_l
     }
 #endif
     
-    struct addrinfo* ai = NULL;
+    addrinfo* ai = NULL;
     if(km_getaddrinfo(host_name, NULL, NULL, &ai) != 0 || NULL == ai)
     {
         return -1;
     }
     
-    for (struct addrinfo *aii = ai; aii; aii = aii->ai_next)
+	for (addrinfo *aii = ai; aii; aii = aii->ai_next)
     {
         if(AF_INET6 == aii->ai_family && (KM_RESOLVE_IPV6 == ipv || KM_RESOLVE_IPV0 == ipv))
         {
@@ -477,7 +477,7 @@ TICK_COUNT_TYPE get_tick_count_ms()
 #ifdef KUMA_HAS_CXX0X
     std::chrono::high_resolution_clock::time_point _now = std::chrono::high_resolution_clock::now();
     std::chrono::milliseconds _now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(_now.time_since_epoch());
-    return _now_ms.count();
+	return (TICK_COUNT_TYPE)_now_ms.count();
 #else
 #if defined(KUMA_OS_WIN)
     return GetTickCount();

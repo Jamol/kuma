@@ -21,7 +21,7 @@
 
 KUMA_NS_BEGIN
 
-class Notifier : public IOHandler
+class Notifier
 {
 public:
     enum {
@@ -81,17 +81,15 @@ public:
         return fds_[READ_FD];
     }
     
-    virtual long acquireReference() { return 1; }
-    virtual long releaseReference() { return 1; }
-    virtual int onEvent(uint32_t ev) {
+    int onEvent(uint32_t ev) {
         char buf[1024];
         recvfrom(fds_[READ_FD], buf, sizeof(buf), 0, NULL, NULL);
         return KUMA_ERROR_NOERR;
     }
 private:
     int fds_[2];
-    sockaddr_storage    ss_addr_;
-    socklen_t   addr_len_;
+    sockaddr_storage ss_addr_;
+    socklen_t addr_len_;
 };
 
 KUMA_NS_END

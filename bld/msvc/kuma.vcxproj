@@ -92,7 +92,7 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;KUMA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;KUMA_EXPORTS;_WINSOCK_DEPRECATED_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\src;..\..\src\loop</AdditionalIncludeDirectories>
     </ClCompile>
@@ -167,18 +167,14 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\kmconf.h" />
-    <ClInclude Include="..\..\src\kuma.h" />
+    <ClInclude Include="..\..\src\kmdefs.h" />
     <ClInclude Include="..\..\src\loop\EventLoop.h" />
     <ClInclude Include="..\..\src\loop\internal.h" />
     <ClInclude Include="..\..\src\loop\Notifier.h" />
-    <ClInclude Include="..\..\src\util\kmatomic.h" />
     <ClInclude Include="..\..\src\util\kmdp.h" />
-    <ClInclude Include="..\..\src\util\kmmutex.h" />
     <ClInclude Include="..\..\src\util\kmqueue.h" />
-    <ClInclude Include="..\..\src\util\kmthread.h" />
     <ClInclude Include="..\..\src\util\kmtimer.h" />
     <ClInclude Include="..\..\src\util\kmtrace.h" />
-    <ClInclude Include="..\..\src\util\refcount.h" />
     <ClInclude Include="..\..\src\util\util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

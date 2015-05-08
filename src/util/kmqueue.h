@@ -47,6 +47,14 @@ public:
         tail_ = node;
         ++count_;
     }
+    
+    void enqueue(const E &&element)
+    {
+        TLNode* node = new TLNode(std::forward(element));
+        tail_->next_ = node;
+        tail_ = node;
+        ++count_;
+    }
 
     bool dequeue(E &element)
     {
@@ -114,6 +122,16 @@ public:
     void enqueue(const E &element)
     {
         TLNode* node = new TLNode(element);
+        lockerT_.lock();
+        tail_->next_ = node;
+        tail_ = node;
+        ++en_count_;
+        lockerT_.unlock();
+    }
+    
+    void enqueue(E &&element)
+    {
+        TLNode* node = new TLNode(std::forward<E>(element));
         lockerT_.lock();
         tail_->next_ = node;
         tail_ = node;
