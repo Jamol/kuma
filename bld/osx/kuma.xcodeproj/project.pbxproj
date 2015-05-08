@@ -20,7 +20,6 @@
 		6F29636C1A18AC6E00C3C79B /* internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963661A18AC6E00C3C79B /* internal.h */; };
 		6F29636D1A18AC6E00C3C79B /* Notifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963671A18AC6E00C3C79B /* Notifier.h */; };
 		6F29636E1A18AC6E00C3C79B /* VPoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963681A18AC6E00C3C79B /* VPoll.cpp */; };
-		6F3D26CF1AFB0C20004C9683 /* delegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F3D26CE1AFB0C20004C9683 /* delegate.h */; };
 		6F6208FB1A26BDB1000DAF4B /* kmconf.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208F81A26BDB1000DAF4B /* kmconf.h */; };
 		6F6208FD1A26BDB1000DAF4B /* kuma.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208FA1A26BDB1000DAF4B /* kuma.h */; };
 		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
@@ -42,7 +41,6 @@
 		6F2963661A18AC6E00C3C79B /* internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = internal.h; path = loop/internal.h; sourceTree = "<group>"; };
 		6F2963671A18AC6E00C3C79B /* Notifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Notifier.h; path = loop/Notifier.h; sourceTree = "<group>"; };
 		6F2963681A18AC6E00C3C79B /* VPoll.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VPoll.cpp; path = loop/VPoll.cpp; sourceTree = "<group>"; };
-		6F3D26CE1AFB0C20004C9683 /* delegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = delegate.h; sourceTree = "<group>"; };
 		6F6208F81A26BDB1000DAF4B /* kmconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmconf.h; sourceTree = "<group>"; };
 		6F6208FA1A26BDB1000DAF4B /* kuma.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kuma.h; sourceTree = "<group>"; };
 		6F852DF11985E33000271D87 /* kuma.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = kuma.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -98,7 +96,6 @@
 		6F852DF31985E33000271D87 /* kuma */ = {
 			isa = PBXGroup;
 			children = (
-				6F3D26CE1AFB0C20004C9683 /* delegate.h */,
 				6F6208F81A26BDB1000DAF4B /* kmconf.h */,
 				6FA951411A3808450033C9CF /* kmdefs.h */,
 				6F6208FA1A26BDB1000DAF4B /* kuma.h */,
@@ -152,7 +149,6 @@
 				6F29636C1A18AC6E00C3C79B /* internal.h in Headers */,
 				6F2963541A18AB0D00C3C79B /* kmtrace.h in Headers */,
 				6F29634F1A18AB0D00C3C79B /* kmqueue.h in Headers */,
-				6F3D26CF1AFB0C20004C9683 /* delegate.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
