@@ -70,7 +70,8 @@ public:
     virtual ~IOPoll() {}
     
     virtual bool init() = 0;
-    virtual int register_fd(int fd, uint32_t events, IOCallback* cb) = 0;
+    virtual int register_fd(int fd, uint32_t events, IOCallback& cb) = 0;
+    virtual int register_fd(int fd, uint32_t events, IOCallback&& cb) = 0;
     virtual int unregister_fd(int fd) = 0;
     virtual int modify_events(int fd, uint32_t events) = 0;
     virtual int wait(uint32_t wait_time_ms) = 0;

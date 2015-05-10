@@ -28,7 +28,8 @@ public:
     ~VPoll();
     
     virtual bool init();
-    virtual int register_fd(int fd, uint32_t events, IOCallback* cb);
+    virtual int register_fd(int fd, uint32_t events, IOCallback& cb);
+    virtual int register_fd(int fd, uint32_t events, IOCallback&& cb);
     virtual int unregister_fd(int fd);
     virtual int modify_events(int fd, uint32_t events);
     virtual int wait(uint32_t wait_time_ms);
@@ -82,7 +83,7 @@ bool VPoll::init()
 {
     notifier_.init();
     IOCallback cb ([this] (uint32_t ev) { notifier_.onEvent(ev); });
-    register_fd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, &cb);
+    register_fd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, std::move(cb));
     return true;
 }
 
@@ -116,7 +117,7 @@ uint32_t VPoll::get_kuma_events(uint32_t events)
     return ev;
 }
 
-int VPoll::register_fd(int fd, uint32_t events, IOCallback* cb)
+int VPoll::register_fd(int fd, uint32_t events, IOCallback& cb)
 {
     if (fd >= fds_alloc_) {
         int tmp_num = fds_alloc_ + 1024;
@@ -143,7 +144,44 @@ int VPoll::register_fd(int fd, uint32_t events, IOCallback* cb)
     }
     
     poll_items_[fd].fd = fd;
-    poll_items_[fd].cb = *cb;
+    poll_items_[fd].cb = cb;
+    poll_items_[fd].index = fds_used_;
+    poll_fds_[fds_used_].fd = fd;
+    poll_fds_[fds_used_].events = get_events(events);
+    KUMA_INFOTRACE("VPoll::register_fd, fd="<<fd<<", index="<<fds_used_);
+    ++fds_used_;
+    
+    return KUMA_ERROR_NOERR;
+}
+
+int VPoll::register_fd(int fd, uint32_t events, IOCallback&& cb)
+{
+    if (fd >= fds_alloc_) {
+        int tmp_num = fds_alloc_ + 1024;
+        if (tmp_num < fd + 1)
+            tmp_num = fd + 1;
+        
+        PollItem *newItems = new PollItem[tmp_num];
+        if(fds_alloc_) {
+            memcpy(newItems, poll_items_, fds_alloc_*sizeof(PollItem));
+        }
+        
+        delete[] poll_items_;
+        poll_items_ = newItems;
+        
+        pollfd *newpfds = new pollfd[tmp_num];
+        memset((uint8_t*)newpfds, 0, tmp_num*sizeof(pollfd));
+        if(fds_alloc_) {
+            memcpy(newpfds, poll_fds_, fds_alloc_*sizeof(pollfd));
+        }
+        
+        delete[] poll_fds_;
+        poll_fds_ = newpfds;
+        fds_alloc_ = tmp_num;
+    }
+    
+    poll_items_[fd].fd = fd;
+    poll_items_[fd].cb = std::move(cb);
     poll_items_[fd].index = fds_used_;
     poll_fds_[fds_used_].fd = fd;
     poll_fds_[fds_used_].events = get_events(events);

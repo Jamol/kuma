@@ -24,7 +24,6 @@
 		6F6208FD1A26BDB1000DAF4B /* kuma.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208FA1A26BDB1000DAF4B /* kuma.h */; };
 		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
 		6FA951421A3808450033C9CF /* kmdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FA951411A3808450033C9CF /* kmdefs.h */; };
-		6FD044E31AFC7D120064F172 /* SelectPoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FD044E21AFC7D120064F172 /* SelectPoll.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -48,7 +47,6 @@
 		6F852E441985EB4700271D87 /* kumaProj.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaProj.xcconfig; sourceTree = "<group>"; };
 		6F852E451985EB4700271D87 /* kumaTarget.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaTarget.xcconfig; sourceTree = "<group>"; };
 		6FA951411A3808450033C9CF /* kmdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmdefs.h; sourceTree = "<group>"; };
-		6FD044E21AFC7D120064F172 /* SelectPoll.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SelectPoll.cpp; path = loop/SelectPoll.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -65,7 +63,6 @@
 		6F2963631A18AC4C00C3C79B /* loop */ = {
 			isa = PBXGroup;
 			children = (
-				6FD044E21AFC7D120064F172 /* SelectPoll.cpp */,
 				6F2963641A18AC6E00C3C79B /* EventLoop.cpp */,
 				6F2963651A18AC6E00C3C79B /* EventLoop.h */,
 				6F2963661A18AC6E00C3C79B /* internal.h */,
@@ -205,7 +202,6 @@
 			files = (
 				6F2963511A18AB0D00C3C79B /* kmtimer.cpp in Sources */,
 				6F29636E1A18AC6E00C3C79B /* VPoll.cpp in Sources */,
-				6FD044E31AFC7D120064F172 /* SelectPoll.cpp in Sources */,
 				6F2963531A18AB0D00C3C79B /* kmtrace.cpp in Sources */,
 				6F29636A1A18AC6E00C3C79B /* EventLoop.cpp in Sources */,
 				6F2963561A18AB0D00C3C79B /* util.cpp in Sources */,

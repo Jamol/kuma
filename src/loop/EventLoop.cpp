@@ -49,16 +49,11 @@ bool EventLoop::init()
     return true;
 }
 
-int EventLoop::registerIOCallback(int fd, uint32_t events, IOCallback &cb)
+int EventLoop::registerIOCallback(int fd, uint32_t events, IOCallback& cb)
 {
     EventCallback ev([=, &cb] {
-        if(ioCallbacks_.find(fd) != ioCallbacks_.end()) {
-            return ;
-        }
-        auto r = ioCallbacks_.emplace(fd, cb);
-        int ret = poll_->register_fd(fd, events, &(r.first->second));
+        int ret = poll_->register_fd(fd, events, cb);
         if(ret != KUMA_ERROR_NOERR) {
-            ioCallbacks_.erase(r.first);
             return ;
         }
     });
@@ -69,7 +64,6 @@ int EventLoop::unregisterIOCallback(int fd, bool close_fd)
 {
     EventCallback ev([=] {
         poll_->unregister_fd(fd);
-        ioCallbacks_.erase(fd);
         if(close_fd) {
             closesocket(fd);
         }

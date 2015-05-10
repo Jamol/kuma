@@ -40,9 +40,11 @@ private:
     uint32_t get_kuma_events(uint32_t events);
     
 private:
-    int         epoll_fd_;
-    Notifier    notifier_;
-    IOCallback  cb_;
+    typedef std::map<int, IOCallback> IOCallbackMap;
+
+    int             epoll_fd_;
+    Notifier        notifier_;
+    IOCallbackMap   callbacks_;
 };
 
 EPoll::EPoll
@@ -67,8 +69,8 @@ bool EPoll::init()
         return false;
     }
     notifier_.init();
-    cb_ = [this] (uint32_t ev) { notifier_.onEvent(ev); };
-    register_fd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, _cb);
+    IOCallbackMap cb = [this](uint32_t ev) { notifier_.onEvent(ev); };
+    register_fd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, std::move(cb));
     return true;
 }
 
@@ -102,10 +104,15 @@ uint32_t EPoll::get_kuma_events(uint32_t events)
     return ev;
 }
 
-int EPoll::register_fd(int fd, uint32_t events, IOCallback* cb)
+int EPoll::register_fd(int fd, uint32_t events, IOCallback& cb)
 {
+    if (callbacks_.find(fd) != callbacks_.end()) {
+        return KUMA_ERROR_ALREADY_EXIST;
+    }
+    auto r = callbacks_.emplace(fd, cb);
+
     struct epoll_event evt = {0};
-    evt.data.ptr = cb;
+    evt.data.ptr = &r.first->second;
     evt.events = get_events(events);//EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLET;
     if(epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, fd, &evt) < 0) {
         KUMA_INFOTRACE("EPoll::register_fd error, fd="<<fd<<", errno="<<errno);
@@ -116,10 +123,30 @@ int EPoll::register_fd(int fd, uint32_t events, IOCallback* cb)
     return KUMA_ERROR_NOERR;
 }
 
+int EPoll::register_fd(int fd, uint32_t events, IOCallback&& cb)
+{
+    if (callbacks_.find(fd) != callbacks_.end()) {
+        return KUMA_ERROR_ALREADY_EXIST;
+    }
+    auto r = callbacks_.emplace(fd, std::move(cb));
+
+    struct epoll_event evt = { 0 };
+    evt.data.ptr = &r.first->second;
+    evt.events = get_events(events);//EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLET;
+    if (epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, fd, &evt) < 0) {
+        KUMA_INFOTRACE("EPoll::register_fd error, fd=" << fd << ", errno=" << errno);
+        return KUMA_ERROR_FAILED;
+    }
+    KUMA_INFOTRACE("EPoll::register_fd, fd=" << fd);
+
+    return KUMA_ERROR_NOERR;
+}
+
 int EPoll::unregister_fd(int fd)
 {
     KUMA_INFOTRACE("EPoll::unregister_fd, fd="<<fd);
     epoll_ctl(epoll_fd_, EPOLL_CTL_DEL, fd, NULL);
+    callbacks_.erase(fd);
     return KUMA_ERROR_NOERR;
 }
 
@@ -130,7 +157,7 @@ int EPoll::modify_events(int fd, uint32_t events)
     evt.events = get_events(events);
     if(epoll_ctl(epoll_fd_, EPOLL_CTL_MOD, fd, &evt) < 0) {
         KUMA_INFOTRACE("EPoll::modify_events error, fd="<<fd<<", errno="<<errno);
-        return -1;
+        return KUMA_ERROR_FAILED;
     }
     return KUMA_ERROR_NOERR;
 }
@@ -147,7 +174,7 @@ int EPoll::wait(uint32_t wait_time_ms)
     } else {
         for (int i=0; i<nfds; i++) {
             IOCallback* cb = (IOCallback*)events[i].data.ptr;
-            if(cb) (*cb)(get_kuma_events(events[i].events));
+            if(cb && *cb) (*cb)(get_kuma_events(events[i].events));
         }
     }
     return KUMA_ERROR_NOERR;

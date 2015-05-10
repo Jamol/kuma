@@ -26,7 +26,8 @@ public:
     ~SelectPoll();
     
     virtual bool init();
-    virtual int register_fd(int fd, uint32_t events, IOCallback* cb);
+    virtual int register_fd(int fd, uint32_t events, IOCallback& cb);
+    virtual int register_fd(int fd, uint32_t events, IOCallback&& cb);
     virtual int unregister_fd(int fd);
     virtual int modify_events(int fd, uint32_t events);
     virtual int wait(uint32_t wait_time_ms);
@@ -66,11 +67,11 @@ bool SelectPoll::init()
 {
     notifier_.init();
     IOCallback cb ([this] (uint32_t ev) { notifier_.onEvent(ev); });
-    register_fd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, &cb);
+    register_fd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, std::move(cb));
     return true;
 }
 
-int SelectPoll::register_fd(int fd, uint32_t events, IOCallback* cb)
+int SelectPoll::register_fd(int fd, uint32_t events, IOCallback& cb)
 {
     KUMA_INFOTRACE("SelectPoll::register_fd, fd="<<fd);
     if (fd >= fds_alloc_) {
@@ -86,7 +87,29 @@ int SelectPoll::register_fd(int fd, uint32_t events, IOCallback* cb)
         delete[] io_items_;
         io_items_ = newItems;
     }
-    io_items_[fd].cb = *cb;
+    io_items_[fd].cb = cb;
+    io_items_[fd].events = events;
+    ++fds_used_;
+    return KUMA_ERROR_NOERR;
+}
+
+int SelectPoll::register_fd(int fd, uint32_t events, IOCallback&& cb)
+{
+    KUMA_INFOTRACE("SelectPoll::register_fd, fd=" << fd);
+    if (fd >= fds_alloc_) {
+        int tmp_num = fds_alloc_ + 1024;
+        if (tmp_num < fd + 1)
+            tmp_num = fd + 1;
+
+        IOItem *newItems = new IOItem[tmp_num];
+        if (fds_alloc_ > 0) {
+            memcpy(newItems, io_items_, fds_alloc_*sizeof(IOItem));
+        }
+
+        delete[] io_items_;
+        io_items_ = newItems;
+    }
+    io_items_[fd].cb = std::move(cb);
     io_items_[fd].events = events;
     ++fds_used_;
     return KUMA_ERROR_NOERR;

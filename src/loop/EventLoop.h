@@ -35,7 +35,7 @@ public:
 
 public:
     bool init();
-    int registerIOCallback(int fd, uint32_t events, IOCallback &cb);
+    int registerIOCallback(int fd, uint32_t events, IOCallback& cb);
     int unregisterIOCallback(int fd, bool close_fd);
     KM_Timer_Manager* getTimerMgr() { return timer_mgr_; }
     
@@ -46,11 +46,9 @@ public:
     void stop();
     
 private:
-    typedef std::map<int, IOCallback> IOCallbackMap;
     typedef KM_QueueT<EventCallback, KM_Mutex> EventQueue;
     
     IOPoll*         poll_;
-    IOCallbackMap   ioCallbacks_;
     bool            stopLoop_;
     
     KM_Mutex        mutex_;
