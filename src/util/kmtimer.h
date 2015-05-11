@@ -17,7 +17,8 @@
 #define __KMTIMER_H__
 
 #include "kmdefs.h"
-#include <map>
+
+#include <memory>
 
 #ifndef TICK_COUNT_TYPE
 # define TICK_COUNT_TYPE    unsigned long
@@ -38,10 +39,10 @@ public:
     KM_Timer_Manager();
     ~KM_Timer_Manager();
 
-    bool schedule_timer(KM_Timer* timer, unsigned int time_elapse, bool repeat);
-    void cancel_timer(KM_Timer* timer);
+    bool scheduleTimer(KM_Timer* timer, unsigned int time_elapse, bool repeat);
+    void cancelTimer(KM_Timer* timer);
 
-    int check_expire(unsigned long* remain_ms = NULL);
+    int checkExpire(unsigned long* remain_ms = NULL);
 
 public:
     class KM_Timer_Node
@@ -79,10 +80,10 @@ public:
     };
     
 private:
-    bool add_timer(KM_Timer_Node* timer_node, bool from_schedule=false);
-    void remove_timer(KM_Timer_Node* timer_node);
-    int cascade_timer(int tv_idx, int tl_idx);
-    bool timer_pending(KM_Timer_Node* timer_node)
+    bool addTimer(KM_Timer_Node* timer_node, bool from_schedule=false);
+    void removeTimer(KM_Timer_Node* timer_node);
+    int cascadeTimer(int tv_idx, int tl_idx);
+    bool isTimerPending(KM_Timer_Node* timer_node)
     {
         return timer_node->next_ != NULL;
     }
@@ -108,22 +109,22 @@ private:
     unsigned int tv0_bitmap_[8]; // 1 -- have timer in this slot
     KM_Timer_Node tv_[TV_COUNT][TIMER_VECTOR_SIZE]; // timer vectors
 };
+typedef std::shared_ptr<KM_Timer_Manager> TimerManagerPtr;
 
 class KM_Timer
 {
 public:
-    KM_Timer(KM_Timer_Manager* mgr, TimerCallback& cb);
-    KM_Timer(KM_Timer_Manager* mgr, TimerCallback&& cb);
+    KM_Timer(TimerManagerPtr mgr, TimerCallback& cb);
+    KM_Timer(TimerManagerPtr mgr, TimerCallback&& cb);
     ~KM_Timer();
     
     bool schedule(unsigned int time_elapse, bool repeat = false);
     void cancel();
-    void on_detach();
     
 private:
     friend class KM_Timer_Manager;
     TimerCallback cb_;
-    KM_Timer_Manager* timer_mgr_;
+    std::weak_ptr<KM_Timer_Manager> timer_mgr_;
     KM_Timer_Manager::KM_Timer_Node timer_node_; // intrusive list node
 };
 

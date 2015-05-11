@@ -38,10 +38,8 @@ EventLoop::~EventLoop()
 {
     if(poll_) {
         delete poll_;
-        poll_ = NULL;
+        poll_ = nullptr;
     }
-    delete timer_mgr_;
-    timer_mgr_ = NULL;
 }
 
 bool EventLoop::init()
@@ -91,7 +89,7 @@ void EventLoop::loop()
             }
         }
         unsigned long wait_ms = max_wait_ms_;
-        timer_mgr_->check_expire(&wait_ms);
+        timer_mgr_->checkExpire(&wait_ms);
         if(wait_ms > max_wait_ms_) {
             wait_ms = max_wait_ms_;
         }

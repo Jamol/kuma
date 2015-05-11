@@ -17,14 +17,12 @@
 #define __KUMA_EVENTLOOP_H__
 
 #include "util/kmqueue.h"
-#include <map>
+#include "util/kmtimer.h"
+
 #include <stdint.h>
 #include <thread>
 
 KUMA_NS_BEGIN
-
-class TimerHandler;
-class KM_Timer_Manager;
 
 class IOPoll;
 
@@ -38,7 +36,7 @@ public:
     bool init();
     int registerFd(int fd, uint32_t events, IOCallback& cb);
     int unregisterFd(int fd, bool close_fd);
-    KM_Timer_Manager* getTimerMgr() { return timer_mgr_; }
+    TimerManagerPtr getTimerMgr() { return timer_mgr_; }
     
 public:
     bool isInEventLoopThread() { return std::this_thread::get_id() == thread_id_; }
@@ -58,7 +56,7 @@ private:
     EventQueue      event_queue_;
     
     uint32_t        max_wait_ms_;
-    KM_Timer_Manager* timer_mgr_;
+    TimerManagerPtr timer_mgr_;
 };
 
 KUMA_NS_END
