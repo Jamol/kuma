@@ -346,7 +346,7 @@ int KM_Timer_Manager::cascade_timer(int tv_idx, int tl_idx)
 }
 
 #define INDEX(N) ((next_jiffies >> ((N+1) * TIMER_VECTOR_BITS)) & TIMER_VECTOR_MASK)
-int KM_Timer_Manager::check_expire(unsigned long* remain_time_ms)
+int KM_Timer_Manager::check_expire(unsigned long* remain_ms)
 {
     if(0 == timer_count_) {
         return 0;
@@ -420,20 +420,20 @@ int KM_Timer_Manager::check_expire(unsigned long* remain_time_ms)
         }
     }
 
-    if(remain_time_ms) {
+    if(remain_ms) {
         // calc remain time in ms
         int pos = find_first_set_in_bitmap(next_jiffies & TIMER_VECTOR_MASK);
-        *remain_time_ms = -1==pos?256:pos;
+        *remain_ms = -1==pos?256:pos;
     }
 
     mutex_.unlock();
-    if(remain_time_ms) { // revise the remain time
+    if(remain_ms) { // revise the remain time
         now_tick = get_tick_count_ms();
         delta_tick = calc_time_elapse_delta_ms(now_tick, last_tick_);
-        if(*remain_time_ms <= delta_tick) {
-            *remain_time_ms = 0;
+        if(*remain_ms <= delta_tick) {
+            *remain_ms = 0;
         } else {
-            *remain_time_ms -= delta_tick;
+            *remain_ms -= delta_tick;
         }
     }
     return count;

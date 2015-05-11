@@ -18,17 +18,20 @@
 #include "util/kmdp.h"
 #include "util/kmqueue.h"
 #include "util/kmtimer.h"
+#include <thread>
 
 KUMA_NS_BEGIN
 
 IOPoll* createIOPoll();
 
-EventLoop::EventLoop(uint32_t max_wait_time_ms)
+EventLoop::EventLoop(uint32_t max_wait_ms)
+: poll_(createIOPoll())
+, stop_loop_(false)
+, thread_id_()
+, max_wait_ms_(max_wait_ms)
+, timer_mgr_(new KM_Timer_Manager())
 {
-    stopLoop_ = false;
-    poll_ = createIOPoll();
-    max_wait_time_ms_ = max_wait_time_ms;
-    timer_mgr_ = new KM_Timer_Manager();
+    
 }
 
 EventLoop::~EventLoop()
@@ -46,13 +49,17 @@ bool EventLoop::init()
     if(!poll_->init()) {
         return false;
     }
+    thread_id_ = std::this_thread::get_id();
     return true;
 }
 
-int EventLoop::registerIOCallback(int fd, uint32_t events, IOCallback& cb)
+int EventLoop::registerFd(int fd, uint32_t events, IOCallback& cb)
 {
+    if(isInEventLoopThread()) {
+        return poll_->registerFd(fd, events, cb);
+    }
     EventCallback ev([=, &cb] {
-        int ret = poll_->register_fd(fd, events, cb);
+        int ret = poll_->registerFd(fd, events, cb);
         if(ret != KUMA_ERROR_NOERR) {
             return ;
         }
@@ -60,10 +67,13 @@ int EventLoop::registerIOCallback(int fd, uint32_t events, IOCallback& cb)
     return runInEventLoop(std::move(ev));
 }
 
-int EventLoop::unregisterIOCallback(int fd, bool close_fd)
+int EventLoop::unregisterFd(int fd, bool close_fd)
 {
+    if(isInEventLoopThread()) {
+        return poll_->unregisterFd(fd);
+    }
     EventCallback ev([=] {
-        poll_->unregister_fd(fd);
+        poll_->unregisterFd(fd);
         if(close_fd) {
             closesocket(fd);
         }
@@ -73,33 +83,41 @@ int EventLoop::unregisterIOCallback(int fd, bool close_fd)
 
 void EventLoop::loop()
 {
-    while (!stopLoop_) {
+    while (!stop_loop_) {
         EventCallback cb;
-        while (!stopLoop_ && eventQueue_.dequeue(cb)) {
+        while (!stop_loop_ && event_queue_.dequeue(cb)) {
             if(cb) {
                 cb();
             }
         }
-        unsigned long remain_time_ms = max_wait_time_ms_;
-        timer_mgr_->check_expire(&remain_time_ms);
-        if(remain_time_ms > max_wait_time_ms_) {
-            remain_time_ms = max_wait_time_ms_;
+        unsigned long wait_ms = max_wait_ms_;
+        timer_mgr_->check_expire(&wait_ms);
+        if(wait_ms > max_wait_ms_) {
+            wait_ms = max_wait_ms_;
         }
-        poll_->wait((uint32_t)remain_time_ms);
+        poll_->wait((uint32_t)wait_ms);
     }
 }
 
 int EventLoop::runInEventLoop(EventCallback &cb)
 {
-    eventQueue_.enqueue(cb);
-    poll_->notify();
+    if(isInEventLoopThread()) {
+        cb();
+    } else {
+        event_queue_.enqueue(cb);
+        poll_->notify();
+    }
     return KUMA_ERROR_NOERR;
 }
 
 int EventLoop::runInEventLoop(EventCallback &&cb)
 {
-    eventQueue_.enqueue(std::move(cb));
-    poll_->notify();
+    if(isInEventLoopThread()) {
+        cb();
+    } else {
+        event_queue_.enqueue(std::move(cb));
+        poll_->notify();
+    }
     return KUMA_ERROR_NOERR;
 }
 

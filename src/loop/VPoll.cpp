@@ -28,11 +28,11 @@ public:
     ~VPoll();
     
     virtual bool init();
-    virtual int register_fd(int fd, uint32_t events, IOCallback& cb);
-    virtual int register_fd(int fd, uint32_t events, IOCallback&& cb);
-    virtual int unregister_fd(int fd);
-    virtual int modify_events(int fd, uint32_t events);
-    virtual int wait(uint32_t wait_time_ms);
+    virtual int registerFd(int fd, uint32_t events, IOCallback& cb);
+    virtual int registerFd(int fd, uint32_t events, IOCallback&& cb);
+    virtual int unregisterFd(int fd);
+    virtual int updateFd(int fd, uint32_t events);
+    virtual int wait(uint32_t wait_ms);
     virtual void notify();
     
 private:
@@ -83,7 +83,7 @@ bool VPoll::init()
 {
     notifier_.init();
     IOCallback cb ([this] (uint32_t ev) { notifier_.onEvent(ev); });
-    register_fd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, std::move(cb));
+    registerFd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, std::move(cb));
     return true;
 }
 
@@ -117,7 +117,7 @@ uint32_t VPoll::get_kuma_events(uint32_t events)
     return ev;
 }
 
-int VPoll::register_fd(int fd, uint32_t events, IOCallback& cb)
+int VPoll::registerFd(int fd, uint32_t events, IOCallback& cb)
 {
     if (fd >= fds_alloc_) {
         int tmp_num = fds_alloc_ + 1024;
@@ -148,13 +148,13 @@ int VPoll::register_fd(int fd, uint32_t events, IOCallback& cb)
     poll_items_[fd].index = fds_used_;
     poll_fds_[fds_used_].fd = fd;
     poll_fds_[fds_used_].events = get_events(events);
-    KUMA_INFOTRACE("VPoll::register_fd, fd="<<fd<<", index="<<fds_used_);
+    KUMA_INFOTRACE("VPoll::registerFd, fd="<<fd<<", index="<<fds_used_);
     ++fds_used_;
     
     return KUMA_ERROR_NOERR;
 }
 
-int VPoll::register_fd(int fd, uint32_t events, IOCallback&& cb)
+int VPoll::registerFd(int fd, uint32_t events, IOCallback&& cb)
 {
     if (fd >= fds_alloc_) {
         int tmp_num = fds_alloc_ + 1024;
@@ -185,17 +185,17 @@ int VPoll::register_fd(int fd, uint32_t events, IOCallback&& cb)
     poll_items_[fd].index = fds_used_;
     poll_fds_[fds_used_].fd = fd;
     poll_fds_[fds_used_].events = get_events(events);
-    KUMA_INFOTRACE("VPoll::register_fd, fd="<<fd<<", index="<<fds_used_);
+    KUMA_INFOTRACE("VPoll::registerFd, fd="<<fd<<", index="<<fds_used_);
     ++fds_used_;
     
     return KUMA_ERROR_NOERR;
 }
 
-int VPoll::unregister_fd(int fd)
+int VPoll::unregisterFd(int fd)
 {
-    KUMA_INFOTRACE("VPoll::unregister_fd, fd="<<fd);
+    KUMA_INFOTRACE("VPoll::unregisterFd, fd="<<fd);
     if ((fd < 0) || (fd >= fds_alloc_) || 0 == fds_used_) {
-        KUMA_WARNTRACE("VPoll::unregister_fd, failed, alloced="<<fds_alloc_<<", used="<<fds_used_);
+        KUMA_WARNTRACE("VPoll::unregisterFd, failed, alloced="<<fds_alloc_<<", used="<<fds_used_);
         return KUMA_ERROR_INVALID_PARAM;
     }
     int pfds_index = poll_items_[fd].index;
@@ -214,32 +214,32 @@ int VPoll::unregister_fd(int fd)
     return KUMA_ERROR_NOERR;
 }
 
-int VPoll::modify_events(int fd, uint32_t events)
+int VPoll::updateFd(int fd, uint32_t events)
 {
     if ((fd < 0) || (fd >= fds_alloc_) || 0 == fds_used_) {
-        KUMA_WARNTRACE("modify_events, failed, alloced: "<<fds_alloc_<<", used: "<<fds_used_);
+        KUMA_WARNTRACE("VPoll::updateFd, failed, alloced: "<<fds_alloc_<<", used: "<<fds_used_);
         return KUMA_ERROR_INVALID_PARAM;
     }
     if(poll_items_[fd].fd != fd) {
-        KUMA_WARNTRACE("modify_events, failed, fd: "<<fd<<", m_fd: "<<poll_items_[fd].fd);
+        KUMA_WARNTRACE("VPoll::updateFd, failed, fd: "<<fd<<", m_fd: "<<poll_items_[fd].fd);
         return KUMA_ERROR_INVALID_PARAM;
     }
     int pfds_index = poll_items_[fd].index;
     if(pfds_index < 0 || pfds_index >= fds_used_) {
-        KUMA_WARNTRACE("modify_events, failed, pfd_index: "<<pfds_index);
+        KUMA_WARNTRACE("VPoll::updateFd, failed, pfd_index: "<<pfds_index);
         return KUMA_ERROR_INVALID_STATE;
     }
     if(poll_fds_[pfds_index].fd != fd) {
-        KUMA_WARNTRACE("modify_events, failed, fd: "<<fd<<", pfds_fd: "<<poll_fds_[pfds_index].fd);
+        KUMA_WARNTRACE("VPoll::updateFd, failed, fd: "<<fd<<", pfds_fd: "<<poll_fds_[pfds_index].fd);
         return KUMA_ERROR_INVALID_PARAM;
     }
     poll_fds_[pfds_index].events = get_events(events);
     return KUMA_ERROR_NOERR;
 }
 
-int VPoll::wait(uint32_t wait_time_ms)
+int VPoll::wait(uint32_t wait_ms)
 {
-    int num_revts = poll(poll_fds_, fds_used_, wait_time_ms);
+    int num_revts = poll(poll_fds_, fds_used_, wait_ms);
     if (-1 == num_revts) {
         if(EINTR == errno) {
             errno = 0;

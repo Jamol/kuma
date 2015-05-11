@@ -41,7 +41,7 @@ public:
     bool schedule_timer(KM_Timer* timer, unsigned int time_elapse, bool repeat);
     void cancel_timer(KM_Timer* timer);
 
-    int check_expire(unsigned long* remain_time_ms = NULL);
+    int check_expire(unsigned long* remain_ms = NULL);
 
 public:
     class KM_Timer_Node

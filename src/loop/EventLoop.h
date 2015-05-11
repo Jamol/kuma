@@ -19,6 +19,7 @@
 #include "util/kmqueue.h"
 #include <map>
 #include <stdint.h>
+#include <thread>
 
 KUMA_NS_BEGIN
 
@@ -35,11 +36,12 @@ public:
 
 public:
     bool init();
-    int registerIOCallback(int fd, uint32_t events, IOCallback& cb);
-    int unregisterIOCallback(int fd, bool close_fd);
+    int registerFd(int fd, uint32_t events, IOCallback& cb);
+    int unregisterFd(int fd, bool close_fd);
     KM_Timer_Manager* getTimerMgr() { return timer_mgr_; }
     
 public:
+    bool isInEventLoopThread() { return std::this_thread::get_id() == thread_id_; }
     int runInEventLoop(EventCallback &cb);
     int runInEventLoop(EventCallback &&cb);
     void loop();
@@ -49,12 +51,13 @@ private:
     typedef KM_QueueT<EventCallback, KM_Mutex> EventQueue;
     
     IOPoll*         poll_;
-    bool            stopLoop_;
+    bool            stop_loop_;
+    std::thread::id thread_id_;
     
     KM_Mutex        mutex_;
-    EventQueue      eventQueue_;
+    EventQueue      event_queue_;
     
-    uint32_t        max_wait_time_ms_;
+    uint32_t        max_wait_ms_;
     KM_Timer_Manager* timer_mgr_;
 };
 

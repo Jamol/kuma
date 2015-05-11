@@ -26,10 +26,10 @@ public:
     ~SelectPoll();
     
     virtual bool init();
-    virtual int register_fd(int fd, uint32_t events, IOCallback& cb);
-    virtual int register_fd(int fd, uint32_t events, IOCallback&& cb);
-    virtual int unregister_fd(int fd);
-    virtual int modify_events(int fd, uint32_t events);
+    virtual int registerFd(int fd, uint32_t events, IOCallback& cb);
+    virtual int registerFd(int fd, uint32_t events, IOCallback&& cb);
+    virtual int unregisterFd(int fd);
+    virtual int updateFd(int fd, uint32_t events);
     virtual int wait(uint32_t wait_time_ms);
     virtual void notify();
     
@@ -67,13 +67,13 @@ bool SelectPoll::init()
 {
     notifier_.init();
     IOCallback cb ([this] (uint32_t ev) { notifier_.onEvent(ev); });
-    register_fd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, std::move(cb));
+    registerFd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, std::move(cb));
     return true;
 }
 
-int SelectPoll::register_fd(int fd, uint32_t events, IOCallback& cb)
+int SelectPoll::registerFd(int fd, uint32_t events, IOCallback& cb)
 {
-    KUMA_INFOTRACE("SelectPoll::register_fd, fd="<<fd);
+    KUMA_INFOTRACE("SelectPoll::registerFd, fd="<<fd);
     if (fd >= fds_alloc_) {
         int tmp_num = fds_alloc_ + 1024;
         if (tmp_num < fd + 1)
@@ -93,9 +93,9 @@ int SelectPoll::register_fd(int fd, uint32_t events, IOCallback& cb)
     return KUMA_ERROR_NOERR;
 }
 
-int SelectPoll::register_fd(int fd, uint32_t events, IOCallback&& cb)
+int SelectPoll::registerFd(int fd, uint32_t events, IOCallback&& cb)
 {
-    KUMA_INFOTRACE("SelectPoll::register_fd, fd=" << fd);
+    KUMA_INFOTRACE("SelectPoll::registerFd, fd=" << fd);
     if (fd >= fds_alloc_) {
         int tmp_num = fds_alloc_ + 1024;
         if (tmp_num < fd + 1)
@@ -115,11 +115,11 @@ int SelectPoll::register_fd(int fd, uint32_t events, IOCallback&& cb)
     return KUMA_ERROR_NOERR;
 }
 
-int SelectPoll::unregister_fd(int fd)
+int SelectPoll::unregisterFd(int fd)
 {
-    KUMA_INFOTRACE("SelectPoll::unregister_fd, fd="<<fd);
+    KUMA_INFOTRACE("SelectPoll::unregisterFd, fd="<<fd);
     if ((fd < 0) || (fd >= fds_alloc_) || 0 == fds_used_) {
-        KUMA_WARNTRACE("SelectPoll::unregister_fd, failed, alloced="<<fds_alloc_<<", used="<<fds_used_);
+        KUMA_WARNTRACE("SelectPoll::unregisterFd, failed, alloced="<<fds_alloc_<<", used="<<fds_used_);
         return KUMA_ERROR_INVALID_PARAM;
     }
     
@@ -129,21 +129,21 @@ int SelectPoll::unregister_fd(int fd)
     return KUMA_ERROR_NOERR;
 }
 
-int SelectPoll::modify_events(int fd, uint32_t events)
+int SelectPoll::updateFd(int fd, uint32_t events)
 {
     return KUMA_ERROR_NOERR;
 }
 
-int SelectPoll::wait(uint32_t wait_time_ms)
+int SelectPoll::wait(uint32_t wait_ms)
 {
     fd_set readfds, writefds, exceptfds;
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
     FD_ZERO(&exceptfds);
     struct timeval tval;
-    if(wait_time_ms > 0) {
-        tval.tv_sec = wait_time_ms/1000;
-        tval.tv_usec = (wait_time_ms - tval.tv_sec*1000)*1000;
+    if(wait_ms > 0) {
+        tval.tv_sec = wait_ms/1000;
+        tval.tv_usec = (wait_ms - tval.tv_sec*1000)*1000;
     }
     int maxfd = 0;
     for (int i=0; i<fds_alloc_; ++i) {
@@ -162,7 +162,7 @@ int SelectPoll::wait(uint32_t wait_time_ms)
             }
         }
     }
-    int nready = ::select(maxfd+1, &readfds, &writefds, &exceptfds, wait_time_ms == -1 ? NULL : &tval);
+    int nready = ::select(maxfd+1, &readfds, &writefds, &exceptfds, wait_ms == -1 ? NULL : &tval);
     if (nready <= 0) {
         return KUMA_ERROR_NOERR;
     }
