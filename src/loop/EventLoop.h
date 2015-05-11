@@ -42,6 +42,7 @@ public:
     bool isInEventLoopThread() { return std::this_thread::get_id() == thread_id_; }
     int runInEventLoop(EventCallback &cb);
     int runInEventLoop(EventCallback &&cb);
+    int runInEventLoopSync(EventCallback &cb);
     void loop();
     void stop();
     
@@ -52,7 +53,6 @@ private:
     bool            stop_loop_;
     std::thread::id thread_id_;
     
-    KM_Mutex        mutex_;
     EventQueue      event_queue_;
     
     uint32_t        max_wait_ms_;

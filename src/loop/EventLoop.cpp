@@ -19,6 +19,7 @@
 #include "util/kmqueue.h"
 #include "util/kmtimer.h"
 #include <thread>
+#include <condition_variable>
 
 KUMA_NS_BEGIN
 
@@ -69,14 +70,19 @@ int EventLoop::unregisterFd(int fd, bool close_fd)
 {
     if(isInEventLoopThread()) {
         return poll_->unregisterFd(fd);
-    }
-    EventCallback ev([=] {
-        poll_->unregisterFd(fd);
-        if(close_fd) {
-            closesocket(fd);
+    } else {
+        EventCallback ev([=] {
+            poll_->unregisterFd(fd);
+            if(close_fd) {
+                closesocket(fd);
+            }
+        });
+        int ret = runInEventLoopSync(ev);
+        if(KUMA_ERROR_NOERR != ret) {
+            return ret;
         }
-    });
-    return runInEventLoop(std::move(ev));
+        return KUMA_ERROR_NOERR;
+    }
 }
 
 void EventLoop::loop()
@@ -97,6 +103,11 @@ void EventLoop::loop()
     }
 }
 
+void EventLoop::stop()
+{
+    stop_loop_ = true;
+}
+
 int EventLoop::runInEventLoop(EventCallback &cb)
 {
     if(isInEventLoopThread()) {
@@ -115,6 +126,29 @@ int EventLoop::runInEventLoop(EventCallback &&cb)
     } else {
         event_queue_.enqueue(std::move(cb));
         poll_->notify();
+    }
+    return KUMA_ERROR_NOERR;
+}
+
+int EventLoop::runInEventLoopSync(EventCallback &cb)
+{
+    if(isInEventLoopThread()) {
+        cb();
+    } else {
+        std::mutex m;
+        std::condition_variable cv;
+        bool ready = false;
+        EventCallback ev_sync([&] {
+            cb();
+            std::unique_lock<std::mutex> lk(m);
+            ready = true;
+            lk.unlock();
+            cv.notify_one();
+        });
+        event_queue_.enqueue(std::move(ev_sync));
+        poll_->notify();
+        std::unique_lock<std::mutex> lk(m);
+        cv.wait(lk, [&ready] { return ready; });
     }
     return KUMA_ERROR_NOERR;
 }
