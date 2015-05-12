@@ -57,7 +57,7 @@ int EventLoop::registerFd(int fd, uint32_t events, IOCallback& cb)
     if(isInEventLoopThread()) {
         return poll_->registerFd(fd, events, cb);
     }
-    EventCallback ev([=, &cb] {
+    LoopCallback ev([=, &cb] {
         int ret = poll_->registerFd(fd, events, cb);
         if(ret != KUMA_ERROR_NOERR) {
             return ;
@@ -71,7 +71,7 @@ int EventLoop::unregisterFd(int fd, bool close_fd)
     if(isInEventLoopThread()) {
         return poll_->unregisterFd(fd);
     } else {
-        EventCallback ev([=] {
+        LoopCallback ev([=] {
             poll_->unregisterFd(fd);
             if(close_fd) {
                 closesocket(fd);
@@ -88,8 +88,8 @@ int EventLoop::unregisterFd(int fd, bool close_fd)
 void EventLoop::loop()
 {
     while (!stop_loop_) {
-        EventCallback cb;
-        while (!stop_loop_ && event_queue_.dequeue(cb)) {
+        LoopCallback cb;
+        while (!stop_loop_ && cb_queue_.dequeue(cb)) {
             if(cb) {
                 cb();
             }
@@ -108,29 +108,29 @@ void EventLoop::stop()
     stop_loop_ = true;
 }
 
-int EventLoop::runInEventLoop(EventCallback &cb)
+int EventLoop::runInEventLoop(LoopCallback &cb)
 {
     if(isInEventLoopThread()) {
         cb();
     } else {
-        event_queue_.enqueue(cb);
+        cb_queue_.enqueue(cb);
         poll_->notify();
     }
     return KUMA_ERROR_NOERR;
 }
 
-int EventLoop::runInEventLoop(EventCallback &&cb)
+int EventLoop::runInEventLoop(LoopCallback &&cb)
 {
     if(isInEventLoopThread()) {
         cb();
     } else {
-        event_queue_.enqueue(std::move(cb));
+        cb_queue_.enqueue(std::move(cb));
         poll_->notify();
     }
     return KUMA_ERROR_NOERR;
 }
 
-int EventLoop::runInEventLoopSync(EventCallback &cb)
+int EventLoop::runInEventLoopSync(LoopCallback &cb)
 {
     if(isInEventLoopThread()) {
         cb();
@@ -138,14 +138,14 @@ int EventLoop::runInEventLoopSync(EventCallback &cb)
         std::mutex m;
         std::condition_variable cv;
         bool ready = false;
-        EventCallback ev_sync([&] {
+        LoopCallback cb_sync([&] {
             cb();
             std::unique_lock<std::mutex> lk(m);
             ready = true;
             lk.unlock();
             cv.notify_one();
         });
-        event_queue_.enqueue(std::move(ev_sync));
+        cb_queue_.enqueue(std::move(cb_sync));
         poll_->notify();
         std::unique_lock<std::mutex> lk(m);
         cv.wait(lk, [&ready] { return ready; });

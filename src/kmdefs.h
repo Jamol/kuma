@@ -24,7 +24,7 @@ enum{
 #define KUMA_EV_NETWORK (KUMA_EV_READ|KUMA_EV_WRITE|KUMA_EV_ERROR)
 
 typedef std::function<void(unsigned int)> IOCallback;
-typedef std::function<void(void)> EventCallback;
+typedef std::function<void(void)> LoopCallback;
 typedef std::function<void(void)> TimerCallback;
 
 typedef std::recursive_mutex KM_Mutex;

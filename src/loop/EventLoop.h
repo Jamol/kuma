@@ -40,20 +40,20 @@ public:
     
 public:
     bool isInEventLoopThread() { return std::this_thread::get_id() == thread_id_; }
-    int runInEventLoop(EventCallback &cb);
-    int runInEventLoop(EventCallback &&cb);
-    int runInEventLoopSync(EventCallback &cb);
+    int runInEventLoop(LoopCallback &cb);
+    int runInEventLoop(LoopCallback &&cb);
+    int runInEventLoopSync(LoopCallback &cb);
     void loop();
     void stop();
     
 private:
-    typedef KM_QueueT<EventCallback, KM_Mutex> EventQueue;
+    typedef KM_QueueT<LoopCallback, KM_Mutex> CallbackQueue;
     
     IOPoll*         poll_;
     bool            stop_loop_;
     std::thread::id thread_id_;
     
-    EventQueue      event_queue_;
+    CallbackQueue   cb_queue_;
     
     uint32_t        max_wait_ms_;
     TimerManagerPtr timer_mgr_;
