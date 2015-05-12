@@ -40,9 +40,9 @@ public:
     
 public:
     bool isInEventLoopThread() { return std::this_thread::get_id() == thread_id_; }
-    int runInEventLoop(LoopCallback &cb);
-    int runInEventLoop(LoopCallback &&cb);
-    int runInEventLoopSync(LoopCallback &cb);
+    int runInEventLoop(LoopCallback& cb);
+    int runInEventLoop(LoopCallback&& cb);
+    int runInEventLoopSync(LoopCallback& cb);
     void loop();
     void stop();
     

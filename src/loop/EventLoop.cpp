@@ -108,7 +108,7 @@ void EventLoop::stop()
     stop_loop_ = true;
 }
 
-int EventLoop::runInEventLoop(LoopCallback &cb)
+int EventLoop::runInEventLoop(LoopCallback& cb)
 {
     if(isInEventLoopThread()) {
         cb();
@@ -119,7 +119,7 @@ int EventLoop::runInEventLoop(LoopCallback &cb)
     return KUMA_ERROR_NOERR;
 }
 
-int EventLoop::runInEventLoop(LoopCallback &&cb)
+int EventLoop::runInEventLoop(LoopCallback&& cb)
 {
     if(isInEventLoopThread()) {
         cb();
@@ -130,7 +130,7 @@ int EventLoop::runInEventLoop(LoopCallback &&cb)
     return KUMA_ERROR_NOERR;
 }
 
-int EventLoop::runInEventLoopSync(LoopCallback &cb)
+int EventLoop::runInEventLoopSync(LoopCallback& cb)
 {
     if(isInEventLoopThread()) {
         cb();
