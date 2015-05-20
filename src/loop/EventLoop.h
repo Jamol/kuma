@@ -19,6 +19,9 @@
 #include "util/kmqueue.h"
 #include "util/kmtimer.h"
 
+#ifdef KUMA_OS_WIN
+# include <Ws2tcpip.h>
+#endif
 #include <stdint.h>
 #include <thread>
 
@@ -29,14 +32,18 @@ class IOPoll;
 class EventLoop
 {
 public:
-    EventLoop(uint32_t max_wait_time_ms = -1);
+    EventLoop(uint32_t max_wait_ms = -1);
     ~EventLoop();
 
 public:
     bool init();
-    int registerFd(int fd, uint32_t events, IOCallback& cb);
-    int unregisterFd(int fd, bool close_fd);
+    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb);
+    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb);
+    int updateFd(SOCKET_FD fd, uint32_t events);
+    int unregisterFd(SOCKET_FD fd, bool close_fd);
     TimerManagerPtr getTimerMgr() { return timer_mgr_; }
+    
+    PollType getPollType();
     
 public:
     bool isInEventLoopThread() { return std::this_thread::get_id() == thread_id_; }

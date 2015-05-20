@@ -25,42 +25,33 @@ public:
     SelectPoll();
     ~SelectPoll();
     
-    virtual bool init();
-    virtual int registerFd(int fd, uint32_t events, IOCallback& cb);
-    virtual int registerFd(int fd, uint32_t events, IOCallback&& cb);
-    virtual int unregisterFd(int fd);
-    virtual int updateFd(int fd, uint32_t events);
-    virtual int wait(uint32_t wait_time_ms);
-    virtual void notify();
+    bool init();
+    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb);
+    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb);
+    int unregisterFd(SOCKET_FD fd);
+    int updateFd(SOCKET_FD fd, uint32_t events);
+    int wait(uint32_t wait_time_ms);
+    void notify();
+    PollType getType() { return POLL_TYPE_SELECT; }
+
+private:
+    void resizePollItems(SOCKET_FD fd);
     
 private:
-    struct IOItem
-    {
-        IOItem() : events(0) {}
-        IOCallback cb;
-        uint32_t events;
-    };
-    
-private:
-    Notifier    notifier_;
-    IOItem*     io_items_;
-    int         fds_alloc_;
-    int         fds_used_;
+    Notifier                notifier_;
+    PollItemVector          poll_items_;
+    std::vector<SOCKET_FD>  poll_fds_;
 };
 
 SelectPoll::SelectPoll()
 {
-    io_items_ = NULL;
-    fds_alloc_ = 0;
-    fds_used_ = 0;
+    
 }
 
 SelectPoll::~SelectPoll()
 {
-    if(io_items_) {
-        delete[] io_items_;
-        io_items_ = NULL;
-    }
+    poll_fds_.clear();
+    poll_items_.clear();
 }
 
 bool SelectPoll::init()
@@ -71,65 +62,72 @@ bool SelectPoll::init()
     return true;
 }
 
-int SelectPoll::registerFd(int fd, uint32_t events, IOCallback& cb)
+void SelectPoll::resizePollItems(SOCKET_FD fd)
+{
+    if (fd >= poll_items_.size()) {
+        poll_items_.resize(fd + 1);
+    }
+}
+
+int SelectPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
 {
     KUMA_INFOTRACE("SelectPoll::registerFd, fd="<<fd);
-    if (fd >= fds_alloc_) {
-        int tmp_num = fds_alloc_ + 1024;
-        if (tmp_num < fd + 1)
-            tmp_num = fd + 1;
-        
-        IOItem *newItems = new IOItem[tmp_num];
-        if(fds_alloc_ > 0) {
-            memcpy(newItems, io_items_, fds_alloc_*sizeof(IOItem));
-        }
-        
-        delete[] io_items_;
-        io_items_ = newItems;
+    resizePollItems(fd);
+    if (INVALID_FD == poll_items_[fd].fd || -1 == poll_items_[fd].idx) {
+        poll_fds_.push_back(fd);
+        poll_items_[fd].idx = int(poll_fds_.size() - 1);
     }
-    io_items_[fd].cb = cb;
-    io_items_[fd].events = events;
-    ++fds_used_;
+    poll_items_[fd].fd = fd;
+    poll_items_[fd].cb = cb;
+    poll_items_[fd].ev = events;
     return KUMA_ERROR_NOERR;
 }
 
-int SelectPoll::registerFd(int fd, uint32_t events, IOCallback&& cb)
+int SelectPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb)
 {
     KUMA_INFOTRACE("SelectPoll::registerFd, fd=" << fd);
-    if (fd >= fds_alloc_) {
-        int tmp_num = fds_alloc_ + 1024;
-        if (tmp_num < fd + 1)
-            tmp_num = fd + 1;
-
-        IOItem *newItems = new IOItem[tmp_num];
-        if (fds_alloc_ > 0) {
-            memcpy(newItems, io_items_, fds_alloc_*sizeof(IOItem));
-        }
-
-        delete[] io_items_;
-        io_items_ = newItems;
+    resizePollItems(fd);
+    if (INVALID_FD == poll_items_[fd].fd || -1 == poll_items_[fd].idx) {
+        poll_fds_.push_back(fd);
+        poll_items_[fd].idx = int(poll_fds_.size() - 1);
     }
-    io_items_[fd].cb = std::move(cb);
-    io_items_[fd].events = events;
-    ++fds_used_;
+    poll_items_[fd].fd = fd;
+    poll_items_[fd].cb = std::move(cb);
+    poll_items_[fd].ev = events;
     return KUMA_ERROR_NOERR;
 }
 
-int SelectPoll::unregisterFd(int fd)
+int SelectPoll::unregisterFd(SOCKET_FD fd)
 {
     KUMA_INFOTRACE("SelectPoll::unregisterFd, fd="<<fd);
-    if ((fd < 0) || (fd >= fds_alloc_) || 0 == fds_used_) {
-        KUMA_WARNTRACE("SelectPoll::unregisterFd, failed, alloced="<<fds_alloc_<<", used="<<fds_used_);
+    int max_fd = int(poll_items_.size() - 1);
+    if (fd < 0 || fd > max_fd) {
+        KUMA_WARNTRACE("SelectPoll::unregisterFd, failed, max_fd=" << max_fd);
         return KUMA_ERROR_INVALID_PARAM;
     }
-    
-    io_items_[fd].cb = nullptr;
-    io_items_[fd].events = 0;
-    --fds_used_;
+    int idx = poll_items_[fd].idx;
+    if (fd == max_fd) {
+        poll_items_.pop_back();
+    } else {
+        poll_items_[fd].fd = INVALID_FD;
+        poll_items_[fd].cb = nullptr;
+        poll_items_[fd].ev = 0;
+        poll_items_[fd].idx = -1;
+    }
+    int last_idx = int(poll_fds_.size() - 1);
+    if (idx > last_idx || -1 == idx) {
+        return KUMA_ERROR_NOERR;
+    }
+    if (idx != last_idx) {
+        poll_fds_[idx] = poll_fds_[last_idx];
+        std::iter_swap(poll_fds_.begin() + idx, poll_fds_.end() - 1);
+        poll_items_[poll_fds_[idx]].idx = idx;
+    }
+    poll_fds_.pop_back();
     return KUMA_ERROR_NOERR;
 }
 
-int SelectPoll::updateFd(int fd, uint32_t events)
+int SelectPoll::updateFd(SOCKET_FD fd, uint32_t events)
 {
     return KUMA_ERROR_NOERR;
 }
@@ -145,44 +143,50 @@ int SelectPoll::wait(uint32_t wait_ms)
         tval.tv_sec = wait_ms/1000;
         tval.tv_usec = (wait_ms - tval.tv_sec*1000)*1000;
     }
-    int maxfd = 0;
-    for (int i=0; i<fds_alloc_; ++i) {
-        if(io_items_[i].cb && io_items_[i].events != 0) {
-            if(io_items_[i].events|KUMA_EV_READ) {
-                FD_SET(i, &readfds);
+    SOCKET_FD max_fd = 0;
+    int fds_count = int(poll_fds_.size());
+    int item_count = int(poll_items_.size());
+    for (int i = 0; i<fds_count; ++i) {
+        SOCKET_FD fd = poll_fds_[i];
+        if (fd != INVALID_FD && fd < item_count && poll_items_[fd].ev != 0) {
+            if (poll_items_[fd].ev | KUMA_EV_READ) {
+                FD_SET(fd, &readfds);
             }
-            if(io_items_[i].events|KUMA_EV_WRITE) {
-                FD_SET(i, &writefds);
+            if (poll_items_[fd].ev | KUMA_EV_WRITE) {
+                FD_SET(fd, &writefds);
             }
-            if(io_items_[i].events|KUMA_EV_ERROR) {
-                FD_SET(i, &exceptfds);
+            if (poll_items_[fd].ev | KUMA_EV_ERROR) {
+                FD_SET(fd, &exceptfds);
             }
-            if(i > maxfd) {
-                maxfd = i;
+            if (fd > max_fd) {
+                max_fd = fd;
             }
         }
     }
-    int nready = ::select(maxfd+1, &readfds, &writefds, &exceptfds, wait_ms == -1 ? NULL : &tval);
+    int nready = ::select(max_fd + 1, &readfds, &writefds, &exceptfds, wait_ms == -1 ? NULL : &tval);
     if (nready <= 0) {
         return KUMA_ERROR_NOERR;
     }
-    for (int i=0; i<=maxfd && nready > 0; ++i) {
+    for (int i = 0; i < fds_count && nready > 0; ++i) {
         uint32_t events = 0;
-        if(FD_ISSET(i, &readfds)) {
+        SOCKET_FD fd = poll_fds_[i];
+        if(FD_ISSET(fd, &readfds)) {
             events |= KUMA_EV_READ;
             --nready;
         }
-        if(nready > 0 && FD_ISSET(i, &writefds)) {
+        if(nready > 0 && FD_ISSET(fd, &writefds)) {
             events |= KUMA_EV_WRITE;
             --nready;
         }
-        if(nready > 0 && FD_ISSET(i, &exceptfds)) {
+        if(nready > 0 && FD_ISSET(fd, &exceptfds)) {
             events |= KUMA_EV_ERROR;
             --nready;
         }
-        IOCallback& cb = io_items_[i].cb;
-        if(cb) {
-            cb(events);
+        if (fd < item_count) {
+            IOCallback& cb = poll_items_[fd].cb;
+            if (cb) {
+                cb(events);
+            }
         }
     }
     return KUMA_ERROR_NOERR;

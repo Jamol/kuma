@@ -27,13 +27,14 @@ public:
     EPoll();
     ~EPoll();
     
-    virtual bool init();
-    virtual int registerFd(int fd, uint32_t events, IOCallback& cb);
-    virtual int registerFd(int fd, uint32_t events, IOCallback&& cb);
-    virtual int unregisterFd(int fd);
-    virtual int updateFd(int fd, uint32_t events);
-    virtual int wait(uint32_t wait_time_ms);
-    virtual void notify();
+    bool init();
+    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb);
+    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb);
+    int unregisterFd(SOCKET_FD fd);
+    int updateFd(SOCKET_FD fd, uint32_t events);
+    int wait(uint32_t wait_time_ms);
+    void notify();
+    PollType getType() { return POLL_TYPE_EPOLL; }
     
 private:
     uint32_t get_events(uint32_t kuma_events);
@@ -104,7 +105,7 @@ uint32_t EPoll::get_kuma_events(uint32_t events)
     return ev;
 }
 
-int EPoll::registerFd(int fd, uint32_t events, IOCallback& cb)
+int EPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
 {
     if (callbacks_.find(fd) != callbacks_.end()) {
         return KUMA_ERROR_ALREADY_EXIST;
@@ -115,7 +116,7 @@ int EPoll::registerFd(int fd, uint32_t events, IOCallback& cb)
     evt.data.ptr = &r.first->second;
     evt.events = get_events(events);//EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLET;
     if(epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, fd, &evt) < 0) {
-        KUMA_INFOTRACE("EPoll::registerFd error, fd="<<fd<<", errno="<<errno);
+        KUMA_ERRTRACE("EPoll::registerFd error, fd="<<fd<<", errno="<<errno);
         return -1;
     }
     KUMA_INFOTRACE("EPoll::registerFd, fd="<<fd);
@@ -123,7 +124,7 @@ int EPoll::registerFd(int fd, uint32_t events, IOCallback& cb)
     return KUMA_ERROR_NOERR;
 }
 
-int EPoll::registerFd(int fd, uint32_t events, IOCallback&& cb)
+int EPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb)
 {
     if (callbacks_.find(fd) != callbacks_.end()) {
         return KUMA_ERROR_ALREADY_EXIST;
@@ -134,7 +135,7 @@ int EPoll::registerFd(int fd, uint32_t events, IOCallback&& cb)
     evt.data.ptr = &r.first->second;
     evt.events = get_events(events);//EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLET;
     if (epoll_ctl(epoll_fd_, EPOLL_CTL_ADD, fd, &evt) < 0) {
-        KUMA_INFOTRACE("EPoll::registerFd error, fd=" << fd << ", errno=" << errno);
+        KUMA_ERRTRACE("EPoll::registerFd error, fd=" << fd << ", errno=" << errno);
         return KUMA_ERROR_FAILED;
     }
     KUMA_INFOTRACE("EPoll::registerFd, fd=" << fd);
@@ -142,7 +143,7 @@ int EPoll::registerFd(int fd, uint32_t events, IOCallback&& cb)
     return KUMA_ERROR_NOERR;
 }
 
-int EPoll::unregisterFd(int fd)
+int EPoll::unregisterFd(SOCKET_FD fd)
 {
     KUMA_INFOTRACE("EPoll::unregisterFd, fd="<<fd);
     epoll_ctl(epoll_fd_, EPOLL_CTL_DEL, fd, NULL);
@@ -150,7 +151,7 @@ int EPoll::unregisterFd(int fd)
     return KUMA_ERROR_NOERR;
 }
 
-int EPoll::updateFd(int fd, uint32_t events)
+int EPoll::updateFd(SOCKET_FD fd, uint32_t events)
 {
     struct epoll_event evt = {0};
     evt.data.ptr = handler;

@@ -52,7 +52,15 @@ bool EventLoop::init()
     return true;
 }
 
-int EventLoop::registerFd(int fd, uint32_t events, IOCallback& cb)
+PollType EventLoop::getPollType()
+{
+    if(poll_) {
+        return poll_->getType();
+    }
+    return POLL_TYPE_NONE;
+}
+
+int EventLoop::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
 {
     if(isInEventLoopThread()) {
         return poll_->registerFd(fd, events, cb);
@@ -66,7 +74,26 @@ int EventLoop::registerFd(int fd, uint32_t events, IOCallback& cb)
     return runInEventLoop(std::move(ev));
 }
 
-int EventLoop::unregisterFd(int fd, bool close_fd)
+int EventLoop::registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb)
+{
+    return registerFd(fd, events, cb);
+}
+
+int EventLoop::updateFd(SOCKET_FD fd, uint32_t events)
+{
+    if(isInEventLoopThread()) {
+        return poll_->updateFd(fd, events);
+    }
+    LoopCallback ev([=] {
+        int ret = poll_->updateFd(fd, events);
+        if(ret != KUMA_ERROR_NOERR) {
+            return ;
+        }
+    });
+    return runInEventLoop(std::move(ev));
+}
+
+int EventLoop::unregisterFd(SOCKET_FD fd, bool close_fd)
 {
     if(isInEventLoopThread()) {
         return poll_->unregisterFd(fd);
@@ -74,7 +101,7 @@ int EventLoop::unregisterFd(int fd, bool close_fd)
         LoopCallback ev([=] {
             poll_->unregisterFd(fd);
             if(close_fd) {
-                closesocket(fd);
+                closeFd(fd);
             }
         });
         int ret = runInEventLoopSync(ev);

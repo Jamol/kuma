@@ -2,6 +2,7 @@
 #define __KUMA_H__
 
 #include "kmdefs.h"
+#include <stdint.h>
 
 KUMA_NS_BEGIN
 

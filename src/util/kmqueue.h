@@ -17,6 +17,7 @@
 #define __KMQUEUE_H__
 
 #include "kmdefs.h"
+#include <type_traits>
 
 KUMA_NS_BEGIN
 
@@ -32,7 +33,7 @@ public:
     }
     ~KM_Queue()
     {
-        TLNode* node = NULL;
+        TLNode* node = nullptr;
         while(head_) {
             node = head_;
             head_ = head_->next_;
@@ -71,7 +72,7 @@ public:
     
     bool empty()
     {
-        return NULL == head_->next_;
+        return nullptr == head_->next_;
     }
     
     unsigned int size()
@@ -85,7 +86,7 @@ private:
     public:
         TLNode(const E &e) : element_(e)
         {
-            next_ = NULL;
+            next_ = nullptr;
         }
 
         E element_;
@@ -110,7 +111,7 @@ public:
     }
     ~KM_QueueT()
     {
-        TLNode* node = NULL;
+        TLNode* node = nullptr;
         while(head_)
         {
             node = head_;
@@ -144,7 +145,7 @@ public:
         if(empty()) {
             return false;
         }
-        TLNode* node_to_delete = NULL;
+        TLNode* node_to_delete = nullptr;
         lockerH_.lock();
         if(empty()) {
             lockerH_.unlock();
@@ -161,7 +162,7 @@ public:
     
     bool empty()
     {
-        return NULL == head_->next_;
+        return nullptr == head_->next_;
     }
     
     unsigned int size()
@@ -175,7 +176,7 @@ private:
     public:
         TLNode(const E &e) : element_(e)
         {
-            next_ = NULL;
+            next_ = nullptr;
         }
 
         E element_;

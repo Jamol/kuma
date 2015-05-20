@@ -29,7 +29,7 @@ KUMA_NS_BEGIN
 #define KUMA_XTRACE(l, x) \
     do{ \
         std::stringstream ss; \
-        ss<<get_obj_key()<<":: "<<x; \
+        ss<<getObjKey()<<":: "<<x; \
         TracePrint(l, "%s", ss.str().c_str());\
     }while(0)
     

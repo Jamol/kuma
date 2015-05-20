@@ -1,16 +1,13 @@
 #ifndef __INTERNAL_H__
 #define __INTERNAL_H__
 
-#include "kmconf.h"
-#include "kuma.h"
+#include "kmdefs.h"
+#include "evdefs.h"
 
 #ifdef KUMA_OS_WIN
 # include <Ws2tcpip.h>
 # include <windows.h>
 # include <time.h>
-
-# pragma warning(disable: 4996)
-
 #elif defined(KUMA_OS_LINUX)
 # include <string.h>
 # include <pthread.h>
@@ -55,14 +52,22 @@
 
 #include <map>
 #include <list>
-
-#ifndef KUMA_OS_WIN
-#define closesocket close
-#endif
+#include <vector>
 
 KUMA_NS_BEGIN
 
 #define INVALID_FD  -1
+
+struct PollItem
+{
+    PollItem() : fd(INVALID_FD), ev(0), idx(-1) { }
+
+    SOCKET_FD fd;
+    uint32_t ev;
+    int idx;
+    IOCallback cb;
+};
+typedef std::vector<PollItem>   PollItemVector;
 
 class IOPoll
 {
@@ -70,12 +75,13 @@ public:
     virtual ~IOPoll() {}
     
     virtual bool init() = 0;
-    virtual int registerFd(int fd, uint32_t events, IOCallback& cb) = 0;
-    virtual int registerFd(int fd, uint32_t events, IOCallback&& cb) = 0;
-    virtual int unregisterFd(int fd) = 0;
-    virtual int updateFd(int fd, uint32_t events) = 0;
+    virtual int registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb) = 0;
+    virtual int registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb) = 0;
+    virtual int unregisterFd(SOCKET_FD fd) = 0;
+    virtual int updateFd(SOCKET_FD fd, uint32_t events) = 0;
     virtual int wait(uint32_t wait_time_ms) = 0;
     virtual void notify() = 0;
+    virtual PollType getType() = 0;
 };
 
 KUMA_NS_END

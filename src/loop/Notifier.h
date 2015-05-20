@@ -34,11 +34,11 @@ public:
     }
     ~Notifier() {
         if(fds_[READ_FD] != INVALID_FD){
-            ::closesocket(fds_[READ_FD]);
+            closeFd(fds_[READ_FD]);
             fds_[READ_FD] = INVALID_FD;
         }
         if(fds_[WRITE_FD] != INVALID_FD){
-            ::closesocket(fds_[WRITE_FD]);
+            closeFd(fds_[WRITE_FD]);
             fds_[WRITE_FD] = INVALID_FD;
         }
     }
@@ -53,31 +53,31 @@ public:
             return false;
         }
         if(bind(fds_[READ_FD], (const sockaddr*)&ss_addr_, sizeof(sockaddr_in)) != 0) {
-            ::closesocket(fds_[READ_FD]);
-            ::closesocket(fds_[WRITE_FD]);
+            closeFd(fds_[READ_FD]);
+            closeFd(fds_[WRITE_FD]);
             return false;
         }
         if(bind(fds_[WRITE_FD], (const sockaddr*)&ss_addr_, sizeof(sockaddr_in)) != 0) {
-            ::closesocket(fds_[READ_FD]);
-            ::closesocket(fds_[WRITE_FD]);
+            closeFd(fds_[READ_FD]);
+            closeFd(fds_[WRITE_FD]);
             return false;
         }
         set_nonblocking(fds_[READ_FD]);
         set_nonblocking(fds_[WRITE_FD]);
         addr_len_ = sizeof(ss_addr_);
         if(getsockname(fds_[READ_FD], (struct sockaddr*)&ss_addr_, &addr_len_) != 0) {
-            ::closesocket(fds_[READ_FD]);
-            ::closesocket(fds_[WRITE_FD]);
+            closeFd(fds_[READ_FD]);
+            closeFd(fds_[WRITE_FD]);
             return false;
         }
         return true;
     }
     void notify() {
-        char ch = 1;
-        sendto(fds_[WRITE_FD], &ch, 1, 0, (struct sockaddr*)&ss_addr_, addr_len_);
+        uint64_t d = 1;
+        sendto(fds_[WRITE_FD], (const char *)&d, sizeof(d), 0, (struct sockaddr*)&ss_addr_, addr_len_);
     }
     
-    int getReadFD() {
+    SOCKET_FD getReadFD() {
         return fds_[READ_FD];
     }
     
@@ -87,7 +87,7 @@ public:
         return KUMA_ERROR_NOERR;
     }
 private:
-    int fds_[2];
+    SOCKET_FD fds_[2];
     sockaddr_storage ss_addr_;
     socklen_t addr_len_;
 };

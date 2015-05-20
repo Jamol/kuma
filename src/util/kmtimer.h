@@ -16,7 +16,7 @@
 #ifndef __KMTIMER_H__
 #define __KMTIMER_H__
 
-#include "kmdefs.h"
+#include "evdefs.h"
 
 #include <memory>
 
