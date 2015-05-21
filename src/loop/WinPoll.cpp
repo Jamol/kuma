@@ -13,13 +13,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "internal.h"
+#include "IOPoll.h"
 #include "util/kmtrace.h"
 
 KUMA_NS_BEGIN
 
 #define WM_SOCKET_NOTIFY		0x0373
+
 #define WM_POLLER_NOTIFY		WM_USER+101
+
 #define KM_WIN_CLASS_NAME		"kuma_win_class_name"
 
 class WinPoll : public IOPoll
@@ -39,6 +41,7 @@ public:
 
 public:
     void on_socket_notify(SOCKET_FD fd, uint32_t events);
+
     void on_poller_notify();
     
 private:
@@ -49,6 +52,7 @@ private:
 private:
     HWND            hwnd_;
     PollItemVector  poll_items_;
+
 };
 
 WinPoll::WinPoll()
@@ -60,10 +64,15 @@ WinPoll::WinPoll()
 WinPoll::~WinPoll()
 {
     if (hwnd_) {
+
         if (::IsWindow(hwnd_)) {
+
             DestroyWindow(hwnd_);
+
         }
+
         hwnd_ = NULL;
+
     }
 }
 

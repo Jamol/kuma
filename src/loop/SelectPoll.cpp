@@ -13,7 +13,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "internal.h"
+#include "IOPoll.h"
 #include "Notifier.h"
 #include "util/kmtrace.h"
 

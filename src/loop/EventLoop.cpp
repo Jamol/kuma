@@ -14,7 +14,7 @@
  */
 
 #include "EventLoop.h"
-#include "internal.h"
+#include "IOPoll.h"
 #include "util/kmdp.h"
 #include "util/kmqueue.h"
 #include "util/kmtimer.h"

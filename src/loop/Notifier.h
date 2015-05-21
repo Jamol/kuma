@@ -16,7 +16,6 @@
 #ifndef kuma_Notifier_h
 #define kuma_Notifier_h
 
-#include "internal.h"
 #include "util/util.h"
 
 KUMA_NS_BEGIN
