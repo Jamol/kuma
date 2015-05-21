@@ -105,6 +105,12 @@ uint32_t WinPoll::get_events(uint32_t kuma_events)
 uint32_t WinPoll::get_kuma_events(uint32_t events)
 {
     uint32_t ev = 0;
+    if (events & FD_CONNECT) { // writeable
+        ev |= KUMA_EV_WRITE;
+    }
+    if (events & FD_ACCEPT) { // writeable
+        ev |= KUMA_EV_READ;
+    }
     if(events & FD_READ) {
         ev |= KUMA_EV_READ;
     }
@@ -126,21 +132,21 @@ void WinPoll::resizePollItems(SOCKET_FD fd)
 
 int WinPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
 {
+    KUMA_INFOTRACE("WinPoll::registerFd, fd=" << fd << ", events=" << events);
     resizePollItems(fd);
     poll_items_[fd].fd = fd;
     poll_items_[fd].cb = cb;
-    KUMA_INFOTRACE("WinPoll::registerFd, fd="<<fd);
-    
+    WSAAsyncSelect(fd, hwnd_, WM_SOCKET_NOTIFY, get_events(events) | FD_CONNECT);
     return KUMA_ERROR_NOERR;
 }
 
 int WinPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb)
 {
+    KUMA_INFOTRACE("WinPoll::registerFd, fd=" << fd << ", events=" << events);
     resizePollItems(fd);
     poll_items_[fd].fd = fd;
     poll_items_[fd].cb = std::move(cb);
-    KUMA_INFOTRACE("WinPoll::registerFd, fd=" << fd);
-    
+    WSAAsyncSelect(fd, hwnd_, WM_SOCKET_NOTIFY, get_events(events) | FD_CONNECT);
     return KUMA_ERROR_NOERR;
 }
 
@@ -158,6 +164,7 @@ int WinPoll::unregisterFd(SOCKET_FD fd)
         poll_items_[fd].cb = nullptr;
         poll_items_[fd].fd = INVALID_FD;
     }
+    WSAAsyncSelect(fd, hwnd_, 0, 0);
     return KUMA_ERROR_NOERR;
 }
 
@@ -194,7 +201,8 @@ void WinPoll::notify()
 
 void WinPoll::on_socket_notify(SOCKET_FD fd, uint32_t events)
 {
-
+    int err = WSAGETSELECTERROR(events);
+    int evt = WSAGETSELECTEVENT(events);
 }
 
 void WinPoll::on_poller_notify()

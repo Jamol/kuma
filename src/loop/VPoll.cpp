@@ -122,7 +122,7 @@ int VPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
     }
     poll_items_[fd].fd = fd;
     poll_items_[fd].cb = cb;
-    KUMA_INFOTRACE("VPoll::registerFd, fd="<<fd<<", index="<<idx);
+    KUMA_INFOTRACE("VPoll::registerFd, fd="<<fd<<", events="<<events<<", index="<<idx);
     
     return KUMA_ERROR_NOERR;
 }
@@ -141,7 +141,7 @@ int VPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb)
     }
     poll_items_[fd].fd = fd;
     poll_items_[fd].cb = std::move(cb);
-    KUMA_INFOTRACE("VPoll::registerFd, fd="<<fd<<", index="<<idx);
+    KUMA_INFOTRACE("VPoll::registerFd, fd="<<fd<<", events="<<events<<", index="<<idx);
     
     return KUMA_ERROR_NOERR;
 }
@@ -168,7 +168,6 @@ int VPoll::unregisterFd(SOCKET_FD fd)
         return KUMA_ERROR_NOERR;
     }
     if (idx != last_idx) {
-        poll_fds_[idx] = poll_fds_[last_idx];
         std::iter_swap(poll_fds_.begin()+idx, poll_fds_.end()-1);
         poll_items_[poll_fds_[idx].fd].idx = idx;
     }

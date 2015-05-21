@@ -1,5 +1,5 @@
-#ifndef __INTERNAL_H__
-#define __INTERNAL_H__
+#ifndef __IOPoll_H__
+#define __IOPoll_H__
 
 #include "kmdefs.h"
 #include "evdefs.h"
@@ -56,14 +56,11 @@
 
 KUMA_NS_BEGIN
 
-#define INVALID_FD  -1
-
 struct PollItem
 {
-    PollItem() : fd(INVALID_FD), ev(0), idx(-1) { }
+    PollItem() : fd(INVALID_FD), idx(-1) { }
 
     SOCKET_FD fd;
-    uint32_t ev;
     int idx;
     IOCallback cb;
 };
