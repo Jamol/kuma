@@ -13,7 +13,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "kmtimer.h"
+#include "TimerManager.h"
 
 KUMA_NS_BEGIN
 
@@ -22,28 +22,28 @@ TICK_COUNT_TYPE get_tick_count_ms();
 TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_TYPE& start_tick);
 
 //////////////////////////////////////////////////////////////////////////
-// KM_Timer
+// Timer
 
-KM_Timer::KM_Timer(TimerManagerPtr mgr, TimerCallback& cb)
+Timer::Timer(TimerManagerPtr mgr, TimerCallback& cb)
 : cb_(cb)
 , timer_mgr_(mgr)
 {
     timer_node_.timer_ = this;
 }
 
-KM_Timer::KM_Timer(TimerManagerPtr mgr, TimerCallback&& cb)
+Timer::Timer(TimerManagerPtr mgr, TimerCallback&& cb)
 : cb_(std::move(cb))
 , timer_mgr_(mgr)
 {
     timer_node_.timer_ = this;
 }
 
-KM_Timer::~KM_Timer()
+Timer::~Timer()
 {
     cancel();
 }
 
-bool KM_Timer::schedule(unsigned int time_elapse, bool repeat)
+bool Timer::schedule(unsigned int time_elapse, bool repeat)
 {
     TimerManagerPtr mgr = timer_mgr_.lock();
     if(mgr) {
@@ -52,7 +52,7 @@ bool KM_Timer::schedule(unsigned int time_elapse, bool repeat)
     return false;
 }
 
-void KM_Timer::cancel()
+void Timer::cancel()
 {
     TimerManagerPtr mgr = timer_mgr_.lock();
     if(mgr) {
@@ -61,8 +61,8 @@ void KM_Timer::cancel()
 }
 
 //////////////////////////////////////////////////////////////////////////
-// KM_Timer_Manager
-KM_Timer_Manager::KM_Timer_Manager()
+// TimerManager
+TimerManager::TimerManager()
 {
     running_node_ = NULL;
     reschedule_node_ = NULL;
@@ -78,14 +78,14 @@ KM_Timer_Manager::KM_Timer_Manager()
     }
 }
 
-KM_Timer_Manager::~KM_Timer_Manager()
+TimerManager::~TimerManager()
 {
     
 }
 
-bool KM_Timer_Manager::scheduleTimer(KM_Timer* timer, unsigned int time_elapse, bool repeat)
+bool TimerManager::scheduleTimer(Timer* timer, unsigned int time_elapse, bool repeat)
 {
-    KM_Timer_Node* timer_node = &timer->timer_node_;
+    TimerNode* timer_node = &timer->timer_node_;
     if(isTimerPending(timer_node) && time_elapse == timer_node->elapse_) {
         return true;
     }
@@ -106,9 +106,9 @@ bool KM_Timer_Manager::scheduleTimer(KM_Timer* timer, unsigned int time_elapse, 
     return ret;
 }
 
-void KM_Timer_Manager::cancelTimer(KM_Timer* timer)
+void TimerManager::cancelTimer(Timer* timer)
 {
-    KM_Timer_Node* timer_node = &timer->timer_node_;
+    TimerNode* timer_node = &timer->timer_node_;
     if(timer_node->cancelled_) {
         return ;
     }
@@ -151,13 +151,13 @@ void KM_Timer_Manager::cancelTimer(KM_Timer* timer)
     }
 }
 
-void KM_Timer_Manager::list_init_head(KM_Timer_Node* head)
+void TimerManager::list_init_head(TimerNode* head)
 {
     head->next_ = head;
     head->prev_ = head;
 }
 
-void KM_Timer_Manager::list_add_node(KM_Timer_Node* head, KM_Timer_Node* timer_node)
+void TimerManager::list_add_node(TimerNode* head, TimerNode* timer_node)
 {
     head->prev_->next_ = timer_node;
     timer_node->prev_ = head->prev_;
@@ -165,14 +165,14 @@ void KM_Timer_Manager::list_add_node(KM_Timer_Node* head, KM_Timer_Node* timer_n
     head->prev_ = timer_node;
 }
 
-void KM_Timer_Manager::list_remove_node(KM_Timer_Node* timer_node)
+void TimerManager::list_remove_node(TimerNode* timer_node)
 {
     timer_node->prev_->next_ = timer_node->next_;
     timer_node->next_->prev_ = timer_node->prev_;
     timer_node->reset();
 }
 
-void KM_Timer_Manager::list_replace(KM_Timer_Node* old_head, KM_Timer_Node* new_head)
+void TimerManager::list_replace(TimerNode* old_head, TimerNode* new_head)
 {
     new_head->next_ = old_head->next_;
     new_head->next_->prev_ = new_head;
@@ -181,7 +181,7 @@ void KM_Timer_Manager::list_replace(KM_Timer_Node* old_head, KM_Timer_Node* new_
     list_init_head(old_head);
 }
 
-void KM_Timer_Manager::list_combine(KM_Timer_Node* from_head, KM_Timer_Node* to_head)
+void TimerManager::list_combine(TimerNode* from_head, TimerNode* to_head)
 {
     if(from_head->next_ == from_head) {
         return ;
@@ -193,26 +193,26 @@ void KM_Timer_Manager::list_combine(KM_Timer_Node* from_head, KM_Timer_Node* to_
     list_init_head(from_head);
 }
 
-bool KM_Timer_Manager::list_empty(KM_Timer_Node* head)
+bool TimerManager::list_empty(TimerNode* head)
 {
     return head->next_ == head;
 }
 
-void KM_Timer_Manager::set_tv0_bitmap(int idx)
+void TimerManager::set_tv0_bitmap(int idx)
 {
     unsigned char a = idx/(sizeof(tv0_bitmap_[0])*8);
     unsigned char b = idx%(sizeof(tv0_bitmap_[0])*8);
     tv0_bitmap_[a] |= 1 << b;
 }
 
-void KM_Timer_Manager::clear_tv0_bitmap(int idx)
+void TimerManager::clear_tv0_bitmap(int idx)
 {
     unsigned char a = idx/(sizeof(tv0_bitmap_[0])*8);
     unsigned char b = idx%(sizeof(tv0_bitmap_[0])*8);
     tv0_bitmap_[a] &= ~(1 << b);
 }
 
-int KM_Timer_Manager::find_first_set_in_bitmap(int idx)
+int TimerManager::find_first_set_in_bitmap(int idx)
 {
     unsigned char a = idx/(sizeof(tv0_bitmap_[0])*8);
     unsigned char b = idx%(sizeof(tv0_bitmap_[0])*8);
@@ -243,7 +243,7 @@ int KM_Timer_Manager::find_first_set_in_bitmap(int idx)
     return pos;
 }
 
-bool KM_Timer_Manager::addTimer(KM_Timer_Node* timer_node, bool from_schedule)
+bool TimerManager::addTimer(TimerNode* timer_node, bool from_schedule)
 {
     if(0 == timer_count_) {
         last_tick_ = timer_node->start_tick_;
@@ -258,7 +258,7 @@ bool KM_Timer_Manager::addTimer(KM_Timer_Node* timer_node, bool from_schedule)
     }
     TICK_COUNT_TYPE elapse_jiffies = fire_tick - last_tick_;
     TICK_COUNT_TYPE fire_jiffies = fire_tick;
-    KM_Timer_Node* head;
+    TimerNode* head;
     if(elapse_jiffies < TIMER_VECTOR_SIZE) {
         int i = fire_jiffies & TIMER_VECTOR_MASK;
         head = &tv_[0][i];
@@ -296,7 +296,7 @@ bool KM_Timer_Manager::addTimer(KM_Timer_Node* timer_node, bool from_schedule)
     return true;
 }
 
-void KM_Timer_Manager::removeTimer(KM_Timer_Node* timer_node)
+void TimerManager::removeTimer(TimerNode* timer_node)
 {
     if(0 == timer_node->tv_index_
        && timer_node->next_ != timer_node
@@ -308,13 +308,13 @@ void KM_Timer_Manager::removeTimer(KM_Timer_Node* timer_node)
     --timer_count_;
 }
 
-int KM_Timer_Manager::cascadeTimer(int tv_idx, int tl_idx)
+int TimerManager::cascadeTimer(int tv_idx, int tl_idx)
 {
-    KM_Timer_Node tmp_head;
+    TimerNode tmp_head;
     list_init_head(&tmp_head);
     list_replace(&tv_[tv_idx][tl_idx], &tmp_head);
-    KM_Timer_Node* next_node = tmp_head.next_;
-    KM_Timer_Node* tmp_node = NULL;
+    TimerNode* next_node = tmp_head.next_;
+    TimerNode* tmp_node = NULL;
     while(next_node != &tmp_head)
     {
         tmp_node = next_node;
@@ -326,7 +326,7 @@ int KM_Timer_Manager::cascadeTimer(int tv_idx, int tl_idx)
 }
 
 #define INDEX(N) ((next_jiffies >> ((N+1) * TIMER_VECTOR_BITS)) & TIMER_VECTOR_MASK)
-int KM_Timer_Manager::checkExpire(unsigned long* remain_ms)
+int TimerManager::checkExpire(unsigned long* remain_ms)
 {
     if(0 == timer_count_) {
         return 0;
@@ -339,7 +339,7 @@ int KM_Timer_Manager::checkExpire(unsigned long* remain_ms)
     TICK_COUNT_TYPE cur_jiffies = now_tick;
     TICK_COUNT_TYPE next_jiffies = last_tick_+1;
     last_tick_ = now_tick;
-    KM_Timer_Node tmp_head;
+    TimerNode tmp_head;
     list_init_head(&tmp_head);
     
     mutex_.lock();

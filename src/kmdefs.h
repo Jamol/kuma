@@ -19,6 +19,13 @@ enum{
     KUMA_ERROR_UNSUPPORT
 };
 
+#ifdef KUMA_OS_WIN
+struct iovec {
+    unsigned long	iov_len;
+    char*			iov_base;
+};
+#endif
+
 KUMA_NS_END
 
 #endif

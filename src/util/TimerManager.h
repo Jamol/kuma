@@ -13,8 +13,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __KMTIMER_H__
-#define __KMTIMER_H__
+#ifndef __TimerManager_H__
+#define __TimerManager_H__
 
 #include "evdefs.h"
 
@@ -31,24 +31,24 @@ KUMA_NS_BEGIN
 #define TIMER_VECTOR_MASK   (TIMER_VECTOR_SIZE - 1)
 #define TV_COUNT            4
 
-class KM_Timer;
+class Timer;
 
-class KM_Timer_Manager
+class TimerManager
 {
 public:
-    KM_Timer_Manager();
-    ~KM_Timer_Manager();
+    TimerManager();
+    ~TimerManager();
 
-    bool scheduleTimer(KM_Timer* timer, unsigned int time_elapse, bool repeat);
-    void cancelTimer(KM_Timer* timer);
+    bool scheduleTimer(Timer* timer, unsigned int time_elapse, bool repeat);
+    void cancelTimer(Timer* timer);
 
     int checkExpire(unsigned long* remain_ms = NULL);
 
 public:
-    class KM_Timer_Node
+    class TimerNode
     {
     public:
-        KM_Timer_Node()
+        TimerNode()
         : cancelled_(true)
         , repeat_(false)
         , elapse_(0)
@@ -69,31 +69,31 @@ public:
         bool            repeat_;
         unsigned int	elapse_;
         TICK_COUNT_TYPE start_tick_;
-        KM_Timer*	    timer_;
+        Timer*          timer_;
         
     protected:
-        friend class KM_Timer_Manager;
+        friend class TimerManager;
         int tv_index_;
         int tl_index_;
-        KM_Timer_Node* prev_;
-        KM_Timer_Node* next_;
+        TimerNode* prev_;
+        TimerNode* next_;
     };
     
 private:
-    bool addTimer(KM_Timer_Node* timer_node, bool from_schedule=false);
-    void removeTimer(KM_Timer_Node* timer_node);
+    bool addTimer(TimerNode* timer_node, bool from_schedule=false);
+    void removeTimer(TimerNode* timer_node);
     int cascadeTimer(int tv_idx, int tl_idx);
-    bool isTimerPending(KM_Timer_Node* timer_node)
+    bool isTimerPending(TimerNode* timer_node)
     {
         return timer_node->next_ != NULL;
     }
 
-    void list_init_head(KM_Timer_Node* head);
-    void list_add_node(KM_Timer_Node* head, KM_Timer_Node* timer_node);
-    void list_remove_node(KM_Timer_Node* timer_node);
-    void list_replace(KM_Timer_Node* old_head, KM_Timer_Node* new_head);
-    void list_combine(KM_Timer_Node* from_head, KM_Timer_Node* to_head);
-    bool list_empty(KM_Timer_Node* head);
+    void list_init_head(TimerNode* head);
+    void list_add_node(TimerNode* head, TimerNode* timer_node);
+    void list_remove_node(TimerNode* timer_node);
+    void list_replace(TimerNode* old_head, TimerNode* new_head);
+    void list_combine(TimerNode* from_head, TimerNode* to_head);
+    bool list_empty(TimerNode* head);
     
     void set_tv0_bitmap(int idx);
     void clear_tv0_bitmap(int idx);
@@ -102,30 +102,30 @@ private:
 private:
     KM_Mutex mutex_;
     KM_Mutex running_mutex_;
-    KM_Timer_Node*  running_node_;
-    KM_Timer_Node*  reschedule_node_;
+    TimerNode*  running_node_;
+    TimerNode*  reschedule_node_;
     TICK_COUNT_TYPE last_tick_;
     unsigned int timer_count_;
     unsigned int tv0_bitmap_[8]; // 1 -- have timer in this slot
-    KM_Timer_Node tv_[TV_COUNT][TIMER_VECTOR_SIZE]; // timer vectors
+    TimerNode tv_[TV_COUNT][TIMER_VECTOR_SIZE]; // timer vectors
 };
-typedef std::shared_ptr<KM_Timer_Manager> TimerManagerPtr;
+typedef std::shared_ptr<TimerManager> TimerManagerPtr;
 
-class KM_Timer
+class Timer
 {
 public:
-    KM_Timer(TimerManagerPtr mgr, TimerCallback& cb);
-    KM_Timer(TimerManagerPtr mgr, TimerCallback&& cb);
-    ~KM_Timer();
+    Timer(TimerManagerPtr mgr, TimerCallback& cb);
+    Timer(TimerManagerPtr mgr, TimerCallback&& cb);
+    ~Timer();
     
     bool schedule(unsigned int time_elapse, bool repeat = false);
     void cancel();
     
 private:
-    friend class KM_Timer_Manager;
+    friend class TimerManager;
     TimerCallback cb_;
-    std::weak_ptr<KM_Timer_Manager> timer_mgr_;
-    KM_Timer_Manager::KM_Timer_Node timer_node_; // intrusive list node
+    std::weak_ptr<TimerManager> timer_mgr_;
+    TimerManager::TimerNode timer_node_; // intrusive list node
 };
 
 KUMA_NS_END

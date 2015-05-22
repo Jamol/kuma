@@ -15,9 +15,8 @@
 
 #include "EventLoop.h"
 #include "IOPoll.h"
-#include "util/kmdp.h"
 #include "util/kmqueue.h"
-#include "util/kmtimer.h"
+#include "util/TimerManager.h"
 #include <thread>
 #include <condition_variable>
 
@@ -30,7 +29,7 @@ EventLoop::EventLoop(uint32_t max_wait_ms)
 , stop_loop_(false)
 , thread_id_()
 , max_wait_ms_(max_wait_ms)
-, timer_mgr_(new KM_Timer_Manager())
+, timer_mgr_(new TimerManager())
 {
     
 }
