@@ -7,39 +7,47 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6F29634D1A18AB0D00C3C79B /* kmdp.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963411A18AB0D00C3C79B /* kmdp.h */; };
+		6F0098AD1B01FEC800122C15 /* TcpSocket.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F0098AC1B01FEC800122C15 /* TcpSocket.h */; };
+		6F0098B11B03110100122C15 /* UdpSocket.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F0098B01B03110100122C15 /* UdpSocket.h */; };
+		6F0098B31B03124400122C15 /* TcpSocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F0098B21B03124400122C15 /* TcpSocket.cpp */; };
+		6F29634D1A18AB0D00C3C79B /* DataPacket.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963411A18AB0D00C3C79B /* DataPacket.h */; };
 		6F29634F1A18AB0D00C3C79B /* kmqueue.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963431A18AB0D00C3C79B /* kmqueue.h */; };
-		6F2963511A18AB0D00C3C79B /* kmtimer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963451A18AB0D00C3C79B /* kmtimer.cpp */; };
-		6F2963521A18AB0D00C3C79B /* kmtimer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963461A18AB0D00C3C79B /* kmtimer.h */; };
+		6F2963511A18AB0D00C3C79B /* TimerManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963451A18AB0D00C3C79B /* TimerManager.cpp */; };
+		6F2963521A18AB0D00C3C79B /* TimerManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963461A18AB0D00C3C79B /* TimerManager.h */; };
 		6F2963531A18AB0D00C3C79B /* kmtrace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963471A18AB0D00C3C79B /* kmtrace.cpp */; };
 		6F2963541A18AB0D00C3C79B /* kmtrace.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963481A18AB0D00C3C79B /* kmtrace.h */; };
 		6F2963561A18AB0D00C3C79B /* util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F29634A1A18AB0D00C3C79B /* util.cpp */; };
 		6F2963571A18AB0D00C3C79B /* util.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F29634B1A18AB0D00C3C79B /* util.h */; };
-		6F29636A1A18AC6E00C3C79B /* EventLoop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963641A18AC6E00C3C79B /* EventLoop.cpp */; };
-		6F29636B1A18AC6E00C3C79B /* EventLoop.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963651A18AC6E00C3C79B /* EventLoop.h */; };
-		6F29636C1A18AC6E00C3C79B /* internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963661A18AC6E00C3C79B /* internal.h */; };
-		6F29636D1A18AC6E00C3C79B /* Notifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963671A18AC6E00C3C79B /* Notifier.h */; };
-		6F29636E1A18AC6E00C3C79B /* VPoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963681A18AC6E00C3C79B /* VPoll.cpp */; };
 		6F6208FB1A26BDB1000DAF4B /* kmconf.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208F81A26BDB1000DAF4B /* kmconf.h */; };
 		6F6208FD1A26BDB1000DAF4B /* kuma.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208FA1A26BDB1000DAF4B /* kuma.h */; };
 		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
 		6FA951421A3808450033C9CF /* kmdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FA951411A3808450033C9CF /* kmdefs.h */; };
+		6FF211031B130A2F006603BB /* TcpServerSocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF211011B130A2F006603BB /* TcpServerSocket.cpp */; };
+		6FF211041B130A2F006603BB /* TcpServerSocket.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF211021B130A2F006603BB /* TcpServerSocket.h */; };
+		6FF211CB1B1556C5006603BB /* OpenSslLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF211C71B1556C5006603BB /* OpenSslLib.cpp */; };
+		6FF211CC1B1556C5006603BB /* OpenSslLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF211C81B1556C5006603BB /* OpenSslLib.h */; };
+		6FF211CD1B1556C5006603BB /* SslHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF211C91B1556C5006603BB /* SslHandler.cpp */; };
+		6FF211CE1B1556C5006603BB /* SslHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF211CA1B1556C5006603BB /* SslHandler.h */; };
+		6FF211D21B1556E6006603BB /* IOPoll.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF211CF1B1556E6006603BB /* IOPoll.h */; };
+		6FF211D31B1556E6006603BB /* Notifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF211D01B1556E6006603BB /* Notifier.h */; };
+		6FF211D41B1556E6006603BB /* VPoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF211D11B1556E6006603BB /* VPoll.cpp */; };
+		6FF211D81B1556FB006603BB /* evdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF211D51B1556FB006603BB /* evdefs.h */; };
+		6FF211D91B1556FB006603BB /* EventLoop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF211D61B1556FB006603BB /* EventLoop.cpp */; };
+		6FF211DA1B1556FB006603BB /* EventLoop.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF211D71B1556FB006603BB /* EventLoop.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		6F2963411A18AB0D00C3C79B /* kmdp.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmdp.h; path = ../../src/util/kmdp.h; sourceTree = "<group>"; };
+		6F0098AC1B01FEC800122C15 /* TcpSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpSocket.h; sourceTree = "<group>"; };
+		6F0098B01B03110100122C15 /* UdpSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UdpSocket.h; sourceTree = "<group>"; };
+		6F0098B21B03124400122C15 /* TcpSocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TcpSocket.cpp; sourceTree = "<group>"; };
+		6F2963411A18AB0D00C3C79B /* DataPacket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DataPacket.h; path = ../../src/util/DataPacket.h; sourceTree = "<group>"; };
 		6F2963431A18AB0D00C3C79B /* kmqueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmqueue.h; path = ../../src/util/kmqueue.h; sourceTree = "<group>"; };
-		6F2963451A18AB0D00C3C79B /* kmtimer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = kmtimer.cpp; path = ../../src/util/kmtimer.cpp; sourceTree = "<group>"; };
-		6F2963461A18AB0D00C3C79B /* kmtimer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmtimer.h; path = ../../src/util/kmtimer.h; sourceTree = "<group>"; };
+		6F2963451A18AB0D00C3C79B /* TimerManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TimerManager.cpp; path = ../../src/util/TimerManager.cpp; sourceTree = "<group>"; };
+		6F2963461A18AB0D00C3C79B /* TimerManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TimerManager.h; path = ../../src/util/TimerManager.h; sourceTree = "<group>"; };
 		6F2963471A18AB0D00C3C79B /* kmtrace.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = kmtrace.cpp; path = ../../src/util/kmtrace.cpp; sourceTree = "<group>"; };
 		6F2963481A18AB0D00C3C79B /* kmtrace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmtrace.h; path = ../../src/util/kmtrace.h; sourceTree = "<group>"; };
 		6F29634A1A18AB0D00C3C79B /* util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = util.cpp; path = ../../src/util/util.cpp; sourceTree = "<group>"; };
 		6F29634B1A18AB0D00C3C79B /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = util.h; path = ../../src/util/util.h; sourceTree = "<group>"; };
-		6F2963641A18AC6E00C3C79B /* EventLoop.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EventLoop.cpp; path = loop/EventLoop.cpp; sourceTree = "<group>"; };
-		6F2963651A18AC6E00C3C79B /* EventLoop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EventLoop.h; path = loop/EventLoop.h; sourceTree = "<group>"; };
-		6F2963661A18AC6E00C3C79B /* internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = internal.h; path = loop/internal.h; sourceTree = "<group>"; };
-		6F2963671A18AC6E00C3C79B /* Notifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Notifier.h; path = loop/Notifier.h; sourceTree = "<group>"; };
-		6F2963681A18AC6E00C3C79B /* VPoll.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VPoll.cpp; path = loop/VPoll.cpp; sourceTree = "<group>"; };
 		6F6208F81A26BDB1000DAF4B /* kmconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmconf.h; sourceTree = "<group>"; };
 		6F6208FA1A26BDB1000DAF4B /* kuma.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kuma.h; sourceTree = "<group>"; };
 		6F852DF11985E33000271D87 /* kuma.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = kuma.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -47,6 +55,18 @@
 		6F852E441985EB4700271D87 /* kumaProj.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaProj.xcconfig; sourceTree = "<group>"; };
 		6F852E451985EB4700271D87 /* kumaTarget.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaTarget.xcconfig; sourceTree = "<group>"; };
 		6FA951411A3808450033C9CF /* kmdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmdefs.h; sourceTree = "<group>"; };
+		6FF211011B130A2F006603BB /* TcpServerSocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TcpServerSocket.cpp; sourceTree = "<group>"; };
+		6FF211021B130A2F006603BB /* TcpServerSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpServerSocket.h; sourceTree = "<group>"; };
+		6FF211C71B1556C5006603BB /* OpenSslLib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OpenSslLib.cpp; path = ssl/OpenSslLib.cpp; sourceTree = "<group>"; };
+		6FF211C81B1556C5006603BB /* OpenSslLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OpenSslLib.h; path = ssl/OpenSslLib.h; sourceTree = "<group>"; };
+		6FF211C91B1556C5006603BB /* SslHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SslHandler.cpp; path = ssl/SslHandler.cpp; sourceTree = "<group>"; };
+		6FF211CA1B1556C5006603BB /* SslHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SslHandler.h; path = ssl/SslHandler.h; sourceTree = "<group>"; };
+		6FF211CF1B1556E6006603BB /* IOPoll.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = IOPoll.h; path = poll/IOPoll.h; sourceTree = "<group>"; };
+		6FF211D01B1556E6006603BB /* Notifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Notifier.h; path = poll/Notifier.h; sourceTree = "<group>"; };
+		6FF211D11B1556E6006603BB /* VPoll.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = VPoll.cpp; path = poll/VPoll.cpp; sourceTree = "<group>"; };
+		6FF211D51B1556FB006603BB /* evdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = evdefs.h; sourceTree = "<group>"; };
+		6FF211D61B1556FB006603BB /* EventLoop.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = EventLoop.cpp; sourceTree = "<group>"; };
+		6FF211D71B1556FB006603BB /* EventLoop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EventLoop.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -60,16 +80,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		6F2963631A18AC4C00C3C79B /* loop */ = {
+		6F2963631A18AC4C00C3C79B /* poll */ = {
 			isa = PBXGroup;
 			children = (
-				6F2963641A18AC6E00C3C79B /* EventLoop.cpp */,
-				6F2963651A18AC6E00C3C79B /* EventLoop.h */,
-				6F2963661A18AC6E00C3C79B /* internal.h */,
-				6F2963671A18AC6E00C3C79B /* Notifier.h */,
-				6F2963681A18AC6E00C3C79B /* VPoll.cpp */,
+				6FF211CF1B1556E6006603BB /* IOPoll.h */,
+				6FF211D01B1556E6006603BB /* Notifier.h */,
+				6FF211D11B1556E6006603BB /* VPoll.cpp */,
 			);
-			name = loop;
+			name = poll;
 			sourceTree = "<group>";
 		};
 		6F852DE81985E33000271D87 = {
@@ -93,11 +111,20 @@
 		6F852DF31985E33000271D87 /* kuma */ = {
 			isa = PBXGroup;
 			children = (
+				6F2963631A18AC4C00C3C79B /* poll */,
+				6FF211C61B1556B9006603BB /* ssl */,
+				6F852E291985EB0500271D87 /* util */,
+				6FF211D51B1556FB006603BB /* evdefs.h */,
+				6FF211D61B1556FB006603BB /* EventLoop.cpp */,
+				6FF211D71B1556FB006603BB /* EventLoop.h */,
 				6F6208F81A26BDB1000DAF4B /* kmconf.h */,
 				6FA951411A3808450033C9CF /* kmdefs.h */,
 				6F6208FA1A26BDB1000DAF4B /* kuma.h */,
-				6F2963631A18AC4C00C3C79B /* loop */,
-				6F852E291985EB0500271D87 /* util */,
+				6FF211011B130A2F006603BB /* TcpServerSocket.cpp */,
+				6FF211021B130A2F006603BB /* TcpServerSocket.h */,
+				6F0098B21B03124400122C15 /* TcpSocket.cpp */,
+				6F0098AC1B01FEC800122C15 /* TcpSocket.h */,
+				6F0098B01B03110100122C15 /* UdpSocket.h */,
 				6F852DF41985E33000271D87 /* Supporting Files */,
 			);
 			name = kuma;
@@ -115,16 +142,27 @@
 		6F852E291985EB0500271D87 /* util */ = {
 			isa = PBXGroup;
 			children = (
-				6F2963411A18AB0D00C3C79B /* kmdp.h */,
+				6F2963411A18AB0D00C3C79B /* DataPacket.h */,
 				6F2963431A18AB0D00C3C79B /* kmqueue.h */,
-				6F2963451A18AB0D00C3C79B /* kmtimer.cpp */,
-				6F2963461A18AB0D00C3C79B /* kmtimer.h */,
+				6F2963451A18AB0D00C3C79B /* TimerManager.cpp */,
+				6F2963461A18AB0D00C3C79B /* TimerManager.h */,
 				6F2963471A18AB0D00C3C79B /* kmtrace.cpp */,
 				6F2963481A18AB0D00C3C79B /* kmtrace.h */,
 				6F29634A1A18AB0D00C3C79B /* util.cpp */,
 				6F29634B1A18AB0D00C3C79B /* util.h */,
 			);
 			path = util;
+			sourceTree = "<group>";
+		};
+		6FF211C61B1556B9006603BB /* ssl */ = {
+			isa = PBXGroup;
+			children = (
+				6FF211C71B1556C5006603BB /* OpenSslLib.cpp */,
+				6FF211C81B1556C5006603BB /* OpenSslLib.h */,
+				6FF211C91B1556C5006603BB /* SslHandler.cpp */,
+				6FF211CA1B1556C5006603BB /* SslHandler.h */,
+			);
+			name = ssl;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -134,18 +172,24 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6FF211D31B1556E6006603BB /* Notifier.h in Headers */,
 				6F6208FB1A26BDB1000DAF4B /* kmconf.h in Headers */,
 				6F2963571A18AB0D00C3C79B /* util.h in Headers */,
-				6F29634D1A18AB0D00C3C79B /* kmdp.h in Headers */,
+				6F0098AD1B01FEC800122C15 /* TcpSocket.h in Headers */,
+				6F0098B11B03110100122C15 /* UdpSocket.h in Headers */,
+				6FF211041B130A2F006603BB /* TcpServerSocket.h in Headers */,
+				6F29634D1A18AB0D00C3C79B /* DataPacket.h in Headers */,
+				6FF211DA1B1556FB006603BB /* EventLoop.h in Headers */,
+				6FF211CE1B1556C5006603BB /* SslHandler.h in Headers */,
 				6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */,
-				6F2963521A18AB0D00C3C79B /* kmtimer.h in Headers */,
-				6F29636B1A18AC6E00C3C79B /* EventLoop.h in Headers */,
+				6F2963521A18AB0D00C3C79B /* TimerManager.h in Headers */,
 				6FA951421A3808450033C9CF /* kmdefs.h in Headers */,
-				6F29636D1A18AC6E00C3C79B /* Notifier.h in Headers */,
 				6F6208FD1A26BDB1000DAF4B /* kuma.h in Headers */,
-				6F29636C1A18AC6E00C3C79B /* internal.h in Headers */,
 				6F2963541A18AB0D00C3C79B /* kmtrace.h in Headers */,
 				6F29634F1A18AB0D00C3C79B /* kmqueue.h in Headers */,
+				6FF211D81B1556FB006603BB /* evdefs.h in Headers */,
+				6FF211D21B1556E6006603BB /* IOPoll.h in Headers */,
+				6FF211CC1B1556C5006603BB /* OpenSslLib.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -200,11 +244,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6F2963511A18AB0D00C3C79B /* kmtimer.cpp in Sources */,
-				6F29636E1A18AC6E00C3C79B /* VPoll.cpp in Sources */,
+				6FF211CD1B1556C5006603BB /* SslHandler.cpp in Sources */,
+				6F0098B31B03124400122C15 /* TcpSocket.cpp in Sources */,
+				6F2963511A18AB0D00C3C79B /* TimerManager.cpp in Sources */,
+				6FF211031B130A2F006603BB /* TcpServerSocket.cpp in Sources */,
 				6F2963531A18AB0D00C3C79B /* kmtrace.cpp in Sources */,
-				6F29636A1A18AC6E00C3C79B /* EventLoop.cpp in Sources */,
+				6FF211D91B1556FB006603BB /* EventLoop.cpp in Sources */,
+				6FF211CB1B1556C5006603BB /* OpenSslLib.cpp in Sources */,
 				6F2963561A18AB0D00C3C79B /* util.cpp in Sources */,
+				6FF211D41B1556E6006603BB /* VPoll.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -284,7 +332,13 @@
 		6F852DFF1985E33000271D87 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "kuma-Prefix.pch";
 				OBJROOT = ../../objs;
+				OTHER_LDFLAGS = (
+					"-lssl",
+					"-lcrypto",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SYMROOT = ../../bin;
 				USER_HEADER_SEARCH_PATHS = ../../src;
@@ -294,7 +348,13 @@
 		6F852E001985E33000271D87 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "kuma-Prefix.pch";
 				OBJROOT = ../../objs;
+				OTHER_LDFLAGS = (
+					"-lssl",
+					"-lcrypto",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SYMROOT = ../../bin;
 				USER_HEADER_SEARCH_PATHS = ../../src;

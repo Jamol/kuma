@@ -54,7 +54,7 @@ public:
     void stop();
     
 private:
-    typedef KM_QueueT<LoopCallback, KM_Mutex> CallbackQueue;
+    typedef KM_QueueMT<LoopCallback, KM_Mutex> CallbackQueue;
     
     IOPoll*         poll_;
     bool            stop_loop_;

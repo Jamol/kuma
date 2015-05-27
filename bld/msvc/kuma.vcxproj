@@ -159,22 +159,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\loop\EventLoop.cpp" />
-    <ClCompile Include="..\..\src\loop\SelectPoll.cpp" />
-    <ClCompile Include="..\..\src\util\kmtimer.cpp" />
+    <ClCompile Include="..\..\src\EventLoop.cpp" />
+    <ClCompile Include="..\..\src\poll\SelectPoll.cpp" />
+    <ClCompile Include="..\..\src\poll\VPoll.cpp" />
+    <ClCompile Include="..\..\src\TcpSocket.cpp" />
     <ClCompile Include="..\..\src\util\kmtrace.cpp" />
+    <ClCompile Include="..\..\src\util\TimerManager.cpp" />
     <ClCompile Include="..\..\src\util\util.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\evdefs.h" />
+    <ClInclude Include="..\..\src\EventLoop.h" />
     <ClInclude Include="..\..\src\kmconf.h" />
     <ClInclude Include="..\..\src\kmdefs.h" />
-    <ClInclude Include="..\..\src\loop\EventLoop.h" />
-    <ClInclude Include="..\..\src\loop\internal.h" />
-    <ClInclude Include="..\..\src\loop\Notifier.h" />
-    <ClInclude Include="..\..\src\util\kmdp.h" />
+    <ClInclude Include="..\..\src\poll\IOPoll.h" />
+    <ClInclude Include="..\..\src\poll\Notifier.h" />
+    <ClInclude Include="..\..\src\TcpSocket.h" />
+    <ClInclude Include="..\..\src\util\DataPacket.h" />
     <ClInclude Include="..\..\src\util\kmqueue.h" />
-    <ClInclude Include="..\..\src\util\kmtimer.h" />
     <ClInclude Include="..\..\src\util\kmtrace.h" />
+    <ClInclude Include="..\..\src\util\TimerManager.h" />
     <ClInclude Include="..\..\src\util\util.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -5,3 +5,5 @@
 //
 
 #include <iostream>
+
+#define KUMA_HAS_OPENSSL    1

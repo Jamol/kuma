@@ -99,17 +99,17 @@ private:
 };
 
 template <class E, class LockType>
-class KM_QueueT
+class KM_QueueMT
 {
 public:
-    KM_QueueT()
+    KM_QueueMT()
     {
         head_ = new TLNode(E());
         tail_ = head_;
         en_count_ = 0;
         de_count_ = 0;
     }
-    ~KM_QueueT()
+    ~KM_QueueMT()
     {
         TLNode* node = nullptr;
         while(head_)
