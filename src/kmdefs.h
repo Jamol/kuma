@@ -19,12 +19,12 @@ enum{
     KUMA_ERROR_UNSUPPORT
 };
 
-#define FLAG_ENABLE_SSL 0x1
+#define FLAG_HAS_SSL 0x1
 
 #ifdef KUMA_OS_WIN
 struct iovec {
-    unsigned long	iov_len;
-    char*			iov_base;
+    unsigned long   iov_len;
+    char*           iov_base;
 };
 #endif
 

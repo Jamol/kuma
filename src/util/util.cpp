@@ -351,87 +351,74 @@ extern "C" bool km_is_ip_address(const char* addr)
     return km_set_sock_addr(addr, 0, &hints, (struct sockaddr *)&ss_addr, sizeof(ss_addr)) == 0;
 }
 
-extern "C" int km_parse_transport_address(const char* transport_address,
-                                          char* protocol_type, int max_protocol_len,
-                                          char* host_ip, int  max_host_ip_len, unsigned short* port)
+extern "C" int km_parse_address(const char* addr,
+                                char* proto, int proto_len,
+                                char* host, int  host_len, unsigned short* port)
 {
-    if(NULL==transport_address || NULL==host_ip)
-        return -1;
+    if(NULL==addr || NULL==host)
+        return KUMA_ERROR_INVALID_PARAM;
     
     const char* tmp1 = NULL;
     int tmp_len = 0;
-    const char* tmp = strstr(transport_address, "://");
-    if(tmp)
-    {
-        tmp_len = int(max_protocol_len>tmp-transport_address?
-            tmp-transport_address:max_protocol_len-1);
+    const char* tmp = strstr(addr, "://");
+    if(tmp) {
+        tmp_len = int(proto_len > tmp-addr?
+            tmp-addr:proto_len-1);
         
-        if(protocol_type)
-        {
-            memcpy(protocol_type, transport_address, tmp_len);
-            protocol_type[tmp_len] = '\0';
+        if(proto) {
+            memcpy(proto, addr, tmp_len);
+            proto[tmp_len] = '\0';
         }
-        
         tmp += 3;
-    }
-    else
-    {
-        if(protocol_type)
-            protocol_type[0] = '\0';
-        tmp = transport_address;
+    } else {
+        if(proto) proto[0] = '\0';
+        tmp = addr;
     }
     const char* end = strchr(tmp, '/');
     if(NULL == end)
-        end = transport_address + strlen(transport_address);
+        end = addr + strlen(addr);
     
     tmp1 = strchr(tmp, '[');
-    if(tmp1)
-    {// ipv6 address
+    if(tmp1) {// ipv6 address
         tmp = tmp1 + 1;
         tmp1 = strchr(tmp, ']');
         if(!tmp1)
             return -1;
-        tmp_len = int(max_host_ip_len>tmp1-tmp?
-            tmp1-tmp:max_host_ip_len-1);
-        memcpy(host_ip, tmp, tmp_len);
-        host_ip[tmp_len] = '\0';
+        tmp_len = int(host_len>tmp1-tmp?
+            tmp1-tmp:host_len-1);
+        memcpy(host, tmp, tmp_len);
+        host[tmp_len] = '\0';
         tmp = tmp1 + 1;
         tmp1 = strchr(tmp, ':');
         if(tmp1 && tmp1 <= end)
             tmp = tmp1 + 1;
         else
             tmp = NULL;
-    }
-    else
-    {// ipv4 address
+    } else {// ipv4 address
         tmp1 = strchr(tmp, ':');
-        if(tmp1 && tmp1 <= end)
-        {
-            tmp_len = int(max_host_ip_len>tmp1-tmp?
-                tmp1-tmp:max_host_ip_len-1);
-            memcpy(host_ip, tmp, tmp_len);
-            host_ip[tmp_len] = '\0';
+        if(tmp1 && tmp1 <= end) {
+            tmp_len = int(host_len>tmp1-tmp?
+                tmp1-tmp:host_len-1);
+            memcpy(host, tmp, tmp_len);
+            host[tmp_len] = '\0';
             tmp = tmp1 + 1;
-        }
-        else
-        {
-            tmp_len = int(max_host_ip_len>end-tmp?
-                end-tmp:max_host_ip_len-1);
-            memcpy(host_ip, tmp, tmp_len);
-            host_ip[tmp_len] = '\0';
+        } else {
+            tmp_len = int(host_len>end-tmp?
+                end-tmp:host_len-1);
+            memcpy(host, tmp, tmp_len);
+            host[tmp_len] = '\0';
             tmp = NULL;
         }
     }
     
-    if(port)
-    {
+    if(port) {
         if(tmp)
             *port = atoi(tmp);
         else
             *port = 0;
     }
     
-    return 0;
+    return KUMA_ERROR_NOERR;
 }
 
 int set_nonblocking(int fd) {

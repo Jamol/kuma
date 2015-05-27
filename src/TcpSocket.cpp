@@ -97,8 +97,9 @@ void TcpSocket::cleanup()
     }
 }
 
-int TcpSocket::bind(const char *local_ip, uint16_t local_port)
+int TcpSocket::bind(const char *bind_host, uint16_t bind_port)
 {
+    KUMA_INFOTRACE("bind, bind_host="<<bind_host<<", bind_port="<<bind_port);
     if(getState() != ST_IDLE) {
         KUMA_ERRXTRACE("bind, invalid state, state="<<getState());
         return KUMA_ERROR_INVALID_STATE;
@@ -110,7 +111,7 @@ int TcpSocket::bind(const char *local_ip, uint16_t local_port)
     struct addrinfo hints = {0};
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_NUMERICHOST;//AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-    if(km_set_sock_addr(local_ip, local_port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
+    if(km_set_sock_addr(bind_host, bind_port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
         return KUMA_ERROR_INVALID_PARAM;
     }
     fd_ = ::socket(ss_addr.ss_family, SOCK_STREAM, 0);
@@ -118,7 +119,14 @@ int TcpSocket::bind(const char *local_ip, uint16_t local_port)
         KUMA_ERRXTRACE("bind, socket failed, err="<<getLastError());
         return KUMA_ERROR_FAILED;
     }
-    int ret = ::bind(fd_, (struct sockaddr*)&ss_addr, sizeof(ss_addr));
+    int addr_len = sizeof(ss_addr);
+#ifdef KUMA_OS_MAC
+    if(AF_INET == ss_addr.ss_family)
+        addr_len = sizeof(sockaddr_in);
+    else
+        addr_len = sizeof(sockaddr_in6);
+#endif
+    int ret = ::bind(fd_, (struct sockaddr*)&ss_addr, addr_len);
     if(ret < 0) {
         KUMA_ERRXTRACE("bind, bind failed, err="<<getLastError());
         return KUMA_ERROR_FAILED;
@@ -126,7 +134,7 @@ int TcpSocket::bind(const char *local_ip, uint16_t local_port)
     return KUMA_ERROR_NOERR;
 }
 
-int TcpSocket::connect(const char *addr, uint16_t port, EventCallback& cb, uint32_t flags, uint32_t timeout)
+int TcpSocket::connect(const char *host, uint16_t port, EventCallback& cb, uint32_t flags, uint32_t timeout)
 {
     if(getState() != ST_IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
@@ -134,10 +142,10 @@ int TcpSocket::connect(const char *addr, uint16_t port, EventCallback& cb, uint3
     }
     cb_connect_ = cb;
     flags_ = flags;
-    return connect_i(addr, port, timeout);
+    return connect_i(host, port, timeout);
 }
 
-int TcpSocket::connect(const char *addr, uint16_t port, EventCallback&& cb, uint32_t flags, uint32_t timeout)
+int TcpSocket::connect(const char *host, uint16_t port, EventCallback&& cb, uint32_t flags, uint32_t timeout)
 {
     if(getState() != ST_IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
@@ -145,14 +153,15 @@ int TcpSocket::connect(const char *addr, uint16_t port, EventCallback&& cb, uint
     }
     cb_connect_ = std::move(cb);
     flags_ = flags;
-    return connect_i(addr, port, timeout);
+    return connect_i(host, port, timeout);
 }
 
-int TcpSocket::connect_i(const char* addr, uint16_t port, uint32_t timeout)
+int TcpSocket::connect_i(const char* host, uint16_t port, uint32_t timeout)
 {
+    KUMA_INFOXTRACE("connect_i, host="<<host<<", port="<<port);
 #ifndef KUMA_HAS_OPENSSL
     if (SslEnabled()) {
-        KUMA_ERRXTRACE("connect, OpenSSL is disabled");
+        KUMA_ERRXTRACE("connect_i, OpenSSL is disabled");
         return KUMA_ERROR_UNSUPPORT;
     }
 #endif
@@ -160,13 +169,13 @@ int TcpSocket::connect_i(const char* addr, uint16_t port, uint32_t timeout)
     struct addrinfo hints = {0};
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-    if(km_set_sock_addr(addr, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
+    if(km_set_sock_addr(host, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
         return KUMA_ERROR_INVALID_PARAM;
     }
     if(INVALID_FD == fd_) {
         fd_ = ::socket(ss_addr.ss_family, SOCK_STREAM, 0);
         if(INVALID_FD == fd_) {
-            KUMA_ERRXTRACE("connect, socket failed, err="<<getLastError());
+            KUMA_ERRXTRACE("connect_i, socket failed, err="<<getLastError());
             return KUMA_ERROR_FAILED;
         }
     }
@@ -191,7 +200,7 @@ int TcpSocket::connect_i(const char* addr, uint16_t port, uint32_t timeout)
               == getLastError()) {
         setState(ST_CONNECTING);
     } else {
-        KUMA_ERRXTRACE("connect, error, fd="<<fd_<<", addr="<<addr<<", err"<<getLastError());
+        KUMA_ERRXTRACE("connect_i, error, fd="<<fd_<<", err="<<getLastError());
         cleanup();
         setState(ST_CLOSED);
         return KUMA_ERROR_FAILED;
@@ -201,22 +210,17 @@ int TcpSocket::connect_i(const char* addr, uint16_t port, uint32_t timeout)
 #else
     int len = sizeof(ss_addr);
 #endif
-    char my_addr[128] = {0};
-    uint16_t my_port = 0;
+    char local_ip[128] = {0};
+    uint16_t local_port = 0;
     ret = getsockname(fd_, (struct sockaddr*)&ss_addr, &len);
     if(ret != -1) {
-        km_get_sock_addr((struct sockaddr*)&ss_addr, sizeof(ss_addr), my_addr, sizeof(my_addr), &my_port);
+        km_get_sock_addr((struct sockaddr*)&ss_addr, sizeof(ss_addr), local_ip, sizeof(local_ip), &local_port);
     }
     
-    KUMA_INFOXTRACE("connect, fd: "<<fd_<<", my_addr: "<<my_addr
-                   <<", my_port: "<<my_port<<", state: "<<getState());
+    KUMA_INFOXTRACE("connect_i, fd="<<fd_<<", local_ip="<<local_ip
+                   <<", local_port="<<local_port<<", state="<<getState());
     
-    loop_->registerFd(fd_,
-#ifdef KUMA_OS_WIN
-                      FD_CONNECT |
-#endif
-                      KUMA_EV_NETWORK,
-                      [this] (uint32_t ev) { ioReady(ev); });
+    loop_->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
     registered_ = true;
     return KUMA_ERROR_NOERR;
 }
@@ -284,7 +288,7 @@ int TcpSocket::startSslHandshake(bool is_server)
     if(ret != KUMA_ERROR_NOERR) {
         return ret;
     }
-    flags_ |= FLAG_ENABLE_SSL;
+    flags_ |= FLAG_HAS_SSL;
     SslHandler::SslState ssl_state = ssl_handler_->doSslHandshake();
     if(SslHandler::SslState::SSL_ERROR == ssl_state) {
         return KUMA_ERROR_SSL_FAILED;
@@ -327,7 +331,7 @@ void TcpSocket::setSocketOption()
 
 bool TcpSocket::SslEnabled()
 {
-    return flags_ & FLAG_ENABLE_SSL;
+    return flags_ & FLAG_HAS_SSL;
 }
 
 bool TcpSocket::isReady()
@@ -372,7 +376,7 @@ int TcpSocket::send(uint8_t* data, uint32_t length)
                == getLastError()) {
                 ret = 0;
             } else {
-                KUMA_ERRXTRACE("send, failed, err: "<<getLastError());
+                KUMA_ERRXTRACE("send, failed, err="<<getLastError());
             }
         }
     }
@@ -385,14 +389,14 @@ int TcpSocket::send(uint8_t* data, uint32_t length)
             loop_->updateFd(fd_, KUMA_EV_NETWORK);
         }
     }
-    //WTP_INFOXTRACE("send, ret: "<<ret<<", len: "<<len);
+    //WTP_INFOXTRACE("send, ret="<<ret<<", len="<<len);
     return ret;
 }
 
 int TcpSocket::send(iovec* iovs, uint32_t count)
 {
     if(!isReady()) {
-        KUMA_WARNXTRACE("send 2, invalid state: "<<getState());
+        KUMA_WARNXTRACE("send 2, invalid state="<<getState());
         return 0;
     }
     if(INVALID_FD == fd_) {
@@ -450,7 +454,7 @@ int TcpSocket::send(iovec* iovs, uint32_t count)
         }
     }
     
-    //WTP_INFOXTRACE("send, ret: "<<ret<<", bytes_sent: "<<bytes_sent);
+    //WTP_INFOXTRACE("send, ret="<<ret<<", bytes_sent="<<bytes_sent);
     return ret<0?ret:bytes_sent;
 }
 
@@ -484,7 +488,7 @@ int TcpSocket::receive(uint8_t* data, uint32_t length)
                == getLastError()) {
                 ret = 0;
             } else {
-                KUMA_ERRXTRACE("receive, failed, err: "<<getLastError());
+                KUMA_ERRXTRACE("receive, failed, err="<<getLastError());
             }
         }
     }
@@ -494,13 +498,13 @@ int TcpSocket::receive(uint8_t* data, uint32_t length)
         setState(ST_CLOSED);
     }
     
-    //KUMA_INFOXTRACE("receive, ret: "<<ret);
+    //KUMA_INFOXTRACE("receive, ret="<<ret);
     return ret;
 }
 
 int TcpSocket::close()
 {
-    KUMA_INFOXTRACE("close, state"<<getState());
+    KUMA_INFOXTRACE("close, state="<<getState());
     cleanup();
     setState(ST_CLOSED);
     return KUMA_ERROR_NOERR;
@@ -508,6 +512,7 @@ int TcpSocket::close()
 
 void TcpSocket::onConnect(int err)
 {
+    KUMA_INFOXTRACE("onConnect, err="<<err<<", state="<<getState());
     if(0 == err) {
         setState(ST_OPEN);
 #ifdef KUMA_HAS_OPENSSL
@@ -556,7 +561,7 @@ void TcpSocket::ioReady(uint32_t events)
         {
             if(events & KUMA_EV_ERROR) {
                 KUMA_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events="<<events
-                              <<", state="<<getState());
+                              <<", err="<<getLastError()<<", state="<<getState());
                 onConnect(KUMA_ERROR_POLLERR);
             } else {
                 bool destroyed = false;
@@ -612,7 +617,7 @@ void TcpSocket::ioReady(uint32_t events)
             destroy_flag_ptr_ = nullptr;
             if((events & KUMA_EV_ERROR) && getState() == ST_OPEN) {
                 KUMA_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events="<<events
-                              <<", state="<<getState());
+                              <<", err="<<getLastError()<<", state="<<getState());
                 onClose(KUMA_ERROR_POLLERR);
                 break;
             }

@@ -10,6 +10,9 @@
 
 #include <stdio.h>
 #include <stdarg.h>
+#include <thread>
+#include <string>
+#include <sstream>
 
 KUMA_NS_BEGIN
 
@@ -26,22 +29,28 @@ void TracePrint(int level, const char* szMessage, ...)
     va_start(VAList, szMessage);
     VSNPRINTF(szMsgBuf, sizeof(szMsgBuf)-1, szMessage, VAList);
     
+    std::thread::id tid = std::this_thread::get_id();
+    std::stringstream ss;
+    ss << tid;
+    std::string stid;
+    ss >> stid;
+    
     switch(level)
     {
         case KUMA_TRACE_LEVEL_INFO:
-            printf("INFO: %s", szMsgBuf);
+            printf("INFO: [%s] %s\n", stid.c_str(), szMsgBuf);
             break;
         case KUMA_TRACE_LEVEL_WARN:
-            printf("WARN: %s", szMsgBuf);
+            printf("WARN: [%s] %s\n", stid.c_str(), szMsgBuf);
             break;
         case KUMA_TRACE_LEVEL_ERROR:
-            printf("ERROR: %s", szMsgBuf);
+            printf("ERROR: [%s] %s\n", stid.c_str(), szMsgBuf);
             break;
         case KUMA_TRACE_LEVEL_DEBUG:
-            printf("DEBUG: %s", szMsgBuf);
+            printf("DEBUG: [%s] %s\n", stid.c_str(), szMsgBuf);
             break;
         default:
-            printf("INFO: %s", szMsgBuf);
+            printf("INFO: [%s] %s\n", stid.c_str(), szMsgBuf);
             break;
     }
 }

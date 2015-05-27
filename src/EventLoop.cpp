@@ -17,6 +17,7 @@
 #include "poll/IOPoll.h"
 #include "util/kmqueue.h"
 #include "util/TimerManager.h"
+#include "util/kmtrace.h"
 #include <thread>
 #include <condition_variable>
 
@@ -131,7 +132,9 @@ void EventLoop::loop()
 
 void EventLoop::stop()
 {
+    KUMA_INFOTRACE("EventLoop::stop");
     stop_loop_ = true;
+    poll_->notify();
 }
 
 int EventLoop::runInEventLoop(LoopCallback& cb)

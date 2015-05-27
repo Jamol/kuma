@@ -49,9 +49,9 @@ KUMA_NS_BEGIN
 TcpServerSocket::TcpServerSocket(EventLoop* loop)
 : fd_(INVALID_FD)
 , loop_(loop)
-, state_(ST_IDLE)
 , registered_(false)
 , flags_(0)
+, stopped_(false)
 {
     
 }
@@ -71,7 +71,7 @@ void TcpServerSocket::cleanup()
     if(INVALID_FD != fd_) {
         SOCKET_FD fd = fd_;
         fd_ = INVALID_FD;
-        shutdown(fd, 0); // only stop receive
+        ::shutdown(fd, 2);
         if(registered_) {
             registered_ = false;
             loop_->unregisterFd(fd, true);
@@ -81,13 +81,14 @@ void TcpServerSocket::cleanup()
     }
 }
 
-int TcpServerSocket::startListen(const char* addr, uint16_t port)
+int TcpServerSocket::startListen(const char* host, uint16_t port)
 {
+    KUMA_INFOXTRACE("startListen, host="<<host<<", port="<<port);
     sockaddr_storage ss_addr = {0};
     struct addrinfo hints = {0};
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-    if(km_set_sock_addr(addr, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
+    if(km_set_sock_addr(host, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
         return KUMA_ERROR_INVALID_PARAM;
     }
     fd_ = ::socket(ss_addr.ss_family, SOCK_STREAM, 0);
@@ -95,11 +96,36 @@ int TcpServerSocket::startListen(const char* addr, uint16_t port)
         KUMA_ERRXTRACE("startListen, socket failed, err="<<getLastError());
         return KUMA_ERROR_FAILED;
     }
-    int ret = ::bind(fd_, (struct sockaddr*)&ss_addr, sizeof(ss_addr));
+    int addr_len = sizeof(ss_addr);
+#ifdef KUMA_OS_MAC
+    if(AF_INET == ss_addr.ss_family)
+        addr_len = sizeof(sockaddr_in);
+    else
+        addr_len = sizeof(sockaddr_in6);
+#endif
+    int ret = ::bind(fd_, (struct sockaddr*)&ss_addr, addr_len);
     if(ret < 0) {
         KUMA_ERRXTRACE("startListen, bind failed, err="<<getLastError());
         return KUMA_ERROR_FAILED;
     }
+    setSocketOption();
+    if(::listen(fd_, 3000) != 0) {
+        closeFd(fd_);
+        fd_ = INVALID_FD;
+        KUMA_ERRXTRACE("startListen, socket listen fail, err="<<getLastError());
+        return KUMA_ERROR_FAILED;
+    }
+    stopped_ = false;
+    loop_->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
+    registered_ = true;
+    return KUMA_ERROR_NOERR;
+}
+
+int TcpServerSocket::stopListen(const char* host, uint16_t port)
+{
+    KUMA_INFOXTRACE("stopListen");
+    stopped_ = true;
+    cleanup();
     return KUMA_ERROR_NOERR;
 }
 
@@ -128,30 +154,58 @@ void TcpServerSocket::setSocketOption()
 
 int TcpServerSocket::close()
 {
-    KUMA_INFOXTRACE("close, state"<<getState());
+    KUMA_INFOXTRACE("close");
     cleanup();
-    setState(ST_CLOSED);
     return KUMA_ERROR_NOERR;
 }
 
 void TcpServerSocket::onAccept()
 {
-    
+    SOCKET_FD fd = INVALID_FD;
+    while(!stopped_) {
+        fd = ::accept(fd_, NULL, NULL);
+        if(INVALID_FD == fd) {
+            return ;
+        }
+        char peer_ip[128] = {0};
+        uint16_t peer_port = 0;
+        
+        sockaddr_storage ss_addr = {0};
+#if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
+        socklen_t ss_len = sizeof(ss_addr);
+#else
+        int ss_len = sizeof(ss_addr);
+#endif
+        int ret = getpeername(fd, (struct sockaddr*)&ss_addr, &ss_len);
+        if(ret == 0) {
+            km_get_sock_addr((struct sockaddr*)&ss_addr, sizeof(ss_addr), peer_ip, sizeof(peer_ip), &peer_port);
+        } else {
+            KUMA_WARNXTRACE("onAccept, getpeername failed, err="<<getLastError());
+        }
+        
+        KUMA_INFOXTRACE("onAccept, fd="<<fd<<", peer_ip="<<peer_ip<<", peer_port="<<peer_port);
+        if(cb_accept_) {
+            cb_accept_(fd);
+        } else {
+            closeFd(fd);
+        }
+    }
 }
 
 void TcpServerSocket::onClose(int err)
 {
-    
+    KUMA_INFOXTRACE("onClose, err="<<err);
+    cleanup();
+    if(cb_error_) cb_error_(err);
 }
 
 void TcpServerSocket::ioReady(uint32_t events)
 {
     if(events & KUMA_EV_ERROR) {
-        KUMA_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events="<<events
-                       <<", state="<<getState());
+        KUMA_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events="<<events<<", err="<<getLastError());
         onClose(KUMA_ERROR_POLLERR);
     } else {
-        
+        onAccept();
     }
 }
 

@@ -4,6 +4,10 @@
 #include "kuma.h"
 #include "evdefs.h"
 
+#ifndef KUMA_OS_WIN
+struct iovec;
+#endif
+
 KUMA_NS_BEGIN
 
 class EventLoop;
@@ -17,9 +21,9 @@ public:
     TcpSocket(EventLoop* loop);
     ~TcpSocket();
     
-    int bind(const char* local_ip, uint16_t local_port);
-    int connect(const char* addr, uint16_t port, EventCallback& cb, uint32_t flags = 0, uint32_t timeout = 0);
-    int connect(const char* addr, uint16_t port, EventCallback&& cb, uint32_t flags = 0, uint32_t timeout = 0);
+    int bind(const char* bind_host, uint16_t bind_port);
+    int connect(const char* host, uint16_t port, EventCallback& cb, uint32_t flags = 0, uint32_t timeout = 0);
+    int connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t flags = 0, uint32_t timeout = 0);
     int attachFd(SOCKET_FD fd, uint32_t flags = 0);
     int detachFd(SOCKET_FD &fd);
     int startSslHandshake(bool is_server);

@@ -334,13 +334,14 @@
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "kuma-Prefix.pch";
-				OBJROOT = ../../objs;
+				INSTALL_PATH = .;
+				OBJROOT = ../../objs/osx;
 				OTHER_LDFLAGS = (
 					"-lssl",
 					"-lcrypto",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SYMROOT = ../../bin;
+				SYMROOT = ../../bin/osx;
 				USER_HEADER_SEARCH_PATHS = ../../src;
 			};
 			name = Debug;
@@ -350,13 +351,14 @@
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "kuma-Prefix.pch";
-				OBJROOT = ../../objs;
+				INSTALL_PATH = .;
+				OBJROOT = ../../objs/osx;
 				OTHER_LDFLAGS = (
 					"-lssl",
 					"-lcrypto",
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SYMROOT = ../../bin;
+				SYMROOT = ../../bin/osx;
 				USER_HEADER_SEARCH_PATHS = ../../src;
 			};
 			name = Release;

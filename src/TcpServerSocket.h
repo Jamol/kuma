@@ -11,14 +11,20 @@ class EventLoop;
 class TcpServerSocket
 {
 public:
-    typedef std::function<void(SOCKET_FD)> EventCallback;
+    typedef std::function<void(SOCKET_FD)> AcceptCallback;
+    typedef std::function<void(int)> ErrorCallback;
     
     TcpServerSocket(EventLoop* loop);
     ~TcpServerSocket();
     
-    int startListen(const char* addr, uint16_t port);
-    int stopListen(const char* addr, uint16_t port);
+    int startListen(const char* host, uint16_t port);
+    int stopListen(const char* host, uint16_t port);
     int close();
+    
+    void setAcceptCallback(AcceptCallback& cb) { cb_accept_ = cb; }
+    void setErrorCallback(ErrorCallback& cb) { cb_error_ = cb; }
+    void setAcceptCallback(AcceptCallback&& cb) { cb_accept_ = std::move(cb); }
+    void setErrorCallback(ErrorCallback&& cb) { cb_error_ = std::move(cb); }
     
     SOCKET_FD getFd() { return fd_; }
     
@@ -32,22 +38,17 @@ private:
     void onClose(int err);
     
 private:
-    enum State {
-        ST_IDLE,
-        ST_ACCEPTING,
-        ST_CLOSED
-    };
-    
-    State getState() { return state_; }
-    void setState(State st) { state_ = st; }
     void cleanup();
     
 private:
     SOCKET_FD   fd_;
     EventLoop*  loop_;
-    State       state_;
     bool        registered_;
     uint32_t    flags_;
+    bool        stopped_;
+    
+    AcceptCallback  cb_accept_;
+    ErrorCallback   cb_error_;
 };
 
 KUMA_NS_END

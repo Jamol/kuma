@@ -90,13 +90,13 @@ bool WinPoll::init()
 uint32_t WinPoll::get_events(uint32_t kuma_events)
 {
     uint32_t ev = 0;
-    if(kuma_events | KUMA_EV_READ) {
+    if(kuma_events & KUMA_EV_READ) {
         ev |= FD_READ;
     }
-    if(kuma_events | KUMA_EV_WRITE) {
+    if(kuma_events & KUMA_EV_WRITE) {
         ev |= FD_WRITE;
     }
-    if(kuma_events | KUMA_EV_ERROR) {
+    if(kuma_events & KUMA_EV_ERROR) {
         ev |= FD_CLOSE;
     }
     return ev;

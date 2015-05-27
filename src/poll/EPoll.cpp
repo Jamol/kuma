@@ -78,13 +78,13 @@ bool EPoll::init()
 uint32_t EPoll::get_events(uint32_t kuma_events)
 {
     uint32_t ev = EPOLLET;//EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLET;
-    if(kuma_events | KUMA_EV_READ) {
+    if(kuma_events & KUMA_EV_READ) {
         ev |= EPOLLIN;
     }
-    if(kuma_events | KUMA_EV_WRITE) {
+    if(kuma_events & KUMA_EV_WRITE) {
         ev |= EPOLLOUT;
     }
-    if(kuma_events | KUMA_EV_ERROR) {
+    if(kuma_events & KUMA_EV_ERROR) {
         ev |= EPOLLERR | EPOLLHUP;
     }
     return ev;

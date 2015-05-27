@@ -74,13 +74,13 @@ bool VPoll::init()
 uint32_t VPoll::get_events(uint32_t kuma_events)
 {
     uint32_t ev = 0;
-    if(kuma_events | KUMA_EV_READ) {
+    if(kuma_events & KUMA_EV_READ) {
         ev |= POLLIN | POLLPRI;
     }
-    if(kuma_events | KUMA_EV_WRITE) {
+    if(kuma_events & KUMA_EV_WRITE) {
         ev |= POLLOUT | POLLWRBAND;
     }
-    if(kuma_events | KUMA_EV_ERROR) {
+    if(kuma_events & KUMA_EV_ERROR) {
         ev |= POLLERR | POLLHUP | POLLNVAL;
     }
     return ev;
