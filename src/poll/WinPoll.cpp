@@ -64,15 +64,10 @@ WinPoll::WinPoll()
 WinPoll::~WinPoll()
 {
     if (hwnd_) {
-
         if (::IsWindow(hwnd_)) {
-
             DestroyWindow(hwnd_);
-
         }
-
         hwnd_ = NULL;
-
     }
 }
 

@@ -25,11 +25,10 @@ KUMA_NS_BEGIN
 
 IOPoll* createIOPoll();
 
-EventLoop::EventLoop(uint32_t max_wait_ms)
+EventLoop::EventLoop()
 : poll_(createIOPoll())
 , stop_loop_(false)
 , thread_id_()
-, max_wait_ms_(max_wait_ms)
 , timer_mgr_(new TimerManager())
 {
     
@@ -58,6 +57,12 @@ PollType EventLoop::getPollType()
         return poll_->getType();
     }
     return POLL_TYPE_NONE;
+}
+
+bool EventLoop::isPollLT()
+{
+    return  getPollType() == POLL_TYPE_POLL ||
+            getPollType() == POLL_TYPE_SELECT;
 }
 
 int EventLoop::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
@@ -112,21 +117,26 @@ int EventLoop::unregisterFd(SOCKET_FD fd, bool close_fd)
     }
 }
 
-void EventLoop::loop()
+void EventLoop::loopOnce(uint32_t max_wait_ms)
+{
+    LoopCallback cb;
+    while (!stop_loop_ && cb_queue_.dequeue(cb)) {
+        if(cb) {
+            cb();
+        }
+    }
+    unsigned long wait_ms = max_wait_ms;
+    timer_mgr_->checkExpire(&wait_ms);
+    if(wait_ms > max_wait_ms) {
+        wait_ms = max_wait_ms;
+    }
+    poll_->wait((uint32_t)wait_ms);
+}
+
+void EventLoop::loop(uint32_t max_wait_ms)
 {
     while (!stop_loop_) {
-        LoopCallback cb;
-        while (!stop_loop_ && cb_queue_.dequeue(cb)) {
-            if(cb) {
-                cb();
-            }
-        }
-        unsigned long wait_ms = max_wait_ms_;
-        timer_mgr_->checkExpire(&wait_ms);
-        if(wait_ms > max_wait_ms_) {
-            wait_ms = max_wait_ms_;
-        }
-        poll_->wait((uint32_t)wait_ms);
+        loopOnce(max_wait_ms);
     }
 }
 
@@ -182,13 +192,9 @@ int EventLoop::runInEventLoopSync(LoopCallback& cb)
     return KUMA_ERROR_NOERR;
 }
 
-#if defined(KUMA_OS_LINUX)
 IOPoll* createEPoll();
-#elif defined(KUMA_OS_MAC)
 IOPoll* createVPoll();
-#else
 IOPoll* createSelectPoll();
-#endif
 
 IOPoll* createIOPoll()
 {

@@ -32,7 +32,7 @@ class IOPoll;
 class EventLoop
 {
 public:
-    EventLoop(uint32_t max_wait_ms = -1);
+    EventLoop();
     ~EventLoop();
 
 public:
@@ -44,13 +44,15 @@ public:
     TimerManagerPtr getTimerMgr() { return timer_mgr_; }
     
     PollType getPollType();
+    bool isPollLT(); // level trigger
     
 public:
     bool isInEventLoopThread() { return std::this_thread::get_id() == thread_id_; }
     int runInEventLoop(LoopCallback& cb);
     int runInEventLoop(LoopCallback&& cb);
     int runInEventLoopSync(LoopCallback& cb);
-    void loop();
+    void loopOnce(uint32_t max_wait_ms);
+    void loop(uint32_t max_wait_ms = -1);
     void stop();
     
 private:
@@ -62,7 +64,6 @@ private:
     
     CallbackQueue   cb_queue_;
     
-    uint32_t        max_wait_ms_;
     TimerManagerPtr timer_mgr_;
 };
 

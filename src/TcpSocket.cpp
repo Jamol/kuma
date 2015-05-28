@@ -385,7 +385,7 @@ int TcpSocket::send(uint8_t* data, uint32_t length)
         cleanup();
         setState(ST_CLOSED);
     } else if(ret < length) {
-        if(loop_->getPollType() == POLL_TYPE_POLL) {
+        if(loop_->isPollLT()) {
             loop_->updateFd(fd_, KUMA_EV_NETWORK);
         }
     }
@@ -449,7 +449,7 @@ int TcpSocket::send(iovec* iovs, uint32_t count)
         cleanup();
         setState(ST_CLOSED);
     } else if(0 == ret) {
-        if(loop_->getPollType() == POLL_TYPE_POLL) {
+        if(loop_->isPollLT()) {
             loop_->updateFd(fd_, KUMA_EV_NETWORK);
         }
     }
@@ -534,7 +534,7 @@ void TcpSocket::onConnect(int err)
 
 void TcpSocket::onSend(int err)
 {
-    if(loop_->getPollType() == POLL_TYPE_POLL) {
+    if(loop_->isPollLT()) {
         loop_->updateFd(fd_, KUMA_EV_READ | KUMA_EV_ERROR);
     }
     if(cb_write_ && isReady()) cb_write_(err);

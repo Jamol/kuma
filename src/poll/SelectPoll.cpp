@@ -36,6 +36,7 @@ public:
 
 private:
     void resizePollItems(SOCKET_FD fd);
+    void updateFdSet(SOCKET_FD fd, uint32_t events);
     
 private:
     struct PollFD {
@@ -45,16 +46,23 @@ private:
     };
 
 private:
-
     typedef std::vector<PollFD> PollFdVector;
     Notifier        notifier_;
     PollItemVector  poll_items_;
     PollFdVector    poll_fds_;
+    
+    fd_set          read_fds_;
+    fd_set          write_fds_;
+    fd_set          except_fds_;
+    SOCKET_FD       max_fd_;
 };
 
 SelectPoll::SelectPoll()
+: max_fd_(0)
 {
-    
+    FD_ZERO(&read_fds_);
+    FD_ZERO(&write_fds_);
+    FD_ZERO(&except_fds_);
 }
 
 SelectPoll::~SelectPoll()
@@ -91,6 +99,7 @@ int SelectPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
     }
     poll_items_[fd].fd = fd;
     poll_items_[fd].cb = cb;
+    updateFdSet(fd, events);
     return KUMA_ERROR_NOERR;
 }
 
@@ -107,6 +116,7 @@ int SelectPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb)
     }
     poll_items_[fd].fd = fd;
     poll_items_[fd].cb = std::move(cb);
+    updateFdSet(fd, events);
     return KUMA_ERROR_NOERR;
 }
 
@@ -118,6 +128,7 @@ int SelectPoll::unregisterFd(SOCKET_FD fd)
         KUMA_WARNTRACE("SelectPoll::unregisterFd, failed, max_fd=" << max_fd);
         return KUMA_ERROR_INVALID_PARAM;
     }
+    updateFdSet(fd, 0);
     int idx = poll_items_[fd].idx;
     if (fd == max_fd) {
         poll_items_.pop_back();
@@ -140,45 +151,74 @@ int SelectPoll::unregisterFd(SOCKET_FD fd)
 
 int SelectPoll::updateFd(SOCKET_FD fd, uint32_t events)
 {
+    int max_fd = int(poll_items_.size() - 1);
+    if (fd < 0 || -1 == max_fd || fd > max_fd) {
+        KUMA_WARNTRACE("SelectPoll::updateFd, failed, fd="<<fd<<", max_fd="<<max_fd);
+        return KUMA_ERROR_INVALID_PARAM;
+    }
+    if(poll_items_[fd].fd != fd) {
+        KUMA_WARNTRACE("SelectPoll::updateFd, failed, fd="<<fd<<", item_fd="<<poll_items_[fd].fd);
+        return KUMA_ERROR_INVALID_PARAM;
+    }
+    int idx = poll_items_[fd].idx;
+    if (idx < 0 || idx >= poll_fds_.size()) {
+        KUMA_WARNTRACE("SelectPoll::updateFd, failed, index="<<idx);
+        return KUMA_ERROR_INVALID_STATE;
+    }
+    if(poll_fds_[idx].fd != fd) {
+        KUMA_WARNTRACE("SelectPoll::updateFd, failed, fd="<<fd<<", pfds_fd="<<poll_fds_[idx].fd);
+        return KUMA_ERROR_INVALID_PARAM;
+    }
+    poll_fds_[idx].events = events;
+    updateFdSet(fd, events);
     return KUMA_ERROR_NOERR;
+}
+
+void SelectPoll::updateFdSet(SOCKET_FD fd, uint32_t events)
+{
+    if(events != 0) {
+        if (events & KUMA_EV_READ) {
+            FD_SET(fd, &read_fds_);
+        }
+        if (events & KUMA_EV_WRITE) {
+            FD_SET(fd, &write_fds_);
+        }
+        if (events & KUMA_EV_ERROR) {
+            FD_SET(fd, &except_fds_);
+        }
+        if (fd > max_fd_) {
+            max_fd_ = fd;
+        }
+    } else {
+        FD_CLR(fd, &read_fds_);
+        FD_CLR(fd, &write_fds_);
+        FD_CLR(fd, &except_fds_);
+        if(max_fd_ == fd) {
+            auto it = std::max_element(poll_fds_.begin(), poll_fds_.end(), [] (PollFD& pf1, PollFD& pf2){
+                return pf1.fd < pf2.fd;
+            });
+            max_fd_ = it != poll_fds_.end()?(*it).fd:0;
+        }
+    }
 }
 
 int SelectPoll::wait(uint32_t wait_ms)
 {
     fd_set readfds, writefds, exceptfds;
-    FD_ZERO(&readfds);
-    FD_ZERO(&writefds);
-    FD_ZERO(&exceptfds);
+    memcpy(&readfds, &read_fds_, sizeof(read_fds_));
+    memcpy(&writefds, &write_fds_, sizeof(write_fds_));
+    memcpy(&exceptfds, &except_fds_, sizeof(except_fds_));
     struct timeval tval;
     if(wait_ms > 0) {
         tval.tv_sec = wait_ms/1000;
         tval.tv_usec = (wait_ms - tval.tv_sec*1000)*1000;
     }
-    SOCKET_FD max_fd = 0;
-    int fds_count = int(poll_fds_.size());
-    int item_count = int(poll_items_.size());
-    for (int i = 0; i<fds_count; ++i) {
-        SOCKET_FD fd = poll_fds_[i].fd;
-        uint32_t ev = poll_fds_[i].events;
-        if (fd != INVALID_FD && fd < item_count && ev != 0) {
-            if (ev | KUMA_EV_READ) {
-                FD_SET(fd, &readfds);
-            }
-            if (ev | KUMA_EV_WRITE) {
-                FD_SET(fd, &writefds);
-            }
-            if (ev | KUMA_EV_ERROR) {
-                FD_SET(fd, &exceptfds);
-            }
-            if (fd > max_fd) {
-                max_fd = fd;
-            }
-        }
-    }
-    int nready = ::select(max_fd + 1, &readfds, &writefds, &exceptfds, wait_ms == -1 ? NULL : &tval);
+    int nready = ::select(max_fd_ + 1, &readfds, &writefds, &exceptfds, wait_ms == -1 ? NULL : &tval);
     if (nready <= 0) {
         return KUMA_ERROR_NOERR;
     }
+    int fds_count = int(poll_fds_.size());
+    int item_count = int(poll_items_.size());
     for (int i = 0; i < fds_count && nready > 0; ++i) {
         uint32_t events = 0;
         SOCKET_FD fd = poll_fds_[i].fd;
