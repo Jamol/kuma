@@ -15,6 +15,7 @@
 
 #include "EventLoopImpl.h"
 #include "TcpSocketImpl.h"
+#include "UdpSocketImpl.h"
 #include "TcpServerSocketImpl.h"
 #include "kmapi.h"
 
@@ -204,7 +205,7 @@ TcpSocketImpl* TcpSocket::getPimpl()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 TcpServerSocket::TcpServerSocket(EventLoop* loop)
-    : pimpl_(new TcpServerSocketImpl(loop->getPimpl()))
+: pimpl_(new TcpServerSocketImpl(loop->getPimpl()))
 {
 
 }
@@ -249,6 +250,78 @@ void TcpServerSocket::setErrorCallback(ErrorCallback&& cb)
 }
 
 TcpServerSocketImpl* TcpServerSocket::getPimpl()
+{
+    return pimpl_;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+UdpSocket::UdpSocket(EventLoop* loop)
+: pimpl_(new UdpSocketImpl(loop->getPimpl()))
+{
+    
+}
+
+UdpSocket::~UdpSocket()
+{
+    delete pimpl_;
+}
+
+int UdpSocket::bind(const char* bind_host, uint16_t bind_port, uint32_t flags)
+{
+    return pimpl_->bind(bind_host, bind_port, flags);
+}
+
+int UdpSocket::send(uint8_t* data, uint32_t length, const char* host, uint16_t port)
+{
+    return pimpl_->send(data, length, host, port);
+}
+
+int UdpSocket::send(iovec* iovs, uint32_t count, const char* host, uint16_t port)
+{
+    return pimpl_->send(iovs, count, host, port);
+}
+
+int UdpSocket::receive(uint8_t* data, uint32_t length, char* ip, uint32_t ip_len, uint16_t& port)
+{
+    return pimpl_->receive(data, length, ip, ip_len, port);
+}
+
+int UdpSocket::close()
+{
+    return pimpl_->close();
+}
+
+int UdpSocket::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
+{
+    return pimpl_->mcastJoin(mcast_addr, mcast_port);
+}
+
+int UdpSocket::mcastLeave(const char* mcast_addr, uint16_t mcast_port)
+{
+    return pimpl_->mcastLeave(mcast_addr, mcast_port);
+}
+
+void UdpSocket::setReadCallback(EventCallback& cb)
+{
+    pimpl_->setReadCallback(cb);
+}
+
+void UdpSocket::setErrorCallback(EventCallback& cb)
+{
+    pimpl_->setErrorCallback(cb);
+}
+
+void UdpSocket::setReadCallback(EventCallback&& cb)
+{
+    pimpl_->setReadCallback(std::move(cb));
+}
+
+void UdpSocket::setErrorCallback(EventCallback&& cb)
+{
+    pimpl_->setErrorCallback(std::move(cb));
+}
+
+UdpSocketImpl* UdpSocket::getPimpl()
 {
     return pimpl_;
 }

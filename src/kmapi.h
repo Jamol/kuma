@@ -30,6 +30,7 @@ KUMA_NS_BEGIN
 
 class EventLoopImpl;
 class TcpSocketImpl;
+class UdpSocketImpl;
 class TcpServerSocketImpl;
 
 class KUMA_API EventLoop
@@ -116,6 +117,33 @@ public:
     
 private:
     TcpServerSocketImpl* pimpl_;
+};
+
+class KUMA_API UdpSocket
+{
+public:
+    typedef std::function<void(int)> EventCallback;
+    
+    UdpSocket(EventLoop* loop);
+    ~UdpSocket();
+    
+    int bind(const char* bind_host, uint16_t bind_port, uint32_t flags = 0);
+    int send(uint8_t* data, uint32_t length, const char* host, uint16_t port);
+    int send(iovec* iovs, uint32_t count, const char* host, uint16_t port);
+    int receive(uint8_t* data, uint32_t length, char* ip, uint32_t ip_len, uint16_t& port);
+    int close();
+    
+    int mcastJoin(const char* mcast_addr, uint16_t mcast_port);
+    int mcastLeave(const char* mcast_addr, uint16_t mcast_port);
+    
+    void setReadCallback(EventCallback& cb);
+    void setErrorCallback(EventCallback& cb);
+    void setReadCallback(EventCallback&& cb);
+    void setErrorCallback(EventCallback&& cb);
+    UdpSocketImpl* getPimpl();
+    
+private:
+    UdpSocketImpl* pimpl_;
 };
 
 KUMA_NS_END

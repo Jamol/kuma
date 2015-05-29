@@ -19,6 +19,13 @@
 #include "kmdefs.h"
 #include "evdefs.h"
 
+#include <stdint.h>
+#ifdef KUMA_OS_WIN
+# include <Ws2tcpip.h>
+#else
+# include <netinet/in.h>
+#endif
+
 KUMA_NS_BEGIN
 
 class EventLoopImpl;
