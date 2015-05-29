@@ -13,10 +13,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef kuma_util_h
-#define kuma_util_h
+#ifndef __kuma_util_h__
+#define __kuma_util_h__
 
-#include "kmconf.h"
 #include "kmdefs.h"
 
 struct addrinfo;

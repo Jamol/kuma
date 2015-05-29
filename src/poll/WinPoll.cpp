@@ -248,20 +248,11 @@ static void initWinClass()
     wc.lpszMenuName = NULL;
     wc.lpszClassName = KM_WIN_CLASS_NAME;
     RegisterClass(&wc);
-    
-    WSADATA wsaData;
-    WORD wVersionRequested = MAKEWORD(1, 1);
-    int nResult = WSAStartup(wVersionRequested, &wsaData);
-    if (nResult != 0)
-    {
-        return ;
-    }
 }
 
 static void uninitWinClass()
 {
     UnregisterClass(KM_WIN_CLASS_NAME, NULL);
-    WSACleanup();
 }
 
 //WBX_Init_Object g_init_obj(poller_load, poller_unload);
