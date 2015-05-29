@@ -1,7 +1,7 @@
 #ifndef __SslHandler_H__
 #define __SslHandler_H__
 
-#include "kuma.h"
+#include "kmdefs.h"
 #include "evdefs.h"
 #include "OpenSslLib.h"
 

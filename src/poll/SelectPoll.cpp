@@ -17,6 +17,8 @@
 #include "Notifier.h"
 #include "util/kmtrace.h"
 
+#include <algorithm>
+
 KUMA_NS_BEGIN
 
 class SelectPoll : public IOPoll

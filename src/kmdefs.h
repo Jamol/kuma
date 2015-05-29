@@ -1,5 +1,5 @@
-#ifndef __KMDEFS_H__
-#define __KMDEFS_H__
+#ifndef __KUMADEFS_H__
+#define __KUMADEFS_H__
 
 #include "kmconf.h"
 
@@ -7,6 +7,16 @@
 #define KUMA_NS_END     }
 
 KUMA_NS_BEGIN
+
+#ifdef KUMA_OS_WIN
+# ifdef KUMA_EXPORTS
+#  define KUMA_API __declspec(dllexport)
+# else
+#  define KUMA_API __declspec(dllimport)
+# endif
+#else
+# define KUMA_API
+#endif
 
 enum{
     KUMA_ERROR_NOERR    = 0,

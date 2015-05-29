@@ -68,8 +68,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <OutDir>$(SolutionDir)..\..\bin\$(Configuration)\</OutDir>
-    <IntDir>..\..\objs\$(Configuration)\</IntDir>
+    <OutDir>$(SolutionDir)..\..\bin\$(Platform)\$(Configuration)\</OutDir>
+    <IntDir>..\..\objs\$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -159,22 +159,26 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\EventLoop.cpp" />
+    <ClCompile Include="..\..\src\EventLoopImpl.cpp" />
+    <ClCompile Include="..\..\src\kmapi.cpp" />
     <ClCompile Include="..\..\src\poll\SelectPoll.cpp" />
     <ClCompile Include="..\..\src\poll\VPoll.cpp" />
-    <ClCompile Include="..\..\src\TcpSocket.cpp" />
+    <ClCompile Include="..\..\src\TcpServerSocketImpl.cpp" />
+    <ClCompile Include="..\..\src\TcpSocketImpl.cpp" />
     <ClCompile Include="..\..\src\util\kmtrace.cpp" />
     <ClCompile Include="..\..\src\util\TimerManager.cpp" />
     <ClCompile Include="..\..\src\util\util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\evdefs.h" />
-    <ClInclude Include="..\..\src\EventLoop.h" />
+    <ClInclude Include="..\..\src\EventLoopImpl.h" />
+    <ClInclude Include="..\..\src\kmapi.h" />
     <ClInclude Include="..\..\src\kmconf.h" />
     <ClInclude Include="..\..\src\kmdefs.h" />
     <ClInclude Include="..\..\src\poll\IOPoll.h" />
     <ClInclude Include="..\..\src\poll\Notifier.h" />
-    <ClInclude Include="..\..\src\TcpSocket.h" />
+    <ClInclude Include="..\..\src\TcpServerSocketImpl.h" />
+    <ClInclude Include="..\..\src\TcpSocketImpl.h" />
     <ClInclude Include="..\..\src\util\DataPacket.h" />
     <ClInclude Include="..\..\src\util\kmqueue.h" />
     <ClInclude Include="..\..\src\util\kmtrace.h" />

@@ -13,7 +13,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "EventLoop.h"
+#include "EventLoopImpl.h"
 #include "poll/IOPoll.h"
 #include "util/kmqueue.h"
 #include "util/TimerManager.h"
@@ -23,10 +23,10 @@
 
 KUMA_NS_BEGIN
 
-IOPoll* createIOPoll();
+IOPoll* createIOPoll(PollType poll_type);
 
-EventLoop::EventLoop()
-: poll_(createIOPoll())
+EventLoopImpl::EventLoopImpl(PollType poll_type)
+: poll_(createIOPoll(poll_type))
 , stop_loop_(false)
 , thread_id_()
 , timer_mgr_(new TimerManager())
@@ -34,7 +34,7 @@ EventLoop::EventLoop()
     
 }
 
-EventLoop::~EventLoop()
+EventLoopImpl::~EventLoopImpl()
 {
     if(poll_) {
         delete poll_;
@@ -42,7 +42,7 @@ EventLoop::~EventLoop()
     }
 }
 
-bool EventLoop::init()
+bool EventLoopImpl::init()
 {
     if(!poll_->init()) {
         return false;
@@ -51,7 +51,7 @@ bool EventLoop::init()
     return true;
 }
 
-PollType EventLoop::getPollType()
+PollType EventLoopImpl::getPollType()
 {
     if(poll_) {
         return poll_->getType();
@@ -59,13 +59,13 @@ PollType EventLoop::getPollType()
     return POLL_TYPE_NONE;
 }
 
-bool EventLoop::isPollLT()
+bool EventLoopImpl::isPollLT()
 {
     return  getPollType() == POLL_TYPE_POLL ||
             getPollType() == POLL_TYPE_SELECT;
 }
 
-int EventLoop::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
+int EventLoopImpl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
 {
     if(isInEventLoopThread()) {
         return poll_->registerFd(fd, events, cb);
@@ -79,12 +79,12 @@ int EventLoop::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
     return runInEventLoop(std::move(ev));
 }
 
-int EventLoop::registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb)
+int EventLoopImpl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb)
 {
     return registerFd(fd, events, cb);
 }
 
-int EventLoop::updateFd(SOCKET_FD fd, uint32_t events)
+int EventLoopImpl::updateFd(SOCKET_FD fd, uint32_t events)
 {
     if(isInEventLoopThread()) {
         return poll_->updateFd(fd, events);
@@ -98,7 +98,7 @@ int EventLoop::updateFd(SOCKET_FD fd, uint32_t events)
     return runInEventLoop(std::move(ev));
 }
 
-int EventLoop::unregisterFd(SOCKET_FD fd, bool close_fd)
+int EventLoopImpl::unregisterFd(SOCKET_FD fd, bool close_fd)
 {
     if(isInEventLoopThread()) {
         return poll_->unregisterFd(fd);
@@ -117,7 +117,7 @@ int EventLoop::unregisterFd(SOCKET_FD fd, bool close_fd)
     }
 }
 
-void EventLoop::loopOnce(uint32_t max_wait_ms)
+void EventLoopImpl::loopOnce(uint32_t max_wait_ms)
 {
     LoopCallback cb;
     while (!stop_loop_ && cb_queue_.dequeue(cb)) {
@@ -133,21 +133,21 @@ void EventLoop::loopOnce(uint32_t max_wait_ms)
     poll_->wait((uint32_t)wait_ms);
 }
 
-void EventLoop::loop(uint32_t max_wait_ms)
+void EventLoopImpl::loop(uint32_t max_wait_ms)
 {
     while (!stop_loop_) {
         loopOnce(max_wait_ms);
     }
 }
 
-void EventLoop::stop()
+void EventLoopImpl::stop()
 {
     KUMA_INFOTRACE("EventLoop::stop");
     stop_loop_ = true;
     poll_->notify();
 }
 
-int EventLoop::runInEventLoop(LoopCallback& cb)
+int EventLoopImpl::runInEventLoop(LoopCallback& cb)
 {
     if(isInEventLoopThread()) {
         cb();
@@ -158,7 +158,7 @@ int EventLoop::runInEventLoop(LoopCallback& cb)
     return KUMA_ERROR_NOERR;
 }
 
-int EventLoop::runInEventLoop(LoopCallback&& cb)
+int EventLoopImpl::runInEventLoop(LoopCallback&& cb)
 {
     if(isInEventLoopThread()) {
         cb();
@@ -169,7 +169,7 @@ int EventLoop::runInEventLoop(LoopCallback&& cb)
     return KUMA_ERROR_NOERR;
 }
 
-int EventLoop::runInEventLoopSync(LoopCallback& cb)
+int EventLoopImpl::runInEventLoopSync(LoopCallback& cb)
 {
     if(isInEventLoopThread()) {
         cb();
@@ -196,7 +196,7 @@ IOPoll* createEPoll();
 IOPoll* createVPoll();
 IOPoll* createSelectPoll();
 
-IOPoll* createIOPoll()
+IOPoll* createDefaultIOPoll()
 {
 #ifdef KUMA_OS_WIN
     return createSelectPoll();
@@ -207,6 +207,23 @@ IOPoll* createIOPoll()
 #else
     return createSelectPoll();
 #endif
+}
+
+IOPoll* createIOPoll(PollType poll_type)
+{
+    switch (poll_type)
+    {
+        case POLL_TYPE_POLL:
+            return createVPoll();
+        case POLL_TYPE_SELECT:
+            return createSelectPoll();
+        case POLL_TYPE_EPOLL:
+#ifdef KUMA_OS_LINUX
+            return createEPoll();
+#endif
+        default:
+            return createDefaultIOPoll();
+    }
 }
 
 KUMA_NS_END

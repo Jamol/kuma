@@ -1,0 +1,258 @@
+/* Copyright (c) 2014, Fengping Bao <jamol@live.com>
+*
+* Permission to use, copy, modify, and/or distribute this software for any
+* purpose with or without fee is hereby granted, provided that the above
+* copyright notice and this permission notice appear in all copies.
+*
+* THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+* WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+* MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+* ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+* WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+* ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+* OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+*/
+
+#include "EventLoopImpl.h"
+#include "TcpSocketImpl.h"
+#include "TcpServerSocketImpl.h"
+#include "kmapi.h"
+
+KUMA_NS_BEGIN
+
+EventLoop::EventLoop(PollType poll_type)
+: pimpl_(new EventLoopImpl(poll_type))
+{
+
+}
+
+EventLoop::~EventLoop()
+{
+    delete pimpl_;
+}
+
+bool EventLoop::init()
+{
+    return pimpl_->init();
+}
+
+PollType EventLoop::getPollType()
+{
+    return pimpl_->getPollType();
+}
+
+bool EventLoop::isPollLT()
+{
+    return  pimpl_->isPollLT();
+}
+
+int EventLoop::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
+{
+    return pimpl_->registerFd(fd, events, cb);
+}
+
+int EventLoop::registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb)
+{
+    return pimpl_->registerFd(fd, events, std::move(cb));
+}
+
+int EventLoop::updateFd(SOCKET_FD fd, uint32_t events)
+{
+    return pimpl_->updateFd(fd, events);
+}
+
+int EventLoop::unregisterFd(SOCKET_FD fd, bool close_fd)
+{
+    return pimpl_->unregisterFd(fd, close_fd);
+}
+
+void EventLoop::loopOnce(uint32_t max_wait_ms)
+{
+    pimpl_->loopOnce(max_wait_ms);
+}
+
+void EventLoop::loop(uint32_t max_wait_ms)
+{
+    pimpl_->loop(max_wait_ms);
+}
+
+void EventLoop::stop()
+{
+    pimpl_->stop();
+}
+
+EventLoopImpl* EventLoop::getPimpl()
+{
+    return pimpl_;
+}
+
+int EventLoop::runInEventLoop(LoopCallback& cb)
+{
+    return pimpl_->runInEventLoop(cb);
+}
+
+int EventLoop::runInEventLoop(LoopCallback&& cb)
+{
+    return pimpl_->runInEventLoop(std::move(cb));
+}
+
+int EventLoop::runInEventLoopSync(LoopCallback& cb)
+{
+    return pimpl_->runInEventLoopSync(cb);
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+TcpSocket::TcpSocket(EventLoop* loop)
+    : pimpl_(new TcpSocketImpl(loop->getPimpl()))
+{
+
+}
+
+TcpSocket::~TcpSocket()
+{
+    delete pimpl_;
+}
+
+int TcpSocket::bind(const char* bind_host, uint16_t bind_port)
+{
+    return pimpl_->bind(bind_host, bind_port);
+}
+int TcpSocket::connect(const char* host, uint16_t port, EventCallback& cb, uint32_t flags, uint32_t timeout)
+{
+    return pimpl_->connect(host, port, cb, flags, timeout);
+}
+
+int TcpSocket::connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t flags, uint32_t timeout)
+{
+    return pimpl_->connect(host, port, std::move(cb), flags, timeout);
+}
+
+int TcpSocket::attachFd(SOCKET_FD fd, uint32_t flags)
+{
+    return pimpl_->attachFd(fd, flags);
+}
+
+int TcpSocket::detachFd(SOCKET_FD &fd)
+{
+    return pimpl_->detachFd(fd);
+}
+
+int TcpSocket::startSslHandshake(bool is_server)
+{
+    return pimpl_->startSslHandshake(is_server);
+}
+
+int TcpSocket::send(uint8_t* data, uint32_t length)
+{
+    return pimpl_->send(data, length);
+}
+
+int TcpSocket::send(iovec* iovs, uint32_t count)
+{
+    return pimpl_->send(iovs, count);
+}
+
+int TcpSocket::receive(uint8_t* data, uint32_t length)
+{
+    return pimpl_->receive(data, length);
+}
+
+int TcpSocket::close()
+{
+    return pimpl_->close();
+}
+
+void TcpSocket::setReadCallback(EventCallback& cb)
+{
+    pimpl_->setReadCallback(cb);
+}
+
+void TcpSocket::setWriteCallback(EventCallback& cb)
+{
+    pimpl_->setWriteCallback(cb);
+}
+
+void TcpSocket::setErrorCallback(EventCallback& cb)
+{
+    pimpl_->setErrorCallback(cb);
+}
+
+void TcpSocket::setReadCallback(EventCallback&& cb)
+{
+    pimpl_->setReadCallback(std::move(cb));
+}
+
+void TcpSocket::setWriteCallback(EventCallback&& cb)
+{
+    pimpl_->setWriteCallback(std::move(cb));
+}
+
+void TcpSocket::setErrorCallback(EventCallback&& cb)
+{
+    pimpl_->setErrorCallback(std::move(cb));
+}
+
+SOCKET_FD TcpSocket::getFd()
+{
+    return pimpl_->getFd();
+}
+
+TcpSocketImpl* TcpSocket::getPimpl()
+{
+    return pimpl_;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+TcpServerSocket::TcpServerSocket(EventLoop* loop)
+    : pimpl_(new TcpServerSocketImpl(loop->getPimpl()))
+{
+
+}
+TcpServerSocket::~TcpServerSocket()
+{
+    delete pimpl_;
+}
+
+int TcpServerSocket::startListen(const char* host, uint16_t port)
+{
+    return pimpl_->startListen(host, port);
+}
+
+int TcpServerSocket::stopListen(const char* host, uint16_t port)
+{
+    return pimpl_->stopListen(host, port);
+}
+
+int TcpServerSocket::close()
+{
+    return pimpl_->close();
+}
+
+void TcpServerSocket::setAcceptCallback(AcceptCallback& cb)
+{
+    pimpl_->setAcceptCallback(cb);
+}
+
+void TcpServerSocket::setErrorCallback(ErrorCallback& cb)
+{
+    pimpl_->setErrorCallback(cb);
+}
+
+void TcpServerSocket::setAcceptCallback(AcceptCallback&& cb)
+{
+    pimpl_->setAcceptCallback(std::move(cb));
+}
+
+void TcpServerSocket::setErrorCallback(ErrorCallback&& cb)
+{
+    pimpl_->setErrorCallback(std::move(cb));
+}
+
+TcpServerSocketImpl* TcpServerSocket::getPimpl()
+{
+    return pimpl_;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+KUMA_NS_END

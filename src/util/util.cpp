@@ -468,3 +468,36 @@ TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_T
 }
 
 KUMA_NS_END
+
+#ifdef KUMA_OS_WIN
+void kuma_init()
+{
+    WSADATA wsaData;
+    WORD wVersionRequested = MAKEWORD(1, 1);
+    int nResult = WSAStartup(wVersionRequested, &wsaData);
+    if (nResult != 0)
+    {
+        return;
+    }
+}
+
+void kuma_fini()
+{
+    WSACleanup();
+}
+
+BOOL WINAPI DllMain(HINSTANCE module_handle, DWORD reason_for_call, LPVOID reserved)
+{
+    switch (reason_for_call)
+    {
+        case DLL_PROCESS_ATTACH:
+            //DisableThreadLibraryCalls(module_handle);
+            kuma_init();
+            break;
+        case DLL_PROCESS_DETACH:
+            kuma_fini();
+            break;
+    }
+    return TRUE;
+}
+#endif

@@ -1,5 +1,5 @@
-#ifndef __EVDEFS_H__
-#define __EVDEFS_H__
+#ifndef __KUMAEVDEFS_H__
+#define __KUMAEVDEFS_H__
 
 #include "kmdefs.h"
 
@@ -13,8 +13,6 @@ KUMA_NS_BEGIN
 #define KUMA_EV_ERROR   (1 << 2)
 #define KUMA_EV_NETWORK (KUMA_EV_READ|KUMA_EV_WRITE|KUMA_EV_ERROR)
 
-#define INVALID_FD  -1
-
 #ifdef KUMA_OS_WIN
 # define SOCKET_FD   SOCKET
 # define closeFd   ::closesocket
@@ -24,6 +22,8 @@ KUMA_NS_BEGIN
 # define closeFd   ::close
 # define getLastError() errno
 #endif
+
+#define INVALID_FD  ((SOCKET_FD)-1)
 
 typedef std::function<void(uint32_t)> IOCallback;
 typedef std::function<void(void)> LoopCallback;
@@ -35,7 +35,7 @@ typedef std::lock_guard<KM_Mutex> KM_Lock_Guard;
 typedef enum {
     POLL_TYPE_NONE,
     POLL_TYPE_POLL,
-    POLL_TYEP_EPOLL,
+    POLL_TYPE_EPOLL,
     POLL_TYPE_SELECT,
     POLL_TYPE_WIN
 }PollType;

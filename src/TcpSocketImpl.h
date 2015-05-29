@@ -1,7 +1,7 @@
-#ifndef __TcpSocket_H__
-#define __TcpSocket_H__
+#ifndef __TcpSocketImpl_H__
+#define __TcpSocketImpl_H__
 
-#include "kuma.h"
+#include "kmdefs.h"
 #include "evdefs.h"
 
 #ifndef KUMA_OS_WIN
@@ -10,16 +10,16 @@ struct iovec;
 
 KUMA_NS_BEGIN
 
-class EventLoop;
+class EventLoopImpl;
 class SslHandler;
 
-class TcpSocket
+class TcpSocketImpl
 {
 public:
     typedef std::function<void(int)> EventCallback;
     
-    TcpSocket(EventLoop* loop);
-    ~TcpSocket();
+    TcpSocketImpl(EventLoopImpl* loop);
+    ~TcpSocketImpl();
     
     int bind(const char* bind_host, uint16_t bind_port);
     int connect(const char* host, uint16_t port, EventCallback& cb, uint32_t flags = 0, uint32_t timeout = 0);
@@ -68,19 +68,19 @@ private:
     bool isReady();
     
 private:
-    SOCKET_FD   fd_;
-    EventLoop*  loop_;
-    State       state_;
-    bool        registered_;
-    bool*       destroy_flag_ptr_;
-    uint32_t    flags_;
+    SOCKET_FD       fd_;
+    EventLoopImpl*  loop_;
+    State           state_;
+    bool            registered_;
+    bool*           destroy_flag_ptr_;
+    uint32_t        flags_;
     
-    SslHandler* ssl_handler_;
+    SslHandler*     ssl_handler_;
     
-    EventCallback cb_connect_;
-    EventCallback cb_read_;
-    EventCallback cb_write_;
-    EventCallback cb_error_;
+    EventCallback   cb_connect_;
+    EventCallback   cb_read_;
+    EventCallback   cb_write_;
+    EventCallback   cb_error_;
 };
 
 KUMA_NS_END

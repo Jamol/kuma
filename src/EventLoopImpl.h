@@ -13,8 +13,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __KUMA_EVENTLOOP_H__
-#define __KUMA_EVENTLOOP_H__
+#ifndef __EventLoopImpl_H__
+#define __EventLoopImpl_H__
 
 #include "util/kmqueue.h"
 #include "util/TimerManager.h"
@@ -29,11 +29,11 @@ KUMA_NS_BEGIN
 
 class IOPoll;
 
-class EventLoop
+class EventLoopImpl
 {
 public:
-    EventLoop();
-    ~EventLoop();
+    EventLoopImpl(PollType poll_type = POLL_TYPE_NONE);
+    ~EventLoopImpl();
 
 public:
     bool init();

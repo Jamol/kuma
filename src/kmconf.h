@@ -1,5 +1,5 @@
-#ifndef __KMCONF_H__
-#define __KMCONF_H__
+#ifndef __KUMACONF_H__
+#define __KUMACONF_H__
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(_WIN64) || defined(__CYGWIN__)
 # define KUMA_OS_WIN

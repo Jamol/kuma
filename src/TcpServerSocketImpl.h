@@ -1,21 +1,21 @@
-#ifndef __TcpServerSocket_H__
-#define __TcpServerSocket_H__
+#ifndef __TcpServerSocketImpl_H__
+#define __TcpServerSocketImpl_H__
 
-#include "kuma.h"
+#include "kmdefs.h"
 #include "evdefs.h"
 
 KUMA_NS_BEGIN
 
-class EventLoop;
+class EventLoopImpl;
 
-class TcpServerSocket
+class TcpServerSocketImpl
 {
 public:
     typedef std::function<void(SOCKET_FD)> AcceptCallback;
     typedef std::function<void(int)> ErrorCallback;
     
-    TcpServerSocket(EventLoop* loop);
-    ~TcpServerSocket();
+    TcpServerSocketImpl(EventLoopImpl* loop);
+    ~TcpServerSocketImpl();
     
     int startListen(const char* host, uint16_t port);
     int stopListen(const char* host, uint16_t port);
@@ -41,11 +41,11 @@ private:
     void cleanup();
     
 private:
-    SOCKET_FD   fd_;
-    EventLoop*  loop_;
-    bool        registered_;
-    uint32_t    flags_;
-    bool        stopped_;
+    SOCKET_FD       fd_;
+    EventLoopImpl*  loop_;
+    bool            registered_;
+    uint32_t        flags_;
+    bool            stopped_;
     
     AcceptCallback  cb_accept_;
     ErrorCallback   cb_error_;

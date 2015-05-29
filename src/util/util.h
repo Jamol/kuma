@@ -39,17 +39,17 @@ TICK_COUNT_TYPE get_tick_count_ms();
 TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_TYPE& start_tick);
 
 extern "C" {
-    int km_resolve_2_ip(const char* host_name, char *ip_buf, int ip_buf_len, int ipv=0);
-    int km_parse_address(const char* addr,
+    KUMA_API int km_resolve_2_ip(const char* host_name, char *ip_buf, int ip_buf_len, int ipv = 0);
+    KUMA_API int km_parse_address(const char* addr,
                          char* proto, int proto_len,
                          char* host, int  host_len, unsigned short* port);
-    int km_set_sock_addr(const char* addr, unsigned short port,
+    KUMA_API int km_set_sock_addr(const char* addr, unsigned short port,
                          addrinfo* hints, sockaddr * sk_addr,
                          unsigned int sk_addr_len);
-    int km_get_sock_addr(sockaddr * sk_addr, unsigned int sk_addr_len,
+    KUMA_API int km_get_sock_addr(sockaddr * sk_addr, unsigned int sk_addr_len,
                          char* addr, unsigned int addr_len, unsigned short* port);
-    bool km_is_ipv6_address(const char* addr);
-    bool km_is_ip_address(const char* addr);
+    KUMA_API bool km_is_ipv6_address(const char* addr);
+    KUMA_API bool km_is_ip_address(const char* addr);
 }
 
 KUMA_NS_END
