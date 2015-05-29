@@ -351,6 +351,30 @@ extern "C" bool km_is_ip_address(const char* addr)
     return km_set_sock_addr(addr, 0, &hints, (struct sockaddr *)&ss_addr, sizeof(ss_addr)) == 0;
 }
 
+extern "C" bool km_is_mcast_address(const char* addr)
+{
+    sockaddr_storage ss_addr = {0};
+    struct addrinfo hints = {0};
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags = AI_NUMERICHOST|AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
+    km_set_sock_addr(addr, 0, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr));
+    switch(ss_addr.ss_family)
+    {
+        case AF_INET:
+        {
+            struct sockaddr_in *sa_in4=(struct sockaddr_in *)&ss_addr;
+            return IN_MULTICAST(ntohl(sa_in4->sin_addr.s_addr));
+        }
+        case AF_INET6:
+        {
+            struct sockaddr_in6 *sa_in6=(struct sockaddr_in6 *)&ss_addr;
+            return IN6_IS_ADDR_MULTICAST(&sa_in6->sin6_addr)?true:false;
+        }
+    }
+    return false;
+}
+
 extern "C" int km_parse_address(const char* addr,
                                 char* proto, int proto_len,
                                 char* host, int  host_len, unsigned short* port)

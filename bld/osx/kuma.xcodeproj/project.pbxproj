@@ -18,6 +18,7 @@
 		6F2963541A18AB0D00C3C79B /* kmtrace.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963481A18AB0D00C3C79B /* kmtrace.h */; };
 		6F2963561A18AB0D00C3C79B /* util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F29634A1A18AB0D00C3C79B /* util.cpp */; };
 		6F2963571A18AB0D00C3C79B /* util.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F29634B1A18AB0D00C3C79B /* util.h */; };
+		6F2D403E1B1834D300E24928 /* UdpSocketImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2D403D1B1834D300E24928 /* UdpSocketImpl.cpp */; };
 		6F6208FB1A26BDB1000DAF4B /* kmconf.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208F81A26BDB1000DAF4B /* kmconf.h */; };
 		6F6208FD1A26BDB1000DAF4B /* kmapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208FA1A26BDB1000DAF4B /* kmapi.h */; };
 		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
@@ -50,6 +51,7 @@
 		6F2963481A18AB0D00C3C79B /* kmtrace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmtrace.h; path = ../../src/util/kmtrace.h; sourceTree = "<group>"; };
 		6F29634A1A18AB0D00C3C79B /* util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = util.cpp; path = ../../src/util/util.cpp; sourceTree = "<group>"; };
 		6F29634B1A18AB0D00C3C79B /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = util.h; path = ../../src/util/util.h; sourceTree = "<group>"; };
+		6F2D403D1B1834D300E24928 /* UdpSocketImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UdpSocketImpl.cpp; sourceTree = "<group>"; };
 		6F6208F81A26BDB1000DAF4B /* kmconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmconf.h; sourceTree = "<group>"; };
 		6F6208FA1A26BDB1000DAF4B /* kmapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmapi.h; sourceTree = "<group>"; };
 		6F852DF11985E33000271D87 /* kuma.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = kuma.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -130,6 +132,7 @@
 				6FF211021B130A2F006603BB /* TcpServerSocketImpl.h */,
 				6F0098B21B03124400122C15 /* TcpSocketImpl.cpp */,
 				6F0098AC1B01FEC800122C15 /* TcpSocketImpl.h */,
+				6F2D403D1B1834D300E24928 /* UdpSocketImpl.cpp */,
 				6F0098B01B03110100122C15 /* UdpSocketImpl.h */,
 				6F852DF41985E33000271D87 /* Supporting Files */,
 			);
@@ -252,6 +255,7 @@
 			files = (
 				6FF211CD1B1556C5006603BB /* SslHandler.cpp in Sources */,
 				6F0098B31B03124400122C15 /* TcpSocketImpl.cpp in Sources */,
+				6F2D403E1B1834D300E24928 /* UdpSocketImpl.cpp in Sources */,
 				6FF212931B181103006603BB /* kmapi.cpp in Sources */,
 				6F2963511A18AB0D00C3C79B /* TimerManager.cpp in Sources */,
 				6FF211031B130A2F006603BB /* TcpServerSocketImpl.cpp in Sources */,

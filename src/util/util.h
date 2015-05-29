@@ -49,6 +49,7 @@ extern "C" {
                          char* addr, unsigned int addr_len, unsigned short* port);
     KUMA_API bool km_is_ipv6_address(const char* addr);
     KUMA_API bool km_is_ip_address(const char* addr);
+    KUMA_API bool km_is_mcast_address(const char* addr);
 }
 
 KUMA_NS_END

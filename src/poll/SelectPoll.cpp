@@ -75,7 +75,9 @@ SelectPoll::~SelectPoll()
 
 bool SelectPoll::init()
 {
-    notifier_.init();
+    if(!notifier_.init()) {
+        return false;
+    }
     IOCallback cb ([this] (uint32_t ev) { notifier_.onEvent(ev); });
     registerFd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, std::move(cb));
     return true;

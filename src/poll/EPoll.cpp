@@ -69,7 +69,9 @@ bool EPoll::init()
     if(INVALID_FD == epoll_fd_) {
         return false;
     }
-    notifier_.init();
+    if(!notifier_.init()) {
+        return false;
+    }
     IOCallbackMap cb = [this](uint32_t ev) { notifier_.onEvent(ev); };
     registerFd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, std::move(cb));
     return true;

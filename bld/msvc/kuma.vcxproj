@@ -184,6 +184,10 @@
     <ClInclude Include="..\..\src\util\kmtrace.h" />
     <ClInclude Include="..\..\src\util\TimerManager.h" />
     <ClInclude Include="..\..\src\util\util.h" />
+    <ClInclude Include="resource.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
