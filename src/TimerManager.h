@@ -31,7 +31,7 @@ KUMA_NS_BEGIN
 #define TIMER_VECTOR_MASK   (TIMER_VECTOR_SIZE - 1)
 #define TV_COUNT            4
 
-class Timer;
+class TimerImpl;
 
 class TimerManager
 {
@@ -39,10 +39,10 @@ public:
     TimerManager();
     ~TimerManager();
 
-    bool scheduleTimer(Timer* timer, unsigned int time_elapse, bool repeat);
-    void cancelTimer(Timer* timer);
+    bool scheduleTimer(TimerImpl* timer, unsigned int time_elapse, bool repeat);
+    void cancelTimer(TimerImpl* timer);
 
-    int checkExpire(unsigned long* remain_ms = NULL);
+    int checkExpire(unsigned long* remain_ms = nullptr);
 
 public:
     class TimerNode
@@ -53,23 +53,25 @@ public:
         , repeat_(false)
         , elapse_(0)
         , start_tick_(0)
-        , timer_(NULL)
+        , timer_(nullptr)
         , tv_index_(-1)
         , tl_index_(-1)
+        , prev_(nullptr)
+        , next_(nullptr)
         { }
         void reset()
         {
             tv_index_ = -1;
             tl_index_ = -1;
-            prev_ = NULL;
-            next_ = NULL;
+            prev_ = nullptr;
+            next_ = nullptr;
         }
         
         bool            cancelled_;
         bool            repeat_;
         unsigned int	elapse_;
         TICK_COUNT_TYPE start_tick_;
-        Timer*          timer_;
+        TimerImpl*      timer_;
         
     protected:
         friend class TimerManager;
@@ -85,7 +87,7 @@ private:
     int cascadeTimer(int tv_idx, int tl_idx);
     bool isTimerPending(TimerNode* timer_node)
     {
-        return timer_node->next_ != NULL;
+        return timer_node->next_ != nullptr;
     }
 
     void list_init_head(TimerNode* head);
@@ -111,14 +113,14 @@ private:
 };
 typedef std::shared_ptr<TimerManager> TimerManagerPtr;
 
-class Timer
+class TimerImpl
 {
 public:
-    Timer(TimerManagerPtr mgr, TimerCallback& cb);
-    Timer(TimerManagerPtr mgr, TimerCallback&& cb);
-    ~Timer();
+    TimerImpl(TimerManagerPtr mgr);
+    ~TimerImpl();
     
-    bool schedule(unsigned int time_elapse, bool repeat = false);
+    bool schedule(unsigned int time_elapse, TimerCallback& cb, bool repeat = false);
+    bool schedule(unsigned int time_elapse, TimerCallback&& cb, bool repeat = false);
     void cancel();
     
 private:

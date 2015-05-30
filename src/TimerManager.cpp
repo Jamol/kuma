@@ -22,37 +22,41 @@ TICK_COUNT_TYPE get_tick_count_ms();
 TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_TYPE& start_tick);
 
 //////////////////////////////////////////////////////////////////////////
-// Timer
-
-Timer::Timer(TimerManagerPtr mgr, TimerCallback& cb)
-: cb_(cb)
+// TimerImpl
+TimerImpl::TimerImpl(TimerManagerPtr mgr)
+: cb_()
 , timer_mgr_(mgr)
+, timer_node_()
 {
     timer_node_.timer_ = this;
 }
 
-Timer::Timer(TimerManagerPtr mgr, TimerCallback&& cb)
-: cb_(std::move(cb))
-, timer_mgr_(mgr)
-{
-    timer_node_.timer_ = this;
-}
-
-Timer::~Timer()
+TimerImpl::~TimerImpl()
 {
     cancel();
 }
 
-bool Timer::schedule(unsigned int time_elapse, bool repeat)
+bool TimerImpl::schedule(unsigned int time_elapse, TimerCallback& cb, bool repeat)
 {
     TimerManagerPtr mgr = timer_mgr_.lock();
     if(mgr) {
+        cb_ = cb;
         return mgr->scheduleTimer(this, time_elapse, repeat);
     }
     return false;
 }
 
-void Timer::cancel()
+bool TimerImpl::schedule(unsigned int time_elapse, TimerCallback&& cb, bool repeat)
+{
+    TimerManagerPtr mgr = timer_mgr_.lock();
+    if(mgr) {
+        cb_ = std::move(cb);
+        return mgr->scheduleTimer(this, time_elapse, repeat);
+    }
+    return false;
+}
+
+void TimerImpl::cancel()
 {
     TimerManagerPtr mgr = timer_mgr_.lock();
     if(mgr) {
@@ -64,8 +68,8 @@ void Timer::cancel()
 // TimerManager
 TimerManager::TimerManager()
 {
-    running_node_ = NULL;
-    reschedule_node_ = NULL;
+    running_node_ = nullptr;
+    reschedule_node_ = nullptr;
     timer_count_ = 0;
     last_tick_ = 0;
     memset(&tv0_bitmap_, 0, sizeof(tv0_bitmap_));
@@ -83,7 +87,7 @@ TimerManager::~TimerManager()
     
 }
 
-bool TimerManager::scheduleTimer(Timer* timer, unsigned int time_elapse, bool repeat)
+bool TimerManager::scheduleTimer(TimerImpl* timer, unsigned int time_elapse, bool repeat)
 {
     TimerNode* timer_node = &timer->timer_node_;
     if(isTimerPending(timer_node) && time_elapse == timer_node->elapse_) {
@@ -101,12 +105,12 @@ bool TimerManager::scheduleTimer(Timer* timer, unsigned int time_elapse, bool re
 
     bool ret = addTimer(timer_node, true);
     if(reschedule_node_ == timer_node) {
-        reschedule_node_ = NULL;
+        reschedule_node_ = nullptr;
     }
     return ret;
 }
 
-void TimerManager::cancelTimer(Timer* timer)
+void TimerManager::cancelTimer(TimerImpl* timer)
 {
     TimerNode* timer_node = &timer->timer_node_;
     if(timer_node->cancelled_) {
@@ -124,7 +128,7 @@ void TimerManager::cancelTimer(Timer* timer)
                 cancelled = true;
             }
             if(reschedule_node_ == timer_node) {
-                reschedule_node_ = NULL;
+                reschedule_node_ = nullptr;
             }
         }
         mutex_.unlock();
@@ -133,7 +137,7 @@ void TimerManager::cancelTimer(Timer* timer)
     if(!cancelled && running_node_ == timer_node) { // may be running, wait it
         running_mutex_.lock();
         if(running_node_ == timer_node) {
-            running_node_ = NULL;
+            running_node_ = nullptr;
             cancelled = true;
         }
         running_mutex_.unlock();
@@ -145,7 +149,7 @@ void TimerManager::cancelTimer(Timer* timer)
             removeTimer(timer_node);
         }
         if(reschedule_node_ == timer_node) {
-            reschedule_node_ = NULL;
+            reschedule_node_ = nullptr;
         }
         mutex_.unlock();
     }
@@ -314,7 +318,7 @@ int TimerManager::cascadeTimer(int tv_idx, int tl_idx)
     list_init_head(&tmp_head);
     list_replace(&tv_[tv_idx][tl_idx], &tmp_head);
     TimerNode* next_node = tmp_head.next_;
-    TimerNode* tmp_node = NULL;
+    TimerNode* tmp_node = nullptr;
     while(next_node != &tmp_head)
     {
         tmp_node = next_node;
@@ -387,16 +391,16 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
                 ++count;
             }
         } else { // this timer is cancelled
-            reschedule_node_ = NULL;
+            reschedule_node_ = nullptr;
         }
-        running_node_ = NULL;
+        running_node_ = nullptr;
         running_mutex_.unlock();
         
         mutex_.lock();
         if(reschedule_node_ && !reschedule_node_->cancelled_ && !isTimerPending(reschedule_node_)) {
             reschedule_node_->start_tick_ = get_tick_count_ms();
             addTimer(reschedule_node_, true);
-            reschedule_node_ = NULL;
+            reschedule_node_ = nullptr;
         }
     }
 

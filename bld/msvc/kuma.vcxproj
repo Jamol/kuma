@@ -165,8 +165,9 @@
     <ClCompile Include="..\..\src\poll\VPoll.cpp" />
     <ClCompile Include="..\..\src\TcpServerSocketImpl.cpp" />
     <ClCompile Include="..\..\src\TcpSocketImpl.cpp" />
+    <ClCompile Include="..\..\src\TimerManager.cpp" />
+    <ClCompile Include="..\..\src\UdpSocketImpl.cpp" />
     <ClCompile Include="..\..\src\util\kmtrace.cpp" />
-    <ClCompile Include="..\..\src\util\TimerManager.cpp" />
     <ClCompile Include="..\..\src\util\util.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -179,10 +180,11 @@
     <ClInclude Include="..\..\src\poll\Notifier.h" />
     <ClInclude Include="..\..\src\TcpServerSocketImpl.h" />
     <ClInclude Include="..\..\src\TcpSocketImpl.h" />
+    <ClInclude Include="..\..\src\TimerManager.h" />
+    <ClInclude Include="..\..\src\UdpSocketImpl.h" />
     <ClInclude Include="..\..\src\util\DataPacket.h" />
     <ClInclude Include="..\..\src\util\kmqueue.h" />
     <ClInclude Include="..\..\src\util\kmtrace.h" />
-    <ClInclude Include="..\..\src\util\TimerManager.h" />
     <ClInclude Include="..\..\src\util\util.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>

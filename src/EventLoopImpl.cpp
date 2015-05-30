@@ -16,7 +16,6 @@
 #include "EventLoopImpl.h"
 #include "poll/IOPoll.h"
 #include "util/kmqueue.h"
-#include "util/TimerManager.h"
 #include "util/kmtrace.h"
 #include <thread>
 #include <condition_variable>

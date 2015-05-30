@@ -64,7 +64,7 @@ private:
     void cleanup();
     
 private:
-    int             fd_;
+    SOCKET_FD       fd_;
     EventLoopImpl*  loop_;
     bool            registered_;
     bool*           destroy_flag_ptr_;

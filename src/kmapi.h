@@ -32,6 +32,7 @@ class EventLoopImpl;
 class TcpSocketImpl;
 class UdpSocketImpl;
 class TcpServerSocketImpl;
+class TimerImpl;
 
 class KUMA_API EventLoop
 {
@@ -144,6 +145,21 @@ public:
     
 private:
     UdpSocketImpl* pimpl_;
+};
+
+class KUMA_API Timer
+{
+public:
+    Timer(EventLoop* loop);
+    ~Timer();
+    
+    bool schedule(unsigned int time_elapse, TimerCallback& cb, bool repeat = false);
+    bool schedule(unsigned int time_elapse, TimerCallback&& cb, bool repeat = false);
+    void cancel();
+    TimerImpl* getPimpl();
+    
+private:
+    TimerImpl* pimpl_;
 };
 
 KUMA_NS_END

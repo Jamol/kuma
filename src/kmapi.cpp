@@ -17,6 +17,7 @@
 #include "TcpSocketImpl.h"
 #include "UdpSocketImpl.h"
 #include "TcpServerSocketImpl.h"
+#include "TimerManager.h"
 #include "kmapi.h"
 
 KUMA_NS_BEGIN
@@ -327,5 +328,36 @@ UdpSocketImpl* UdpSocket::getPimpl()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Timer::Timer(EventLoop* loop)
+: pimpl_(new TimerImpl(loop->getPimpl()->getTimerMgr()))
+{
+    
+}
+
+Timer::~Timer()
+{
+    delete pimpl_;
+}
+
+bool Timer::schedule(unsigned int time_elapse, TimerCallback& cb, bool repeat)
+{
+    return pimpl_->schedule(time_elapse, cb, repeat);
+}
+
+bool Timer::schedule(unsigned int time_elapse, TimerCallback&& cb, bool repeat)
+{
+    return pimpl_->schedule(time_elapse, std::move(cb), repeat);
+}
+
+void Timer::cancel()
+{
+    pimpl_->cancel();
+}
+
+TimerImpl* Timer::getPimpl()
+{
+    return pimpl_;
+}
 
 KUMA_NS_END

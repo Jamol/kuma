@@ -12,13 +12,15 @@
 		6F0098B31B03124400122C15 /* TcpSocketImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F0098B21B03124400122C15 /* TcpSocketImpl.cpp */; };
 		6F29634D1A18AB0D00C3C79B /* DataPacket.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963411A18AB0D00C3C79B /* DataPacket.h */; };
 		6F29634F1A18AB0D00C3C79B /* kmqueue.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963431A18AB0D00C3C79B /* kmqueue.h */; };
-		6F2963511A18AB0D00C3C79B /* TimerManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963451A18AB0D00C3C79B /* TimerManager.cpp */; };
-		6F2963521A18AB0D00C3C79B /* TimerManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963461A18AB0D00C3C79B /* TimerManager.h */; };
 		6F2963531A18AB0D00C3C79B /* kmtrace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963471A18AB0D00C3C79B /* kmtrace.cpp */; };
 		6F2963541A18AB0D00C3C79B /* kmtrace.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963481A18AB0D00C3C79B /* kmtrace.h */; };
 		6F2963561A18AB0D00C3C79B /* util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F29634A1A18AB0D00C3C79B /* util.cpp */; };
 		6F2963571A18AB0D00C3C79B /* util.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F29634B1A18AB0D00C3C79B /* util.h */; };
 		6F2D403E1B1834D300E24928 /* UdpSocketImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2D403D1B1834D300E24928 /* UdpSocketImpl.cpp */; };
+		6F2D40471B194AE200E24928 /* TimerManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2D40451B194AE200E24928 /* TimerManager.cpp */; };
+		6F2D40481B194AE200E24928 /* TimerManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2D40461B194AE200E24928 /* TimerManager.h */; };
+		6F2D404B1B19E25B00E24928 /* HttpParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2D40491B19E25B00E24928 /* HttpParser.cpp */; };
+		6F2D404C1B19E25B00E24928 /* HttpParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2D404A1B19E25B00E24928 /* HttpParser.h */; };
 		6F6208FB1A26BDB1000DAF4B /* kmconf.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208F81A26BDB1000DAF4B /* kmconf.h */; };
 		6F6208FD1A26BDB1000DAF4B /* kmapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208FA1A26BDB1000DAF4B /* kmapi.h */; };
 		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
@@ -45,13 +47,15 @@
 		6F0098B21B03124400122C15 /* TcpSocketImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TcpSocketImpl.cpp; sourceTree = "<group>"; };
 		6F2963411A18AB0D00C3C79B /* DataPacket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DataPacket.h; path = ../../src/util/DataPacket.h; sourceTree = "<group>"; };
 		6F2963431A18AB0D00C3C79B /* kmqueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmqueue.h; path = ../../src/util/kmqueue.h; sourceTree = "<group>"; };
-		6F2963451A18AB0D00C3C79B /* TimerManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TimerManager.cpp; path = ../../src/util/TimerManager.cpp; sourceTree = "<group>"; };
-		6F2963461A18AB0D00C3C79B /* TimerManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TimerManager.h; path = ../../src/util/TimerManager.h; sourceTree = "<group>"; };
 		6F2963471A18AB0D00C3C79B /* kmtrace.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = kmtrace.cpp; path = ../../src/util/kmtrace.cpp; sourceTree = "<group>"; };
 		6F2963481A18AB0D00C3C79B /* kmtrace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmtrace.h; path = ../../src/util/kmtrace.h; sourceTree = "<group>"; };
 		6F29634A1A18AB0D00C3C79B /* util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = util.cpp; path = ../../src/util/util.cpp; sourceTree = "<group>"; };
 		6F29634B1A18AB0D00C3C79B /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = util.h; path = ../../src/util/util.h; sourceTree = "<group>"; };
 		6F2D403D1B1834D300E24928 /* UdpSocketImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UdpSocketImpl.cpp; sourceTree = "<group>"; };
+		6F2D40451B194AE200E24928 /* TimerManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TimerManager.cpp; sourceTree = "<group>"; };
+		6F2D40461B194AE200E24928 /* TimerManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimerManager.h; sourceTree = "<group>"; };
+		6F2D40491B19E25B00E24928 /* HttpParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HttpParser.cpp; path = http/HttpParser.cpp; sourceTree = "<group>"; };
+		6F2D404A1B19E25B00E24928 /* HttpParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HttpParser.h; path = http/HttpParser.h; sourceTree = "<group>"; };
 		6F6208F81A26BDB1000DAF4B /* kmconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmconf.h; sourceTree = "<group>"; };
 		6F6208FA1A26BDB1000DAF4B /* kmapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmapi.h; sourceTree = "<group>"; };
 		6F852DF11985E33000271D87 /* kuma.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = kuma.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -118,6 +122,8 @@
 		6F852DF31985E33000271D87 /* kuma */ = {
 			isa = PBXGroup;
 			children = (
+				6F2D40491B19E25B00E24928 /* HttpParser.cpp */,
+				6F2D404A1B19E25B00E24928 /* HttpParser.h */,
 				6F2963631A18AC4C00C3C79B /* poll */,
 				6FF211C61B1556B9006603BB /* ssl */,
 				6F852E291985EB0500271D87 /* util */,
@@ -132,6 +138,8 @@
 				6FF211021B130A2F006603BB /* TcpServerSocketImpl.h */,
 				6F0098B21B03124400122C15 /* TcpSocketImpl.cpp */,
 				6F0098AC1B01FEC800122C15 /* TcpSocketImpl.h */,
+				6F2D40451B194AE200E24928 /* TimerManager.cpp */,
+				6F2D40461B194AE200E24928 /* TimerManager.h */,
 				6F2D403D1B1834D300E24928 /* UdpSocketImpl.cpp */,
 				6F0098B01B03110100122C15 /* UdpSocketImpl.h */,
 				6F852DF41985E33000271D87 /* Supporting Files */,
@@ -153,8 +161,6 @@
 			children = (
 				6F2963411A18AB0D00C3C79B /* DataPacket.h */,
 				6F2963431A18AB0D00C3C79B /* kmqueue.h */,
-				6F2963451A18AB0D00C3C79B /* TimerManager.cpp */,
-				6F2963461A18AB0D00C3C79B /* TimerManager.h */,
 				6F2963471A18AB0D00C3C79B /* kmtrace.cpp */,
 				6F2963481A18AB0D00C3C79B /* kmtrace.h */,
 				6F29634A1A18AB0D00C3C79B /* util.cpp */,
@@ -185,19 +191,20 @@
 				6F6208FB1A26BDB1000DAF4B /* kmconf.h in Headers */,
 				6F2963571A18AB0D00C3C79B /* util.h in Headers */,
 				6F0098AD1B01FEC800122C15 /* TcpSocketImpl.h in Headers */,
+				6F2D404C1B19E25B00E24928 /* HttpParser.h in Headers */,
 				6F0098B11B03110100122C15 /* UdpSocketImpl.h in Headers */,
 				6FF211041B130A2F006603BB /* TcpServerSocketImpl.h in Headers */,
 				6F29634D1A18AB0D00C3C79B /* DataPacket.h in Headers */,
 				6FF211DA1B1556FB006603BB /* EventLoopImpl.h in Headers */,
 				6FF211CE1B1556C5006603BB /* SslHandler.h in Headers */,
 				6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */,
-				6F2963521A18AB0D00C3C79B /* TimerManager.h in Headers */,
 				6FA951421A3808450033C9CF /* kmdefs.h in Headers */,
 				6F6208FD1A26BDB1000DAF4B /* kmapi.h in Headers */,
 				6F2963541A18AB0D00C3C79B /* kmtrace.h in Headers */,
 				6F29634F1A18AB0D00C3C79B /* kmqueue.h in Headers */,
 				6FF211D81B1556FB006603BB /* evdefs.h in Headers */,
 				6FF211D21B1556E6006603BB /* IOPoll.h in Headers */,
+				6F2D40481B194AE200E24928 /* TimerManager.h in Headers */,
 				6FF211CC1B1556C5006603BB /* OpenSslLib.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -257,11 +264,12 @@
 				6F0098B31B03124400122C15 /* TcpSocketImpl.cpp in Sources */,
 				6F2D403E1B1834D300E24928 /* UdpSocketImpl.cpp in Sources */,
 				6FF212931B181103006603BB /* kmapi.cpp in Sources */,
-				6F2963511A18AB0D00C3C79B /* TimerManager.cpp in Sources */,
 				6FF211031B130A2F006603BB /* TcpServerSocketImpl.cpp in Sources */,
+				6F2D40471B194AE200E24928 /* TimerManager.cpp in Sources */,
 				6FF212911B17229C006603BB /* SelectPoll.cpp in Sources */,
 				6F2963531A18AB0D00C3C79B /* kmtrace.cpp in Sources */,
 				6FF211D91B1556FB006603BB /* EventLoopImpl.cpp in Sources */,
+				6F2D404B1B19E25B00E24928 /* HttpParser.cpp in Sources */,
 				6FF211CB1B1556C5006603BB /* OpenSslLib.cpp in Sources */,
 				6F2963561A18AB0D00C3C79B /* util.cpp in Sources */,
 				6FF211D41B1556E6006603BB /* VPoll.cpp in Sources */,

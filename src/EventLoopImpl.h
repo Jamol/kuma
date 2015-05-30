@@ -17,7 +17,7 @@
 #define __EventLoopImpl_H__
 
 #include "util/kmqueue.h"
-#include "util/TimerManager.h"
+#include "TimerManager.h"
 
 #ifdef KUMA_OS_WIN
 # include <Ws2tcpip.h>
