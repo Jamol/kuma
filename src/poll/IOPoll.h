@@ -94,6 +94,7 @@ public:
     virtual int wait(uint32_t wait_time_ms) = 0;
     virtual void notify() = 0;
     virtual PollType getType() = 0;
+    virtual bool isLevelTriggered() = 0;
 };
 
 KUMA_NS_END

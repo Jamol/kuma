@@ -38,6 +38,7 @@ public:
     int wait(uint32_t wait_ms);
     void notify();
     PollType getType() { return POLL_TYPE_WIN; }
+    bool isLevelTriggered() { return false; }
 
 public:
     void on_socket_notify(SOCKET_FD fd, uint32_t events);

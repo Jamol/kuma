@@ -35,6 +35,7 @@ public:
     int wait(uint32_t wait_time_ms);
     void notify();
     PollType getType() { return POLL_TYPE_EPOLL; }
+    bool isLevelTriggered() { return false; }
     
 private:
     uint32_t get_events(uint32_t kuma_events);

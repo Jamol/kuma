@@ -35,6 +35,7 @@ public:
     int wait(uint32_t wait_time_ms);
     void notify();
     PollType getType() { return POLL_TYPE_SELECT; }
+    bool isLevelTriggered() { return true; }
 
 private:
     void resizePollItems(SOCKET_FD fd);

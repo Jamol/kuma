@@ -60,8 +60,10 @@ PollType EventLoopImpl::getPollType()
 
 bool EventLoopImpl::isPollLT()
 {
-    return  getPollType() == POLL_TYPE_POLL ||
-            getPollType() == POLL_TYPE_SELECT;
+    if(poll_) {
+        return poll_->isLevelTriggered();
+    }
+    return false;
 }
 
 int EventLoopImpl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
