@@ -37,6 +37,16 @@ int find_first_set(unsigned int b);
 TICK_COUNT_TYPE get_tick_count_ms();
 TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_TYPE& start_tick);
 
+bool is_equal(const char* str1, const char* str2);
+bool is_equal(const std::string& str1, const std::string& str2);
+bool is_equal(const char* str1, const std::string& str2);
+bool is_equal(const std::string& str1, const char* str2);
+char* trim_left(char* str);
+char* trim_right(char* str);
+char* trim_right(char* str, char* str_end);
+std::string& trim_left(std::string& str);
+std::string& trim_right(std::string& str);
+
 extern "C" {
     KUMA_API int km_resolve_2_ip(const char* host_name, char *ip_buf, int ip_buf_len, int ipv = 0);
     KUMA_API int km_parse_address(const char* addr,

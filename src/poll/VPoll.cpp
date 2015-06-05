@@ -226,13 +226,18 @@ int VPoll::wait(uint32_t wait_ms)
         return KUMA_ERROR_INVALID_STATE;
     }
 
+    // copy poll fds since event handler may unregister fd
+    PollFdVector poll_fds = poll_fds_;
+    
     int idx = 0;
-    int last_idx = int(poll_fds_.size() - 1);
+    int last_idx = int(poll_fds.size() - 1);
     while(num_revts > 0 && idx <= last_idx) {
-        if(poll_fds_[idx].revents) {
+        if(poll_fds[idx].revents) {
             --num_revts;
-            IOCallback &cb = poll_items_[poll_fds_[idx].fd].cb;
-            if(cb) cb(get_kuma_events(poll_fds_[idx].revents));
+            if(poll_fds[idx].fd < poll_items_.size()) {
+                IOCallback &cb = poll_items_[poll_fds[idx].fd].cb;
+                if(cb) cb(get_kuma_events(poll_fds[idx].revents));
+            }
         }
         ++idx;
     }

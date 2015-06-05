@@ -491,6 +491,64 @@ TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_T
     return now_tick - start_tick;
 }
 
+#ifdef KUMA_OS_WIN
+# define strcasecmp stricmp
+#endif
+
+bool is_equal(const char* str1, const char* str2)
+{
+    return strcasecmp(str1, str2) == 0;
+}
+
+bool is_equal(const std::string& str1, const std::string& str2)
+{
+    return strcasecmp(str1.c_str(), str2.c_str()) == 0;
+}
+
+bool is_equal(const char* str1, const std::string& str2)
+{
+    return strcasecmp(str1, str2.c_str()) == 0;
+}
+
+bool is_equal(const std::string& str1, const char* str2)
+{
+    return strcasecmp(str1.c_str(), str2) == 0;
+}
+
+char* trim_left(char* str)
+{
+    while (*str && isspace(*str++)) {
+        ;
+    }
+    
+    return str;
+}
+
+char* trim_right(char* str)
+{
+    return trim_right(str, str + strlen(str));
+}
+
+char* trim_right(char* str, char* str_end)
+{
+    while (--str_end >= str && isspace(*str_end)) {
+        ;
+    }
+    *(++str_end) = 0;
+    
+    return str;
+}
+
+std::string& trim_left(std::string& str) {
+    str.erase(0, str.find_first_not_of(' '));
+    return str;
+}
+
+std::string& trim_right(std::string& str) {
+    str.erase(str.find_last_not_of(' '));
+    return str;
+}
+
 KUMA_NS_END
 
 #ifdef KUMA_OS_WIN

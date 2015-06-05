@@ -222,11 +222,12 @@ int SelectPoll::wait(uint32_t wait_ms)
     if (nready <= 0) {
         return KUMA_ERROR_NOERR;
     }
-    int fds_count = int(poll_fds_.size());
-    int item_count = int(poll_items_.size());
+    // copy poll fds since event handler may unregister fd
+    PollFdVector poll_fds = poll_fds_;
+    int fds_count = int(poll_fds.size());
     for (int i = 0; i < fds_count && nready > 0; ++i) {
         uint32_t events = 0;
-        SOCKET_FD fd = poll_fds_[i].fd;
+        SOCKET_FD fd = poll_fds[i].fd;
         if(FD_ISSET(fd, &readfds)) {
             events |= KUMA_EV_READ;
             --nready;
@@ -239,11 +240,9 @@ int SelectPoll::wait(uint32_t wait_ms)
             events |= KUMA_EV_ERROR;
             --nready;
         }
-        if (fd < item_count) {
+        if (fd < poll_items_.size()) {
             IOCallback& cb = poll_items_[fd].cb;
-            if (cb) {
-                cb(events);
-            }
+            if (cb) cb(events);
         }
     }
     return KUMA_ERROR_NOERR;
