@@ -491,10 +491,6 @@ TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_T
     return now_tick - start_tick;
 }
 
-#ifdef KUMA_OS_WIN
-# define strcasecmp stricmp
-#endif
-
 bool is_equal(const char* str1, const char* str2)
 {
     return strcasecmp(str1, str2) == 0;
@@ -545,7 +541,10 @@ std::string& trim_left(std::string& str) {
 }
 
 std::string& trim_right(std::string& str) {
-    str.erase(str.find_last_not_of(' '));
+    auto pos = str.find_last_not_of(' ');
+    if(pos != std::string::npos) {
+        str.erase(pos + 1);
+    }
     return str;
 }
 

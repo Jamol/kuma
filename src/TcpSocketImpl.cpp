@@ -379,7 +379,7 @@ int TcpSocketImpl::send(uint8_t* data, uint32_t length)
     {
         ret = ::send(fd_, (char*)data, length, 0);
         if(0 == ret) {
-            KUMA_WARNXTRACE("send, peer closed");
+            KUMA_WARNXTRACE("send, peer closed, err="<<getLastError());
             ret = -1;
         } else if(ret < 0) {
             if(getLastError() == EAGAIN ||
@@ -523,6 +523,16 @@ int TcpSocketImpl::close()
     cleanup();
     setState(ST_CLOSED);
     return KUMA_ERROR_NOERR;
+}
+
+int TcpSocketImpl::suspend()
+{
+    return loop_->updateFd(fd_, KUMA_EV_ERROR);
+}
+
+int TcpSocketImpl::resume()
+{
+    return loop_->updateFd(fd_, KUMA_EV_NETWORK);
 }
 
 void TcpSocketImpl::onConnect(int err)

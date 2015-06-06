@@ -24,8 +24,9 @@ struct sockaddr;
 KUMA_NS_BEGIN
 
 #ifdef KUMA_OS_WIN
-#define snprintf    _snprintf
-#define vsnprintf   _vsnprintf
+# define snprintf    _snprintf
+# define vsnprintf   _vsnprintf
+# define strcasecmp stricmp
 #endif
 
 #ifndef TICK_COUNT_TYPE

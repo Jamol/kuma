@@ -47,6 +47,9 @@ public:
     int receive(uint8_t* data, uint32_t length);
     int close();
     
+    int suspend();
+    int resume();
+    
     void setReadCallback(EventCallback& cb) { cb_read_ = cb; }
     void setWriteCallback(EventCallback& cb) { cb_write_ = cb; }
     void setErrorCallback(EventCallback& cb) { cb_error_ = cb; }

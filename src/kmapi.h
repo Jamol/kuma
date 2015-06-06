@@ -33,6 +33,7 @@ class TcpSocketImpl;
 class UdpSocketImpl;
 class TcpServerSocketImpl;
 class TimerImpl;
+class HttpRequestImpl;
 
 class KUMA_API EventLoop
 {
@@ -82,6 +83,9 @@ public:
     int send(iovec* iovs, uint32_t count);
     int receive(uint8_t* data, uint32_t length);
     int close();
+    
+    int suspend();
+    int resume();
     
     void setReadCallback(EventCallback& cb);
     void setWriteCallback(EventCallback& cb);
@@ -160,6 +164,37 @@ public:
     
 private:
     TimerImpl* pimpl_;
+};
+
+class HttpRequest
+{
+public:
+    typedef std::function<void(uint8_t*, uint32_t)> DataCallback;
+    typedef std::function<void(int)> EventCallback;
+    typedef std::function<void(void)> RequestCompleteCallback;
+    typedef std::function<void(void)> HeaderCompleteCallback;
+    typedef std::function<void(void)> ResponseCompleteCallback;
+    
+    HttpRequest(EventLoop* loop);
+    ~HttpRequest();
+    
+    void addHeader(const char* name, const char* value);
+    void addHeader(const char* name, uint32_t value);
+    int sendRequest(const char* method, const char* uri, const char* ver);
+    int sendData(uint8_t* data, uint32_t len);
+    int close();
+    
+    void setDataCallback(DataCallback& cb);
+    void setWriteCallback(EventCallback& cb);
+    void setErrorCallback(EventCallback& cb);
+    void setDataCallback(DataCallback&& cb);
+    void setWriteCallback(EventCallback&& cb);
+    void setErrorCallback(EventCallback&& cb);
+    
+    HttpRequestImpl* getPimpl();
+    
+private:
+    HttpRequestImpl* pimpl_;
 };
 
 KUMA_NS_END

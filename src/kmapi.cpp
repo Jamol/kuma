@@ -18,6 +18,7 @@
 #include "UdpSocketImpl.h"
 #include "TcpServerSocketImpl.h"
 #include "TimerManager.h"
+#include "HttpRequestImpl.h"
 #include "kmapi.h"
 
 KUMA_NS_BEGIN
@@ -162,6 +163,16 @@ int TcpSocket::receive(uint8_t* data, uint32_t length)
 int TcpSocket::close()
 {
     return pimpl_->close();
+}
+
+int TcpSocket::suspend()
+{
+    return pimpl_->suspend();
+}
+
+int TcpSocket::resume()
+{
+    return pimpl_->resume();
 }
 
 void TcpSocket::setReadCallback(EventCallback& cb)
@@ -359,5 +370,77 @@ TimerImpl* Timer::getPimpl()
 {
     return pimpl_;
 }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+HttpRequest::HttpRequest(EventLoop* loop)
+: pimpl_(new HttpRequestImpl(loop->getPimpl()))
+{
+    
+}
+HttpRequest::~HttpRequest()
+{
+    delete pimpl_;
+}
+
+void HttpRequest::addHeader(const char* name, const char* value)
+{
+    pimpl_->addHeader(name, value);
+}
+
+void HttpRequest::addHeader(const char* name, uint32_t value)
+{
+    pimpl_->addHeader(name, value);
+}
+
+int HttpRequest::sendRequest(const char* method, const char* uri, const char* ver)
+{
+    return pimpl_->sendRequest(method, uri, ver);
+}
+
+int HttpRequest::sendData(uint8_t* data, uint32_t len)
+{
+    return pimpl_->sendData(data, len);
+}
+
+int HttpRequest::close()
+{
+    return pimpl_->close();
+}
+
+void HttpRequest::setDataCallback(DataCallback& cb)
+{
+    pimpl_->setDataCallback(cb);
+}
+
+void HttpRequest::setWriteCallback(EventCallback& cb)
+{
+    pimpl_->setWriteCallback(cb);
+}
+
+void HttpRequest::setErrorCallback(EventCallback& cb)
+{
+    pimpl_->setErrorCallback(cb);
+}
+
+void HttpRequest::setDataCallback(DataCallback&& cb)
+{
+    pimpl_->setDataCallback(std::move(cb));
+}
+
+void HttpRequest::setWriteCallback(EventCallback&& cb)
+{
+    pimpl_->setWriteCallback(std::move(cb));
+}
+
+void HttpRequest::setErrorCallback(EventCallback&& cb)
+{
+    pimpl_->setErrorCallback(std::move(cb));
+}
+
+HttpRequestImpl* HttpRequest::getPimpl()
+{
+    return pimpl_;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 KUMA_NS_END

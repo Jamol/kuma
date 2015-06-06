@@ -11,6 +11,7 @@
 #include "kmconf.h"
 #include "kmdefs.h"
 #include <sstream>
+#include <assert.h>
 
 KUMA_NS_BEGIN
 
@@ -41,6 +42,8 @@ KUMA_NS_BEGIN
 #define KUMA_WARNTRACE(x)   KUMA_TRACE(KUMA_TRACE_LEVEL_WARN, x)
 #define KUMA_ERRTRACE(x)    KUMA_TRACE(KUMA_TRACE_LEVEL_ERROR, x)
 #define KUMA_DBGTRACE(x)    KUMA_TRACE(KUMA_TRACE_LEVEL_DEBUG, x)
+
+#define KUMA_ASSERT(x) assert(x)
 
 void TracePrint(int level, const char* szMessage, ...);
 
