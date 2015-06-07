@@ -4,6 +4,9 @@
 #include "util/util.h"
 
 #include <sstream>
+#ifndef KUMA_OS_WIN
+# include <sys/socket.h>
+#endif
 
 KUMA_NS_BEGIN
 
@@ -19,7 +22,7 @@ HttpRequestImpl::HttpRequestImpl(EventLoopImpl* loop)
 , tcp_socket_(loop)
 , destroy_flag_ptr_(nullptr)
 {
-
+    http_parser_.set_request(false);
 }
 
 HttpRequestImpl::~HttpRequestImpl()
@@ -133,15 +136,68 @@ int HttpRequestImpl::sendRequest(const char* method, const char* url, const char
 
 int HttpRequestImpl::sendData(uint8_t* data, uint32_t len)
 {
-    if(!send_buffer_.empty() || getState() != STATE_SENDING_BODY) {
+    if(!send_buffer_.empty() || getState() != STATE_SENDING_REQUEST) {
+        return 0;
+    }
+    if(is_chunked_) {
+        return sendTrunk(data, len);
+    }
+    if(!data || 0 == len) {
         return 0;
     }
     int ret = tcp_socket_.send(data, len);
     if(ret > 0 && has_content_length_ && body_bytes_sent_ >= content_length_) {
         setState(STATE_RECVING_RESPONSE);
-        if(cb_request_) cb_request_();
     }
     return ret;
+}
+
+int HttpRequestImpl::sendTrunk(uint8_t* data, uint32_t len)
+{
+    if(nullptr == data && 0 == len) { // chunk end
+        static const std::string _chunk_end_token_ = "0\r\n\r\n";
+        int ret = tcp_socket_.send((uint8_t*)_chunk_end_token_.c_str(), (uint32_t)_chunk_end_token_.length());
+        if(ret < 0) {
+            return ret;
+        } else if(ret < 5) {
+            std::copy(_chunk_end_token_.begin() + ret, _chunk_end_token_.end(), back_inserter(send_buffer_));
+            send_offset_ = 0;
+        }
+        return 0;
+    } else {
+        std::stringstream ss;
+        ss.setf(std::ios_base::hex, std::ios_base::basefield);
+        ss << len << "\r\n";
+        std::string str;
+        ss >> str;
+        iovec iovs[3];
+        iovs[0].iov_base = (uint8_t*)str.c_str();
+        iovs[0].iov_len = str.length();
+        iovs[1].iov_base = data;
+        iovs[1].iov_len = len;
+        iovs[2].iov_base = (uint8_t*)"\r\n";
+        iovs[2].iov_len = 2;
+        auto total_len = iovs[0].iov_len + iovs[1].iov_len + iovs[2].iov_len;
+        int ret = tcp_socket_.send(iovs, 3);
+        if(ret < 0) {
+            return ret;
+        } else if(ret < total_len) {
+            send_buffer_.reserve(total_len - ret);
+            send_offset_ = 0;
+            for (auto &iov : iovs) {
+                uint8_t* first = ((uint8_t*)iov.iov_base) + ret;
+                uint8_t* last = ((uint8_t*)iov.iov_base) + iov.iov_len;
+                if(first < last) {
+                    std::copy(first, last, back_inserter(send_buffer_));
+                    send_offset_ += last - first;
+                    ret = 0;
+                } else {
+                    ret -= iov.iov_len;
+                }
+            }
+        }
+        return len;
+    }
 }
 
 int HttpRequestImpl::close()
@@ -158,6 +214,7 @@ void HttpRequestImpl::onConnect(int err)
         if(cb_error_) cb_error_(err);
         return ;
     }
+    body_bytes_sent_ = 0;
     http_parser_.setDataCallback([this] (uint8_t* data, uint32_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpParser::HttpEvent ev) { onHttpEvent(ev); });
     buildRequest();
@@ -172,11 +229,8 @@ void HttpRequestImpl::onConnect(int err)
         if(send_offset_ == send_buffer_.size()) {
             send_offset_ = 0;
             send_buffer_.clear();
-            if((has_content_length_ && content_length_ > 0) || is_chunked_) {
-                setState(STATE_SENDING_BODY);
-            } else {
+            if(0 == content_length_ && !is_chunked_) {
                 setState(STATE_RECVING_RESPONSE);
-                if(cb_request_) cb_request_();
             }
         }
     }
@@ -195,18 +249,8 @@ void HttpRequestImpl::onSend(int err)
             if(send_offset_ == send_buffer_.size()) {
                 send_offset_ = 0;
                 send_buffer_.clear();
-                if(getState() == STATE_SENDING_REQUEST) {
-                    if((has_content_length_ && content_length_ > 0) || is_chunked_) {
-                        setState(STATE_SENDING_BODY);
-                    } else {
-                        setState(STATE_RECVING_RESPONSE);
-                        if(cb_request_) cb_request_();
-                    }
-                } else if(getState() == STATE_SENDING_BODY) {
-                    if(has_content_length_ && body_bytes_sent_ >= content_length_) {
-                        setState(STATE_RECVING_RESPONSE);
-                        if(cb_request_) cb_request_();
-                    }
+                if(!is_chunked_ && body_bytes_sent_ >= content_length_) {
+                    setState(STATE_RECVING_RESPONSE);
                 }
             }
         }
@@ -230,7 +274,7 @@ void HttpRequestImpl::onReceive(int err)
             bool destroyed = false;
             KUMA_ASSERT(nullptr == destroy_flag_ptr_);
             destroy_flag_ptr_ = &destroyed;
-            int bytes_used = http_parser_.parse_data(buf, ret);
+            int bytes_used = http_parser_.parse(buf, ret);
             if(destroyed) {
                 return;
             }

@@ -13,7 +13,6 @@ class HttpRequestImpl
 public:
     typedef std::function<void(uint8_t*, uint32_t)> DataCallback;
     typedef std::function<void(int)> EventCallback;
-    typedef std::function<void(void)> RequestCompleteCallback;
     typedef std::function<void(void)> HeaderCompleteCallback;
     typedef std::function<void(void)> ResponseCompleteCallback;
     
@@ -47,7 +46,6 @@ private:
         STATE_IDLE,
         STATE_CONNECTING,
         STATE_SENDING_REQUEST,
-        STATE_SENDING_BODY,
         STATE_RECVING_RESPONSE,
         STATE_COMPLETE,
         STATE_ERROR,
@@ -56,6 +54,7 @@ private:
     void setState(State state) { state_ = state; }
     State getState() { return state_; }
     void buildRequest();
+    int sendTrunk(uint8_t* data, uint32_t len);
     void cleanup();
     
     void onHttpData(uint8_t* data, uint32_t len);
@@ -82,7 +81,6 @@ private:
     DataCallback            cb_data_;
     EventCallback           cb_write_;
     EventCallback           cb_error_;
-    RequestCompleteCallback cb_request_;
     HeaderCompleteCallback  cb_header_;
     ResponseCompleteCallback    cb_response_;
     
