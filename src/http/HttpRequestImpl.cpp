@@ -140,7 +140,7 @@ int HttpRequestImpl::sendData(uint8_t* data, uint32_t len)
         return 0;
     }
     if(is_chunked_) {
-        return sendTrunk(data, len);
+        return sendChunk(data, len);
     }
     if(!data || 0 == len) {
         return 0;
@@ -152,7 +152,7 @@ int HttpRequestImpl::sendData(uint8_t* data, uint32_t len)
     return ret;
 }
 
-int HttpRequestImpl::sendTrunk(uint8_t* data, uint32_t len)
+int HttpRequestImpl::sendChunk(uint8_t* data, uint32_t len)
 {
     if(nullptr == data && 0 == len) { // chunk end
         static const std::string _chunk_end_token_ = "0\r\n\r\n";
