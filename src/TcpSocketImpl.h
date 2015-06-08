@@ -19,8 +19,10 @@
 #include "kmdefs.h"
 #include "evdefs.h"
 
-#ifndef KUMA_OS_WIN
-struct iovec;
+#ifdef KUMA_OS_WIN
+# include <Ws2tcpip.h>
+#else
+# include <sys/socket.h>
 #endif
 
 KUMA_NS_BEGIN

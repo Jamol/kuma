@@ -2,9 +2,11 @@
 #define __HttpParser_H__
 
 #include "kmdefs.h"
+#include "util/util.h"
 #include <string>
 #include <map>
 #include <vector>
+#include <functional>
 
 KUMA_NS_BEGIN
 
@@ -17,7 +19,7 @@ public:
         HTTP_ERROR
     }HttpEvent;
     
-    typedef std::function<void(uint8_t*, uint32_t)> DataCallback;
+    typedef std::function<void(const char*, uint32_t)> DataCallback;
     typedef std::function<void(HttpEvent)> EventCallback;
     typedef std::function<void(const char* name, const char* value)> EnumrateCallback;
     
@@ -32,7 +34,7 @@ public:
     ~HttpParser();
     
     // return bytes parsed
-    int parse(uint8_t* data, uint32_t len);
+    int parse(const char* data, uint32_t len);
     void reset();
     
     bool isRequest() { return is_request_; }
@@ -66,11 +68,11 @@ private:
     }ParseState;
     
 private:
-    ParseState parseHttp(uint8_t* data, uint32_t len, uint32_t& used_len);
-    bool parseStatusLine(char* cur_line);
-    bool parseHeaderLine(char* cur_line);
-    ParseState parseChunk(uint8_t* data, uint32_t len, uint32_t& pos);
-    char* getLine(char* data, uint32_t len, uint32_t& pos);
+    ParseState parseHttp(const char*& cur_pos, const char* end);
+    bool parseStartLine(const char* line, const char* line_end);
+    bool parseHeaderLine(const char* line, const char* line_end);
+    ParseState parseChunk(const char*& cur_pos, const char* end);
+    bool getLine(const char*& cur_pos, const char* end, const char*& line, const char*& line_end);
     
     bool decodeUrl();
     bool parseUrl();
@@ -82,7 +84,7 @@ private:
     void onHeaderComplete();
     void onComplete();
     
-    int saveData(uint8_t* data, uint32_t len);
+    int saveData(const char* cur_pos, const char* end);
     void clearStrBuf() { str_buf_.clear(); }
     
 private:

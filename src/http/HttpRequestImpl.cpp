@@ -171,11 +171,11 @@ int HttpRequestImpl::sendChunk(uint8_t* data, uint32_t len)
         std::string str;
         ss >> str;
         iovec iovs[3];
-        iovs[0].iov_base = (uint8_t*)str.c_str();
+        iovs[0].iov_base = (char*)str.c_str();
         iovs[0].iov_len = str.length();
-        iovs[1].iov_base = data;
+        iovs[1].iov_base = (char*)data;
         iovs[1].iov_len = len;
-        iovs[2].iov_base = (uint8_t*)"\r\n";
+        iovs[2].iov_base = (char*)"\r\n";
         iovs[2].iov_len = 2;
         auto total_len = iovs[0].iov_len + iovs[1].iov_len + iovs[2].iov_len;
         int ret = tcp_socket_.send(iovs, 3);
@@ -215,7 +215,7 @@ void HttpRequestImpl::onConnect(int err)
         return ;
     }
     body_bytes_sent_ = 0;
-    http_parser_.setDataCallback([this] (uint8_t* data, uint32_t len) { onHttpData(data, len); });
+    http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpParser::HttpEvent ev) { onHttpEvent(ev); });
     buildRequest();
     setState(STATE_SENDING_REQUEST);
@@ -262,9 +262,9 @@ void HttpRequestImpl::onSend(int err)
 
 void HttpRequestImpl::onReceive(int err)
 {
-    uint8_t buf[256*1024];
+    char buf[256*1024];
     do {
-        int ret = tcp_socket_.receive(buf, sizeof(buf));
+        int ret = tcp_socket_.receive((uint8_t*)buf, sizeof(buf));
         if(ret < 0) {
             cleanup();
             if(cb_error_) cb_error_(KUMA_ERROR_SOCKERR);
@@ -295,9 +295,9 @@ void HttpRequestImpl::onClose(int err)
     cleanup();
 }
 
-void HttpRequestImpl::onHttpData(uint8_t* data, uint32_t len)
+void HttpRequestImpl::onHttpData(const char* data, uint32_t len)
 {
-    if(cb_data_) cb_data_(data, len);
+    if(cb_data_) cb_data_((uint8_t*)data, len);
 }
 
 void HttpRequestImpl::onHttpEvent(HttpParser::HttpEvent ev)

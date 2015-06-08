@@ -491,6 +491,17 @@ TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_T
     return now_tick - start_tick;
 }
 
+#if 0
+// need c++ 14
+bool is_equal(const std::string& s1, const std::string& s2)
+{
+    return std::equal(s1.begin(), s1.end(), s2.begin(), s2.end(),
+        [] (const char& ch1, const char& ch2) {
+            return std::toupper(ch1) == std::toupper(ch2);
+    });
+}
+#endif
+
 bool is_equal(const char* str1, const char* str2)
 {
     return strcasecmp(str1, str2) == 0;

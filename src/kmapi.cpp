@@ -18,7 +18,7 @@
 #include "UdpSocketImpl.h"
 #include "TcpServerSocketImpl.h"
 #include "TimerManager.h"
-#include "HttpRequestImpl.h"
+#include "http/HttpRequestImpl.h"
 #include "kmapi.h"
 
 KUMA_NS_BEGIN

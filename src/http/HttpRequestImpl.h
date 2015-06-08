@@ -57,7 +57,7 @@ private:
     int sendChunk(uint8_t* data, uint32_t len);
     void cleanup();
     
-    void onHttpData(uint8_t* data, uint32_t len);
+    void onHttpData(const char* data, uint32_t len);
     void onHttpEvent(HttpParser::HttpEvent ev);
     
 private:

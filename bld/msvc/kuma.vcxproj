@@ -160,6 +160,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\EventLoopImpl.cpp" />
+    <ClCompile Include="..\..\src\http\HttpParser.cpp" />
+    <ClCompile Include="..\..\src\http\HttpRequestImpl.cpp" />
+    <ClCompile Include="..\..\src\http\HttpResponse.cpp" />
+    <ClCompile Include="..\..\src\http\Uri.cpp" />
     <ClCompile Include="..\..\src\kmapi.cpp" />
     <ClCompile Include="..\..\src\poll\SelectPoll.cpp" />
     <ClCompile Include="..\..\src\poll\VPoll.cpp" />
@@ -173,6 +177,10 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\evdefs.h" />
     <ClInclude Include="..\..\src\EventLoopImpl.h" />
+    <ClInclude Include="..\..\src\http\HttpParser.h" />
+    <ClInclude Include="..\..\src\http\HttpRequestImpl.h" />
+    <ClInclude Include="..\..\src\http\HttpResponse.h" />
+    <ClInclude Include="..\..\src\http\Uri.h" />
     <ClInclude Include="..\..\src\kmapi.h" />
     <ClInclude Include="..\..\src\kmconf.h" />
     <ClInclude Include="..\..\src\kmdefs.h" />

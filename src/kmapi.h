@@ -166,7 +166,7 @@ private:
     TimerImpl* pimpl_;
 };
 
-class HttpRequest
+class KUMA_API HttpRequest
 {
 public:
     typedef std::function<void(uint8_t*, uint32_t)> DataCallback;

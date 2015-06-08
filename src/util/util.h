@@ -17,6 +17,7 @@
 #define __kuma_util_h__
 
 #include "kmdefs.h"
+#include <string>
 
 struct addrinfo;
 struct sockaddr;
@@ -26,8 +27,8 @@ KUMA_NS_BEGIN
 #ifdef KUMA_OS_WIN
 # define snprintf    _snprintf
 # define vsnprintf   _vsnprintf
-# define strcasecmp stricmp
-# define strncasecmp srtnicmp
+# define strcasecmp _stricmp
+# define strncasecmp _strnicmp
 #endif
 
 #ifndef TICK_COUNT_TYPE
