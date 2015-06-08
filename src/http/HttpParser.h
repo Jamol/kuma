@@ -19,6 +19,7 @@ public:
     
     typedef std::function<void(uint8_t*, uint32_t)> DataCallback;
     typedef std::function<void(HttpEvent)> EventCallback;
+    typedef std::function<void(const char* name, const char* value)> EnumrateCallback;
     
     struct CaseIgnoreLess : public std::binary_function<std::string, std::string, bool> {
         bool operator()(const std::string &lhs, const std::string &rhs) const {
@@ -32,23 +33,24 @@ public:
     
     // return bytes parsed
     int parse(uint8_t* data, uint32_t len);
-    
-    bool header_complete() { return header_complete_; }
-    bool complete();
-    bool error();
-    uint32_t get_status_code() { return status_code_; }
-    const char* get_location() { return get_header_value("Location"); }
-    bool is_request() { return is_request_; }
-    const char* get_uri() { return url_.c_str(); }
-    const char* get_url_path() { return url_path_.c_str(); }
-    const char* get_method() { return method_.c_str(); }
-    const char* get_version() { return version_.c_str(); }
-    const char* get_param_value(const char* name);
-    const char* get_header_value(const char* name);
     void reset();
     
-    void copy_param_map(STRING_MAP& param_map);
-    void copy_header_map(STRING_MAP& header_map);
+    bool isRequest() { return is_request_; }
+    bool headerComplete() { return header_complete_; }
+    bool complete();
+    bool error();
+    
+    uint32_t getStatusCode() { return status_code_; }
+    const char* getLocation() { return getHeaderValue("Location"); }
+    const char* getUrl() { return url_.c_str(); }
+    const char* getUrlPath() { return url_path_.c_str(); }
+    const char* getMethod() { return method_.c_str(); }
+    const char* getVersion() { return version_.c_str(); }
+    const char* getParamValue(const char* name);
+    const char* getHeaderValue(const char* name);
+    
+    void forEachParam(EnumrateCallback cb);
+    void forEachHeader(EnumrateCallback cb);
     
     void setDataCallback(DataCallback& cb) { cb_data_ = cb; }
     void setEventCallback(EventCallback& cb) { cb_event_ = cb; }
@@ -64,24 +66,24 @@ private:
     }ParseState;
     
 private:
-    ParseState parse_http(uint8_t* data, uint32_t len, uint32_t& used_len);
-    bool parse_status_line(char* cur_line);
-    bool parse_header_line(char* cur_line);
-    ParseState parse_chunk(uint8_t* data, uint32_t len, uint32_t& pos);
-    char* get_line(char* data, uint32_t len, uint32_t& pos);
+    ParseState parseHttp(uint8_t* data, uint32_t len, uint32_t& used_len);
+    bool parseStatusLine(char* cur_line);
+    bool parseHeaderLine(char* cur_line);
+    ParseState parseChunk(uint8_t* data, uint32_t len, uint32_t& pos);
+    char* getLine(char* data, uint32_t len, uint32_t& pos);
     
-    bool decode_url();
-    bool parse_url();
-    void add_param_value(const std::string& name, const std::string& value);
-    void add_header_value(std::string& name, std::string& value);
+    bool decodeUrl();
+    bool parseUrl();
+    void addParamValue(const std::string& name, const std::string& value);
+    void addHeaderValue(std::string& name, std::string& value);
     
-    bool has_body();
+    bool hasBody();
     
-    void on_header_complete();
-    void on_complete();
+    void onHeaderComplete();
+    void onComplete();
     
-    int save_data(uint8_t* data, uint32_t len);
-    void clear_buffer() { str_buf_.clear(); }
+    int saveData(uint8_t* data, uint32_t len);
+    void clearStrBuf() { str_buf_.clear(); }
     
 private:
     HttpParser &operator= (const HttpParser &);

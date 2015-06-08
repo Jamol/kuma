@@ -8,7 +8,7 @@ KUMA_NS_BEGIN
 
 #define CR  '\r'
 #define LF  '\n'
-#define MAX_HTTP_HEADER_SIZE	10*1024*1024 // 10 MB
+#define MAX_HTTP_HEADER_SIZE	2*1024*1024 // 2 MB
 
 typedef enum{
     HTTP_READ_LINE,
@@ -90,7 +90,7 @@ bool HttpParser::error()
     return HTTP_READ_ERROR == read_state_;
 }
 
-bool HttpParser::has_body()
+bool HttpParser::hasBody()
 {
     if(content_length_ > 0 || is_chunked_) {
         return true;
@@ -119,7 +119,7 @@ int HttpParser::parse(uint8_t* data, uint32_t len)
         return len;
     }
     uint32_t read_len = 0;
-    ParseState parse_state = parse_http(data, len, read_len);
+    ParseState parse_state = parseHttp(data, len, read_len);
     if(PARSE_STATE_DESTROY == parse_state) {
         return read_len;
     }
@@ -129,7 +129,7 @@ int HttpParser::parse(uint8_t* data, uint32_t len)
     return read_len;
 }
 
-int HttpParser::save_data(uint8_t* data, uint32_t len)
+int HttpParser::saveData(uint8_t* data, uint32_t len)
 {
     if(0 == len) {
         return KUMA_ERROR_NOERR;
@@ -142,7 +142,7 @@ int HttpParser::save_data(uint8_t* data, uint32_t len)
     return KUMA_ERROR_NOERR;
 }
 
-HttpParser::ParseState HttpParser::parse_http(uint8_t* data, uint32_t len, uint32_t& used_len)
+HttpParser::ParseState HttpParser::parseHttp(uint8_t* data, uint32_t len, uint32_t& used_len)
 {
     char* cur_line = NULL;
     uint32_t& pos = used_len;
@@ -150,17 +150,17 @@ HttpParser::ParseState HttpParser::parse_http(uint8_t* data, uint32_t len, uint3
     
     if(HTTP_READ_LINE == read_state_)
     {// try to get status line
-        while ((cur_line = get_line((char*)data, len, pos)) && cur_line[0] == '\0' && str_buf_.empty())
+        while ((cur_line = getLine((char*)data, len, pos)) && cur_line[0] == '\0' && str_buf_.empty())
             ;
         if(cur_line) {
-            if(!parse_status_line(cur_line)) {
+            if(!parseStatusLine(cur_line)) {
                 read_state_ = HTTP_READ_ERROR;
                 return PARSE_STATE_ERROR;
             }
             read_state_ = HTTP_READ_HEAD;
         } else {
             // need more data
-            if(save_data(data+pos, len-pos) != KUMA_ERROR_NOERR) {
+            if(saveData(data+pos, len-pos) != KUMA_ERROR_NOERR) {
                 return PARSE_STATE_ERROR;
             }
             pos = len; // all data was consumed
@@ -169,25 +169,25 @@ HttpParser::ParseState HttpParser::parse_http(uint8_t* data, uint32_t len, uint3
     }
     if(HTTP_READ_HEAD == read_state_)
     {
-        while ((cur_line = get_line((char*)data, len, pos)) != nullptr)
+        while ((cur_line = getLine((char*)data, len, pos)) != nullptr)
         {
             if(cur_line[0] == '\0')
             {// blank line, header completed
-                on_header_complete();
-                if(has_body()) {
+                onHeaderComplete();
+                if(hasBody()) {
                     read_state_ = HTTP_READ_BODY;
                 } else {
                     read_state_ = HTTP_READ_DONE;
-                    on_complete();
+                    onComplete();
                     return PARSE_STATE_DONE;
                 }
                 break;
             }
-            parse_header_line(cur_line);
+            parseHeaderLine(cur_line);
         }
         if(HTTP_READ_HEAD == read_state_)
         {// need more data
-            if(save_data(data+pos, len-pos) != KUMA_ERROR_NOERR) {
+            if(saveData(data+pos, len-pos) != KUMA_ERROR_NOERR) {
                 return PARSE_STATE_ERROR;
             }
             pos = len; // all data was consumed
@@ -197,7 +197,7 @@ HttpParser::ParseState HttpParser::parse_http(uint8_t* data, uint32_t len, uint3
     if(HTTP_READ_BODY == read_state_ && (len - pos) > 0)
     {// try to get body
         if(is_chunked_) {
-            return parse_chunk(data, len, pos);
+            return parseChunk(data, len, pos);
         } else {
             uint32_t cur_len = len - pos;
             if(has_content_length_ && (content_length_ - total_bytes_read_) <= cur_len)
@@ -215,7 +215,7 @@ HttpParser::ParseState HttpParser::parse_http(uint8_t* data, uint32_t len, uint3
                     return PARSE_STATE_DESTROY;
                 }
                 destroy_flag_ptr_ = nullptr;
-                on_complete();
+                onComplete();
                 return PARSE_STATE_DONE;
             }
             else
@@ -231,14 +231,14 @@ HttpParser::ParseState HttpParser::parse_http(uint8_t* data, uint32_t len, uint3
     return HTTP_READ_DONE == read_state_?PARSE_STATE_DONE:PARSE_STATE_CONTINUE;
 }
 
-bool HttpParser::parse_status_line(char* cur_line)
+bool HttpParser::parseStatusLine(char* cur_line)
 {
     const char* p_line = cur_line;
     if(!str_buf_.empty()) {
         str_buf_ += cur_line;
         p_line = str_buf_.c_str();
     }
-    KUMA_INFOTRACE("parse_status_line, "<<p_line);
+    KUMA_INFOTRACE("parseStatusLine, "<<p_line);
     std::string str;
     const char*  p = strchr(p_line, ' ');
     if(p) {
@@ -258,8 +258,8 @@ bool HttpParser::parse_status_line(char* cur_line)
             return false;
         }
         version_ = p_line;
-        decode_url();
-        parse_url();
+        decodeUrl();
+        parseUrl();
     } else {// response
         version_.swap(str);
         p = strchr(p_line, ' ');
@@ -270,11 +270,11 @@ bool HttpParser::parse_status_line(char* cur_line)
         }
         status_code_ = atoi(str.c_str());
     }
-    clear_buffer();
+    clearStrBuf();
     return true;
 }
 
-bool HttpParser::parse_header_line(char * cur_line)
+bool HttpParser::parseHeaderLine(char * cur_line)
 {
     const char* p_line = cur_line;
     if(!str_buf_.empty()) {
@@ -285,28 +285,28 @@ bool HttpParser::parse_header_line(char * cur_line)
     std::string str_value;
     const char* p = strchr(p_line, ':');
     if(NULL == p) {
-        clear_buffer();
+        clearStrBuf();
         return false;
     }
     str_name.assign(p_line, p);
     p_line = p + 1;
     str_value = p_line;
-    clear_buffer();
-    add_header_value(str_name, str_value);
+    clearStrBuf();
+    addHeaderValue(str_name, str_value);
     return true;
 }
 
-HttpParser::ParseState HttpParser::parse_chunk(uint8_t* data, uint32_t len, uint32_t& pos)
+HttpParser::ParseState HttpParser::parseChunk(uint8_t* data, uint32_t len, uint32_t& pos)
 {
     while (pos < len)
     {
         switch (chunk_state_) {
             case CHUNK_READ_SIZE:
             {
-                char* cur_line = get_line((char*)data, len, pos);
+                char* cur_line = getLine((char*)data, len, pos);
                 if(nullptr == cur_line)
                 {// need more data, save remain data.
-                    if(save_data(data+pos, len-pos) != KUMA_ERROR_NOERR) {
+                    if(saveData(data+pos, len-pos) != KUMA_ERROR_NOERR) {
                         return PARSE_STATE_ERROR;
                     }
                     pos = len;
@@ -315,11 +315,11 @@ HttpParser::ParseState HttpParser::parse_chunk(uint8_t* data, uint32_t len, uint
                 if(!str_buf_.empty()) {
                     str_buf_ += cur_line;
                     chunk_size_ = strtol(str_buf_.c_str(), NULL, 16);
-                    clear_buffer();
+                    clearStrBuf();
                 } else {
                     chunk_size_ = strtol(cur_line, NULL, 16);
                 }
-                KUMA_INFOTRACE("HttpParser::parse_chunk, chunk_size="<<chunk_size_);
+                KUMA_INFOTRACE("HttpParser::parseChunk, chunk_size="<<chunk_size_);
                 if(0 == chunk_size_)
                 {// chunk completed
                     chunk_state_ = CHUNK_READ_TRAILER;
@@ -359,7 +359,7 @@ HttpParser::ParseState HttpParser::parse_chunk(uint8_t* data, uint32_t len, uint
             case CHUNK_READ_DATA_CR:
             {
                 if(data[pos] != CR) {
-                    KUMA_ERRTRACE("parse_chunk, can not find data CR");
+                    KUMA_ERRTRACE("parseChunk, can not find data CR");
                     read_state_ = HTTP_READ_ERROR;
                     return PARSE_STATE_ERROR;
                 }
@@ -370,7 +370,7 @@ HttpParser::ParseState HttpParser::parse_chunk(uint8_t* data, uint32_t len, uint
             case CHUNK_READ_DATA_LF:
             {
                 if(data[pos] != LF) {
-                    KUMA_ERRTRACE("parse_chunk, can not find data LF");
+                    KUMA_ERRTRACE("parseChunk, can not find data LF");
                     read_state_ = HTTP_READ_ERROR;
                     return PARSE_STATE_ERROR;
                 }
@@ -380,11 +380,11 @@ HttpParser::ParseState HttpParser::parse_chunk(uint8_t* data, uint32_t len, uint
             }
             case CHUNK_READ_TRAILER:
             {
-                char* cur_line = get_line((char*)data, len, pos);
+                char* cur_line = getLine((char*)data, len, pos);
                 if(cur_line != nullptr && cur_line[0] == '\0') {
                     // empty line, http completed
                     read_state_ = HTTP_READ_DONE;
-                    on_complete();
+                    onComplete();
                     return PARSE_STATE_DONE;
                 } else { // need more data
                     // dont save data, ignore trailer
@@ -400,30 +400,30 @@ HttpParser::ParseState HttpParser::parse_chunk(uint8_t* data, uint32_t len, uint
     return HTTP_READ_DONE == read_state_?PARSE_STATE_DONE:PARSE_STATE_CONTINUE;
 }
 
-void HttpParser::on_header_complete()
+void HttpParser::onHeaderComplete()
 {
     header_complete_ = true;
     auto it = header_map_.find("Content-Length");
     if(it != header_map_.end()) {
         content_length_ = atoi(it->second.c_str());
         has_content_length_ = true;
-        KUMA_INFOTRACE("on_header_complete, Content-Length="<<content_length_);
+        KUMA_INFOTRACE("onHeaderComplete, Content-Length="<<content_length_);
     }
     it = header_map_.find("Transfer-Encoding");
     if(it != header_map_.end()) {
         is_chunked_ = is_equal("chunked", it->second);
-        KUMA_INFOTRACE("on_header_complete, Transfer-Encoding="<<it->second);
+        KUMA_INFOTRACE("onHeaderComplete, Transfer-Encoding="<<it->second);
     }
     if(cb_event_) cb_event_(HTTP_HEADER_COMPLETE);
 }
 
-void HttpParser::on_complete()
+void HttpParser::onComplete()
 {
-    KUMA_INFOTRACE("HttpParser::on_complete");
+    KUMA_INFOTRACE("HttpParser::onComplete");
     if(cb_event_) cb_event_(HTTP_COMPLETE);
 }
 
-bool HttpParser::decode_url()
+bool HttpParser::decodeUrl()
 {
     std::string new_url;
     int i = 0;
@@ -464,7 +464,7 @@ bool HttpParser::decode_url()
     return true;
 }
 
-bool HttpParser::parse_url()
+bool HttpParser::parseUrl()
 {
     Uri uri;
     if(!uri.parse(url_)) {
@@ -482,25 +482,25 @@ bool HttpParser::parse_url()
         pos1 = query.find('&', pos);
         if(pos1 == std::string::npos){
             std::string value(query.begin()+pos, query.end());
-            add_param_value(name, value);
+            addParamValue(name, value);
             break;
         }
         std::string value(query.begin()+pos, query.begin()+pos1);
         pos = pos1 + 1;
-        add_param_value(name, value);
+        addParamValue(name, value);
     }
     
     return true;
 }
 
-void HttpParser::add_param_value(const std::string& name, const std::string& value)
+void HttpParser::addParamValue(const std::string& name, const std::string& value)
 {
     if(!name.empty()) {
         param_map_[name] = value;
     }
 }
 
-void HttpParser::add_header_value(std::string& name, std::string& value)
+void HttpParser::addHeaderValue(std::string& name, std::string& value)
 {
     trim_left(name);
     trim_right(name);
@@ -511,7 +511,7 @@ void HttpParser::add_header_value(std::string& name, std::string& value)
     }
 }
 
-const char* HttpParser::get_param_value(const char* name)
+const char* HttpParser::getParamValue(const char* name)
 {
     auto it = param_map_.find(name);
     if (it != param_map_.end()) {
@@ -520,7 +520,7 @@ const char* HttpParser::get_param_value(const char* name)
     return nullptr;
 }
 
-const char* HttpParser::get_header_value(const char* name)
+const char* HttpParser::getHeaderValue(const char* name)
 {
     auto it = header_map_.find(name);
     if (it != header_map_.end()) {
@@ -529,17 +529,21 @@ const char* HttpParser::get_header_value(const char* name)
     return nullptr;
 }
 
-void HttpParser::copy_param_map(STRING_MAP& param_map)
+void HttpParser::forEachParam(EnumrateCallback cb)
 {
-    param_map = param_map_;
+    for (auto &kv : param_map_) {
+        cb(kv.first.c_str(), kv.second.c_str());
+    }
 }
 
-void HttpParser::copy_header_map(STRING_MAP& header_map)
+void HttpParser::forEachHeader(EnumrateCallback cb)
 {
-    header_map = header_map_;
+    for (auto &kv : header_map_) {
+        cb(kv.first.c_str(), kv.second.c_str());
+    }
 }
 
-char* HttpParser::get_line(char* data, uint32_t len, uint32_t& pos)
+char* HttpParser::getLine(char* data, uint32_t len, uint32_t& pos)
 {
     bool b_line = false;
     char *p_line = nullptr;
