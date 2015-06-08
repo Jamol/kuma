@@ -59,10 +59,10 @@ void HttpParser::reset()
     read_state_ = HTTP_READ_LINE;
     
     status_code_ = 0;
+    header_complete_ = false;
     content_length_ = 0;
     has_content_length_ = false;
     
-    header_complete_ = false;
     is_chunked_ = false;
     chunk_state_ = CHUNK_READ_SIZE;
     chunk_size_ = 0;
@@ -90,6 +90,22 @@ bool HttpParser::error()
     return HTTP_READ_ERROR == read_state_;
 }
 
+bool HttpParser::has_body()
+{
+    if(content_length_ > 0 || is_chunked_) {
+        return true;
+    }
+    if(has_content_length_ && 0 == content_length_) {
+        return false;
+    }
+    if(is_request_) {
+        return false;
+    } else { // read untill EOF
+        return !((100 <= status_code_ && status_code_ <= 100) ||
+                 204 == status_code_ || 304 == status_code_);
+    }
+}
+
 int HttpParser::parse(uint8_t* data, uint32_t len)
 {
     if(HTTP_READ_DONE == read_state_ || HTTP_READ_ERROR == read_state_) {
@@ -97,7 +113,7 @@ int HttpParser::parse(uint8_t* data, uint32_t len)
         return 0;
     }
     if(HTTP_READ_BODY == read_state_ && !is_chunked_ && !has_content_length_)
-    {// return directly
+    {// return directly, read untill EOF
         total_bytes_read_ += len;
         if(cb_data_) cb_data_(data, len);
         return len;
@@ -158,14 +174,12 @@ HttpParser::ParseState HttpParser::parse_http(uint8_t* data, uint32_t len, uint3
             if(cur_line[0] == '\0')
             {// blank line, header completed
                 on_header_complete();
-                if((has_content_length_ && 0 == content_length_ && !is_chunked_)
-                   || is_equal("OPTIONS", method_))
-                {
+                if(has_body()) {
+                    read_state_ = HTTP_READ_BODY;
+                } else {
                     read_state_ = HTTP_READ_DONE;
                     on_complete();
                     return PARSE_STATE_DONE;
-                } else {
-                    read_state_ = HTTP_READ_BODY;
                 }
                 break;
             }
@@ -225,14 +239,17 @@ bool HttpParser::parse_status_line(char* cur_line)
         p_line = str_buf_.c_str();
     }
     KUMA_INFOTRACE("parse_status_line, "<<p_line);
+    std::string str;
+    const char*  p = strchr(p_line, ' ');
+    if(p) {
+        str.assign(p_line, p);
+        p_line = p + 1;
+    } else {
+        return false;
+    }
+    is_request_ = !is_equal(str, "HTTP", 4);
     if(is_request_) {// request
-        const char*  p = strchr(p_line, ' ');
-        if(p) {
-            method_.assign(p_line, p);
-            p_line = p + 1;
-        } else {
-            return false;
-        }
+        method_.swap(str);
         p = strchr(p_line, ' ');
         if(p) {
             url_.assign(p_line, p);
@@ -244,14 +261,7 @@ bool HttpParser::parse_status_line(char* cur_line)
         decode_url();
         parse_url();
     } else {// response
-        const char*  p = strchr(p_line, ' ');
-        if(p) {
-            version_.assign(p_line, p);
-            p_line = p + 1;
-        } else {
-            return false;
-        }
-        std::string str;
+        version_.swap(str);
         p = strchr(p_line, ' ');
         if(p) {
             str.assign(p_line, p);
@@ -463,13 +473,13 @@ bool HttpParser::parse_url()
     const std::string& query = uri.getQuery();
     std::string::size_type pos = 0;
     while (true) {
-        auto pos1 = query.find(pos, '=');
+        auto pos1 = query.find('=', pos);
         if(pos1 == std::string::npos){
             break;
         }
         std::string name(query.begin()+pos, query.begin()+pos1);
         pos = pos1 + 1;
-        pos1 = query.find(pos, '&');
+        pos1 = query.find('&', pos);
         if(pos1 == std::string::npos){
             std::string value(query.begin()+pos, query.end());
             add_param_value(name, value);

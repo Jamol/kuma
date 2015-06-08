@@ -21,7 +21,7 @@ public:
     
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
-    int sendRequest(const char* method, const char* uri, const char* ver);
+    int sendRequest(const char* method, const char* url, const char* ver);
     int sendData(uint8_t* data, uint32_t len);
     int close();
     

@@ -391,9 +391,9 @@ void HttpRequest::addHeader(const char* name, uint32_t value)
     pimpl_->addHeader(name, value);
 }
 
-int HttpRequest::sendRequest(const char* method, const char* uri, const char* ver)
+int HttpRequest::sendRequest(const char* method, const char* url, const char* ver)
 {
-    return pimpl_->sendRequest(method, uri, ver);
+    return pimpl_->sendRequest(method, url, ver);
 }
 
 int HttpRequest::sendData(uint8_t* data, uint32_t len)

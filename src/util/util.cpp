@@ -511,6 +511,26 @@ bool is_equal(const std::string& str1, const char* str2)
     return strcasecmp(str1.c_str(), str2) == 0;
 }
 
+bool is_equal(const char* str1, const char* str2, int n)
+{
+    return strncasecmp(str1, str2, n) == 0;
+}
+
+bool is_equal(const std::string& str1, const std::string& str2, int n)
+{
+    return strncasecmp(str1.c_str(), str2.c_str(), n) == 0;
+}
+
+bool is_equal(const char* str1, const std::string& str2, int n)
+{
+    return strncasecmp(str1, str2.c_str(), n) == 0;
+}
+
+bool is_equal(const std::string& str1, const char* str2, int n)
+{
+    return strncasecmp(str1.c_str(), str2, n) == 0;
+}
+
 char* trim_left(char* str)
 {
     while (*str && isspace(*str++)) {

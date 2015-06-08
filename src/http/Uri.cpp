@@ -25,7 +25,7 @@ bool Uri::parse(const std::string& url)
     if(pos != std::string::npos) {
         scheme_.assign(url.begin(), url.begin()+pos);
         pos += 3;
-        auto path_pos = url.find(pos, '/');
+        auto path_pos = url.find('/', pos);
         std::string hostport;
         if(path_pos == std::string::npos) {
             hostport.assign(url.begin()+pos, url.end());
@@ -44,9 +44,9 @@ bool Uri::parse(const std::string& url)
         return false;
     }
     // now url[pos] == '/'
-    auto query_pos = url.find(pos+1, '?');
+    auto query_pos = url.find('?', pos+1);
     if (query_pos == std::string::npos) {
-        auto fragment_pos = url.find(pos+1, '#');
+        auto fragment_pos = url.find('#', pos+1);
         if(fragment_pos == std::string::npos) {
             path_.assign(url.begin()+pos, url.end());
         } else {
@@ -58,7 +58,7 @@ bool Uri::parse(const std::string& url)
     }
     path_.assign(url.begin()+pos, url.begin()+query_pos);
     ++query_pos;
-    auto fragment_pos = url.find(query_pos, '#');
+    auto fragment_pos = url.find('#', query_pos);
     if(fragment_pos == std::string::npos) {
         query_.assign(url.begin()+query_pos, url.end());
     } else {
@@ -76,13 +76,13 @@ bool Uri::parse_host_port(const std::string& hostport, std::string& host, std::s
     auto pos = hostport.find('[');
     if(pos != std::string::npos) { // ipv6
         ++pos;
-        auto pos1 = hostport.find(pos, ']');
+        auto pos1 = hostport.find(']', pos);
         if(pos1 == std::string::npos) {
             return false;
         }
         host.assign(hostport.begin()+pos, hostport.begin()+pos1);
         pos = pos1 + 1;
-        pos = hostport.find(pos, ':');
+        pos = hostport.find(':', pos);
         if(pos != std::string::npos) {
             port.assign(hostport.begin()+pos+1, hostport.end());
         }

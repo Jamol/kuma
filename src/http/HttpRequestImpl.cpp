@@ -22,7 +22,7 @@ HttpRequestImpl::HttpRequestImpl(EventLoopImpl* loop)
 , tcp_socket_(loop)
 , destroy_flag_ptr_(nullptr)
 {
-    http_parser_.set_request(false);
+    
 }
 
 HttpRequestImpl::~HttpRequestImpl()

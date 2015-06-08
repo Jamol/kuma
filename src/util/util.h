@@ -27,6 +27,7 @@ KUMA_NS_BEGIN
 # define snprintf    _snprintf
 # define vsnprintf   _vsnprintf
 # define strcasecmp stricmp
+# define strncasecmp srtnicmp
 #endif
 
 #ifndef TICK_COUNT_TYPE
@@ -42,6 +43,10 @@ bool is_equal(const char* str1, const char* str2);
 bool is_equal(const std::string& str1, const std::string& str2);
 bool is_equal(const char* str1, const std::string& str2);
 bool is_equal(const std::string& str1, const char* str2);
+bool is_equal(const char* str1, const char* str2, int n);
+bool is_equal(const std::string& str1, const std::string& str2, int n);
+bool is_equal(const char* str1, const std::string& str2, int n);
+bool is_equal(const std::string& str1, const char* str2, int n);
 char* trim_left(char* str);
 char* trim_right(char* str);
 char* trim_right(char* str, char* str_end);

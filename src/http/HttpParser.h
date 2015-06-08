@@ -45,7 +45,6 @@ public:
     const char* get_version() { return version_.c_str(); }
     const char* get_param_value(const char* name);
     const char* get_header_value(const char* name);
-    void set_request(bool is_req) { is_request_ = is_req; }
     void reset();
     
     void copy_param_map(STRING_MAP& param_map);
@@ -75,6 +74,8 @@ private:
     bool parse_url();
     void add_param_value(const std::string& name, const std::string& value);
     void add_header_value(std::string& name, std::string& value);
+    
+    bool has_body();
     
     void on_header_complete();
     void on_complete();
