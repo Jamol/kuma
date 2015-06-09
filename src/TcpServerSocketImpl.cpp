@@ -111,6 +111,7 @@ int TcpServerSocketImpl::startListen(const char* host, uint16_t port)
         KUMA_ERRXTRACE("startListen, socket failed, err="<<getLastError());
         return KUMA_ERROR_FAILED;
     }
+    setSocketOption();
     int addr_len = sizeof(ss_addr);
 #ifdef KUMA_OS_MAC
     if(AF_INET == ss_addr.ss_family)
@@ -123,7 +124,6 @@ int TcpServerSocketImpl::startListen(const char* host, uint16_t port)
         KUMA_ERRXTRACE("startListen, bind failed, err="<<getLastError());
         return KUMA_ERROR_FAILED;
     }
-    setSocketOption();
     if(::listen(fd_, 3000) != 0) {
         closeFd(fd_);
         fd_ = INVALID_FD;

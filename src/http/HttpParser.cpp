@@ -90,6 +90,13 @@ bool HttpParser::error()
     return HTTP_READ_ERROR == read_state_;
 }
 
+bool HttpParser::readEOF()
+{
+    return !is_request_ && !has_content_length_ && !is_chunked_ &&
+           !((100 <= status_code_ && status_code_ <= 199) ||
+             204 == status_code_ || 304 == status_code_);
+}
+
 bool HttpParser::hasBody()
 {
     if(content_length_ > 0 || is_chunked_) {
@@ -101,7 +108,7 @@ bool HttpParser::hasBody()
     if(is_request_) {
         return false;
     } else { // read untill EOF
-        return !((100 <= status_code_ && status_code_ <= 100) ||
+        return !((100 <= status_code_ && status_code_ <= 199) ||
                  204 == status_code_ || 304 == status_code_);
     }
 }
@@ -129,6 +136,16 @@ int HttpParser::parse(const char* data, uint32_t len)
         cb_event_(HTTP_ERROR);
     }
     return parsed_len;
+}
+
+bool HttpParser::setEOF()
+{
+    if(readEOF() && HTTP_READ_BODY == read_state_) {
+        read_state_ = HTTP_READ_DONE;
+        onComplete();
+        return true;
+    }
+    return false;
 }
 
 int HttpParser::saveData(const char* cur_pos, const char* end)
@@ -269,7 +286,7 @@ bool HttpParser::parseStartLine(const char* line, const char* line_end)
         str.assign(p_line, p);
         status_code_ = atoi(str.c_str());
     }
-    clearStrBuf();
+    clearBuffer();
     return true;
 }
 
@@ -287,13 +304,13 @@ bool HttpParser::parseHeaderLine(const char* line, const char* line_end)
     std::string str_value;
     const char* p = std::find(p_line, p_end, ':');
     if(p == p_end) {
-        clearStrBuf();
+        clearBuffer();
         return false;
     }
     str_name.assign(p_line, p);
     p_line = p + 1;
     str_value.assign(p_line, p_end);
-    clearStrBuf();
+    clearBuffer();
     addHeaderValue(str_name, str_value);
     return true;
 }
@@ -305,7 +322,8 @@ HttpParser::ParseState HttpParser::parseChunk(const char*& cur_pos, const char* 
     bool b_line = false;
     while (cur_pos < end)
     {
-        switch (chunk_state_) {
+        switch (chunk_state_)
+        {
             case CHUNK_READ_SIZE:
             {
                 b_line = getLine(cur_pos, end, p_line, p_end);
@@ -320,9 +338,10 @@ HttpParser::ParseState HttpParser::parseChunk(const char*& cur_pos, const char* 
                 std::string str;
                 if(!str_buf_.empty()) {
                     str.swap(str_buf_);
-                    clearStrBuf();
+                    clearBuffer();
                 }
                 str.append(p_line, p_end);
+                // need not parse chunk extension
                 chunk_size_ = (uint32_t)strtol(str.c_str(), NULL, 16);
                 KUMA_INFOTRACE("HttpParser::parseChunk, chunk_size="<<chunk_size_);
                 if(0 == chunk_size_)
@@ -386,17 +405,20 @@ HttpParser::ParseState HttpParser::parseChunk(const char*& cur_pos, const char* 
             case CHUNK_READ_TRAILER:
             {
                 b_line = getLine(cur_pos, end, p_line, p_end);
-                if(b_line && p_line == p_end) {
-                    // empty line, http completed
-                    read_state_ = HTTP_READ_DONE;
-                    onComplete();
-                    return PARSE_STATE_DONE;
+                if(b_line) {
+                    if(p_line == p_end && bufferEmpty()) {
+                        // blank line, http completed
+                        read_state_ = HTTP_READ_DONE;
+                        onComplete();
+                        return PARSE_STATE_DONE;
+                    }
+                    clearBuffer(); // discard trailer
                 } else { // need more data
-                    // dont save data, ignore trailer
-                    //if(save_data(data+pos, len-pos) != KUMA_ERROR_NOERR) {
-                    //    return PARSE_STATE_ERROR;
-                    //}
+                    if(saveData(cur_pos, end) != KUMA_ERROR_NOERR) {
+                        return PARSE_STATE_ERROR;
+                    }
                     cur_pos = end; // all data was consumed
+                    return PARSE_STATE_CONTINUE;
                 }
                 break;
             }

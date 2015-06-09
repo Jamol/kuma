@@ -34,6 +34,7 @@ class UdpSocketImpl;
 class TcpServerSocketImpl;
 class TimerImpl;
 class HttpRequestImpl;
+class HttpResponseImpl;
 
 class KUMA_API EventLoop
 {
@@ -171,30 +172,68 @@ class KUMA_API HttpRequest
 public:
     typedef std::function<void(uint8_t*, uint32_t)> DataCallback;
     typedef std::function<void(int)> EventCallback;
-    typedef std::function<void(void)> RequestCompleteCallback;
-    typedef std::function<void(void)> HeaderCompleteCallback;
-    typedef std::function<void(void)> ResponseCompleteCallback;
+    typedef std::function<void(void)> HttpEventCallback;
     
     HttpRequest(EventLoop* loop);
     ~HttpRequest();
     
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
-    int sendRequest(const char* method, const char* url, const char* ver);
+    int sendRequest(const char* method, const char* url, const char* ver = "HTTP/1.1");
     int sendData(uint8_t* data, uint32_t len);
     int close();
     
     void setDataCallback(DataCallback& cb);
     void setWriteCallback(EventCallback& cb);
     void setErrorCallback(EventCallback& cb);
+    void setHeaderCompleteCallback(HttpEventCallback& cb);
+    void setResponseCompleteCallback(HttpEventCallback& cb);
     void setDataCallback(DataCallback&& cb);
     void setWriteCallback(EventCallback&& cb);
     void setErrorCallback(EventCallback&& cb);
+    void setHeaderCompleteCallback(HttpEventCallback&& cb);
+    void setResponseCompleteCallback(HttpEventCallback&& cb);
     
     HttpRequestImpl* getPimpl();
     
 private:
     HttpRequestImpl* pimpl_;
+};
+
+class KUMA_API HttpResponse
+{
+public:
+    typedef std::function<void(uint8_t*, uint32_t)> DataCallback;
+    typedef std::function<void(int)> EventCallback;
+    typedef std::function<void(void)> HttpEventCallback;
+    
+    HttpResponse(EventLoop* loop);
+    ~HttpResponse();
+    
+    int attachFd(SOCKET_FD fd);
+    void addHeader(const char* name, const char* value);
+    void addHeader(const char* name, uint32_t value);
+    int sendResponse(int status_code, const char* desc = nullptr, const char* ver = "HTTP/1.1");
+    int sendData(uint8_t* data, uint32_t len);
+    int close();
+    
+    void setDataCallback(DataCallback& cb);
+    void setWriteCallback(EventCallback& cb);
+    void setErrorCallback(EventCallback& cb);
+    void setHeaderCompleteCallback(HttpEventCallback& cb);
+    void setRequestCompleteCallback(HttpEventCallback& cb);
+    void setResponseCompleteCallback(HttpEventCallback& cb);
+    void setDataCallback(DataCallback&& cb);
+    void setWriteCallback(EventCallback&& cb);
+    void setErrorCallback(EventCallback&& cb);
+    void setHeaderCompleteCallback(HttpEventCallback&& cb);
+    void setRequestCompleteCallback(HttpEventCallback&& cb);
+    void setResponseCompleteCallback(HttpEventCallback&& cb);
+    
+    HttpResponseImpl* getPimpl();
+    
+private:
+    HttpResponseImpl* pimpl_;
 };
 
 KUMA_NS_END

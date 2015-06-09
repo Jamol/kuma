@@ -193,6 +193,24 @@ int EventLoopImpl::runInEventLoopSync(LoopCallback& cb)
     return KUMA_ERROR_NOERR;
 }
 
+int EventLoopImpl::queueInEventLoop(LoopCallback& cb)
+{
+    cb_queue_.enqueue(cb);
+    if(!isInEventLoopThread()) {
+        poll_->notify();
+    }
+    return KUMA_ERROR_NOERR;
+}
+
+int EventLoopImpl::queueInEventLoop(LoopCallback&& cb)
+{
+    cb_queue_.enqueue(std::move(cb));
+    if(!isInEventLoopThread()) {
+        poll_->notify();
+    }
+    return KUMA_ERROR_NOERR;
+}
+
 IOPoll* createEPoll();
 IOPoll* createVPoll();
 IOPoll* createSelectPoll();

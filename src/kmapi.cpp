@@ -19,6 +19,7 @@
 #include "TcpServerSocketImpl.h"
 #include "TimerManager.h"
 #include "http/HttpRequestImpl.h"
+#include "http/HttpResponseImpl.h"
 #include "kmapi.h"
 
 KUMA_NS_BEGIN
@@ -421,6 +422,16 @@ void HttpRequest::setErrorCallback(EventCallback& cb)
     pimpl_->setErrorCallback(cb);
 }
 
+void HttpRequest::setHeaderCompleteCallback(HttpEventCallback& cb)
+{
+    pimpl_->setHeaderCompleteCallback(cb);
+}
+
+void HttpRequest::setResponseCompleteCallback(HttpEventCallback& cb)
+{
+    pimpl_->setResponseCompleteCallback(cb);
+}
+
 void HttpRequest::setDataCallback(DataCallback&& cb)
 {
     pimpl_->setDataCallback(std::move(cb));
@@ -436,11 +447,126 @@ void HttpRequest::setErrorCallback(EventCallback&& cb)
     pimpl_->setErrorCallback(std::move(cb));
 }
 
+void HttpRequest::setHeaderCompleteCallback(HttpEventCallback&& cb)
+{
+    pimpl_->setHeaderCompleteCallback(std::move(cb));
+}
+
+void HttpRequest::setResponseCompleteCallback(HttpEventCallback&& cb)
+{
+    pimpl_->setResponseCompleteCallback(std::move(cb));
+}
+
 HttpRequestImpl* HttpRequest::getPimpl()
 {
     return pimpl_;
 }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+HttpResponse::HttpResponse(EventLoop* loop)
+: pimpl_(new HttpResponseImpl(loop->getPimpl()))
+{
+    
+}
+HttpResponse::~HttpResponse()
+{
+    delete pimpl_;
+}
+
+int HttpResponse::attachFd(SOCKET_FD fd)
+{
+    return pimpl_->attachFd(fd);
+}
+
+void HttpResponse::addHeader(const char* name, const char* value)
+{
+    return pimpl_->addHeader(name, value);
+}
+
+void HttpResponse::addHeader(const char* name, uint32_t value)
+{
+    return pimpl_->addHeader(name, value);
+}
+
+int HttpResponse::sendResponse(int status_code, const char* desc, const char* ver)
+{
+    return pimpl_->sendResponse(status_code, desc, ver);
+}
+
+int HttpResponse::sendData(uint8_t* data, uint32_t len)
+{
+    return pimpl_->sendData(data, len);
+}
+
+int HttpResponse::close()
+{
+    return pimpl_->close();
+}
+
+void HttpResponse::setDataCallback(DataCallback& cb)
+{
+    pimpl_->setDataCallback(cb);
+}
+void HttpResponse::setWriteCallback(EventCallback& cb)
+{
+    pimpl_->setWriteCallback(cb);
+}
+
+void HttpResponse::setErrorCallback(EventCallback& cb)
+{
+    pimpl_->setErrorCallback(cb);
+}
+
+void HttpResponse::setHeaderCompleteCallback(HttpEventCallback& cb)
+{
+    pimpl_->setHeaderCompleteCallback(cb);
+}
+
+void HttpResponse::setRequestCompleteCallback(HttpEventCallback& cb)
+{
+    pimpl_->setRequestCompleteCallback(cb);
+}
+
+void HttpResponse::setResponseCompleteCallback(HttpEventCallback& cb)
+{
+    pimpl_->setResponseCompleteCallback(cb);
+}
+
+void HttpResponse::setDataCallback(DataCallback&& cb)
+{
+    pimpl_->setDataCallback(std::move(cb));
+}
+
+void HttpResponse::setWriteCallback(EventCallback&& cb)
+{
+    pimpl_->setWriteCallback(std::move(cb));
+}
+
+void HttpResponse::setErrorCallback(EventCallback&& cb)
+{
+    pimpl_->setErrorCallback(std::move(cb));
+}
+
+void HttpResponse::setHeaderCompleteCallback(HttpEventCallback&& cb)
+{
+    pimpl_->setHeaderCompleteCallback(std::move(cb));
+}
+
+void HttpResponse::setRequestCompleteCallback(HttpEventCallback&& cb)
+{
+    pimpl_->setRequestCompleteCallback(std::move(cb));
+}
+
+void HttpResponse::setResponseCompleteCallback(HttpEventCallback&& cb)
+{
+    pimpl_->setResponseCompleteCallback(std::move(cb));
+}
+
+HttpResponseImpl* HttpResponse::getPimpl()
+{
+    return pimpl_;
+}
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 KUMA_NS_END

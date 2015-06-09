@@ -43,8 +43,8 @@
 		6FF746A31B2009100007F34D /* HttpRequestImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF746A11B2009100007F34D /* HttpRequestImpl.h */; };
 		6FF746EF1B2196240007F34D /* Uri.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF746ED1B2196240007F34D /* Uri.cpp */; };
 		6FF746F01B2196240007F34D /* Uri.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF746EE1B2196240007F34D /* Uri.h */; };
-		6FF746F61B2345FD0007F34D /* HttpResponse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF746F41B2345FD0007F34D /* HttpResponse.cpp */; };
-		6FF746F71B2345FD0007F34D /* HttpResponse.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF746F51B2345FD0007F34D /* HttpResponse.h */; };
+		6FF746F61B2345FD0007F34D /* HttpResponseImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF746F41B2345FD0007F34D /* HttpResponseImpl.cpp */; };
+		6FF746F71B2345FD0007F34D /* HttpResponseImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF746F51B2345FD0007F34D /* HttpResponseImpl.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -87,8 +87,8 @@
 		6FF746A11B2009100007F34D /* HttpRequestImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HttpRequestImpl.h; path = http/HttpRequestImpl.h; sourceTree = "<group>"; };
 		6FF746ED1B2196240007F34D /* Uri.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Uri.cpp; path = http/Uri.cpp; sourceTree = "<group>"; };
 		6FF746EE1B2196240007F34D /* Uri.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Uri.h; path = http/Uri.h; sourceTree = "<group>"; };
-		6FF746F41B2345FD0007F34D /* HttpResponse.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HttpResponse.cpp; path = http/HttpResponse.cpp; sourceTree = "<group>"; };
-		6FF746F51B2345FD0007F34D /* HttpResponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HttpResponse.h; path = http/HttpResponse.h; sourceTree = "<group>"; };
+		6FF746F41B2345FD0007F34D /* HttpResponseImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HttpResponseImpl.cpp; path = http/HttpResponseImpl.cpp; sourceTree = "<group>"; };
+		6FF746F51B2345FD0007F34D /* HttpResponseImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HttpResponseImpl.h; path = http/HttpResponseImpl.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -194,14 +194,14 @@
 		6FF746A41B201B250007F34D /* http */ = {
 			isa = PBXGroup;
 			children = (
-				6FF746F41B2345FD0007F34D /* HttpResponse.cpp */,
-				6FF746F51B2345FD0007F34D /* HttpResponse.h */,
-				6FF746ED1B2196240007F34D /* Uri.cpp */,
-				6FF746EE1B2196240007F34D /* Uri.h */,
-				6FF746A01B2009100007F34D /* HttpRequestImpl.cpp */,
-				6FF746A11B2009100007F34D /* HttpRequestImpl.h */,
 				6F2D40491B19E25B00E24928 /* HttpParser.cpp */,
 				6F2D404A1B19E25B00E24928 /* HttpParser.h */,
+				6FF746A01B2009100007F34D /* HttpRequestImpl.cpp */,
+				6FF746A11B2009100007F34D /* HttpRequestImpl.h */,
+				6FF746F41B2345FD0007F34D /* HttpResponseImpl.cpp */,
+				6FF746F51B2345FD0007F34D /* HttpResponseImpl.h */,
+				6FF746ED1B2196240007F34D /* Uri.cpp */,
+				6FF746EE1B2196240007F34D /* Uri.h */,
 			);
 			name = http;
 			sourceTree = "<group>";
@@ -224,7 +224,7 @@
 				6F29634D1A18AB0D00C3C79B /* DataPacket.h in Headers */,
 				6FF746A31B2009100007F34D /* HttpRequestImpl.h in Headers */,
 				6FF211DA1B1556FB006603BB /* EventLoopImpl.h in Headers */,
-				6FF746F71B2345FD0007F34D /* HttpResponse.h in Headers */,
+				6FF746F71B2345FD0007F34D /* HttpResponseImpl.h in Headers */,
 				6FF211CE1B1556C5006603BB /* SslHandler.h in Headers */,
 				6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */,
 				6FA951421A3808450033C9CF /* kmdefs.h in Headers */,
@@ -289,7 +289,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6FF746F61B2345FD0007F34D /* HttpResponse.cpp in Sources */,
+				6FF746F61B2345FD0007F34D /* HttpResponseImpl.cpp in Sources */,
 				6FF211CD1B1556C5006603BB /* SslHandler.cpp in Sources */,
 				6FF746A21B2009100007F34D /* HttpRequestImpl.cpp in Sources */,
 				6F0098B31B03124400122C15 /* TcpSocketImpl.cpp in Sources */,

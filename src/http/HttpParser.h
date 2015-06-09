@@ -35,6 +35,8 @@ public:
     
     // return bytes parsed
     int parse(const char* data, uint32_t len);
+    // true - http completed
+    bool setEOF();
     void reset();
     
     bool isRequest() { return is_request_; }
@@ -80,12 +82,14 @@ private:
     void addHeaderValue(std::string& name, std::string& value);
     
     bool hasBody();
+    bool readEOF();
     
     void onHeaderComplete();
     void onComplete();
     
     int saveData(const char* cur_pos, const char* end);
-    void clearStrBuf() { str_buf_.clear(); }
+    bool bufferEmpty() { return str_buf_.empty(); };
+    void clearBuffer() { str_buf_.clear(); }
     
 private:
     HttpParser &operator= (const HttpParser &);
