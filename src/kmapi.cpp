@@ -131,9 +131,9 @@ int TcpSocket::connect(const char* host, uint16_t port, EventCallback&& cb, uint
     return pimpl_->connect(host, port, std::move(cb), flags, timeout);
 }
 
-int TcpSocket::attachFd(SOCKET_FD fd, uint32_t flags)
+int TcpSocket::attachFd(SOCKET_FD fd, uint32_t flags, uint8_t* init_data, uint32_t init_len)
 {
-    return pimpl_->attachFd(fd, flags);
+    return pimpl_->attachFd(fd, flags, init_data, init_len);
 }
 
 int TcpSocket::detachFd(SOCKET_FD &fd)
@@ -166,9 +166,9 @@ int TcpSocket::close()
     return pimpl_->close();
 }
 
-int TcpSocket::suspend()
+int TcpSocket::pause()
 {
-    return pimpl_->suspend();
+    return pimpl_->pause();
 }
 
 int TcpSocket::resume()
@@ -407,6 +407,26 @@ int HttpRequest::close()
     return pimpl_->close();
 }
 
+int HttpRequest::getStatusCode()
+{
+    return pimpl_->getStatusCode();
+}
+
+const char* HttpRequest::getVersion()
+{
+    return pimpl_->getVersion();
+}
+
+const char* HttpRequest::getHeaderValue(const char* name)
+{
+    return pimpl_->getHeaderValue(name);
+}
+
+void HttpRequest::forEachHeader(EnumrateCallback cb)
+{
+    pimpl_->forEachHeader(cb);
+}
+
 void HttpRequest::setDataCallback(DataCallback& cb)
 {
     pimpl_->setDataCallback(cb);
@@ -474,9 +494,9 @@ HttpResponse::~HttpResponse()
     delete pimpl_;
 }
 
-int HttpResponse::attachFd(SOCKET_FD fd)
+int HttpResponse::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_len)
 {
-    return pimpl_->attachFd(fd);
+    return pimpl_->attachFd(fd, init_data, init_len);
 }
 
 void HttpResponse::addHeader(const char* name, const char* value)
@@ -504,10 +524,41 @@ int HttpResponse::close()
     return pimpl_->close();
 }
 
+const char* HttpResponse::getMethod()
+{
+    return pimpl_->getMethod();
+}
+
+const char* HttpResponse::getUrl()
+{
+    return pimpl_->getUrl();
+}
+
+const char* HttpResponse::getVersion()
+{
+    return pimpl_->getVersion();
+}
+
+const char* HttpResponse::getParamValue(const char* name)
+{
+    return pimpl_->getParamValue(name);
+}
+
+const char* HttpResponse::getHeaderValue(const char* name)
+{
+    return pimpl_->getHeaderValue(name);
+}
+
+void HttpResponse::forEachHeader(EnumrateCallback cb)
+{
+    return pimpl_->forEachHeader(cb);
+}
+
 void HttpResponse::setDataCallback(DataCallback& cb)
 {
     pimpl_->setDataCallback(cb);
 }
+
 void HttpResponse::setWriteCallback(EventCallback& cb)
 {
     pimpl_->setWriteCallback(cb);

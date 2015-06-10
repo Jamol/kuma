@@ -77,7 +77,7 @@ public:
     int bind(const char* bind_host, uint16_t bind_port);
     int connect(const char* host, uint16_t port, EventCallback& cb, uint32_t flags = 0, uint32_t timeout = 0);
     int connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t flags = 0, uint32_t timeout = 0);
-    int attachFd(SOCKET_FD fd, uint32_t flags = 0);
+    int attachFd(SOCKET_FD fd, uint32_t flags = 0, uint8_t* init_data = nullptr, uint32_t init_len = 0);
     int detachFd(SOCKET_FD &fd);
     int startSslHandshake(bool is_server);
     int send(uint8_t* data, uint32_t length);
@@ -85,7 +85,7 @@ public:
     int receive(uint8_t* data, uint32_t length);
     int close();
     
-    int suspend();
+    int pause();
     int resume();
     
     void setReadCallback(EventCallback& cb);
@@ -155,6 +155,8 @@ private:
 class KUMA_API Timer
 {
 public:
+    typedef std::function<void(void)> TimerCallback;
+    
     Timer(EventLoop* loop);
     ~Timer();
     
@@ -173,6 +175,7 @@ public:
     typedef std::function<void(uint8_t*, uint32_t)> DataCallback;
     typedef std::function<void(int)> EventCallback;
     typedef std::function<void(void)> HttpEventCallback;
+    typedef std::function<void(const char* name, const char* value)> EnumrateCallback;
     
     HttpRequest(EventLoop* loop);
     ~HttpRequest();
@@ -182,6 +185,11 @@ public:
     int sendRequest(const char* method, const char* url, const char* ver = "HTTP/1.1");
     int sendData(uint8_t* data, uint32_t len);
     int close();
+    
+    int getStatusCode();
+    const char* getVersion();
+    const char* getHeaderValue(const char* name);
+    void forEachHeader(EnumrateCallback cb);
     
     void setDataCallback(DataCallback& cb);
     void setWriteCallback(EventCallback& cb);
@@ -206,16 +214,24 @@ public:
     typedef std::function<void(uint8_t*, uint32_t)> DataCallback;
     typedef std::function<void(int)> EventCallback;
     typedef std::function<void(void)> HttpEventCallback;
+    typedef std::function<void(const char* name, const char* value)> EnumrateCallback;
     
     HttpResponse(EventLoop* loop);
     ~HttpResponse();
     
-    int attachFd(SOCKET_FD fd);
+    int attachFd(SOCKET_FD fd, uint8_t* init_data = nullptr, uint32_t init_len = 0);
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
     int sendResponse(int status_code, const char* desc = nullptr, const char* ver = "HTTP/1.1");
     int sendData(uint8_t* data, uint32_t len);
     int close();
+    
+    const char* getMethod();
+    const char* getUrl();
+    const char* getVersion();
+    const char* getParamValue(const char* name);
+    const char* getHeaderValue(const char* name);
+    void forEachHeader(EnumrateCallback cb);
     
     void setDataCallback(DataCallback& cb);
     void setWriteCallback(EventCallback& cb);

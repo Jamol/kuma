@@ -46,7 +46,7 @@ enum{
     KUMA_ERROR_UNSUPPORT
 };
 
-#define FLAG_HAS_SSL    0x1
+#define FLAG_HAS_SSL    0x01
 #define FLAG_HAS_MCAST  0x02
 
 #ifdef KUMA_OS_WIN

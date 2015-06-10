@@ -24,6 +24,11 @@ public:
     int sendData(uint8_t* data, uint32_t len);
     int close();
     
+    int getStatusCode() { return http_parser_.getStatusCode(); }
+    const char* getVersion() { return http_parser_.getVersion(); }
+    const char* getHeaderValue(const char* name) { return http_parser_.getHeaderValue(name); }
+    void forEachHeader(HttpParser::EnumrateCallback cb) { return http_parser_.forEachHeader(cb); }
+    
     void setDataCallback(DataCallback& cb) { cb_data_ = cb; }
     void setWriteCallback(EventCallback& cb) { cb_write_ = cb; }
     void setErrorCallback(EventCallback& cb) { cb_error_ = cb; }

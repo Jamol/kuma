@@ -13,6 +13,12 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\http">
+      <UniqueIdentifier>{9fbde78f-7218-46f8-9883-743689ad57cd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\http">
+      <UniqueIdentifier>{763a1eba-8c74-4385-afb6-d53667fe008e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\util\kmtrace.cpp">
@@ -46,16 +52,16 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\http\HttpParser.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\http</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\http\HttpRequestImpl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\http\HttpResponse.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\http</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\http\Uri.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\http</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\http\HttpResponseImpl.cpp">
+      <Filter>Source Files\http</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -107,17 +113,17 @@
     <ClInclude Include="..\..\src\UdpSocketImpl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\http\Uri.h">
+      <Filter>Header Files\http</Filter>
+    </ClInclude>
     <ClInclude Include="..\..\src\http\HttpParser.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\http</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\http\HttpRequestImpl.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header Files\http</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\http\HttpResponse.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\http\Uri.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="..\..\src\http\HttpResponseImpl.h">
+      <Filter>Header Files\http</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

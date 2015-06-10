@@ -45,6 +45,8 @@
 		6FF746F01B2196240007F34D /* Uri.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF746EE1B2196240007F34D /* Uri.h */; };
 		6FF746F61B2345FD0007F34D /* HttpResponseImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF746F41B2345FD0007F34D /* HttpResponseImpl.cpp */; };
 		6FF746F71B2345FD0007F34D /* HttpResponseImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF746F51B2345FD0007F34D /* HttpResponseImpl.h */; };
+		6FF7476F1B27D6540007F34D /* WebSocketImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF7476D1B27D6540007F34D /* WebSocketImpl.cpp */; };
+		6FF747701B27D6540007F34D /* WebSocketImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF7476E1B27D6540007F34D /* WebSocketImpl.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -89,6 +91,8 @@
 		6FF746EE1B2196240007F34D /* Uri.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Uri.h; path = http/Uri.h; sourceTree = "<group>"; };
 		6FF746F41B2345FD0007F34D /* HttpResponseImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HttpResponseImpl.cpp; path = http/HttpResponseImpl.cpp; sourceTree = "<group>"; };
 		6FF746F51B2345FD0007F34D /* HttpResponseImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HttpResponseImpl.h; path = http/HttpResponseImpl.h; sourceTree = "<group>"; };
+		6FF7476D1B27D6540007F34D /* WebSocketImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WebSocketImpl.cpp; path = ws/WebSocketImpl.cpp; sourceTree = "<group>"; };
+		6FF7476E1B27D6540007F34D /* WebSocketImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WebSocketImpl.h; path = ws/WebSocketImpl.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -138,6 +142,7 @@
 				6F2963631A18AC4C00C3C79B /* poll */,
 				6FF211C61B1556B9006603BB /* ssl */,
 				6F852E291985EB0500271D87 /* util */,
+				6FF7476C1B27D6210007F34D /* ws */,
 				6FF211D51B1556FB006603BB /* evdefs.h */,
 				6FF211D61B1556FB006603BB /* EventLoopImpl.cpp */,
 				6FF211D71B1556FB006603BB /* EventLoopImpl.h */,
@@ -206,6 +211,15 @@
 			name = http;
 			sourceTree = "<group>";
 		};
+		6FF7476C1B27D6210007F34D /* ws */ = {
+			isa = PBXGroup;
+			children = (
+				6FF7476D1B27D6540007F34D /* WebSocketImpl.cpp */,
+				6FF7476E1B27D6540007F34D /* WebSocketImpl.h */,
+			);
+			name = ws;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -228,6 +242,7 @@
 				6FF211CE1B1556C5006603BB /* SslHandler.h in Headers */,
 				6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */,
 				6FA951421A3808450033C9CF /* kmdefs.h in Headers */,
+				6FF747701B27D6540007F34D /* WebSocketImpl.h in Headers */,
 				6F6208FD1A26BDB1000DAF4B /* kmapi.h in Headers */,
 				6F2963541A18AB0D00C3C79B /* kmtrace.h in Headers */,
 				6F29634F1A18AB0D00C3C79B /* kmqueue.h in Headers */,
@@ -294,6 +309,7 @@
 				6FF746A21B2009100007F34D /* HttpRequestImpl.cpp in Sources */,
 				6F0098B31B03124400122C15 /* TcpSocketImpl.cpp in Sources */,
 				6F2D403E1B1834D300E24928 /* UdpSocketImpl.cpp in Sources */,
+				6FF7476F1B27D6540007F34D /* WebSocketImpl.cpp in Sources */,
 				6FF212931B181103006603BB /* kmapi.cpp in Sources */,
 				6FF211031B130A2F006603BB /* TcpServerSocketImpl.cpp in Sources */,
 				6F2D40471B194AE200E24928 /* TimerManager.cpp in Sources */,

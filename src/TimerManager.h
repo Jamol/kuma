@@ -16,9 +16,10 @@
 #ifndef __TimerManager_H__
 #define __TimerManager_H__
 
-#include "evdefs.h"
+#include "kmdefs.h"
 
 #include <memory>
+#include <mutex>
 
 #ifndef TICK_COUNT_TYPE
 # define TICK_COUNT_TYPE    unsigned long
@@ -102,6 +103,9 @@ private:
     int find_first_set_in_bitmap(int idx);
 
 private:
+    typedef std::recursive_mutex KM_Mutex;
+    typedef std::lock_guard<KM_Mutex> KM_Lock_Guard;
+    
     KM_Mutex mutex_;
     KM_Mutex running_mutex_;
     TimerNode*  running_node_;
@@ -116,6 +120,8 @@ typedef std::shared_ptr<TimerManager> TimerManagerPtr;
 class TimerImpl
 {
 public:
+    typedef std::function<void(void)> TimerCallback;
+    
     TimerImpl(TimerManagerPtr mgr);
     ~TimerImpl();
     

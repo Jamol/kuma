@@ -7,12 +7,17 @@
 //
 
 #include "kmtrace.h"
+#include "util.h"
 
 #include <stdio.h>
 #include <stdarg.h>
 #include <thread>
 #include <string>
 #include <sstream>
+
+#ifdef KUMA_OS_WIN
+# include <Windows.h>
+#endif
 
 KUMA_NS_BEGIN
 
@@ -31,7 +36,7 @@ void TracePrint(int level, const char* szMessage, ...)
     
     std::thread::id tid = std::this_thread::get_id();
     std::stringstream ss;
-    ss << tid;
+    ss << tid << ":" << getCurrentThreadId();
     std::string stid;
     ss >> stid;
     

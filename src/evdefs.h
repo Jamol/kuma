@@ -42,10 +42,6 @@ KUMA_NS_BEGIN
 
 typedef std::function<void(uint32_t)> IOCallback;
 typedef std::function<void(void)> LoopCallback;
-typedef std::function<void(void)> TimerCallback;
-
-typedef std::recursive_mutex KM_Mutex;
-typedef std::lock_guard<KM_Mutex> KM_Lock_Guard;
 
 typedef enum {
     POLL_TYPE_NONE,

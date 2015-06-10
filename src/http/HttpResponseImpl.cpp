@@ -40,7 +40,7 @@ void HttpResponseImpl::cleanup()
     send_offset_ = 0;
 }
 
-int HttpResponseImpl::attachFd(SOCKET_FD fd)
+int HttpResponseImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_len)
 {
     http_parser_.reset();
     http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });
@@ -48,7 +48,7 @@ int HttpResponseImpl::attachFd(SOCKET_FD fd)
     tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
     tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
     tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
-    return tcp_socket_.attachFd(fd);
+    return tcp_socket_.attachFd(fd, 0, init_data, init_len);
 }
 
 void HttpResponseImpl::addHeader(const char* name, const char* value)

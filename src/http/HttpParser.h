@@ -44,7 +44,7 @@ public:
     bool complete();
     bool error();
     
-    uint32_t getStatusCode() { return status_code_; }
+    int getStatusCode() { return status_code_; }
     const char* getLocation() { return getHeaderValue("Location"); }
     const char* getUrl() { return url_.c_str(); }
     const char* getUrlPath() { return url_path_.c_str(); }

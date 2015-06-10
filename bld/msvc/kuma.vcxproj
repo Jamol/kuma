@@ -162,7 +162,7 @@
     <ClCompile Include="..\..\src\EventLoopImpl.cpp" />
     <ClCompile Include="..\..\src\http\HttpParser.cpp" />
     <ClCompile Include="..\..\src\http\HttpRequestImpl.cpp" />
-    <ClCompile Include="..\..\src\http\HttpResponse.cpp" />
+    <ClCompile Include="..\..\src\http\HttpResponseImpl.cpp" />
     <ClCompile Include="..\..\src\http\Uri.cpp" />
     <ClCompile Include="..\..\src\kmapi.cpp" />
     <ClCompile Include="..\..\src\poll\SelectPoll.cpp" />
@@ -179,7 +179,7 @@
     <ClInclude Include="..\..\src\EventLoopImpl.h" />
     <ClInclude Include="..\..\src\http\HttpParser.h" />
     <ClInclude Include="..\..\src\http\HttpRequestImpl.h" />
-    <ClInclude Include="..\..\src\http\HttpResponse.h" />
+    <ClInclude Include="..\..\src\http\HttpResponseImpl.h" />
     <ClInclude Include="..\..\src\http\Uri.h" />
     <ClInclude Include="..\..\src\kmapi.h" />
     <ClInclude Include="..\..\src\kmconf.h" />

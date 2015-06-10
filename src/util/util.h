@@ -29,6 +29,11 @@ KUMA_NS_BEGIN
 # define vsnprintf   _vsnprintf
 # define strcasecmp _stricmp
 # define strncasecmp _strnicmp
+# define getCurrentThreadId() GetCurrentThreadId()
+#elif defined(KUMA_OS_MAC)
+# define getCurrentThreadId() pthread_mach_thread_np(pthread_self())
+#else
+# define getCurrentThreadId() pthread_self()
 #endif
 
 #ifndef TICK_COUNT_TYPE

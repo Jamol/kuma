@@ -16,6 +16,7 @@
 #ifndef __EventLoopImpl_H__
 #define __EventLoopImpl_H__
 
+#include "evdefs.h"
 #include "util/kmqueue.h"
 #include "TimerManager.h"
 
@@ -58,6 +59,9 @@ public:
     void stop();
     
 private:
+    typedef std::recursive_mutex KM_Mutex;
+    typedef std::lock_guard<KM_Mutex> KM_Lock_Guard;
+    
     typedef KM_QueueMT<LoopCallback, KM_Mutex> CallbackQueue;
     
     IOPoll*         poll_;
