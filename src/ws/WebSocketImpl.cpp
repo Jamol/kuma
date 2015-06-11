@@ -38,7 +38,7 @@ void WebSocketImpl::cleanup()
     send_offset_ = 0;
 }
 
-int WebSocketImpl::connect(const char* ws_url, const char* proto, EventCallback& cb)
+int WebSocketImpl::connect(const char* ws_url, const char* proto, const char* origin, EventCallback& cb)
 {
     if(getState() != STATE_IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
@@ -48,10 +48,13 @@ int WebSocketImpl::connect(const char* ws_url, const char* proto, EventCallback&
     if(proto) {
         proto_ = proto;
     }
+    if(origin) {
+        origin_ = origin;
+    }
     return connect_i(ws_url);
 }
 
-int WebSocketImpl::connect(const char* ws_url, const char* proto, EventCallback&& cb)
+int WebSocketImpl::connect(const char* ws_url, const char* proto, const char* origin, EventCallback&& cb)
 {
     if(getState() != STATE_IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
@@ -60,6 +63,9 @@ int WebSocketImpl::connect(const char* ws_url, const char* proto, EventCallback&
     cb_connect_ = std::move(cb);
     if(proto) {
         proto_ = proto;
+    }
+    if(origin) {
+        origin_ = origin;
     }
     return connect_i(ws_url);
 }
@@ -91,6 +97,9 @@ int WebSocketImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_len)
     is_server_ = true;
     ws_handler_.setDataCallback([this] (uint8_t* data, uint32_t len) { onWsData(data, len); });
     ws_handler_.setHandshakeCallback([this] (int err) { onWsHandshake(err); });
+    tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
+    tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
+    tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
     setState(STATE_HANDSHAKE);
     return tcp_socket_.attachFd(fd, 0, init_data, init_len);
 }
@@ -148,7 +157,7 @@ void WebSocketImpl::onConnect(int err)
     ws_handler_.setDataCallback([this] (uint8_t* data, uint32_t len) { onWsData(data, len); });
     ws_handler_.setHandshakeCallback([this] (int err) { onWsHandshake(err); });
     body_bytes_sent_ = 0;
-    std::string str(ws_handler_.buildRequest(uri_.getPath(), uri_.getHost(), proto_));
+    std::string str(ws_handler_.buildRequest(uri_.getPath(), uri_.getHost(), proto_, origin_));
     send_buffer_.clear();
     send_offset_ = 0;
     send_buffer_.reserve(str.length());
@@ -217,7 +226,7 @@ void WebSocketImpl::onReceive(int err)
             if(getState() == STATE_ERROR || getState() == STATE_CLOSED) {
                 break;
             }
-            if(err != WSHandler::WSError::WS_ERROR_NOERR ||
+            if(err != WSHandler::WSError::WS_ERROR_NOERR &&
                err != WSHandler::WSError::WS_ERROR_NEED_MORE_DATA) {
                 cleanup();
                 setState(STATE_CLOSED);
@@ -263,8 +272,13 @@ void WebSocketImpl::sendWsResponse()
 
 void WebSocketImpl::onStateOpen()
 {
+    KUMA_INFOXTRACE("onStateOpen");
     setState(STATE_OPEN);
-    if(cb_connect_) cb_connect_(0);
+    if(is_server_) {
+        if(cb_write_) cb_write_(0);
+    } else {
+        if(cb_connect_) cb_connect_(0);
+    }
 }
 
 void WebSocketImpl::onWsData(uint8_t* data, uint32_t len)

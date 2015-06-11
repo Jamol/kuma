@@ -14,7 +14,8 @@ WSHandler::WSHandler()
 : state_(STATE_HANDSHAKE)
 , destroy_flag_ptr_(nullptr)
 {
-    
+    http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });
+    http_parser_.setEventCallback([this] (HttpParser::HttpEvent ev) { onHttpEvent(ev); });
 }
 
 WSHandler::~WSHandler()
@@ -48,17 +49,18 @@ std::string generate_sec_accept_value(const std::string& sec_ws_key)
     return std::string((char*)x64_encode_buf, x64_encode_len);
 }
 
-std::string WSHandler::buildRequest(const std::string& path, const std::string& host, const std::string& proto)
+std::string WSHandler::buildRequest(const std::string& path, const std::string& host,
+                                    const std::string& proto, const std::string& origin)
 {
     std::stringstream ss;
-    ss << "GET  ";
+    ss << "GET ";
     ss << path;
     ss << " HTTP/1.1\r\n";
     ss << "Host: " << host << "\r\n";
     ss << "Upgrade: websocket\r\n";
     ss << "Connection: Upgrade\r\n";
-    ss << "Origin: http://example.com\r\n";
-    ss << "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==";
+    ss << "Origin: " << origin << "\r\n";
+    ss << "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n";
     ss << "Sec-WebSocket-Protocol: " << proto << "\r\n";
     ss << "Sec-WebSocket-Version: 13\r\n";
     ss << "\r\n";

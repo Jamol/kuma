@@ -21,6 +21,9 @@ Uri::~Uri()
 
 bool Uri::parse(const std::string& url)
 {
+    if(url.empty()) {
+        return false;
+    }
     auto pos = url.find("://");
     if(pos != std::string::npos) {
         scheme_.assign(url.begin(), url.begin()+pos);
