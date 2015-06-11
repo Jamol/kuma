@@ -49,6 +49,8 @@
 		6FF747701B27D6540007F34D /* WebSocketImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF7476E1B27D6540007F34D /* WebSocketImpl.h */; };
 		6FF747891B29146A0007F34D /* WSHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF747871B29146A0007F34D /* WSHandler.cpp */; };
 		6FF7478A1B29146A0007F34D /* WSHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF747881B29146A0007F34D /* WSHandler.h */; };
+		6FF7478D1B29587D0007F34D /* base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF7478B1B29587D0007F34D /* base64.cpp */; };
+		6FF7478E1B29587D0007F34D /* base64.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF7478C1B29587D0007F34D /* base64.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -97,6 +99,8 @@
 		6FF7476E1B27D6540007F34D /* WebSocketImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WebSocketImpl.h; path = ws/WebSocketImpl.h; sourceTree = "<group>"; };
 		6FF747871B29146A0007F34D /* WSHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WSHandler.cpp; path = ws/WSHandler.cpp; sourceTree = "<group>"; };
 		6FF747881B29146A0007F34D /* WSHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WSHandler.h; path = ws/WSHandler.h; sourceTree = "<group>"; };
+		6FF7478B1B29587D0007F34D /* base64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = base64.cpp; sourceTree = "<group>"; };
+		6FF7478C1B29587D0007F34D /* base64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = base64.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -179,6 +183,8 @@
 		6F852E291985EB0500271D87 /* util */ = {
 			isa = PBXGroup;
 			children = (
+				6FF7478B1B29587D0007F34D /* base64.cpp */,
+				6FF7478C1B29587D0007F34D /* base64.h */,
 				6F2963411A18AB0D00C3C79B /* DataPacket.h */,
 				6F2963431A18AB0D00C3C79B /* kmqueue.h */,
 				6F2963471A18AB0D00C3C79B /* kmtrace.cpp */,
@@ -253,6 +259,7 @@
 				6F2963541A18AB0D00C3C79B /* kmtrace.h in Headers */,
 				6FF7478A1B29146A0007F34D /* WSHandler.h in Headers */,
 				6F29634F1A18AB0D00C3C79B /* kmqueue.h in Headers */,
+				6FF7478E1B29587D0007F34D /* base64.h in Headers */,
 				6FF211D81B1556FB006603BB /* evdefs.h in Headers */,
 				6FF211D21B1556E6006603BB /* IOPoll.h in Headers */,
 				6F2D40481B194AE200E24928 /* TimerManager.h in Headers */,
@@ -328,6 +335,7 @@
 				6FF211CB1B1556C5006603BB /* OpenSslLib.cpp in Sources */,
 				6FF746EF1B2196240007F34D /* Uri.cpp in Sources */,
 				6F2963561A18AB0D00C3C79B /* util.cpp in Sources */,
+				6FF7478D1B29587D0007F34D /* base64.cpp in Sources */,
 				6FF211D41B1556E6006603BB /* VPoll.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
