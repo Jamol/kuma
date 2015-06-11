@@ -35,6 +35,7 @@ class TcpServerSocketImpl;
 class TimerImpl;
 class HttpRequestImpl;
 class HttpResponseImpl;
+class WebSocketImpl;
 
 class KUMA_API EventLoop
 {
@@ -250,6 +251,34 @@ public:
     
 private:
     HttpResponseImpl* pimpl_;
+};
+
+class KUMA_API WebSocket
+{
+public:
+    typedef std::function<void(uint8_t*, uint32_t)> DataCallback;
+    typedef std::function<void(int)> EventCallback;
+    
+    WebSocket(EventLoop* loop);
+    ~WebSocket();
+    
+    int connect(const char* ws_url, EventCallback& cb);
+    int connect(const char* ws_url, EventCallback&& cb);
+    int attachFd(SOCKET_FD fd, uint8_t* init_data = nullptr, uint32_t init_len = 0);
+    int send(uint8_t* data, uint32_t len);
+    int close();
+    
+    void setDataCallback(DataCallback& cb);
+    void setWriteCallback(EventCallback& cb);
+    void setErrorCallback(EventCallback& cb);
+    void setDataCallback(DataCallback&& cb);
+    void setWriteCallback(EventCallback&& cb);
+    void setErrorCallback(EventCallback&& cb);
+    
+    WebSocketImpl* getPimpl();
+    
+private:
+    WebSocketImpl* pimpl_;
 };
 
 KUMA_NS_END

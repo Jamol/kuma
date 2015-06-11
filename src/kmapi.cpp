@@ -20,6 +20,7 @@
 #include "TimerManager.h"
 #include "http/HttpRequestImpl.h"
 #include "http/HttpResponseImpl.h"
+#include "ws/WebSocketImpl.h"
 #include "kmapi.h"
 
 KUMA_NS_BEGIN
@@ -618,6 +619,77 @@ HttpResponseImpl* HttpResponse::getPimpl()
 {
     return pimpl_;
 }
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+WebSocket::WebSocket(EventLoop* loop)
+: pimpl_(new WebSocketImpl(loop->getPimpl()))
+{
+    
+}
+WebSocket::~WebSocket()
+{
+    delete pimpl_;
+}
+
+int WebSocket::connect(const char* ws_url, EventCallback& cb)
+{
+    return pimpl_->connect(ws_url, cb);
+}
+
+int WebSocket::connect(const char* ws_url, EventCallback&& cb)
+{
+    return pimpl_->connect(ws_url, std::move(cb));
+}
+
+int WebSocket::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_len)
+{
+    return pimpl_->attachFd(fd, init_data, init_len);
+}
+
+int WebSocket::send(uint8_t* data, uint32_t len)
+{
+    return pimpl_->send(data, len);
+}
+
+int WebSocket::close()
+{
+    return pimpl_->close();
+}
+
+void WebSocket::setDataCallback(DataCallback& cb)
+{
+    pimpl_->setDataCallback(cb);
+}
+
+void WebSocket::setWriteCallback(EventCallback& cb)
+{
+    pimpl_->setWriteCallback(cb);
+}
+
+void WebSocket::setErrorCallback(EventCallback& cb)
+{
+    pimpl_->setErrorCallback(cb);
+}
+
+void WebSocket::setDataCallback(DataCallback&& cb)
+{
+    pimpl_->setDataCallback(std::move(cb));
+}
+
+void WebSocket::setWriteCallback(EventCallback&& cb)
+{
+    pimpl_->setWriteCallback(std::move(cb));
+}
+
+void WebSocket::setErrorCallback(EventCallback&& cb)
+{
+    pimpl_->setErrorCallback(std::move(cb));
+}
+
+WebSocketImpl* WebSocket::getPimpl()
+{
+    return pimpl_;
+}
 
 KUMA_NS_END
