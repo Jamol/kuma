@@ -104,6 +104,7 @@ private:
     
     int                 read_state_;
     bool                header_complete_;
+    bool                upgrade_;
     
     bool                has_content_length_;
     uint32_t            content_length_;

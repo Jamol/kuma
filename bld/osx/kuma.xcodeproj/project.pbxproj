@@ -47,6 +47,8 @@
 		6FF746F71B2345FD0007F34D /* HttpResponseImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF746F51B2345FD0007F34D /* HttpResponseImpl.h */; };
 		6FF7476F1B27D6540007F34D /* WebSocketImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF7476D1B27D6540007F34D /* WebSocketImpl.cpp */; };
 		6FF747701B27D6540007F34D /* WebSocketImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF7476E1B27D6540007F34D /* WebSocketImpl.h */; };
+		6FF747891B29146A0007F34D /* WSHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF747871B29146A0007F34D /* WSHandler.cpp */; };
+		6FF7478A1B29146A0007F34D /* WSHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF747881B29146A0007F34D /* WSHandler.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -93,6 +95,8 @@
 		6FF746F51B2345FD0007F34D /* HttpResponseImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HttpResponseImpl.h; path = http/HttpResponseImpl.h; sourceTree = "<group>"; };
 		6FF7476D1B27D6540007F34D /* WebSocketImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WebSocketImpl.cpp; path = ws/WebSocketImpl.cpp; sourceTree = "<group>"; };
 		6FF7476E1B27D6540007F34D /* WebSocketImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WebSocketImpl.h; path = ws/WebSocketImpl.h; sourceTree = "<group>"; };
+		6FF747871B29146A0007F34D /* WSHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WSHandler.cpp; path = ws/WSHandler.cpp; sourceTree = "<group>"; };
+		6FF747881B29146A0007F34D /* WSHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WSHandler.h; path = ws/WSHandler.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -214,6 +218,8 @@
 		6FF7476C1B27D6210007F34D /* ws */ = {
 			isa = PBXGroup;
 			children = (
+				6FF747871B29146A0007F34D /* WSHandler.cpp */,
+				6FF747881B29146A0007F34D /* WSHandler.h */,
 				6FF7476D1B27D6540007F34D /* WebSocketImpl.cpp */,
 				6FF7476E1B27D6540007F34D /* WebSocketImpl.h */,
 			);
@@ -245,6 +251,7 @@
 				6FF747701B27D6540007F34D /* WebSocketImpl.h in Headers */,
 				6F6208FD1A26BDB1000DAF4B /* kmapi.h in Headers */,
 				6F2963541A18AB0D00C3C79B /* kmtrace.h in Headers */,
+				6FF7478A1B29146A0007F34D /* WSHandler.h in Headers */,
 				6F29634F1A18AB0D00C3C79B /* kmqueue.h in Headers */,
 				6FF211D81B1556FB006603BB /* evdefs.h in Headers */,
 				6FF211D21B1556E6006603BB /* IOPoll.h in Headers */,
@@ -316,6 +323,7 @@
 				6FF212911B17229C006603BB /* SelectPoll.cpp in Sources */,
 				6F2963531A18AB0D00C3C79B /* kmtrace.cpp in Sources */,
 				6FF211D91B1556FB006603BB /* EventLoopImpl.cpp in Sources */,
+				6FF747891B29146A0007F34D /* WSHandler.cpp in Sources */,
 				6F2D404B1B19E25B00E24928 /* HttpParser.cpp in Sources */,
 				6FF211CB1B1556C5006603BB /* OpenSslLib.cpp in Sources */,
 				6FF746EF1B2196240007F34D /* Uri.cpp in Sources */,

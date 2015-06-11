@@ -80,7 +80,8 @@ void HttpResponseImpl::buildResponse(int status_code, const char* desc, const ch
     send_buffer_.clear();
     send_offset_ = 0;
     send_buffer_.reserve(str.length());
-    std::copy(str.begin(), str.end(), back_inserter(send_buffer_));
+    send_buffer_.insert(send_buffer_.end(), str.begin(), str.end());
+    //std::copy(str.begin(), str.end(), back_inserter(send_buffer_));
 }
 
 int HttpResponseImpl::sendResponse(int status_code, const char* desc, const char* ver)
@@ -175,8 +176,8 @@ int HttpResponseImpl::sendChunk(uint8_t* data, uint32_t len)
                 uint8_t* first = ((uint8_t*)iov.iov_base) + ret;
                 uint8_t* last = ((uint8_t*)iov.iov_base) + iov.iov_len;
                 if(first < last) {
-                    std::copy(first, last, back_inserter(send_buffer_));
-                    send_offset_ += last - first;
+                    send_buffer_.insert(send_buffer_.end(), first, last);
+                    //std::copy(first, last, back_inserter(send_buffer_));
                     ret = 0;
                 } else {
                     ret -= iov.iov_len;

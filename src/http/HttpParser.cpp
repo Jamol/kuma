@@ -33,6 +33,7 @@ HttpParser::HttpParser()
 , read_state_(HTTP_READ_LINE)
 , header_complete_(false)
 , has_content_length_(false)
+, upgrade_(false)
 , content_length_(0)
 , is_chunked_(false)
 , chunk_state_(CHUNK_READ_SIZE)
@@ -60,6 +61,7 @@ void HttpParser::reset()
     
     status_code_ = 0;
     header_complete_ = false;
+    upgrade_ = false;
     content_length_ = 0;
     has_content_length_ = false;
     
@@ -190,10 +192,10 @@ HttpParser::ParseState HttpParser::parseHttp(const char*& cur_pos, const char* e
     {
         while ((b_line = getLine(cur_pos, end, line, line_end)))
         {
-            if(line == line_end)
+            if(line == line_end && bufferEmpty())
             {// blank line, header completed
                 onHeaderComplete();
-                if(hasBody()) {
+                if(hasBody() && !upgrade_) {
                     read_state_ = HTTP_READ_BODY;
                 } else {
                     read_state_ = HTTP_READ_DONE;
@@ -440,6 +442,11 @@ void HttpParser::onHeaderComplete()
     if(it != header_map_.end()) {
         is_chunked_ = is_equal("chunked", it->second);
         KUMA_INFOTRACE("onHeaderComplete, Transfer-Encoding="<<it->second);
+    }
+    it = header_map_.find("Upgrade");
+    if(it != header_map_.end()) {
+        upgrade_ = true;
+        KUMA_INFOTRACE("onHeaderComplete, Upgrade="<<it->second);
     }
     if(cb_event_) cb_event_(HTTP_HEADER_COMPLETE);
 }
