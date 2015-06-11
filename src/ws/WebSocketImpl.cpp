@@ -38,23 +38,29 @@ void WebSocketImpl::cleanup()
     send_offset_ = 0;
 }
 
-int WebSocketImpl::connect(const char* ws_url, EventCallback& cb)
+int WebSocketImpl::connect(const char* ws_url, const char* proto, EventCallback& cb)
 {
     if(getState() != STATE_IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
         return KUMA_ERROR_INVALID_STATE;
     }
     cb_connect_ = cb;
+    if(proto) {
+        proto_ = proto;
+    }
     return connect_i(ws_url);
 }
 
-int WebSocketImpl::connect(const char* ws_url, EventCallback&& cb)
+int WebSocketImpl::connect(const char* ws_url, const char* proto, EventCallback&& cb)
 {
     if(getState() != STATE_IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
         return KUMA_ERROR_INVALID_STATE;
     }
     cb_connect_ = std::move(cb);
+    if(proto) {
+        proto_ = proto;
+    }
     return connect_i(ws_url);
 }
 
@@ -142,7 +148,7 @@ void WebSocketImpl::onConnect(int err)
     ws_handler_.setDataCallback([this] (uint8_t* data, uint32_t len) { onWsData(data, len); });
     ws_handler_.setHandshakeCallback([this] (int err) { onWsHandshake(err); });
     body_bytes_sent_ = 0;
-    std::string str(ws_handler_.buildRequest(uri_.getPath(), uri_.getHost()));
+    std::string str(ws_handler_.buildRequest(uri_.getPath(), uri_.getHost(), proto_));
     send_buffer_.clear();
     send_offset_ = 0;
     send_buffer_.reserve(str.length());

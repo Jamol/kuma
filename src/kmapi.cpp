@@ -632,14 +632,14 @@ WebSocket::~WebSocket()
     delete pimpl_;
 }
 
-int WebSocket::connect(const char* ws_url, EventCallback& cb)
+int WebSocket::connect(const char* ws_url, const char* proto, EventCallback& cb)
 {
-    return pimpl_->connect(ws_url, cb);
+    return pimpl_->connect(ws_url, proto, cb);
 }
 
-int WebSocket::connect(const char* ws_url, EventCallback&& cb)
+int WebSocket::connect(const char* ws_url, const char* proto, EventCallback&& cb)
 {
-    return pimpl_->connect(ws_url, std::move(cb));
+    return pimpl_->connect(ws_url, proto, std::move(cb));
 }
 
 int WebSocket::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_len)

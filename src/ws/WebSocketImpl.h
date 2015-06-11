@@ -17,8 +17,8 @@ public:
     WebSocketImpl(EventLoopImpl* loop);
     ~WebSocketImpl();
     
-    int connect(const char* ws_url, EventCallback& cb);
-    int connect(const char* ws_url, EventCallback&& cb);
+    int connect(const char* ws_url, const char* proto, EventCallback& cb);
+    int connect(const char* ws_url, const char* proto, EventCallback&& cb);
     int attachFd(SOCKET_FD fd, uint8_t* init_data = nullptr, uint32_t init_len = 0);
     int send(uint8_t* data, uint32_t len);
     int close();
@@ -69,6 +69,7 @@ private:
     
     uint32_t                body_bytes_sent_;
     
+    std::string             proto_;
     DataCallback            cb_data_;
     EventCallback           cb_connect_;
     EventCallback           cb_write_;

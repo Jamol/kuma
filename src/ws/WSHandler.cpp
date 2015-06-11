@@ -48,7 +48,7 @@ std::string generate_sec_accept_value(const std::string& sec_ws_key)
     return std::string((char*)x64_encode_buf, x64_encode_len);
 }
 
-std::string WSHandler::buildRequest(const std::string& path, const std::string& host)
+std::string WSHandler::buildRequest(const std::string& path, const std::string& host, const std::string& proto)
 {
     std::stringstream ss;
     ss << "GET  ";
@@ -59,7 +59,7 @@ std::string WSHandler::buildRequest(const std::string& path, const std::string& 
     ss << "Connection: Upgrade\r\n";
     ss << "Origin: http://example.com\r\n";
     ss << "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==";
-    ss << "Sec-WebSocket-Protocol: test\r\n";
+    ss << "Sec-WebSocket-Protocol: " << proto << "\r\n";
     ss << "Sec-WebSocket-Version: 13\r\n";
     ss << "\r\n";
     return ss.str();

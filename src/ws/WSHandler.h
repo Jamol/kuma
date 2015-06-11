@@ -31,7 +31,7 @@ public:
     WSHandler();
     ~WSHandler();
     
-    std::string buildRequest(const std::string& path, const std::string& host);
+    std::string buildRequest(const std::string& path, const std::string& host, const std::string& proto);
     std::string buildResponse();
     
     WSError handleData(uint8_t* data, uint32_t len);
