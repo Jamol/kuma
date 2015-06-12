@@ -161,7 +161,7 @@ void WebSocketImpl::onConnect(int err)
     send_buffer_.reserve(str.length());
     send_buffer_.insert(send_buffer_.end(), str.begin(), str.end());
     setState(STATE_HANDSHAKE);
-    int ret = tcp_socket_.send(&send_buffer_[0] + send_offset_, (uint32_t)send_buffer_.size() - send_offset_);
+    int ret = tcp_socket_.send(&send_buffer_[0], (uint32_t)send_buffer_.size());
     if(ret < 0) {
         cleanup();
         setState(STATE_CLOSED);
@@ -191,7 +191,7 @@ void WebSocketImpl::onSend(int err)
                 send_offset_ = 0;
                 send_buffer_.clear();
                 if(is_server_ && getState() == STATE_HANDSHAKE) {
-                    onStateOpen();
+                    onStateOpen(); // response is sent out
                 }
             }
         }

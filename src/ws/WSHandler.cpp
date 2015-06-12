@@ -27,7 +27,7 @@ WSHandler::~WSHandler()
 
 void WSHandler::cleanup()
 {
-    
+    ctx_.reset();
 }
 
 #define SHA1_DIGEST_SIZE	20
@@ -77,7 +77,9 @@ std::string WSHandler::buildResponse()
     ss << "Upgrade: websocket\r\n";
     ss << "Connection: Upgrade\r\n";
     ss << "Sec-WebSocket-Accept: " << generate_sec_accept_value(sec_ws_key) << "\r\n";
-    ss << "Sec-WebSocket-Protocol: " << protos << "\r\n";
+    if(!protos.empty()) {
+        ss << "Sec-WebSocket-Protocol: " << protos << "\r\n";
+    }
     ss << "\r\n";
     return ss.str();
 }
@@ -94,12 +96,12 @@ const std::string WSHandler::getOrigin()
 
 void WSHandler::onHttpData(const char* data, uint32_t len)
 {
-    KUMA_ERRTRACE("onHttpData, len="<<len);
+    KUMA_ERRTRACE("WSHandler::onHttpData, len="<<len);
 }
 
 void WSHandler::onHttpEvent(HttpParser::HttpEvent ev)
 {
-    KUMA_INFOTRACE("onHttpEvent, ev="<<ev);
+    KUMA_INFOTRACE("WSHandler::onHttpEvent, ev="<<ev);
     switch (ev) {
         case HttpParser::HTTP_HEADER_COMPLETE:
             break;
@@ -126,13 +128,15 @@ void WSHandler::handleRequest()
     if(!is_equal(http_parser_.getHeaderValue("Upgrade"), "WebSocket") ||
        !is_equal(http_parser_.getHeaderValue("Connection"), "Upgrade")) {
         state_ = STATE_ERROR;
-        if(cb_handshake_) cb_handshake_(-1);
+        KUMA_INFOTRACE("WSHandler::handleRequest, not WebSocket request");
+        if(cb_handshake_) cb_handshake_(KUMA_ERROR_INVALID_PROTO);
         return;
     }
     std::string sec_ws_key = http_parser_.getHeaderValue("Sec-WebSocket-Key");
     if(sec_ws_key.empty()) {
         state_ = STATE_ERROR;
-        if(cb_handshake_) cb_handshake_(-1);
+        KUMA_INFOTRACE("WSHandler::handleRequest, no Sec-WebSocket-Key");
+        if(cb_handshake_) cb_handshake_(KUMA_ERROR_INVALID_PROTO);
         return;
     }
     state_ = STATE_OPEN;
@@ -148,6 +152,7 @@ void WSHandler::handleResponse()
         if(cb_handshake_) cb_handshake_(0);
     } else {
         state_ = STATE_ERROR;
+        KUMA_INFOTRACE("WSHandler::handleResponse, invalid status code: "<<http_parser_.getStatusCode());
         if(cb_handshake_) cb_handshake_(-1);
     }
 }
@@ -226,109 +231,109 @@ int WSHandler::encodeFrameHeader(FrameType frame_type, uint32_t frame_len, uint8
 
 WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, uint32_t len)
 {
-#define UB1	frame_hdr_.u1.HByte
-#define UB2	frame_hdr_.u2.HByte
+#define UB1	ctx_.hdr.u1.HByte
+#define UB2	ctx_.hdr.u2.HByte
 #define WS_MAX_FRAME_DATA_LENGTH	10*1024*1024
     
     uint32_t pos = 0;
     while(pos < len)
     {
-        switch(frame_hdr_.state)
+        switch(ctx_.state)
         {
             case FRAME_DECODE_STATE_HDR1:
-                frame_hdr_.u1.UByte = data[pos++];
+                ctx_.hdr.u1.UByte = data[pos++];
                 if(UB1.Rsv1 != 0 || UB1.Rsv2 != 0 || UB1.Rsv3 != 0) {
-                    frame_hdr_.state = (FRAME_DECODE_STATE_ERROR);
+                    ctx_.state = (FRAME_DECODE_STATE_ERROR);
                     return WS_ERROR_INVALID_FRAME;
                 }
-                frame_hdr_.state = (FRAME_DECODE_STATE_HDR2);
+                ctx_.state = FRAME_DECODE_STATE_HDR2;
                 break;
             case FRAME_DECODE_STATE_HDR2:
-                frame_hdr_.u2.UByte = data[pos++];
-                frame_hdr_.xpl.xpl64 = 0;
-                frame_hdr_.de_pos = 0;
-                frame_hdr_.buffer.clear();
-                frame_hdr_.state = (FRAME_DECODE_STATE_HDREX);
+                ctx_.hdr.u2.UByte = data[pos++];
+                ctx_.hdr.xpl.xpl64 = 0;
+                ctx_.pos = 0;
+                ctx_.buf.clear();
+                ctx_.state = FRAME_DECODE_STATE_HDREX;
                 break;
             case FRAME_DECODE_STATE_HDREX:
                 if(126 == UB2.PayloadLen) {
                     uint32_t expect_len = 2;
-                    if(len-pos+frame_hdr_.de_pos >= expect_len) {
-                        for (; frame_hdr_.de_pos<expect_len; ++pos, ++frame_hdr_.de_pos) {
-                            frame_hdr_.xpl.xpl16 |= data[pos] << ((expect_len-frame_hdr_.de_pos-1) << 3);
+                    if(len-pos+ctx_.pos >= expect_len) {
+                        for (; ctx_.pos<expect_len; ++pos, ++ctx_.pos) {
+                            ctx_.hdr.xpl.xpl16 |= data[pos] << ((expect_len-ctx_.pos-1) << 3);
                         }
-                        frame_hdr_.de_pos = 0;
-                        if(frame_hdr_.xpl.xpl16 < 126)
+                        ctx_.pos = 0;
+                        if(ctx_.hdr.xpl.xpl16 < 126)
                         {// invalid ex payload length
-                            frame_hdr_.state = (FRAME_DECODE_STATE_ERROR);
+                            ctx_.state = (FRAME_DECODE_STATE_ERROR);
                             return WS_ERROR_INVALID_LENGTH;
                         }
-                        frame_hdr_.length = frame_hdr_.xpl.xpl16;
-                        frame_hdr_.state = (FRAME_DECODE_STATE_MASKEY);
+                        ctx_.hdr.length = ctx_.hdr.xpl.xpl16;
+                        ctx_.state = FRAME_DECODE_STATE_MASKEY;
                     } else {
-                        frame_hdr_.xpl.xpl16 |= data[pos++]<<8;
-                        ++frame_hdr_.de_pos;
+                        ctx_.hdr.xpl.xpl16 |= data[pos++]<<8;
+                        ++ctx_.pos;
                         return WS_ERROR_NEED_MORE_DATA;
                     }
                 } else if(127 == UB2.PayloadLen) {
                     uint32_t expect_len = 8;
-                    if(len-pos+frame_hdr_.de_pos >= expect_len) {
-                        for (; frame_hdr_.de_pos<expect_len; ++pos, ++frame_hdr_.de_pos) {
-                            frame_hdr_.xpl.xpl64 |= data[pos] << ((expect_len-frame_hdr_.de_pos-1) << 3);
+                    if(len-pos+ctx_.pos >= expect_len) {
+                        for (; ctx_.pos<expect_len; ++pos, ++ctx_.pos) {
+                            ctx_.hdr.xpl.xpl64 |= data[pos] << ((expect_len-ctx_.pos-1) << 3);
                         }
-                        frame_hdr_.de_pos = 0;
-                        if((frame_hdr_.xpl.xpl64>>63) != 0)
+                        ctx_.pos = 0;
+                        if((ctx_.hdr.xpl.xpl64>>63) != 0)
                         {// invalid ex payload length
-                            frame_hdr_.state = (FRAME_DECODE_STATE_ERROR);
+                            ctx_.state = (FRAME_DECODE_STATE_ERROR);
                             return WS_ERROR_INVALID_LENGTH;
                         }
-                        frame_hdr_.length = (uint32_t)frame_hdr_.xpl.xpl64;
-                        if(frame_hdr_.length > WS_MAX_FRAME_DATA_LENGTH)
+                        ctx_.hdr.length = (uint32_t)ctx_.hdr.xpl.xpl64;
+                        if(ctx_.hdr.length > WS_MAX_FRAME_DATA_LENGTH)
                         {// invalid ex payload length
-                            frame_hdr_.state = (FRAME_DECODE_STATE_ERROR);
+                            ctx_.state = FRAME_DECODE_STATE_ERROR;
                             return WS_ERROR_INVALID_LENGTH;
                         }
-                        frame_hdr_.state = (FRAME_DECODE_STATE_MASKEY);
+                        ctx_.state = FRAME_DECODE_STATE_MASKEY;
                     } else {
-                        for (; pos<len; ++pos, ++frame_hdr_.de_pos) {
-                            frame_hdr_.xpl.xpl64 |= data[pos] << ((expect_len-frame_hdr_.de_pos-1) << 3);
+                        for (; pos<len; ++pos, ++ctx_.pos) {
+                            ctx_.hdr.xpl.xpl64 |= data[pos] << ((expect_len-ctx_.pos-1) << 3);
                         }
                         return WS_ERROR_NEED_MORE_DATA;
                     }
                 } else {
-                    frame_hdr_.length = UB2.PayloadLen;
-                    frame_hdr_.state = (FRAME_DECODE_STATE_MASKEY);
+                    ctx_.hdr.length = UB2.PayloadLen;
+                    ctx_.state = FRAME_DECODE_STATE_MASKEY;
                 }
                 break;
             case FRAME_DECODE_STATE_MASKEY:
                 if(UB2.Mask) {
                     uint32_t expect_len = 4;
-                    if(len-pos+frame_hdr_.de_pos >= expect_len)
+                    if(len-pos+ctx_.pos >= expect_len)
                     {
-                        memcpy(frame_hdr_.maskey+frame_hdr_.de_pos, data+pos, expect_len-frame_hdr_.de_pos);
-                        pos += expect_len-frame_hdr_.de_pos;
-                        frame_hdr_.de_pos = 0;
+                        memcpy(ctx_.hdr.maskey+ctx_.pos, data+pos, expect_len-ctx_.pos);
+                        pos += expect_len-ctx_.pos;
+                        ctx_.pos = 0;
                     } else {
-                        memcpy(frame_hdr_.maskey+frame_hdr_.de_pos, data+pos, len-pos);
-                        frame_hdr_.de_pos += len-pos;
+                        memcpy(ctx_.hdr.maskey+ctx_.pos, data+pos, len-pos);
+                        ctx_.pos += len-pos;
                         pos = len;
                         return WS_ERROR_NEED_MORE_DATA;
                     }
                 }
-                frame_hdr_.buffer.clear();
-                frame_hdr_.state = (FRAME_DECODE_STATE_DATA);
+                ctx_.buf.clear();
+                ctx_.state = FRAME_DECODE_STATE_DATA;
                 break;
             case FRAME_DECODE_STATE_DATA:
                 if(0x8 == UB1.Opcode) {
                     // connection closed
-                    frame_hdr_.state = (FRAME_DECODE_STATE_CLOSED);
+                    ctx_.state = (FRAME_DECODE_STATE_CLOSED);
                     return WS_ERROR_CLOSED;
                 }
-                if(frame_hdr_.buffer.empty() && len-pos >= frame_hdr_.length) {
+                if(ctx_.buf.empty() && len-pos >= ctx_.hdr.length) {
                     uint8_t* notify_data = data + pos;
-                    uint32_t notify_len = frame_hdr_.length;
+                    uint32_t notify_len = ctx_.hdr.length;
                     pos += notify_len;
-                    handleDataMask(frame_hdr_, notify_data, notify_len);
+                    handleDataMask(ctx_.hdr, notify_data, notify_len);
                     KUMA_ASSERT(!destroy_flag_ptr_);
                     bool destroyed = false;
                     destroy_flag_ptr_ = &destroyed;
@@ -337,16 +342,16 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, uint32_t len)
                         return WS_ERROR_DESTROY;
                     }
                     destroy_flag_ptr_ = nullptr;
-                    frame_hdr_.reset();
-                } else if(len-pos+frame_hdr_.buffer.size() >= frame_hdr_.length) {
-                    auto buf_size = frame_hdr_.buffer.size();
-                    auto read_len = frame_hdr_.length - buf_size;
-                    frame_hdr_.buffer.reserve(frame_hdr_.length);
-                    frame_hdr_.buffer.insert(frame_hdr_.buffer.end(), data + pos, data + pos + read_len);
-                    uint8_t* notify_data = &frame_hdr_.buffer[0];
-                    uint32_t notify_len = frame_hdr_.length;
+                    ctx_.reset();
+                } else if(len-pos+ctx_.buf.size() >= ctx_.hdr.length) {
+                    auto buf_size = ctx_.buf.size();
+                    auto read_len = ctx_.hdr.length - buf_size;
+                    ctx_.buf.reserve(ctx_.hdr.length);
+                    ctx_.buf.insert(ctx_.buf.end(), data + pos, data + pos + read_len);
+                    uint8_t* notify_data = &ctx_.buf[0];
+                    uint32_t notify_len = ctx_.hdr.length;
                     pos += read_len;
-                    handleDataMask(frame_hdr_, notify_data, notify_len);
+                    handleDataMask(ctx_.hdr, notify_data, notify_len);
                     KUMA_ASSERT(!destroy_flag_ptr_);
                     bool destroyed = false;
                     destroy_flag_ptr_ = &destroyed;
@@ -355,12 +360,12 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, uint32_t len)
                         return WS_ERROR_DESTROY;
                     }
                     destroy_flag_ptr_ = nullptr;
-                    frame_hdr_.reset();
+                    ctx_.reset();
                 } else {
-                    auto buf_size = frame_hdr_.buffer.size();
+                    auto buf_size = ctx_.buf.size();
                     auto read_len = len - pos;
-                    frame_hdr_.buffer.reserve(buf_size + read_len);
-                    frame_hdr_.buffer.insert(frame_hdr_.buffer.end(), data + pos, data + len);
+                    ctx_.buf.reserve(buf_size + read_len);
+                    ctx_.buf.insert(ctx_.buf.end(), data + pos, data + len);
                     return WS_ERROR_NEED_MORE_DATA;
                 }
                 break;
@@ -368,7 +373,7 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, uint32_t len)
                 return WS_ERROR_INVALID_FRAME;
         }
     }
-    return frame_hdr_.state == FRAME_DECODE_STATE_HDR1 ? WS_ERROR_NOERR : WS_ERROR_NEED_MORE_DATA;
+    return ctx_.state == FRAME_DECODE_STATE_HDR1 ? WS_ERROR_NOERR : WS_ERROR_NEED_MORE_DATA;
 }
 
 WSHandler::WSError WSHandler::handleDataMask(FrameHeader& hdr, uint8_t* data, uint32_t len)

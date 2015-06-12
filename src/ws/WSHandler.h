@@ -55,7 +55,7 @@ private:
         FRAME_DECODE_STATE_DATA,
         FRAME_DECODE_STATE_CLOSED,
         FRAME_DECODE_STATE_ERROR,
-    }FrameDecodeState;
+    }DecodeState;
     
     typedef struct FrameHeader {
         FrameHeader()
@@ -67,10 +67,6 @@ private:
             u2.UByte = 0;
             xpl.xpl64 = 0;
             length = 0;
-            
-            state = FRAME_DECODE_STATE_HDR1;
-            buffer.clear();
-            de_pos = 0;
         }
         union{
             struct{
@@ -95,11 +91,27 @@ private:
         }xpl;
         uint8_t maskey[4];
         uint32_t length;
-        
-        FrameDecodeState state;
-        std::vector<uint8_t> buffer;
-        uint8_t de_pos;
     }FrameHeader;
+    typedef struct DecodeContext{
+        DecodeContext()
+        : hdr()
+        , state(FRAME_DECODE_STATE_HDR1)
+        , pos(0)
+        {
+            
+        }
+        void reset()
+        {
+            hdr.reset();
+            state = FRAME_DECODE_STATE_HDR1;
+            buf.clear();
+            pos = 0;
+        }
+        FrameHeader hdr;
+        DecodeState state;
+        std::vector<uint8_t> buf;
+        uint8_t pos;
+    }DecodeContext;
     void cleanup();
     
     static WSError handleDataMask(FrameHeader& hdr, uint8_t* data, uint32_t len);
@@ -119,7 +131,7 @@ private:
         STATE_DESTROY
     }State;
     State                   state_;
-    FrameHeader             frame_hdr_;
+    DecodeContext           ctx_;
     
     HttpParser              http_parser_;
     
