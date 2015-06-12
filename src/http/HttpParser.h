@@ -21,7 +21,7 @@ public:
     
     typedef std::function<void(const char*, uint32_t)> DataCallback;
     typedef std::function<void(HttpEvent)> EventCallback;
-    typedef std::function<void(const char* name, const char* value)> EnumrateCallback;
+    typedef std::function<void(const std::string& name, const std::string& value)> EnumrateCallback;
     
     struct CaseIgnoreLess : public std::binary_function<std::string, std::string, bool> {
         bool operator()(const std::string &lhs, const std::string &rhs) const {
@@ -45,13 +45,13 @@ public:
     bool error();
     
     int getStatusCode() { return status_code_; }
-    const char* getLocation() { return getHeaderValue("Location"); }
-    const char* getUrl() { return url_.c_str(); }
-    const char* getUrlPath() { return url_path_.c_str(); }
-    const char* getMethod() { return method_.c_str(); }
-    const char* getVersion() { return version_.c_str(); }
-    const char* getParamValue(const char* name);
-    const char* getHeaderValue(const char* name);
+    const std::string& getLocation() { return getHeaderValue("Location"); }
+    const std::string& getUrl() { return url_; }
+    const std::string& getUrlPath() { return url_path_; }
+    const std::string& getMethod() { return method_; }
+    const std::string& getVersion() { return version_; }
+    const std::string& getParamValue(const std::string& name);
+    const std::string& getHeaderValue(const std::string& name);
     
     void forEachParam(EnumrateCallback cb);
     void forEachHeader(EnumrateCallback cb);

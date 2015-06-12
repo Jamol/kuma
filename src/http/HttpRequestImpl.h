@@ -18,15 +18,15 @@ public:
     HttpRequestImpl(EventLoopImpl* loop);
     ~HttpRequestImpl();
     
-    void addHeader(const char* name, const char* value);
-    void addHeader(const char* name, uint32_t value);
-    int sendRequest(const char* method, const char* url, const char* ver = "HTTP/1.1");
+    void addHeader(const std::string& name, const std::string& value);
+    void addHeader(const std::string& name, uint32_t value);
+    int sendRequest(const std::string& method, const std::string& url, const std::string& ver = "HTTP/1.1");
     int sendData(uint8_t* data, uint32_t len);
     int close();
     
     int getStatusCode() { return http_parser_.getStatusCode(); }
-    const char* getVersion() { return http_parser_.getVersion(); }
-    const char* getHeaderValue(const char* name) { return http_parser_.getHeaderValue(name); }
+    const std::string& getVersion() { return http_parser_.getVersion(); }
+    const std::string& getHeaderValue(const char* name) { return http_parser_.getHeaderValue(name); }
     void forEachHeader(HttpParser::EnumrateCallback cb) { return http_parser_.forEachHeader(cb); }
     
     void setDataCallback(DataCallback& cb) { cb_data_ = cb; }

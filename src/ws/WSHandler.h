@@ -38,6 +38,9 @@ public:
     WSError handleData(uint8_t* data, uint32_t len);
     int encodeFrameHeader(FrameType frame_type, uint32_t frame_len, uint8_t frame_hdr[10]);
     
+    const std::string getProtocol();
+    const std::string getOrigin();
+    
     void setDataCallback(DataCallback& cb) { cb_data_ = cb; }
     void setHandshakeCallback(HandshakeCallback& cb) { cb_handshake_ = cb; }
     void setDataCallback(DataCallback&& cb) { cb_data_ = std::move(cb); }

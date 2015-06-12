@@ -41,18 +41,18 @@ void HttpRequestImpl::cleanup()
     send_offset_ = 0;
 }
 
-void HttpRequestImpl::addHeader(const char* name, const char* value)
+void HttpRequestImpl::addHeader(const std::string& name, const std::string& value)
 {
-    if(name && name[0] != '\0') {
+    if(!name.empty()) {
         header_map_[name] = value;
     }
 }
 
-void HttpRequestImpl::addHeader(const char* name, uint32_t value)
+void HttpRequestImpl::addHeader(const std::string& name, uint32_t value)
 {
     std::stringstream ss;
     ss << value;
-    addHeader(name, ss.str().c_str());
+    addHeader(name, ss.str());
 }
 
 void HttpRequestImpl::buildRequest()
@@ -95,7 +95,7 @@ void HttpRequestImpl::buildRequest()
     send_buffer_.insert(send_buffer_.end(), str.begin(), str.end());
 }
 
-int HttpRequestImpl::sendRequest(const char* method, const char* url, const char* ver)
+int HttpRequestImpl::sendRequest(const std::string& method, const std::string& url, const std::string& ver)
 {
     method_ = method;
     url_ = url;

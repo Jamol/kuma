@@ -19,17 +19,17 @@ public:
     ~HttpResponseImpl();
     
     int attachFd(SOCKET_FD fd, uint8_t* init_data = nullptr, uint32_t init_len = 0);
-    void addHeader(const char* name, const char* value);
-    void addHeader(const char* name, uint32_t value);
-    int sendResponse(int status_code, const char* desc = nullptr, const char* ver = "HTTP/1.1");
+    void addHeader(const std::string& name, const std::string& value);
+    void addHeader(const std::string& name, uint32_t value);
+    int sendResponse(int status_code, const std::string& desc = nullptr, const std::string& ver = "HTTP/1.1");
     int sendData(uint8_t* data, uint32_t len);
     int close();
     
-    const char* getMethod() { return http_parser_.getMethod(); }
-    const char* getUrl() { return http_parser_.getUrl(); }
-    const char* getVersion() { return http_parser_.getVersion(); }
-    const char* getParamValue(const char* name) { return http_parser_.getParamValue(name); }
-    const char* getHeaderValue(const char* name) { return http_parser_.getHeaderValue(name); }
+    const std::string& getMethod() { return http_parser_.getMethod(); }
+    const std::string& getUrl() { return http_parser_.getUrl(); }
+    const std::string& getVersion() { return http_parser_.getVersion(); }
+    const std::string& getParamValue(const char* name) { return http_parser_.getParamValue(name); }
+    const std::string& getHeaderValue(const char* name) { return http_parser_.getHeaderValue(name); }
     void forEachHeader(HttpParser::EnumrateCallback cb) { return http_parser_.forEachHeader(cb); }
     
     void setDataCallback(DataCallback& cb) { cb_data_ = cb; }
@@ -64,7 +64,7 @@ private:
     };
     void setState(State state) { state_ = state; }
     State getState() { return state_; }
-    void buildResponse(int status_code, const char* desc, const char* ver);
+    void buildResponse(int status_code, const std::string& desc, const std::string& ver);
     int sendChunk(uint8_t* data, uint32_t len);
     void cleanup();
     

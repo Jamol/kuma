@@ -38,39 +38,37 @@ void WebSocketImpl::cleanup()
     send_offset_ = 0;
 }
 
-int WebSocketImpl::connect(const char* ws_url, const char* proto, const char* origin, EventCallback& cb)
+void WebSocketImpl::setProtocol(const std::string& proto)
+{
+    proto_ = proto;
+}
+
+void WebSocketImpl::setOrigin(const std::string& origin)
+{
+    origin_ = origin;
+}
+
+int WebSocketImpl::connect(const std::string& ws_url, EventCallback& cb)
 {
     if(getState() != STATE_IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
         return KUMA_ERROR_INVALID_STATE;
     }
     cb_connect_ = cb;
-    if(proto) {
-        proto_ = proto;
-    }
-    if(origin) {
-        origin_ = origin;
-    }
     return connect_i(ws_url);
 }
 
-int WebSocketImpl::connect(const char* ws_url, const char* proto, const char* origin, EventCallback&& cb)
+int WebSocketImpl::connect(const std::string& ws_url, EventCallback&& cb)
 {
     if(getState() != STATE_IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
         return KUMA_ERROR_INVALID_STATE;
     }
     cb_connect_ = std::move(cb);
-    if(proto) {
-        proto_ = proto;
-    }
-    if(origin) {
-        origin_ = origin;
-    }
     return connect_i(ws_url);
 }
 
-int WebSocketImpl::connect_i(const char* ws_url)
+int WebSocketImpl::connect_i(const std::string& ws_url)
 {
     if(!uri_.parse(ws_url)) {
         return false;

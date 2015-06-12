@@ -5,6 +5,10 @@
 
 KUMA_NS_BEGIN
 
+static const std::string str_content_type = "Content-Type";
+static const std::string str_content_length = "Content-Length";
+static const std::string str_transfer_encoding = "Transfer-Encoding";
+static const std::string str_chunked = "chunked";
 //////////////////////////////////////////////////////////////////////////
 HttpResponseImpl::HttpResponseImpl(EventLoopImpl* loop)
 : http_parser_()
@@ -51,25 +55,25 @@ int HttpResponseImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_l
     return tcp_socket_.attachFd(fd, 0, init_data, init_len);
 }
 
-void HttpResponseImpl::addHeader(const char* name, const char* value)
+void HttpResponseImpl::addHeader(const std::string& name, const std::string& value)
 {
-    if(name && name[0] != '\0') {
+    if(!name.empty()) {
         header_map_[name] = value;
     }
 }
 
-void HttpResponseImpl::addHeader(const char* name, uint32_t value)
+void HttpResponseImpl::addHeader(const std::string& name, uint32_t value)
 {
     std::stringstream ss;
     ss << value;
-    addHeader(name, ss.str().c_str());
+    addHeader(name, ss.str());
 }
 
-void HttpResponseImpl::buildResponse(int status_code, const char* desc, const char* ver)
+void HttpResponseImpl::buildResponse(int status_code, const std::string& desc, const std::string& ver)
 {
     std::stringstream ss;
-    ss << (ver?ver:"HTTP/1.1") << " " << status_code << " " << (desc?desc:"") << "\r\n";
-    if(header_map_.find("Content-Type") == header_map_.end()) {
+    ss << (!ver.empty()?ver:"HTTP/1.1") << " " << status_code << " " << desc << "\r\n";
+    if(header_map_.find(str_content_type) == header_map_.end()) {
         ss << "Content-Type: application/octet-stream\r\n";
     }
     for (auto &kv : header_map_) {
@@ -83,16 +87,16 @@ void HttpResponseImpl::buildResponse(int status_code, const char* desc, const ch
     send_buffer_.insert(send_buffer_.end(), str.begin(), str.end());
 }
 
-int HttpResponseImpl::sendResponse(int status_code, const char* desc, const char* ver)
+int HttpResponseImpl::sendResponse(int status_code, const std::string& desc, const std::string& ver)
 {
     KUMA_INFOXTRACE("sendResponse, status_code="<<status_code);
-    auto it = header_map_.find("Content-Length");
+    auto it = header_map_.find(str_content_length);
     if(it != header_map_.end()) {
         has_content_length_ = true;
         content_length_ = atoi(it->second.c_str());
     }
-    it = header_map_.find("Transfer-Encoding");
-    if(it != header_map_.end() && is_equal("chunked", it->second)) {
+    it = header_map_.find(str_transfer_encoding);
+    if(it != header_map_.end() && is_equal(str_chunked, it->second)) {
         is_chunked_ = true;
     }
     body_bytes_sent_ = 0;

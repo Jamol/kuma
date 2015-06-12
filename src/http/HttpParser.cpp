@@ -27,6 +27,8 @@ typedef enum{
     CHUNK_READ_TRAILER
 }ChunkReadState;
 
+static const std::string str_empty = "";
+
 //////////////////////////////////////////////////////////////////////////
 HttpParser::HttpParser()
 : is_request_(true)
@@ -545,22 +547,22 @@ void HttpParser::addHeaderValue(std::string& name, std::string& value)
     }
 }
 
-const char* HttpParser::getParamValue(const char* name)
+const std::string& HttpParser::getParamValue(const std::string& name)
 {
     auto it = param_map_.find(name);
     if (it != param_map_.end()) {
-        return (*it).second.c_str();
+        return (*it).second;
     }
-    return nullptr;
+    return str_empty;
 }
 
-const char* HttpParser::getHeaderValue(const char* name)
+const std::string& HttpParser::getHeaderValue(const std::string& name)
 {
     auto it = header_map_.find(name);
     if (it != header_map_.end()) {
-        return (*it).second.c_str();
+        return (*it).second;
     }
-    return nullptr;
+    return str_empty;
 }
 
 void HttpParser::forEachParam(EnumrateCallback cb)

@@ -82,6 +82,16 @@ std::string WSHandler::buildResponse()
     return ss.str();
 }
 
+const std::string WSHandler::getProtocol()
+{
+    return http_parser_.getHeaderValue("Sec-WebSocket-Protocol");
+}
+
+const std::string WSHandler::getOrigin()
+{
+    return http_parser_.getHeaderValue("Origin");
+}
+
 void WSHandler::onHttpData(const char* data, uint32_t len)
 {
     KUMA_ERRTRACE("onHttpData, len="<<len);

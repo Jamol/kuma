@@ -415,17 +415,19 @@ int HttpRequest::getStatusCode()
 
 const char* HttpRequest::getVersion()
 {
-    return pimpl_->getVersion();
+    return pimpl_->getVersion().c_str();
 }
 
 const char* HttpRequest::getHeaderValue(const char* name)
 {
-    return pimpl_->getHeaderValue(name);
+    return pimpl_->getHeaderValue(name).c_str();
 }
 
 void HttpRequest::forEachHeader(EnumrateCallback cb)
 {
-    pimpl_->forEachHeader(cb);
+    pimpl_->forEachHeader([&cb] (const std::string& name, const std::string& value) {
+        cb(name.c_str(), value.c_str());
+    });
 }
 
 void HttpRequest::setDataCallback(DataCallback& cb)
@@ -527,32 +529,34 @@ int HttpResponse::close()
 
 const char* HttpResponse::getMethod()
 {
-    return pimpl_->getMethod();
+    return pimpl_->getMethod().c_str();
 }
 
 const char* HttpResponse::getUrl()
 {
-    return pimpl_->getUrl();
+    return pimpl_->getUrl().c_str();
 }
 
 const char* HttpResponse::getVersion()
 {
-    return pimpl_->getVersion();
+    return pimpl_->getVersion().c_str();
 }
 
 const char* HttpResponse::getParamValue(const char* name)
 {
-    return pimpl_->getParamValue(name);
+    return pimpl_->getParamValue(name).c_str();
 }
 
 const char* HttpResponse::getHeaderValue(const char* name)
 {
-    return pimpl_->getHeaderValue(name);
+    return pimpl_->getHeaderValue(name).c_str();
 }
 
 void HttpResponse::forEachHeader(EnumrateCallback cb)
 {
-    return pimpl_->forEachHeader(cb);
+    pimpl_->forEachHeader([&cb] (const std::string& name, const std::string& value) {
+        cb(name.c_str(), value.c_str());
+    });
 }
 
 void HttpResponse::setDataCallback(DataCallback& cb)
@@ -627,19 +631,40 @@ WebSocket::WebSocket(EventLoop* loop)
 {
     
 }
+
 WebSocket::~WebSocket()
 {
     delete pimpl_;
 }
 
-int WebSocket::connect(const char* ws_url, const char* proto, const char* origin, EventCallback& cb)
+void WebSocket::setProtocol(const char* proto)
 {
-    return pimpl_->connect(ws_url, proto, origin, cb);
+    pimpl_->setProtocol(proto);
 }
 
-int WebSocket::connect(const char* ws_url, const char* proto, const char* origin, EventCallback&& cb)
+const char* WebSocket::getProtocol()
 {
-    return pimpl_->connect(ws_url, proto, origin, std::move(cb));
+    return pimpl_->getProtocol().c_str();
+}
+
+void WebSocket::setOrigin(const char* origin)
+{
+    pimpl_->setOrigin(origin);
+}
+
+const char* WebSocket::getOrigin()
+{
+    return pimpl_->getOrigin().c_str();
+}
+
+int WebSocket::connect(const char* ws_url, EventCallback& cb)
+{
+    return pimpl_->connect(ws_url, cb);
+}
+
+int WebSocket::connect(const char* ws_url, EventCallback&& cb)
+{
+    return pimpl_->connect(ws_url, std::move(cb));
 }
 
 int WebSocket::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_len)
