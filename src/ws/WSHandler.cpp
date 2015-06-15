@@ -12,6 +12,7 @@ KUMA_NS_BEGIN
 //////////////////////////////////////////////////////////////////////////
 WSHandler::WSHandler()
 : state_(STATE_HANDSHAKE)
+, opcode_(WS_OPCODE_BINARY)
 , destroy_flag_ptr_(nullptr)
 {
     http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });
@@ -183,21 +184,17 @@ WSHandler::WSError WSHandler::handleData(uint8_t* data, uint32_t len)
     return WS_ERROR_NOERR;
 }
 
-int WSHandler::encodeFrameHeader(FrameType frame_type, uint32_t frame_len, uint8_t frame_hdr[10])
+int WSHandler::encodeFrameHeader(WSOpcode opcode, uint32_t frame_len, uint8_t frame_hdr[10])
 {
-    uint8_t first_byte = 0x81;
+    uint8_t first_byte = 0x80 | opcode;
     uint8_t second_byte = 0x00;
     uint8_t hdr_len = 2;
-    if(frame_type == WS_FRAME_TYPE_BINARY)
-    {
-        first_byte = 0x82;
-    }
     
     if(frame_len <= 125)
     {//0 byte
         second_byte = (uint8_t)frame_len;
     }
-    else if(frame_len <= 0xffff)
+    else if(frame_len <= 0xFFFF)
     {//2 bytes
         hdr_len += 2;
         second_byte = 126;
@@ -231,32 +228,36 @@ int WSHandler::encodeFrameHeader(FrameType frame_type, uint32_t frame_len, uint8
 
 WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, uint32_t len)
 {
-#define UB1	ctx_.hdr.u1.HByte
-#define UB2	ctx_.hdr.u2.HByte
 #define WS_MAX_FRAME_DATA_LENGTH	10*1024*1024
     
     uint32_t pos = 0;
+    uint8_t b = 0;
     while(pos < len)
     {
         switch(ctx_.state)
         {
             case FRAME_DECODE_STATE_HDR1:
-                ctx_.hdr.u1.UByte = data[pos++];
-                if(UB1.Rsv1 != 0 || UB1.Rsv2 != 0 || UB1.Rsv3 != 0) {
-                    ctx_.state = (FRAME_DECODE_STATE_ERROR);
+                b = data[pos++];
+                ctx_.hdr.fin = b >> 7;
+                ctx_.hdr.opcode = b & 0x0F;
+                if(b & 0x70) { // reserved bits are not 0
+                    ctx_.state = FRAME_DECODE_STATE_ERROR;
                     return WS_ERROR_INVALID_FRAME;
                 }
+                opcode_ = ctx_.hdr.opcode;
                 ctx_.state = FRAME_DECODE_STATE_HDR2;
                 break;
             case FRAME_DECODE_STATE_HDR2:
-                ctx_.hdr.u2.UByte = data[pos++];
+                b = data[pos++];
+                ctx_.hdr.mask = b >> 7;
+                ctx_.hdr.plen = b & 0x7F;
                 ctx_.hdr.xpl.xpl64 = 0;
                 ctx_.pos = 0;
                 ctx_.buf.clear();
                 ctx_.state = FRAME_DECODE_STATE_HDREX;
                 break;
             case FRAME_DECODE_STATE_HDREX:
-                if(126 == UB2.PayloadLen) {
+                if(126 == ctx_.hdr.plen) {
                     uint32_t expect_len = 2;
                     if(len-pos+ctx_.pos >= expect_len) {
                         for (; ctx_.pos<expect_len; ++pos, ++ctx_.pos) {
@@ -265,7 +266,7 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, uint32_t len)
                         ctx_.pos = 0;
                         if(ctx_.hdr.xpl.xpl16 < 126)
                         {// invalid ex payload length
-                            ctx_.state = (FRAME_DECODE_STATE_ERROR);
+                            ctx_.state = FRAME_DECODE_STATE_ERROR;
                             return WS_ERROR_INVALID_LENGTH;
                         }
                         ctx_.hdr.length = ctx_.hdr.xpl.xpl16;
@@ -275,7 +276,7 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, uint32_t len)
                         ++ctx_.pos;
                         return WS_ERROR_NEED_MORE_DATA;
                     }
-                } else if(127 == UB2.PayloadLen) {
+                } else if(127 == ctx_.hdr.plen) {
                     uint32_t expect_len = 8;
                     if(len-pos+ctx_.pos >= expect_len) {
                         for (; ctx_.pos<expect_len; ++pos, ++ctx_.pos) {
@@ -284,7 +285,7 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, uint32_t len)
                         ctx_.pos = 0;
                         if((ctx_.hdr.xpl.xpl64>>63) != 0)
                         {// invalid ex payload length
-                            ctx_.state = (FRAME_DECODE_STATE_ERROR);
+                            ctx_.state = FRAME_DECODE_STATE_ERROR;
                             return WS_ERROR_INVALID_LENGTH;
                         }
                         ctx_.hdr.length = (uint32_t)ctx_.hdr.xpl.xpl64;
@@ -301,12 +302,12 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, uint32_t len)
                         return WS_ERROR_NEED_MORE_DATA;
                     }
                 } else {
-                    ctx_.hdr.length = UB2.PayloadLen;
+                    ctx_.hdr.length = ctx_.hdr.plen;
                     ctx_.state = FRAME_DECODE_STATE_MASKEY;
                 }
                 break;
             case FRAME_DECODE_STATE_MASKEY:
-                if(UB2.Mask) {
+                if(ctx_.hdr.mask) {
                     uint32_t expect_len = 4;
                     if(len-pos+ctx_.pos >= expect_len)
                     {
@@ -324,9 +325,9 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, uint32_t len)
                 ctx_.state = FRAME_DECODE_STATE_DATA;
                 break;
             case FRAME_DECODE_STATE_DATA:
-                if(0x8 == UB1.Opcode) {
+                if(WS_OPCODE_CLOSE == ctx_.hdr.opcode) {
                     // connection closed
-                    ctx_.state = (FRAME_DECODE_STATE_CLOSED);
+                    ctx_.state = FRAME_DECODE_STATE_CLOSED;
                     return WS_ERROR_CLOSED;
                 }
                 if(ctx_.buf.empty() && len-pos >= ctx_.hdr.length) {
@@ -378,7 +379,7 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, uint32_t len)
 
 WSHandler::WSError WSHandler::handleDataMask(FrameHeader& hdr, uint8_t* data, uint32_t len)
 {
-    if(0 == hdr.u2.HByte.Mask) return WS_ERROR_NOERR;
+    if(0 == hdr.mask) return WS_ERROR_NOERR;
     if(nullptr == data || 0 == len) return WS_ERROR_INVALID_FRAME;
     
     for(uint32_t i=0; i < len; ++i) {

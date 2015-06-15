@@ -111,7 +111,11 @@ int WebSocketImpl::send(uint8_t* data, uint32_t len)
         return 0;
     }
     uint8_t hdr[10];
-    int hdr_len = ws_handler_.encodeFrameHeader(WSHandler::WS_FRAME_TYPE_BINARY, len, hdr);
+    WSHandler::WSOpcode opcode = WSHandler::WSOpcode::WS_OPCODE_BINARY;
+    if(ws_handler_.getOpcode() == WSHandler::WSOpcode::WS_OPCODE_TEXT) {
+        opcode = WSHandler::WSOpcode::WS_OPCODE_TEXT;
+    }
+    int hdr_len = ws_handler_.encodeFrameHeader(opcode, len, hdr);
     iovec iovs[2];
     iovs[0].iov_base = hdr;
     iovs[0].iov_len = hdr_len;

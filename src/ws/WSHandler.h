@@ -11,9 +11,12 @@ class WSHandler
 {
 public:
     typedef enum{
-        WS_FRAME_TYPE_TEXT  = 1,
-        WS_FRAME_TYPE_BINARY
-    }FrameType;
+        WS_OPCODE_TEXT      = 1,
+        WS_OPCODE_BINARY    = 2,
+        WS_OPCODE_CLOSE     = 8,
+        WS_OPCODE_PING      = 9,
+        WS_OPCODE_PONG      = 10
+    }WSOpcode;
     typedef enum{
         WS_ERROR_NOERR,
         WS_ERROR_NEED_MORE_DATA,
@@ -36,7 +39,8 @@ public:
     std::string buildResponse();
     
     WSError handleData(uint8_t* data, uint32_t len);
-    int encodeFrameHeader(FrameType frame_type, uint32_t frame_len, uint8_t frame_hdr[10]);
+    int encodeFrameHeader(WSOpcode opcode, uint32_t frame_len, uint8_t frame_hdr[10]);
+    uint8_t getOpcode() { return opcode_; }
     
     const std::string getProtocol();
     const std::string getOrigin();
@@ -58,33 +62,13 @@ private:
     }DecodeState;
     
     typedef struct FrameHeader {
-        FrameHeader()
-        {
-            reset();
-        }
-        void reset() {
-            u1.UByte = 0;
-            u2.UByte = 0;
-            xpl.xpl64 = 0;
-            length = 0;
-        }
-        union{
-            struct{
-                uint8_t Opcode:4;
-                uint8_t Rsv3:1;
-                uint8_t Rsv2:1;
-                uint8_t Rsv1:1;
-                uint8_t Fin:1;
-            }HByte;
-            uint8_t UByte;
-        }u1;
-        union{
-            struct{
-                uint8_t PayloadLen:7;
-                uint8_t Mask:1;
-            }HByte;
-            uint8_t UByte;
-        }u2;
+        uint8_t fin:1;
+        uint8_t rsv1:1;
+        uint8_t rsv2:1;
+        uint8_t rsv3:1;
+        uint8_t opcode:4;
+        uint8_t mask:1;
+        uint8_t plen:7;
         union{
             uint16_t xpl16;
             uint64_t xpl64;
@@ -102,7 +86,7 @@ private:
         }
         void reset()
         {
-            hdr.reset();
+            memset(&hdr, 0, sizeof(hdr));
             state = FRAME_DECODE_STATE_HDR1;
             buf.clear();
             pos = 0;
@@ -132,6 +116,7 @@ private:
     }State;
     State                   state_;
     DecodeContext           ctx_;
+    uint8_t                 opcode_;
     
     HttpParser              http_parser_;
     
