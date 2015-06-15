@@ -96,7 +96,7 @@ uint32_t x64_encode(const uint8_t* data, uint32_t data_len,
             break;
     }
     
-    return dst - buf;
+    return uint32_t(dst - buf);
 }
 
 uint32_t x64_decode(const uint8_t* buf, uint32_t buf_len,
@@ -148,7 +148,7 @@ uint32_t x64_decode(const uint8_t* buf, uint32_t buf_len,
         dst += pos;
     }
     
-    return dst - data;
+    return uint32_t(dst - data);
 }
 
 void x64_init_ctx(X64_CTX* ctx)
@@ -261,7 +261,7 @@ uint32_t x64_encode_ctx(X64_CTX* ctx, const uint8_t* data, uint32_t data_len,
             break;
     }
     
-    return dst - buf;
+    return uint32_t(dst - buf);
 }
 
 uint32_t x64_decode_ctx(X64_CTX* ctx, const uint8_t* buf, uint32_t buf_len,
@@ -383,7 +383,7 @@ uint32_t x64_decode_ctx(X64_CTX* ctx, const uint8_t* buf, uint32_t buf_len,
     }
     if(!final)
     {
-        uint32_t remain_len = buf_len - (src - buf);
+        uint32_t remain_len = uint32_t(buf_len - (src - buf));
         remain_len %= 4;
         for (uint32_t i=0; i<remain_len; ++i)
         {
@@ -392,7 +392,7 @@ uint32_t x64_decode_ctx(X64_CTX* ctx, const uint8_t* buf, uint32_t buf_len,
         ctx->l = remain_len;
     }
     
-    return dst - data;
+    return uint32_t(dst - data);
 }
 
 KUMA_NS_END

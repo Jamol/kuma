@@ -18,6 +18,7 @@
 #include "UdpSocketImpl.h"
 #include "TcpServerSocketImpl.h"
 #include "TimerManager.h"
+#include "http/HttpParserImpl.h"
 #include "http/HttpRequestImpl.h"
 #include "http/HttpResponseImpl.h"
 #include "ws/WebSocketImpl.h"
@@ -132,9 +133,9 @@ int TcpSocket::connect(const char* host, uint16_t port, EventCallback&& cb, uint
     return pimpl_->connect(host, port, std::move(cb), flags, timeout);
 }
 
-int TcpSocket::attachFd(SOCKET_FD fd, uint32_t flags, uint8_t* init_data, uint32_t init_len)
+int TcpSocket::attachFd(SOCKET_FD fd, uint32_t flags)
 {
-    return pimpl_->attachFd(fd, flags, init_data, init_len);
+    return pimpl_->attachFd(fd, flags);
 }
 
 int TcpSocket::detachFd(SOCKET_FD &fd)
@@ -372,6 +373,155 @@ TimerImpl* Timer::getPimpl()
 {
     return pimpl_;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+HttpParser::HttpParser()
+: pimpl_(new HttpParserImpl())
+{
+    
+}
+
+HttpParser::~HttpParser()
+{
+    delete pimpl_;
+}
+
+// return bytes parsed
+int HttpParser::parse(const char* data, uint32_t len)
+{
+    return pimpl_->parse(data, len);
+}
+
+void HttpParser::pause()
+{
+    pimpl_->pause();
+}
+
+void HttpParser::resume()
+{
+    pimpl_->resume();
+}
+
+bool HttpParser::setEOF()
+{
+    return pimpl_->setEOF();
+}
+
+void HttpParser::reset()
+{
+    pimpl_->reset();
+}
+
+bool HttpParser::isRequest()
+{
+    return pimpl_->isRequest();
+}
+
+bool HttpParser::headerComplete()
+{
+    return pimpl_->headerComplete();
+}
+
+bool HttpParser::complete()
+{
+    return pimpl_->complete();
+}
+
+bool HttpParser::error()
+{
+    return pimpl_->error();
+}
+
+bool HttpParser::paused()
+{
+    return pimpl_->paused();
+}
+
+int HttpParser::getStatusCode()
+{
+    return pimpl_->getStatusCode();
+}
+
+const char* HttpParser::getUrl()
+{
+    return pimpl_->getLocation().c_str();
+}
+
+const char* HttpParser::getUrlPath()
+{
+    return pimpl_->getUrlPath().c_str();
+}
+
+const char* HttpParser::getMethod()
+{
+    return pimpl_->getMethod().c_str();
+}
+
+const char* HttpParser::getVersion()
+{
+    return pimpl_->getVersion().c_str();
+}
+
+const char* HttpParser::getParamValue(const char* name)
+{
+    return pimpl_->getParamValue(name).c_str();
+}
+
+const char* HttpParser::getHeaderValue(const char* name)
+{
+    return pimpl_->getHeaderValue(name).c_str();
+}
+
+
+void HttpParser::forEachParam(EnumrateCallback& cb)
+{
+    pimpl_->forEachParam([&cb] (const std::string& name, const std::string& value) {
+        cb(name.c_str(), value.c_str());
+    });
+}
+
+void HttpParser::forEachHeader(EnumrateCallback& cb)
+{
+    pimpl_->forEachHeader([&cb] (const std::string& name, const std::string& value) {
+        cb(name.c_str(), value.c_str());
+    });
+}
+
+void HttpParser::forEachParam(EnumrateCallback&& cb)
+{
+    forEachParam(cb);
+}
+
+void HttpParser::forEachHeader(EnumrateCallback&& cb)
+{
+    forEachHeader(cb);
+}
+
+void HttpParser::setDataCallback(DataCallback& cb)
+{
+    pimpl_->setDataCallback(cb);
+}
+
+void HttpParser::setEventCallback(EventCallback& cb)
+{
+    pimpl_->setEventCallback(cb);
+}
+
+void HttpParser::setDataCallback(DataCallback&& cb)
+{
+    pimpl_->setDataCallback(std::move(cb));
+}
+
+void HttpParser::setEventCallback(EventCallback&& cb)
+{
+    pimpl_->setEventCallback(std::move(cb));
+}
+
+HttpParserImpl* HttpParser::getPimpl()
+{
+    return pimpl_;
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 HttpRequest::HttpRequest(EventLoop* loop)
 : pimpl_(new HttpRequestImpl(loop->getPimpl()))
@@ -423,11 +573,16 @@ const char* HttpRequest::getHeaderValue(const char* name)
     return pimpl_->getHeaderValue(name).c_str();
 }
 
-void HttpRequest::forEachHeader(EnumrateCallback cb)
+void HttpRequest::forEachHeader(HttpParser::EnumrateCallback& cb)
 {
     pimpl_->forEachHeader([&cb] (const std::string& name, const std::string& value) {
         cb(name.c_str(), value.c_str());
     });
+}
+
+void HttpRequest::forEachHeader(HttpParser::EnumrateCallback&& cb)
+{
+    forEachHeader(cb);
 }
 
 void HttpRequest::setDataCallback(DataCallback& cb)
@@ -552,11 +707,16 @@ const char* HttpResponse::getHeaderValue(const char* name)
     return pimpl_->getHeaderValue(name).c_str();
 }
 
-void HttpResponse::forEachHeader(EnumrateCallback cb)
+void HttpResponse::forEachHeader(HttpParser::EnumrateCallback& cb)
 {
     pimpl_->forEachHeader([&cb] (const std::string& name, const std::string& value) {
         cb(name.c_str(), value.c_str());
     });
+}
+
+void HttpResponse::forEachHeader(HttpParser::EnumrateCallback&& cb)
+{
+    forEachHeader(cb);
 }
 
 void HttpResponse::setDataCallback(DataCallback& cb)

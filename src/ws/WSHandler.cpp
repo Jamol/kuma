@@ -5,7 +5,13 @@
 #include "util/base64.h"
 
 #include <sstream>
+#ifdef KUMA_HAS_OPENSSL
 #include <openssl/sha.h>
+#else
+#include "sha1/sha1.h"
+#include "sha1/sha1.cpp"
+#define SHA1 sha1::calc
+#endif
 
 KUMA_NS_BEGIN
 
@@ -16,7 +22,7 @@ WSHandler::WSHandler()
 , destroy_flag_ptr_(nullptr)
 {
     http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });
-    http_parser_.setEventCallback([this] (HttpParser::HttpEvent ev) { onHttpEvent(ev); });
+    http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
 }
 
 WSHandler::~WSHandler()
@@ -100,14 +106,14 @@ void WSHandler::onHttpData(const char* data, uint32_t len)
     KUMA_ERRTRACE("WSHandler::onHttpData, len="<<len);
 }
 
-void WSHandler::onHttpEvent(HttpParser::HttpEvent ev)
+void WSHandler::onHttpEvent(HttpEvent ev)
 {
     KUMA_INFOTRACE("WSHandler::onHttpEvent, ev="<<ev);
     switch (ev) {
-        case HttpParser::HTTP_HEADER_COMPLETE:
+        case HTTP_HEADER_COMPLETE:
             break;
             
-        case HttpParser::HTTP_COMPLETE:
+        case HTTP_COMPLETE:
             if(http_parser_.isRequest()) {
                 handleRequest();
             } else {
@@ -115,7 +121,7 @@ void WSHandler::onHttpEvent(HttpParser::HttpEvent ev)
             }
             break;
             
-        case HttpParser::HTTP_ERROR:
+        case HTTP_ERROR:
             state_ = STATE_ERROR;
             break;
             

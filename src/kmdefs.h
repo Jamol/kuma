@@ -33,7 +33,7 @@ KUMA_NS_BEGIN
 # define KUMA_API
 #endif
 
-enum{
+typedef enum{
     KUMA_ERROR_NOERR    = 0,
     KUMA_ERROR_FAILED,
     KUMA_ERROR_INVALID_STATE,
@@ -44,7 +44,13 @@ enum{
     KUMA_ERROR_POLLERR,
     KUMA_ERROR_SSL_FAILED,
     KUMA_ERROR_UNSUPPORT
-};
+}KMError;
+
+typedef enum {
+    HTTP_HEADER_COMPLETE,
+    HTTP_COMPLETE,
+    HTTP_ERROR
+}HttpEvent;
 
 #define FLAG_HAS_SSL    0x01
 #define FLAG_HAS_MCAST  0x02

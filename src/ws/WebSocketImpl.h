@@ -4,7 +4,7 @@
 #include "kmdefs.h"
 #include "WSHandler.h"
 #include "TcpSocketImpl.h"
-#include "Uri.h"
+#include "http/Uri.h"
 
 KUMA_NS_BEGIN
 
@@ -66,6 +66,10 @@ private:
     State                   state_;
     WSHandler               ws_handler_;
     Uri                     uri_;
+    
+    uint8_t*                init_data_;
+    uint32_t                init_len_;
+    
     std::vector<uint8_t>    send_buffer_;
     uint32_t                send_offset_;
     TcpSocketImpl           tcp_socket_;

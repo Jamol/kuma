@@ -33,6 +33,7 @@ class TcpSocketImpl;
 class UdpSocketImpl;
 class TcpServerSocketImpl;
 class TimerImpl;
+class HttpParserImpl;
 class HttpRequestImpl;
 class HttpResponseImpl;
 class WebSocketImpl;
@@ -78,7 +79,7 @@ public:
     int bind(const char* bind_host, uint16_t bind_port);
     int connect(const char* host, uint16_t port, EventCallback& cb, uint32_t flags = 0, uint32_t timeout = 0);
     int connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t flags = 0, uint32_t timeout = 0);
-    int attachFd(SOCKET_FD fd, uint32_t flags = 0, uint8_t* init_data = nullptr, uint32_t init_len = 0);
+    int attachFd(SOCKET_FD fd, uint32_t flags = 0);
     int detachFd(SOCKET_FD &fd);
     int startSslHandshake(bool is_server);
     int send(uint8_t* data, uint32_t length);
@@ -170,13 +171,61 @@ private:
     TimerImpl* pimpl_;
 };
 
+class HttpParser
+{
+public:
+    typedef std::function<void(const char*, uint32_t)> DataCallback;
+    typedef std::function<void(HttpEvent)> EventCallback;
+    typedef std::function<void(const char* name, const char* value)> EnumrateCallback;
+    
+    HttpParser();
+    ~HttpParser();
+    
+    // return bytes parsed
+    int parse(const char* data, uint32_t len);
+    void pause();
+    void resume();
+    
+    // true - http completed
+    bool setEOF();
+    void reset();
+    
+    bool isRequest();
+    bool headerComplete();
+    bool complete();
+    bool error();
+    bool paused();
+    
+    int getStatusCode();
+    const char* getUrl();
+    const char* getUrlPath();
+    const char* getMethod();
+    const char* getVersion();
+    const char* getParamValue(const char* name);
+    const char* getHeaderValue(const char* name);
+    
+    void forEachParam(EnumrateCallback& cb);
+    void forEachHeader(EnumrateCallback& cb);
+    void forEachParam(EnumrateCallback&& cb);
+    void forEachHeader(EnumrateCallback&& cb);
+    
+    void setDataCallback(DataCallback& cb);
+    void setEventCallback(EventCallback& cb);
+    void setDataCallback(DataCallback&& cb);
+    void setEventCallback(EventCallback&& cb);
+    
+    HttpParserImpl* getPimpl();
+    
+private:
+    HttpParserImpl* pimpl_;
+};
+
 class KUMA_API HttpRequest
 {
 public:
     typedef std::function<void(uint8_t*, uint32_t)> DataCallback;
     typedef std::function<void(int)> EventCallback;
     typedef std::function<void(void)> HttpEventCallback;
-    typedef std::function<void(const char* name, const char* value)> EnumrateCallback;
     
     HttpRequest(EventLoop* loop);
     ~HttpRequest();
@@ -190,7 +239,8 @@ public:
     int getStatusCode();
     const char* getVersion();
     const char* getHeaderValue(const char* name);
-    void forEachHeader(EnumrateCallback cb);
+    void forEachHeader(HttpParser::EnumrateCallback& cb);
+    void forEachHeader(HttpParser::EnumrateCallback&& cb);
     
     void setDataCallback(DataCallback& cb);
     void setWriteCallback(EventCallback& cb);
@@ -215,7 +265,6 @@ public:
     typedef std::function<void(uint8_t*, uint32_t)> DataCallback;
     typedef std::function<void(int)> EventCallback;
     typedef std::function<void(void)> HttpEventCallback;
-    typedef std::function<void(const char* name, const char* value)> EnumrateCallback;
     
     HttpResponse(EventLoop* loop);
     ~HttpResponse();
@@ -232,7 +281,8 @@ public:
     const char* getVersion();
     const char* getParamValue(const char* name);
     const char* getHeaderValue(const char* name);
-    void forEachHeader(EnumrateCallback cb);
+    void forEachHeader(HttpParser::EnumrateCallback& cb);
+    void forEachHeader(HttpParser::EnumrateCallback&& cb);
     
     void setDataCallback(DataCallback& cb);
     void setWriteCallback(EventCallback& cb);

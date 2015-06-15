@@ -215,7 +215,7 @@ void HttpRequestImpl::onConnect(int err)
     }
     body_bytes_sent_ = 0;
     http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });
-    http_parser_.setEventCallback([this] (HttpParser::HttpEvent ev) { onHttpEvent(ev); });
+    http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     buildRequest();
     setState(STATE_SENDING_REQUEST);
     int ret = tcp_socket_.send(&send_buffer_[0] + send_offset_, (uint32_t)send_buffer_.size() - send_offset_);
@@ -321,20 +321,20 @@ void HttpRequestImpl::onHttpData(const char* data, uint32_t len)
     if(cb_data_) cb_data_((uint8_t*)data, len);
 }
 
-void HttpRequestImpl::onHttpEvent(HttpParser::HttpEvent ev)
+void HttpRequestImpl::onHttpEvent(HttpEvent ev)
 {
     KUMA_INFOXTRACE("onHttpEvent, ev="<<ev);
     switch (ev) {
-        case HttpParser::HTTP_HEADER_COMPLETE:
+        case HTTP_HEADER_COMPLETE:
             if(cb_header_) cb_header_();
             break;
             
-        case HttpParser::HTTP_COMPLETE:
+        case HTTP_COMPLETE:
             setState(STATE_COMPLETE);
             if(cb_response_) cb_response_();
             break;
             
-        case HttpParser::HTTP_ERROR:
+        case HTTP_ERROR:
             cleanup();
             setState(STATE_ERROR);
             if(cb_error_) cb_error_(KUMA_ERROR_FAILED);

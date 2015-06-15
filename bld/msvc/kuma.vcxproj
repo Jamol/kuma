@@ -110,7 +110,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;KUMA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\src;..\..\src\loop</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\src;..\..\src\loop;..\..\vendor</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -148,7 +148,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;KUMA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\src;..\..\src\loop</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\src;..\..\src\loop;..\..\vendor</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -160,7 +160,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\EventLoopImpl.cpp" />
-    <ClCompile Include="..\..\src\http\HttpParser.cpp" />
+    <ClCompile Include="..\..\src\http\HttpParserImpl.cpp" />
     <ClCompile Include="..\..\src\http\HttpRequestImpl.cpp" />
     <ClCompile Include="..\..\src\http\HttpResponseImpl.cpp" />
     <ClCompile Include="..\..\src\http\Uri.cpp" />
@@ -171,13 +171,16 @@
     <ClCompile Include="..\..\src\TcpSocketImpl.cpp" />
     <ClCompile Include="..\..\src\TimerManager.cpp" />
     <ClCompile Include="..\..\src\UdpSocketImpl.cpp" />
+    <ClCompile Include="..\..\src\util\base64.cpp" />
     <ClCompile Include="..\..\src\util\kmtrace.cpp" />
     <ClCompile Include="..\..\src\util\util.cpp" />
+    <ClCompile Include="..\..\src\ws\WebSocketImpl.cpp" />
+    <ClCompile Include="..\..\src\ws\WSHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\evdefs.h" />
     <ClInclude Include="..\..\src\EventLoopImpl.h" />
-    <ClInclude Include="..\..\src\http\HttpParser.h" />
+    <ClInclude Include="..\..\src\http\HttpParserImpl.h" />
     <ClInclude Include="..\..\src\http\HttpRequestImpl.h" />
     <ClInclude Include="..\..\src\http\HttpResponseImpl.h" />
     <ClInclude Include="..\..\src\http\Uri.h" />
@@ -190,10 +193,12 @@
     <ClInclude Include="..\..\src\TcpSocketImpl.h" />
     <ClInclude Include="..\..\src\TimerManager.h" />
     <ClInclude Include="..\..\src\UdpSocketImpl.h" />
-    <ClInclude Include="..\..\src\util\DataPacket.h" />
+    <ClInclude Include="..\..\src\util\base64.h" />
     <ClInclude Include="..\..\src\util\kmqueue.h" />
     <ClInclude Include="..\..\src\util\kmtrace.h" />
     <ClInclude Include="..\..\src\util\util.h" />
+    <ClInclude Include="..\..\src\ws\WebSocketImpl.h" />
+    <ClInclude Include="..\..\src\ws\WSHandler.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

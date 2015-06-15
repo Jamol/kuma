@@ -41,7 +41,7 @@ public:
     int bind(const char* bind_host, uint16_t bind_port);
     int connect(const char* host, uint16_t port, EventCallback& cb, uint32_t flags = 0, uint32_t timeout = 0);
     int connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t flags = 0, uint32_t timeout = 0);
-    int attachFd(SOCKET_FD fd, uint32_t flags = 0, uint8_t* init_data = nullptr, uint32_t init_len = 0);
+    int attachFd(SOCKET_FD fd, uint32_t flags = 0);
     int detachFd(SOCKET_FD &fd);
     int startSslHandshake(bool is_server);
     int send(uint8_t* data, uint32_t length);
@@ -94,10 +94,6 @@ private:
     bool            registered_;
     bool*           destroy_flag_ptr_;
     uint32_t        flags_;
-    
-    uint8_t*        init_data_;
-    uint32_t        init_len_;
-    uint32_t        init_off_;
     
     SslHandler*     ssl_handler_;
     

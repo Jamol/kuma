@@ -2,7 +2,7 @@
 #define __HttpResponseImpl_H__
 
 #include "kmdefs.h"
-#include "HttpParser.h"
+#include "HttpParserImpl.h"
 #include "TcpSocketImpl.h"
 #include "Uri.h"
 
@@ -30,7 +30,8 @@ public:
     const std::string& getVersion() { return http_parser_.getVersion(); }
     const std::string& getParamValue(const char* name) { return http_parser_.getParamValue(name); }
     const std::string& getHeaderValue(const char* name) { return http_parser_.getHeaderValue(name); }
-    void forEachHeader(HttpParser::EnumrateCallback cb) { return http_parser_.forEachHeader(cb); }
+    void forEachHeader(HttpParserImpl::EnumrateCallback& cb) { return http_parser_.forEachHeader(cb); }
+    void forEachHeader(HttpParserImpl::EnumrateCallback&& cb) { return http_parser_.forEachHeader(cb); }
     
     void setDataCallback(DataCallback& cb) { cb_data_ = cb; }
     void setWriteCallback(EventCallback& cb) { cb_write_ = cb; }
@@ -69,19 +70,22 @@ private:
     void cleanup();
     
     void onHttpData(const char* data, uint32_t len);
-    void onHttpEvent(HttpParser::HttpEvent ev);
+    void onHttpEvent(HttpEvent ev);
     void notifyComplete();
     
 private:
-    HttpParser              http_parser_;
+    HttpParserImpl          http_parser_;
     State                   state_;
     EventLoopImpl*          loop_;
+    
+    uint8_t*                init_data_;
+    uint32_t                init_len_;
     
     std::vector<uint8_t>    send_buffer_;
     uint32_t                send_offset_;
     TcpSocketImpl           tcp_socket_;
     
-    HttpParser::STRING_MAP  header_map_;
+    HttpParserImpl::STRING_MAP  header_map_;
     
     bool                    is_chunked_;
     bool                    has_content_length_;

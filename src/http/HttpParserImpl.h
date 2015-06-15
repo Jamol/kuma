@@ -1,5 +1,5 @@
-#ifndef __HttpParser_H__
-#define __HttpParser_H__
+#ifndef __HttpParserImpl_H__
+#define __HttpParserImpl_H__
 
 #include "kmdefs.h"
 #include "util/util.h"
@@ -10,15 +10,9 @@
 
 KUMA_NS_BEGIN
 
-class HttpParser
+class HttpParserImpl
 {
 public:
-    typedef enum {
-        HTTP_HEADER_COMPLETE,
-        HTTP_COMPLETE,
-        HTTP_ERROR
-    }HttpEvent;
-    
     typedef std::function<void(const char*, uint32_t)> DataCallback;
     typedef std::function<void(HttpEvent)> EventCallback;
     typedef std::function<void(const std::string& name, const std::string& value)> EnumrateCallback;
@@ -30,11 +24,17 @@ public:
     };
     typedef std::map<std::string, std::string, CaseIgnoreLess> STRING_MAP;
     
-    HttpParser();
-    ~HttpParser();
+    HttpParserImpl();
+    HttpParserImpl(const HttpParserImpl& other);
+    HttpParserImpl(HttpParserImpl&& other);
+    ~HttpParserImpl();
+    HttpParserImpl& operator=(const HttpParserImpl& other);
+    HttpParserImpl& operator=(HttpParserImpl&& other);
     
     // return bytes parsed
     int parse(const char* data, uint32_t len);
+    void pause();
+    void resume();
     // true - http completed
     bool setEOF();
     void reset();
@@ -43,6 +43,7 @@ public:
     bool headerComplete() { return header_complete_; }
     bool complete();
     bool error();
+    bool paused() { return paused_; }
     
     int getStatusCode() { return status_code_; }
     const std::string& getLocation() { return getHeaderValue("Location"); }
@@ -53,8 +54,10 @@ public:
     const std::string& getParamValue(const std::string& name);
     const std::string& getHeaderValue(const std::string& name);
     
-    void forEachParam(EnumrateCallback cb);
-    void forEachHeader(EnumrateCallback cb);
+    void forEachParam(EnumrateCallback& cb);
+    void forEachHeader(EnumrateCallback& cb);
+    void forEachParam(EnumrateCallback&& cb);
+    void forEachHeader(EnumrateCallback&& cb);
     
     void setDataCallback(DataCallback& cb) { cb_data_ = cb; }
     void setEventCallback(EventCallback& cb) { cb_event_ = cb; }
@@ -92,10 +95,6 @@ private:
     void clearBuffer() { str_buf_.clear(); }
     
 private:
-    HttpParser &operator= (const HttpParser &);
-    HttpParser(const HttpParser &);
-    
-private:
     DataCallback        cb_data_;
     EventCallback       cb_event_;
     bool                is_request_;
@@ -105,6 +104,7 @@ private:
     int                 read_state_;
     bool                header_complete_;
     bool                upgrade_;
+    bool                paused_;
     
     bool                has_content_length_;
     uint32_t            content_length_;

@@ -2,7 +2,7 @@
 #define __WSHandler_H__
 
 #include "kmdefs.h"
-#include "HttpParser.h"
+#include "http/HttpParserImpl.h"
 #include <vector>
 
 KUMA_NS_BEGIN
@@ -102,7 +102,7 @@ private:
     WSError decodeFrame(uint8_t* data, uint32_t len);
     
     void onHttpData(const char* data, uint32_t len);
-    void onHttpEvent(HttpParser::HttpEvent ev);
+    void onHttpEvent(HttpEvent ev);
     
     void handleRequest();
     void handleResponse();
@@ -118,7 +118,7 @@ private:
     DecodeContext           ctx_;
     uint8_t                 opcode_;
     
-    HttpParser              http_parser_;
+    HttpParserImpl          http_parser_;
     
     DataCallback            cb_data_;
     HandshakeCallback       cb_handshake_;

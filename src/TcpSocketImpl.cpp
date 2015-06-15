@@ -72,9 +72,6 @@ TcpSocketImpl::TcpSocketImpl(EventLoopImpl* loop)
 , registered_(false)
 , destroy_flag_ptr_(nullptr)
 , flags_(0)
-, init_data_(nullptr)
-, init_len_(0)
-, init_off_(0)
 , ssl_handler_(nullptr)
 {
     
@@ -102,11 +99,6 @@ void TcpSocketImpl::cleanup()
         ssl_handler_ = nullptr;
     }
 #endif
-    if(init_data_) {
-        delete [] init_data_;
-        init_data_ = nullptr;
-        init_len_ = 0;
-    }
     if(INVALID_FD != fd_) {
         SOCKET_FD fd = fd_;
         fd_ = INVALID_FD;
@@ -248,7 +240,7 @@ int TcpSocketImpl::connect_i(const char* host, uint16_t port, uint32_t timeout)
     return KUMA_ERROR_NOERR;
 }
 
-int TcpSocketImpl::attachFd(SOCKET_FD fd, uint32_t flags, uint8_t* init_data, uint32_t init_len)
+int TcpSocketImpl::attachFd(SOCKET_FD fd, uint32_t flags)
 {
     KUMA_INFOXTRACE("attachFd, fd="<<fd<<", state="<<getState());
     if(getState() != ST_IDLE) {
@@ -274,12 +266,6 @@ int TcpSocketImpl::attachFd(SOCKET_FD fd, uint32_t flags, uint8_t* init_data, ui
         }
     }
 #endif
-    if(init_data && init_len > 0) {
-        init_len_ = init_len;
-        init_data_ = new uint8_t(init_len_);
-        memcpy(init_data_, init_data, init_len_);
-        init_off_ = 0;
-    }
     loop_->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
     registered_ = true;
     return KUMA_ERROR_NOERR;
@@ -496,18 +482,6 @@ int TcpSocketImpl::receive(uint8_t* data, uint32_t length)
         KUMA_ERRXTRACE("receive, invalid fd");
         return -1;
     }
-    if(init_data_ && init_len_ > 0 && init_len_ - init_off_ > 0)
-    {
-        uint32_t read_len = init_len_ - init_off_ > length ? length : init_len_ - init_off_;
-        memcpy(data, init_data_ + init_off_, read_len);
-        init_off_ += read_len;
-        if(init_off_ >= init_len_) {
-            delete [] init_data_;
-            init_data_ = nullptr;
-            init_len_ = init_off_ = 0;
-        }
-        return read_len;
-    }
     int ret = 0;
 #ifdef KUMA_HAS_OPENSSL
     if(SslEnabled()) {
@@ -587,15 +561,6 @@ void TcpSocketImpl::onSend(int err)
 {
     if(loop_->isPollLT()) {
         loop_->updateFd(fd_, KUMA_EV_READ | KUMA_EV_ERROR);
-    }
-    if(init_data_ && init_len_ > 0) {
-        bool destroyed = false;
-        destroy_flag_ptr_ = &destroyed;
-        onReceive(KUMA_ERROR_NOERR);
-        if(destroyed) {
-            return ;
-        }
-        destroy_flag_ptr_ = nullptr;
     }
     if(cb_write_ && isReady()) cb_write_(err);
 }

@@ -1,5 +1,5 @@
 
-#include "HttpParser.h"
+#include "HttpParserImpl.h"
 #include "util/kmtrace.h"
 #include "util/util.h"
 #include "Uri.h"
@@ -30,12 +30,13 @@ typedef enum{
 static const std::string str_empty = "";
 
 //////////////////////////////////////////////////////////////////////////
-HttpParser::HttpParser()
+HttpParserImpl::HttpParserImpl()
 : is_request_(true)
 , read_state_(HTTP_READ_LINE)
 , header_complete_(false)
 , has_content_length_(false)
 , upgrade_(false)
+, paused_(false)
 , content_length_(0)
 , is_chunked_(false)
 , chunk_state_(CHUNK_READ_SIZE)
@@ -48,7 +49,115 @@ HttpParser::HttpParser()
     
 }
 
-HttpParser::~HttpParser()
+HttpParserImpl::HttpParserImpl(const HttpParserImpl& other)
+: is_request_(other.is_request_)
+, str_buf_(other.str_buf_)
+, read_state_(other.read_state_)
+, header_complete_(other.header_complete_)
+, upgrade_(other.upgrade_)
+, paused_(other.paused_)
+, has_content_length_(other.has_content_length_)
+, content_length_(other.content_length_)
+
+, is_chunked_(other.is_chunked_)
+, chunk_state_(other.chunk_state_)
+, chunk_size_(other.chunk_size_)
+, chunk_bytes_read_(other.chunk_bytes_read_)
+, total_bytes_read_(other.total_bytes_read_)
+
+, method_(other.method_)
+, url_(other.url_)
+, url_path_(other.url_path_)
+, param_map_(other.param_map_)
+, header_map_(other.header_map_)
+, status_code_(other.status_code_)
+{
+    
+}
+
+HttpParserImpl::HttpParserImpl(HttpParserImpl&& other)
+: is_request_(other.is_request_)
+, str_buf_(std::move(other.str_buf_))
+, read_state_(other.read_state_)
+, header_complete_(other.header_complete_)
+, upgrade_(other.upgrade_)
+, paused_(other.paused_)
+, has_content_length_(other.has_content_length_)
+, content_length_(other.content_length_)
+
+, is_chunked_(other.is_chunked_)
+, chunk_state_(other.chunk_state_)
+, chunk_size_(other.chunk_size_)
+, chunk_bytes_read_(other.chunk_bytes_read_)
+, total_bytes_read_(other.total_bytes_read_)
+
+, method_(std::move(other.method_))
+, url_(std::move(other.url_))
+, url_path_(std::move(other.url_path_))
+, param_map_(std::move(other.param_map_))
+, header_map_(std::move(other.header_map_))
+, status_code_(other.status_code_)
+{
+    
+}
+
+HttpParserImpl& HttpParserImpl::operator=(const HttpParserImpl& other)
+{
+    if(this != & other) {
+        is_request_ = other.is_request_;
+        str_buf_ = other.str_buf_;
+        read_state_ = other.read_state_;
+        header_complete_ = other.header_complete_;
+        upgrade_ = other.upgrade_;
+        paused_ = other.paused_;
+        has_content_length_ = other.has_content_length_;
+        content_length_ = other.content_length_;
+        
+        is_chunked_ = other.is_chunked_;
+        chunk_state_ = other.chunk_state_;
+        chunk_size_ = other.chunk_size_;
+        chunk_bytes_read_ = other.chunk_bytes_read_;
+        total_bytes_read_ = other.total_bytes_read_;
+        
+        method_ = other.method_;
+        url_ = other.url_;
+        url_path_ = other.url_path_;
+        param_map_ = other.param_map_;
+        header_map_ = other.header_map_;
+        status_code_ = other.status_code_;
+    }
+    return *this;
+}
+
+HttpParserImpl& HttpParserImpl::operator=(HttpParserImpl&& other)
+{
+    if(this != & other) {
+        is_request_ = other.is_request_;
+        str_buf_.swap(other.str_buf_);
+        read_state_ = other.read_state_;
+        header_complete_ = other.header_complete_;
+        upgrade_ = other.upgrade_;
+        paused_ = other.paused_;
+        has_content_length_ = other.has_content_length_;
+        content_length_ = other.content_length_;
+        
+        is_chunked_ = other.is_chunked_;
+        chunk_state_ = other.chunk_state_;
+        chunk_size_ = other.chunk_size_;
+        chunk_bytes_read_ = other.chunk_bytes_read_;
+        total_bytes_read_ = other.total_bytes_read_;
+        
+        method_.swap(other.method_);
+        url_.swap(other.url_);
+        url_path_.swap(other.url_path_);
+        param_map_.swap(other.param_map_);
+        header_map_.swap(other.header_map_);
+        status_code_ = other.status_code_;
+    }
+    return *this;
+}
+
+HttpParserImpl::~HttpParserImpl()
 {
     param_map_.clear();
     header_map_.clear();
@@ -57,13 +166,14 @@ HttpParser::~HttpParser()
     }
 }
 
-void HttpParser::reset()
+void HttpParserImpl::reset()
 {
     read_state_ = HTTP_READ_LINE;
     
     status_code_ = 0;
     header_complete_ = false;
     upgrade_ = false;
+    paused_ = false;
     content_length_ = 0;
     has_content_length_ = false;
     
@@ -84,24 +194,38 @@ void HttpParser::reset()
     header_map_.clear();
 }
 
-bool HttpParser::complete()
+bool HttpParserImpl::complete()
 {
     return HTTP_READ_DONE == read_state_;
 }
 
-bool HttpParser::error()
+bool HttpParserImpl::error()
 {
     return HTTP_READ_ERROR == read_state_;
 }
 
-bool HttpParser::readEOF()
+void HttpParserImpl::pause() {
+    paused_ = true;
+}
+
+void HttpParserImpl::resume() {
+    paused_ = false;
+    if(hasBody() && !upgrade_) {
+        read_state_ = HTTP_READ_BODY;
+    } else {
+        read_state_ = HTTP_READ_DONE;
+        onComplete();
+    }
+}
+
+bool HttpParserImpl::readEOF()
 {
     return !is_request_ && !has_content_length_ && !is_chunked_ &&
            !((100 <= status_code_ && status_code_ <= 199) ||
              204 == status_code_ || 304 == status_code_);
 }
 
-bool HttpParser::hasBody()
+bool HttpParserImpl::hasBody()
 {
     if(content_length_ > 0 || is_chunked_) {
         return true;
@@ -117,10 +241,10 @@ bool HttpParser::hasBody()
     }
 }
 
-int HttpParser::parse(const char* data, uint32_t len)
+int HttpParserImpl::parse(const char* data, uint32_t len)
 {
     if(HTTP_READ_DONE == read_state_ || HTTP_READ_ERROR == read_state_) {
-        KUMA_WARNTRACE("parse, invalid state="<<read_state_);
+        KUMA_WARNTRACE("HttpParser::parse, invalid state="<<read_state_);
         return 0;
     }
     if(HTTP_READ_BODY == read_state_ && !is_chunked_ && !has_content_length_)
@@ -142,7 +266,7 @@ int HttpParser::parse(const char* data, uint32_t len)
     return parsed_len;
 }
 
-bool HttpParser::setEOF()
+bool HttpParserImpl::setEOF()
 {
     if(readEOF() && HTTP_READ_BODY == read_state_) {
         read_state_ = HTTP_READ_DONE;
@@ -152,7 +276,7 @@ bool HttpParser::setEOF()
     return false;
 }
 
-int HttpParser::saveData(const char* cur_pos, const char* end)
+int HttpParserImpl::saveData(const char* cur_pos, const char* end)
 {
     if(cur_pos == end) {
         return KUMA_ERROR_NOERR;
@@ -165,7 +289,7 @@ int HttpParser::saveData(const char* cur_pos, const char* end)
     return KUMA_ERROR_NOERR;
 }
 
-HttpParser::ParseState HttpParser::parseHttp(const char*& cur_pos, const char* end)
+HttpParserImpl::ParseState HttpParserImpl::parseHttp(const char*& cur_pos, const char* end)
 {
     const char* line = nullptr;
     const char* line_end = nullptr;
@@ -197,6 +321,9 @@ HttpParser::ParseState HttpParser::parseHttp(const char*& cur_pos, const char* e
             if(line == line_end && bufferEmpty())
             {// blank line, header completed
                 onHeaderComplete();
+                if(paused_) {
+                    return PARSE_STATE_CONTINUE;
+                }
                 if(hasBody() && !upgrade_) {
                     read_state_ = HTTP_READ_BODY;
                 } else {
@@ -254,7 +381,7 @@ HttpParser::ParseState HttpParser::parseHttp(const char*& cur_pos, const char* e
     return HTTP_READ_DONE == read_state_?PARSE_STATE_DONE:PARSE_STATE_CONTINUE;
 }
 
-bool HttpParser::parseStartLine(const char* line, const char* line_end)
+bool HttpParserImpl::parseStartLine(const char* line, const char* line_end)
 {
     const char* p_line = line;
     const char* p_end = line_end;
@@ -294,7 +421,7 @@ bool HttpParser::parseStartLine(const char* line, const char* line_end)
     return true;
 }
 
-bool HttpParser::parseHeaderLine(const char* line, const char* line_end)
+bool HttpParserImpl::parseHeaderLine(const char* line, const char* line_end)
 {
     const char* p_line = line;
     const char* p_end = line_end;
@@ -319,7 +446,7 @@ bool HttpParser::parseHeaderLine(const char* line, const char* line_end)
     return true;
 }
 
-HttpParser::ParseState HttpParser::parseChunk(const char*& cur_pos, const char* end)
+HttpParserImpl::ParseState HttpParserImpl::parseChunk(const char*& cur_pos, const char* end)
 {
     const char* p_line = nullptr;
     const char* p_end = nullptr;
@@ -387,7 +514,7 @@ HttpParser::ParseState HttpParser::parseChunk(const char*& cur_pos, const char* 
             case CHUNK_READ_DATA_CR:
             {
                 if(*cur_pos != CR) {
-                    KUMA_ERRTRACE("parseChunk, can not find data CR");
+                    KUMA_ERRTRACE("HttpParser::parseChunk, can not find data CR");
                     read_state_ = HTTP_READ_ERROR;
                     return PARSE_STATE_ERROR;
                 }
@@ -398,7 +525,7 @@ HttpParser::ParseState HttpParser::parseChunk(const char*& cur_pos, const char* 
             case CHUNK_READ_DATA_LF:
             {
                 if(*cur_pos != LF) {
-                    KUMA_ERRTRACE("parseChunk, can not find data LF");
+                    KUMA_ERRTRACE("HttpParser::parseChunk, can not find data LF");
                     read_state_ = HTTP_READ_ERROR;
                     return PARSE_STATE_ERROR;
                 }
@@ -431,35 +558,35 @@ HttpParser::ParseState HttpParser::parseChunk(const char*& cur_pos, const char* 
     return HTTP_READ_DONE == read_state_?PARSE_STATE_DONE:PARSE_STATE_CONTINUE;
 }
 
-void HttpParser::onHeaderComplete()
+void HttpParserImpl::onHeaderComplete()
 {
     header_complete_ = true;
     auto it = header_map_.find("Content-Length");
     if(it != header_map_.end()) {
         content_length_ = atoi(it->second.c_str());
         has_content_length_ = true;
-        KUMA_INFOTRACE("onHeaderComplete, Content-Length="<<content_length_);
+        KUMA_INFOTRACE("HttpParser::onHeaderComplete, Content-Length="<<content_length_);
     }
     it = header_map_.find("Transfer-Encoding");
     if(it != header_map_.end()) {
         is_chunked_ = is_equal("chunked", it->second);
-        KUMA_INFOTRACE("onHeaderComplete, Transfer-Encoding="<<it->second);
+        KUMA_INFOTRACE("HttpParser::onHeaderComplete, Transfer-Encoding="<<it->second);
     }
     it = header_map_.find("Upgrade");
     if(it != header_map_.end()) {
         upgrade_ = true;
-        KUMA_INFOTRACE("onHeaderComplete, Upgrade="<<it->second);
+        KUMA_INFOTRACE("HttpParser::onHeaderComplete, Upgrade="<<it->second);
     }
     if(cb_event_) cb_event_(HTTP_HEADER_COMPLETE);
 }
 
-void HttpParser::onComplete()
+void HttpParserImpl::onComplete()
 {
     KUMA_INFOTRACE("HttpParser::onComplete");
     if(cb_event_) cb_event_(HTTP_COMPLETE);
 }
 
-bool HttpParser::decodeUrl()
+bool HttpParserImpl::decodeUrl()
 {
     std::string new_url;
     int i = 0;
@@ -500,7 +627,7 @@ bool HttpParser::decodeUrl()
     return true;
 }
 
-bool HttpParser::parseUrl()
+bool HttpParserImpl::parseUrl()
 {
     Uri uri;
     if(!uri.parse(url_)) {
@@ -529,14 +656,14 @@ bool HttpParser::parseUrl()
     return true;
 }
 
-void HttpParser::addParamValue(const std::string& name, const std::string& value)
+void HttpParserImpl::addParamValue(const std::string& name, const std::string& value)
 {
     if(!name.empty()) {
         param_map_[name] = value;
     }
 }
 
-void HttpParser::addHeaderValue(std::string& name, std::string& value)
+void HttpParserImpl::addHeaderValue(std::string& name, std::string& value)
 {
     trim_left(name);
     trim_right(name);
@@ -547,7 +674,7 @@ void HttpParser::addHeaderValue(std::string& name, std::string& value)
     }
 }
 
-const std::string& HttpParser::getParamValue(const std::string& name)
+const std::string& HttpParserImpl::getParamValue(const std::string& name)
 {
     auto it = param_map_.find(name);
     if (it != param_map_.end()) {
@@ -556,7 +683,7 @@ const std::string& HttpParser::getParamValue(const std::string& name)
     return str_empty;
 }
 
-const std::string& HttpParser::getHeaderValue(const std::string& name)
+const std::string& HttpParserImpl::getHeaderValue(const std::string& name)
 {
     auto it = header_map_.find(name);
     if (it != header_map_.end()) {
@@ -565,21 +692,31 @@ const std::string& HttpParser::getHeaderValue(const std::string& name)
     return str_empty;
 }
 
-void HttpParser::forEachParam(EnumrateCallback cb)
+void HttpParserImpl::forEachParam(EnumrateCallback& cb)
 {
     for (auto &kv : param_map_) {
-        cb(kv.first.c_str(), kv.second.c_str());
+        cb(kv.first, kv.second);
     }
 }
 
-void HttpParser::forEachHeader(EnumrateCallback cb)
+void HttpParserImpl::forEachHeader(EnumrateCallback& cb)
 {
     for (auto &kv : header_map_) {
-        cb(kv.first.c_str(), kv.second.c_str());
+        cb(kv.first, kv.second);
     }
 }
 
-bool HttpParser::getLine(const char*& cur_pos, const char* end, const char*& line, const char*& line_end)
+void HttpParserImpl::forEachParam(EnumrateCallback&& cb)
+{
+    forEachParam(cb);
+}
+
+void HttpParserImpl::forEachHeader(EnumrateCallback&& cb)
+{
+    forEachHeader(cb);
+}
+
+bool HttpParserImpl::getLine(const char*& cur_pos, const char* end, const char*& line, const char*& line_end)
 {
     const char* lf = std::find(cur_pos, end, LF);
     if(lf == cur_pos) {

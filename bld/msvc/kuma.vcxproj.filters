@@ -51,9 +51,6 @@
     <ClCompile Include="..\..\src\UdpSocketImpl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\http\HttpParser.cpp">
-      <Filter>Source Files\http</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\http\HttpRequestImpl.cpp">
       <Filter>Source Files\http</Filter>
     </ClCompile>
@@ -62,6 +59,18 @@
     </ClCompile>
     <ClCompile Include="..\..\src\http\HttpResponseImpl.cpp">
       <Filter>Source Files\http</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\http\HttpParserImpl.cpp">
+      <Filter>Source Files\http</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ws\WebSocketImpl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ws\WSHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\util\base64.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -78,9 +87,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\kmdefs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\util\DataPacket.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\poll\IOPoll.h">
@@ -116,14 +122,23 @@
     <ClInclude Include="..\..\src\http\Uri.h">
       <Filter>Header Files\http</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\http\HttpParser.h">
-      <Filter>Header Files\http</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\http\HttpRequestImpl.h">
       <Filter>Header Files\http</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\http\HttpResponseImpl.h">
       <Filter>Header Files\http</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\HttpParserImpl.h">
+      <Filter>Header Files\http</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ws\WebSocketImpl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ws\WSHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\util\base64.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

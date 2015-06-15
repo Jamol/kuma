@@ -2,7 +2,7 @@
 #define __HttpRequestImpl_H__
 
 #include "kmdefs.h"
-#include "HttpParser.h"
+#include "HttpParserImpl.h"
 #include "TcpSocketImpl.h"
 #include "Uri.h"
 
@@ -27,7 +27,8 @@ public:
     int getStatusCode() { return http_parser_.getStatusCode(); }
     const std::string& getVersion() { return http_parser_.getVersion(); }
     const std::string& getHeaderValue(const char* name) { return http_parser_.getHeaderValue(name); }
-    void forEachHeader(HttpParser::EnumrateCallback cb) { return http_parser_.forEachHeader(cb); }
+    void forEachHeader(HttpParserImpl::EnumrateCallback& cb) { return http_parser_.forEachHeader(cb); }
+    void forEachHeader(HttpParserImpl::EnumrateCallback&& cb) { return http_parser_.forEachHeader(cb); }
     
     void setDataCallback(DataCallback& cb) { cb_data_ = cb; }
     void setWriteCallback(EventCallback& cb) { cb_write_ = cb; }
@@ -66,17 +67,17 @@ private:
     void cleanup();
     
     void onHttpData(const char* data, uint32_t len);
-    void onHttpEvent(HttpParser::HttpEvent ev);
+    void onHttpEvent(HttpEvent ev);
     
 private:
-    HttpParser              http_parser_;
+    HttpParserImpl          http_parser_;
     State                   state_;
     
     std::vector<uint8_t>    send_buffer_;
     uint32_t                send_offset_;
     TcpSocketImpl           tcp_socket_;
     
-    HttpParser::STRING_MAP  header_map_;
+    HttpParserImpl::STRING_MAP  header_map_;
     std::string             method_;
     std::string             url_;
     std::string             version_;

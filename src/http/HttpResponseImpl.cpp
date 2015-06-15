@@ -14,6 +14,8 @@ HttpResponseImpl::HttpResponseImpl(EventLoopImpl* loop)
 : http_parser_()
 , state_(STATE_IDLE)
 , loop_(loop)
+, init_data_(nullptr)
+, init_len_(0)
 , send_offset_(0)
 , tcp_socket_(loop)
 , is_chunked_(false)
@@ -29,6 +31,11 @@ HttpResponseImpl::~HttpResponseImpl()
 {
     if(destroy_flag_ptr_) {
         *destroy_flag_ptr_ = true;
+    }
+    if(init_data_) {
+        delete [] init_data_;
+        init_data_ = nullptr;
+        init_len_ = 0;
     }
 }
 
@@ -46,13 +53,18 @@ void HttpResponseImpl::cleanup()
 
 int HttpResponseImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_len)
 {
+    if(init_data && init_len > 0) {
+        init_data = new uint8_t(init_len);
+        memcpy(init_data_, init_data, init_len);
+        init_len_ = init_len;
+    }
     http_parser_.reset();
     http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });
-    http_parser_.setEventCallback([this] (HttpParser::HttpEvent ev) { onHttpEvent(ev); });
+    http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
     tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
     tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
-    return tcp_socket_.attachFd(fd, 0, init_data, init_len);
+    return tcp_socket_.attachFd(fd, 0);
 }
 
 void HttpResponseImpl::addHeader(const std::string& name, const std::string& value)
@@ -227,6 +239,28 @@ void HttpResponseImpl::onSend(int err)
 
 void HttpResponseImpl::onReceive(int err)
 {
+    if(init_data_ && init_len_ > 0) {
+        bool destroyed = false;
+        KUMA_ASSERT(nullptr == destroy_flag_ptr_);
+        destroy_flag_ptr_ = &destroyed;
+        int bytes_used = http_parser_.parse((char*)init_data_, init_len_);
+        if(destroyed) {
+            return;
+        }
+        destroy_flag_ptr_ = nullptr;
+        if(getState() == STATE_ERROR || getState() == STATE_CLOSED) {
+            return;
+        }
+        if(bytes_used != init_len_) {
+            KUMA_WARNXTRACE("onReceive, bytes_used="<<bytes_used<<", init_len="<<init_len_);
+            memmove(init_data_, init_data_ + bytes_used, init_len_ - bytes_used);
+            init_len_ -= bytes_used;
+            return;
+        }
+        delete [] init_data_;
+        init_data_ = nullptr;
+        init_len_ = 0;
+    }
     char buf[256*1024];
     do {
         int ret = tcp_socket_.receive((uint8_t*)buf, sizeof(buf));
@@ -272,20 +306,20 @@ void HttpResponseImpl::onHttpData(const char* data, uint32_t len)
     if(cb_data_) cb_data_((uint8_t*)data, len);
 }
 
-void HttpResponseImpl::onHttpEvent(HttpParser::HttpEvent ev)
+void HttpResponseImpl::onHttpEvent(HttpEvent ev)
 {
     KUMA_INFOXTRACE("onHttpEvent, ev="<<ev);
     switch (ev) {
-        case HttpParser::HTTP_HEADER_COMPLETE:
+        case HTTP_HEADER_COMPLETE:
             if(cb_header_) cb_header_();
             break;
             
-        case HttpParser::HTTP_COMPLETE:
+        case HTTP_COMPLETE:
             setState(STATE_SENDING_RESPONSE);
             if(cb_request_) cb_request_();
             break;
             
-        case HttpParser::HTTP_ERROR:
+        case HTTP_ERROR:
             cleanup();
             setState(STATE_ERROR);
             if(cb_error_) cb_error_(KUMA_ERROR_FAILED);

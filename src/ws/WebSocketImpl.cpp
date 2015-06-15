@@ -10,6 +10,8 @@ KUMA_NS_BEGIN
 //////////////////////////////////////////////////////////////////////////
 WebSocketImpl::WebSocketImpl(EventLoopImpl* loop)
 : state_(STATE_IDLE)
+, init_data_(nullptr)
+, init_len_(0)
 , send_offset_(0)
 , tcp_socket_(loop)
 , is_server_(false)
@@ -23,6 +25,11 @@ WebSocketImpl::~WebSocketImpl()
 {
     if(destroy_flag_ptr_) {
         *destroy_flag_ptr_ = true;
+    }
+    if(init_data_) {
+        delete [] init_data_;
+        init_data_ = nullptr;
+        init_len_ = 0;
     }
 }
 
@@ -93,13 +100,18 @@ int WebSocketImpl::connect_i(const std::string& ws_url)
 int WebSocketImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_len)
 {
     is_server_ = true;
+    if(init_data && init_len > 0) {
+        init_data = new uint8_t(init_len);
+        memcpy(init_data_, init_data, init_len);
+        init_len_ = init_len;
+    }
     ws_handler_.setDataCallback([this] (uint8_t* data, uint32_t len) { onWsData(data, len); });
     ws_handler_.setHandshakeCallback([this] (int err) { onWsHandshake(err); });
     tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
     tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
     tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
     setState(STATE_HANDSHAKE);
-    return tcp_socket_.attachFd(fd, 0, init_data, init_len);
+    return tcp_socket_.attachFd(fd, 0);
 }
 
 int WebSocketImpl::send(uint8_t* data, uint32_t len)
@@ -117,9 +129,9 @@ int WebSocketImpl::send(uint8_t* data, uint32_t len)
     }
     int hdr_len = ws_handler_.encodeFrameHeader(opcode, len, hdr);
     iovec iovs[2];
-    iovs[0].iov_base = hdr;
+    iovs[0].iov_base = (char*)hdr;
     iovs[0].iov_len = hdr_len;
-    iovs[1].iov_base = data;
+    iovs[1].iov_base = (char*)data;
     iovs[1].iov_len = len;
     auto total_len = iovs[0].iov_len + iovs[1].iov_len;
     int ret = tcp_socket_.send(iovs, 2);
@@ -207,9 +219,32 @@ void WebSocketImpl::onSend(int err)
 
 void WebSocketImpl::onReceive(int err)
 {
-    char buf[256*1024];
+    if(init_data_ && init_len_ > 0) {
+        bool destroyed = false;
+        KUMA_ASSERT(nullptr == destroy_flag_ptr_);
+        destroy_flag_ptr_ = &destroyed;
+        WSHandler::WSError err = ws_handler_.handleData(init_data_, init_len_);
+        if(destroyed) {
+            return;
+        }
+        destroy_flag_ptr_ = nullptr;
+        delete [] init_data_;
+        init_data_ = nullptr;
+        init_len_ = 0;
+        if(getState() == STATE_ERROR || getState() == STATE_CLOSED) {
+            return;
+        }
+        if(err != WSHandler::WSError::WS_ERROR_NOERR &&
+           err != WSHandler::WSError::WS_ERROR_NEED_MORE_DATA) {
+            cleanup();
+            setState(STATE_CLOSED);
+            if(cb_error_) cb_error_(KUMA_ERROR_FAILED);
+            return;
+        }
+    }
+    uint8_t buf[256*1024];
     do {
-        int ret = tcp_socket_.receive((uint8_t*)buf, sizeof(buf));
+        int ret = tcp_socket_.receive(buf, sizeof(buf));
         if(ret < 0) {
             cleanup();
             setState(STATE_CLOSED);
@@ -220,7 +255,7 @@ void WebSocketImpl::onReceive(int err)
             bool destroyed = false;
             KUMA_ASSERT(nullptr == destroy_flag_ptr_);
             destroy_flag_ptr_ = &destroyed;
-            WSHandler::WSError err = ws_handler_.handleData((uint8_t*)buf, ret);
+            WSHandler::WSError err = ws_handler_.handleData(buf, ret);
             if(destroyed) {
                 return;
             }
