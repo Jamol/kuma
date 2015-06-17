@@ -6,9 +6,12 @@
 # include <arpa/inet.h>
 #endif
 
+uint32_t getSendInterval();
+
 WsClient::WsClient(EventLoop* loop, long conn_id, TestLoop* server)
 : loop_(loop)
 , ws_(loop_)
+, timed_sending_(false)
 , timer_(loop_)
 , server_(server)
 , conn_id_(conn_id)
@@ -47,6 +50,10 @@ void WsClient::onConnect(int err)
     printf("WsClient::onConnect, err=%d\n", err);
     start_point_ = std::chrono::steady_clock::now();
     sendData();
+    if (getSendInterval() > 0) {
+        timed_sending_ = true;
+        timer_.schedule(getSendInterval(), [this] { sendData(); }, true);
+    }
 }
 
 void WsClient::onSend(int err)
@@ -64,7 +71,9 @@ void WsClient::onData(uint8_t* data, uint32_t len)
         printf("WsClient::onReceive, bytes_read=%d, index=%d\n", len, index);
     }
     if(index < max_send_count_) {
-        sendData();
+        if (!timed_sending_) {
+            sendData();
+        }
     } else {
         timer_.cancel();
         std::chrono::steady_clock::time_point end_point = std::chrono::steady_clock::now();
@@ -78,9 +87,4 @@ void WsClient::onClose(int err)
 {
     printf("WsClient::onClose, err=%d\n", err);
     server_->removeObject(conn_id_);
-}
-
-void WsClient::onTimer()
-{
-    printf("WsClient::onTimer\n");
 }

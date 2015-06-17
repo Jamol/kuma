@@ -26,6 +26,30 @@
 		6FF747941B2981D50007F34D /* WsClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF747921B2981D50007F34D /* WsClient.cpp */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		6F8E7CFC1B31375F00DA073C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 6F852DF11985E33000271D87;
+			remoteInfo = kuma;
+		};
+		6F8E7CFE1B3137D300DA073C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 6F852DF01985E33000271D87;
+			remoteInfo = kuma;
+		};
+		6F8E7D001B3137D900DA073C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 6F852DF01985E33000271D87;
+			remoteInfo = kuma;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXCopyFilesBuildPhase section */
 		6FF211AD1B155298006603BB /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -61,6 +85,7 @@
 		6F2D40401B1875DB00E24928 /* UdpServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UdpServer.h; path = ../../../server/UdpServer.h; sourceTree = "<group>"; };
 		6F2D40421B1877A500E24928 /* UdpClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UdpClient.cpp; path = ../../../client/UdpClient.cpp; sourceTree = "<group>"; };
 		6F2D40431B1877A600E24928 /* UdpClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UdpClient.h; path = ../../../client/UdpClient.h; sourceTree = "<group>"; };
+		6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = kuma.xcodeproj; path = ../../../bld/osx/kuma.xcodeproj; sourceTree = "<group>"; };
 		6FF211AF1B155298006603BB /* client */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = client; sourceTree = BUILT_PRODUCTS_DIR; };
 		6FF211BB1B1552AA006603BB /* server */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = server; sourceTree = BUILT_PRODUCTS_DIR; };
 		6FF211C21B1553C6006603BB /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../../../client/main.cpp; sourceTree = "<group>"; };
@@ -101,10 +126,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6F8E7CF91B31375F00DA073C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6F8E7CFD1B31375F00DA073C /* kuma.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		6FF211A41B1551CD006603BB = {
 			isa = PBXGroup;
 			children = (
 				6F29765D1B311D5900EB467D /* kuma.dylib */,
+				6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */,
 				6FF211B11B155298006603BB /* client */,
 				6FF211BC1B1552AA006603BB /* server */,
 				6FF211B01B155298006603BB /* Products */,
@@ -176,6 +210,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				6F8E7CFF1B3137D300DA073C /* PBXTargetDependency */,
 			);
 			name = client;
 			productName = client;
@@ -193,6 +228,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				6F8E7D011B3137D900DA073C /* PBXTargetDependency */,
 			);
 			name = server;
 			productName = server;
@@ -225,6 +261,12 @@
 			mainGroup = 6FF211A41B1551CD006603BB;
 			productRefGroup = 6FF211B01B155298006603BB /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 6F8E7CF91B31375F00DA073C /* Products */;
+					ProjectRef = 6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				6FF211AE1B155298006603BB /* client */,
@@ -232,6 +274,16 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXReferenceProxy section */
+		6F8E7CFD1B31375F00DA073C /* kuma.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = kuma.dylib;
+			remoteRef = 6F8E7CFC1B31375F00DA073C /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+/* End PBXReferenceProxy section */
 
 /* Begin PBXSourcesBuildPhase section */
 		6FF211AB1B155298006603BB /* Sources */ = {
@@ -264,6 +316,19 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6F8E7CFF1B3137D300DA073C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = kuma;
+			targetProxy = 6F8E7CFE1B3137D300DA073C /* PBXContainerItemProxy */;
+		};
+		6F8E7D011B3137D900DA073C /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = kuma;
+			targetProxy = 6F8E7D001B3137D900DA073C /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		6FF211A91B1551CD006603BB /* Debug */ = {

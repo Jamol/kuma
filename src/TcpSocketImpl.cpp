@@ -559,8 +559,9 @@ void TcpSocketImpl::onConnect(int err)
 
 void TcpSocketImpl::onSend(int err)
 {
-    if(loop_->isPollLT()) {
-        loop_->updateFd(fd_, KUMA_EV_READ | KUMA_EV_ERROR);
+    SOCKET_FD fd = fd_;
+    if (loop_->isPollLT() && fd != INVALID_FD) {
+        loop_->updateFd(fd, KUMA_EV_READ | KUMA_EV_ERROR);
     }
     if(cb_write_ && isReady()) cb_write_(err);
 }

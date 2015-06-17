@@ -47,6 +47,7 @@ static const char* g_usage =
 "   client [option] mcast//224.0.0.1:5500\n\n"
 "   -b host:port    local host and port to be binded to\n"
 "   -c number       concurrent clients\n"
+"   -t ms           send interval\n"
 "   -v              print version\n"
 ;
 
@@ -55,6 +56,12 @@ std::vector<std::thread> event_threads;
 void printUsage()
 {
     printf("%s\n", g_usage);
+}
+
+static uint32_t _send_interval_ = 0;
+uint32_t getSendInterval()
+{
+    return _send_interval_;
 }
 
 int main(int argc, char *argv[])
@@ -98,6 +105,14 @@ int main(int argc, char *argv[])
                         return -1;
                     }
                     break;
+                case 't':
+                    if (++i < argc) {
+                        _send_interval_ = atoi(argv[i]);
+                    } else {
+                        printUsage();
+                        return -1;
+                    }
+                    break;
                 default:
                     printUsage();
                     return -1;
@@ -132,12 +147,12 @@ int main(int argc, char *argv[])
     loop_pool.startTest(addr, bind_addr, concurrent);
     
     main_loop.loop();
+    printf("stop loops...\n");
     loop_pool.stop();
     
 	printf("main exit...\n");
 #ifdef KUMA_OS_WIN
 	SetConsoleCtrlHandler(HandlerRoutine, FALSE);
 #endif
-
 	return 0;
 }

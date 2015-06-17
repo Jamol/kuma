@@ -21,7 +21,6 @@ public:
     void onConnect(int err);
     void onSend(int err);
     void onClose(int err);
-    void onTimer();
     
 private:
     void sendData();
@@ -30,6 +29,7 @@ private:
     EventLoop*  loop_;
     WebSocket   ws_;
     
+    bool        timed_sending_;
     Timer       timer_;
     TestLoop*   server_;
     long        conn_id_;

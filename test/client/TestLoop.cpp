@@ -18,6 +18,7 @@ TestLoop::TestLoop(LoopPool* server, PollType poll_type)
 void TestLoop::cleanup()
 {
     std::lock_guard<std::mutex> lg(obj_mutex_);
+    printf("TestLoop::cleanup, size=%d\n", obj_map_.size());
     for (auto &kv : obj_map_) {
         kv.second->close();
         delete kv.second;
@@ -42,8 +43,9 @@ bool TestLoop::init()
 
 void TestLoop::stop()
 {
-    cleanup();
+    //cleanup();
     if(loop_) {
+        loop_->runInEventLoop([this] { cleanup(); });
         loop_->stop();
     }
     if(thread_.joinable()) {

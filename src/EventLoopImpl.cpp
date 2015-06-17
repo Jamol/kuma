@@ -85,7 +85,7 @@ int EventLoopImpl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb)
     if(isInEventLoopThread()) {
         return poll_->registerFd(fd, events, std::move(cb));
     }
-    LoopCallback ev([=]  () mutable {
+    LoopCallback ev([=] () mutable {
         int ret = poll_->registerFd(fd, events, cb);
         if(ret != KUMA_ERROR_NOERR) {
             return ;
@@ -134,7 +134,7 @@ int EventLoopImpl::unregisterFd(SOCKET_FD fd, bool close_fd)
 void EventLoopImpl::loopOnce(uint32_t max_wait_ms)
 {
     LoopCallback cb;
-    while (!stop_loop_ && cb_queue_.dequeue(cb)) {
+    while (cb_queue_.dequeue(cb)) {
         if(cb) {
             cb();
         }
@@ -152,6 +152,13 @@ void EventLoopImpl::loop(uint32_t max_wait_ms)
     while (!stop_loop_) {
         loopOnce(max_wait_ms);
     }
+    LoopCallback cb;
+    while (cb_queue_.dequeue(cb)) {
+        if (cb) {
+            cb();
+        }
+    }
+    KUMA_INFOTRACE("EventLoop::loop, stopped");
 }
 
 void EventLoopImpl::stop()

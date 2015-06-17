@@ -39,8 +39,9 @@ bool TestLoop::init()
 
 void TestLoop::stop()
 {
-    cleanup();
+    //cleanup();
     if(loop_) {
+        loop_->runInEventLoop([this] { cleanup(); });
         loop_->stop();
     }
     if(thread_.joinable()) {
