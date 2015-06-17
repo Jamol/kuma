@@ -46,7 +46,7 @@ static const char* g_usage =
 "   client [option] udp//www.kuma.com:5500\n"
 "   client [option] mcast//224.0.0.1:5500\n\n"
 "   -b host:port    local host and port to be binded to\n"
-"   -c concurrent clients"
+"   -c number       concurrent clients\n"
 "   -v              print version\n"
 ;
 
