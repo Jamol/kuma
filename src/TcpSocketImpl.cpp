@@ -173,7 +173,7 @@ int TcpSocketImpl::connect(const char *host, uint16_t port, EventCallback&& cb, 
 
 int TcpSocketImpl::connect_i(const char* host, uint16_t port, uint32_t timeout)
 {
-    KUMA_INFOXTRACE("connect_i, host="<<host<<", port="<<port);
+    KUMA_INFOXTRACE("connect_i, host="<<host<<", port="<<port<<", this="<<this);
 #ifndef KUMA_HAS_OPENSSL
     if (SslEnabled()) {
         KUMA_ERRXTRACE("connect_i, OpenSSL is disabled");

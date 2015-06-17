@@ -335,6 +335,9 @@ private:
     WebSocketImpl* pimpl_;
 };
 
+KUMA_API void init();
+KUMA_API void fini();
+
 KUMA_NS_END
 
 #endif

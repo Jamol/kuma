@@ -71,7 +71,7 @@ int EventLoopImpl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
     if(isInEventLoopThread()) {
         return poll_->registerFd(fd, events, cb);
     }
-    LoopCallback ev([=, &cb] {
+    LoopCallback ev([=] () mutable {
         int ret = poll_->registerFd(fd, events, cb);
         if(ret != KUMA_ERROR_NOERR) {
             return ;
@@ -82,7 +82,16 @@ int EventLoopImpl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
 
 int EventLoopImpl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb)
 {
-    return registerFd(fd, events, cb);
+    if(isInEventLoopThread()) {
+        return poll_->registerFd(fd, events, std::move(cb));
+    }
+    LoopCallback ev([=]  () mutable {
+        int ret = poll_->registerFd(fd, events, cb);
+        if(ret != KUMA_ERROR_NOERR) {
+            return ;
+        }
+    });
+    return runInEventLoop(std::move(ev));
 }
 
 int EventLoopImpl::updateFd(SOCKET_FD fd, uint32_t events)
@@ -102,7 +111,11 @@ int EventLoopImpl::updateFd(SOCKET_FD fd, uint32_t events)
 int EventLoopImpl::unregisterFd(SOCKET_FD fd, bool close_fd)
 {
     if(isInEventLoopThread()) {
-        return poll_->unregisterFd(fd);
+        int ret = poll_->unregisterFd(fd);
+        if(close_fd) {
+            closeFd(fd);
+        }
+        return ret;
     } else {
         LoopCallback ev([=] {
             poll_->unregisterFd(fd);

@@ -22,6 +22,11 @@
 #include "http/HttpRequestImpl.h"
 #include "http/HttpResponseImpl.h"
 #include "ws/WebSocketImpl.h"
+
+#ifdef KUMA_HAS_OPENSSL
+#include "OpenSslLib.h"
+#endif
+
 #include "kmapi.h"
 
 KUMA_NS_BEGIN
@@ -875,6 +880,19 @@ void WebSocket::setErrorCallback(EventCallback&& cb)
 WebSocketImpl* WebSocket::getPimpl()
 {
     return pimpl_;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+void init()
+{
+#ifdef KUMA_HAS_OPENSSL
+    OpenSslLib::init();
+#endif
+}
+
+void fini()
+{
+    
 }
 
 KUMA_NS_END
