@@ -338,6 +338,13 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
     TICK_COUNT_TYPE now_tick = get_tick_count_ms();
     TICK_COUNT_TYPE delta_tick = calc_time_elapse_delta_ms(now_tick, last_tick_);
     if(0 == delta_tick) {
+        if(remain_ms) {
+            // calc remain time in ms
+            mutex_.lock();
+            int pos = find_first_set_in_bitmap(now_tick & TIMER_VECTOR_MASK);
+            mutex_.unlock();
+            *remain_ms = -1==pos?256:pos;
+        }
         return 0;
     }
     TICK_COUNT_TYPE cur_jiffies = now_tick;
