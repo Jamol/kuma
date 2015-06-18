@@ -28,7 +28,7 @@ EventLoopImpl::EventLoopImpl(PollType poll_type)
 : poll_(createIOPoll(poll_type))
 , stop_loop_(false)
 , thread_id_()
-, timer_mgr_(new TimerManager())
+, timer_mgr_(new TimerManager(this))
 {
     
 }
@@ -159,6 +159,11 @@ void EventLoopImpl::loop(uint32_t max_wait_ms)
         }
     }
     KUMA_INFOTRACE("EventLoop::loop, stopped");
+}
+
+void EventLoopImpl::notify()
+{
+    poll_->notify();
 }
 
 void EventLoopImpl::stop()

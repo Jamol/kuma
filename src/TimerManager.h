@@ -33,11 +33,12 @@ KUMA_NS_BEGIN
 #define TV_COUNT            4
 
 class TimerImpl;
+class EventLoopImpl;
 
 class TimerManager
 {
 public:
-    TimerManager();
+    TimerManager(EventLoopImpl* loop);
     ~TimerManager();
 
     bool scheduleTimer(TimerImpl* timer, unsigned int time_elapse, bool repeat);
@@ -106,10 +107,12 @@ private:
     typedef std::recursive_mutex KM_Mutex;
     typedef std::lock_guard<KM_Mutex> KM_Lock_Guard;
     
+    EventLoopImpl* loop_;
     KM_Mutex mutex_;
     KM_Mutex running_mutex_;
     TimerNode*  running_node_;
     TimerNode*  reschedule_node_;
+    unsigned long last_remain_ms_;
     TICK_COUNT_TYPE last_tick_;
     unsigned int timer_count_;
     unsigned int tv0_bitmap_[8]; // 1 -- have timer in this slot

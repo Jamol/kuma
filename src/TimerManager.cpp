@@ -14,6 +14,7 @@
  */
 
 #include "TimerManager.h"
+#include "EventLoopImpl.h"
 
 KUMA_NS_BEGIN
 
@@ -66,12 +67,14 @@ void TimerImpl::cancel()
 
 //////////////////////////////////////////////////////////////////////////
 // TimerManager
-TimerManager::TimerManager()
+TimerManager::TimerManager(EventLoopImpl* loop)
+: loop_(loop)
+, running_node_(nullptr)
+, reschedule_node_(nullptr)
+, last_remain_ms_(-1)
+, last_tick_(0)
+, timer_count_(0)
 {
-    running_node_ = nullptr;
-    reschedule_node_ = nullptr;
-    timer_count_ = 0;
-    last_tick_ = 0;
     memset(&tv0_bitmap_, 0, sizeof(tv0_bitmap_));
     for (int i=0; i<TV_COUNT; ++i)
     {
@@ -95,17 +98,29 @@ bool TimerManager::scheduleTimer(TimerImpl* timer, unsigned int time_elapse, boo
     }
     TICK_COUNT_TYPE now_tick = get_tick_count_ms();
     timer_node->cancelled_ = false;
-    KM_Lock_Guard g(mutex_);
-    if(isTimerPending(timer_node)) {
-        removeTimer(timer_node);
+    bool need_notify = false;
+    bool ret = false;
+    {
+        KM_Lock_Guard g(mutex_);
+        if(isTimerPending(timer_node)) {
+            removeTimer(timer_node);
+        }
+        timer_node->start_tick_ = now_tick;
+        timer_node->elapse_ = time_elapse;
+        timer_node->repeat_ = repeat;
+        
+        ret = addTimer(timer_node, true);
+        if(reschedule_node_ == timer_node) {
+            reschedule_node_ = nullptr;
+        }
+        long diff = now_tick - last_tick_;
+        if(last_remain_ms_ == -1 || (diff >= 0 && time_elapse < last_remain_ms_ - diff)) {
+            // need update poll wait time
+            need_notify = !loop_->isInEventLoopThread();
+        }
     }
-    timer_node->start_tick_ = now_tick;
-    timer_node->elapse_ = time_elapse;
-    timer_node->repeat_ = repeat;
-
-    bool ret = addTimer(timer_node, true);
-    if(reschedule_node_ == timer_node) {
-        reschedule_node_ = nullptr;
+    if(need_notify) {
+        loop_->notify();
     }
     return ret;
 }
@@ -309,7 +324,9 @@ void TimerManager::removeTimer(TimerNode* timer_node)
         clear_tv0_bitmap(timer_node->tl_index_);
     }
     list_remove_node(timer_node);
-    --timer_count_;
+    if(--timer_count_ == 0) {
+        last_remain_ms_ = -1;
+    }
 }
 
 int TimerManager::cascadeTimer(int tv_idx, int tl_idx)
@@ -333,17 +350,24 @@ int TimerManager::cascadeTimer(int tv_idx, int tl_idx)
 int TimerManager::checkExpire(unsigned long* remain_ms)
 {
     if(0 == timer_count_) {
+        last_remain_ms_ = -1;
+        *remain_ms = last_remain_ms_;
         return 0;
     }
     TICK_COUNT_TYPE now_tick = get_tick_count_ms();
     TICK_COUNT_TYPE delta_tick = calc_time_elapse_delta_ms(now_tick, last_tick_);
     if(0 == delta_tick) {
         if(remain_ms) {
-            // calc remain time in ms
-            mutex_.lock();
-            int pos = find_first_set_in_bitmap(now_tick & TIMER_VECTOR_MASK);
-            mutex_.unlock();
-            *remain_ms = -1==pos?256:pos;
+            if(last_remain_ms_ != -1) {
+                *remain_ms = last_remain_ms_;
+            } else {
+                // calc remain time in ms
+                mutex_.lock();
+                int pos = find_first_set_in_bitmap(now_tick & TIMER_VECTOR_MASK);
+                mutex_.unlock();
+                *remain_ms = -1==pos?256:pos;
+                last_remain_ms_ = *remain_ms;
+            }
         }
         return 0;
     }
@@ -426,6 +450,7 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
         } else {
             *remain_ms -= delta_tick;
         }
+        last_remain_ms_ = *remain_ms;
     }
     return count;
 }
