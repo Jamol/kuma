@@ -39,7 +39,7 @@ LIBS = $(BINDIR)/libkuma.so
 CXX=g++
 
 CXXFLAGS = -g -std=c++11 -pipe -fPIC -Wall -Wextra -pedantic
-#LINKFLAGS = -Wl,-R -Wl,/Users/xxx/work/mygit/kuma/bin/linux
+#LDFLAGS = -Wl,-R -Wl,/Users/xxx/work/mygit/kuma/bin/linux
 
 SRCS =  \
     LoopPool.cpp\
@@ -60,7 +60,7 @@ testdir = @if test ! -d $(1);\
 
 $(BINDIR)/$(TARGET): $(OBJS)
 	$(call testdir,$(dir $@))
-	$(CXX) $(LINKFLAGS) -o $(BINDIR)/$(TARGET) $(OBJS) $(LIBS)
+	$(CXX) -o $(BINDIR)/$(TARGET) $(LDFLAGS) $(OBJS) $(LIBS)
 
 $(OBJDIR)/%.o: %.c
 	$(call testdir,$(dir $@))

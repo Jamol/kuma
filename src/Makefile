@@ -34,7 +34,7 @@ INCLUDES = -I. -I../vendor -I$(OPENSSL_INCLUDE)
 CXX=g++
 
 CXXFLAGS = -g -std=c++11 -pipe -fPIC -Wall -Wextra -pedantic
-LINKFLAGS = -shared -Wl,-Bsymbolic
+LDFLAGS = -shared -Wl,-Bsymbolic
 
 SRCS =  \
     EventLoopImpl.cpp\
@@ -65,7 +65,7 @@ testdir = @if test ! -d $(1);\
 
 $(BINDIR)/$(TARGET): $(OBJS)
 	$(call testdir,$(dir $@))
-	$(CXX) -o $(BINDIR)/$(TARGET) $(LINKFLAGS) $(OBJS) $(LIBS)
+	$(CXX) -o $(BINDIR)/$(TARGET) $(LDFLAGS) $(OBJS) $(LIBS)
 
 $(OBJDIR)/%.o: %.c
 	$(call testdir,$(dir $@))
