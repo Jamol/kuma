@@ -14,7 +14,7 @@
  */
 
 #include "OpenSslLib.h"
-#include "kmtrace.h"
+#include "util/kmtrace.h"
 
 #include <string>
 #include <thread>

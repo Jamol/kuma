@@ -72,7 +72,9 @@ TcpSocketImpl::TcpSocketImpl(EventLoopImpl* loop)
 , registered_(false)
 , destroy_flag_ptr_(nullptr)
 , flags_(0)
+#ifdef KUMA_HAS_OPENSSL
 , ssl_handler_(nullptr)
+#endif
 {
     
 }

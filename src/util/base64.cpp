@@ -14,6 +14,7 @@
  */
 
 #include "base64.h"
+#include <string.h>
 
 KUMA_NS_BEGIN
 /////////////////////////////////////////////////////////////////////////////
@@ -292,7 +293,7 @@ uint32_t x64_decode_ctx(X64_CTX* ctx, const uint8_t* buf, uint32_t buf_len,
                 bC = s_base64_decode_map[src[0]];
                 bD = s_base64_decode_map[src[1]];
             }
-            else if(3 == ctx->l)
+            else //if(3 == ctx->l)
             {
                 bA = s_base64_decode_map[ctx->b[0]];
                 bB = s_base64_decode_map[ctx->b[1]];

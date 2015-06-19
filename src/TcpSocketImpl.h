@@ -95,7 +95,9 @@ private:
     bool*           destroy_flag_ptr_;
     uint32_t        flags_;
     
+#ifdef KUMA_HAS_OPENSSL
     SslHandler*     ssl_handler_;
+#endif
     
     EventCallback   cb_connect_;
     EventCallback   cb_read_;
