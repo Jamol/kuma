@@ -32,6 +32,9 @@
 # include <arpa/inet.h>
 # include <netinet/tcp.h>
 # include <netinet/in.h>
+# ifdef KUMA_OS_ANDROID
+#  include <sys/uio.h>
+# endif
 #elif defined(KUMA_OS_MAC)
 # include <string.h>
 # include <pthread.h>

@@ -42,6 +42,7 @@ SRCS =  \
     UdpSocketImpl.cpp\
     TimerManager.cpp\
     TcpServerSocketImpl.cpp\
+    poll/EPoll.cpp\
     poll/VPoll.cpp\
     poll/SelectPoll.cpp\
     http/Uri.cpp\

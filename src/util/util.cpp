@@ -86,34 +86,9 @@ pf_getaddrinfo km_getaddrinfo = NULL;
 pf_getnameinfo km_getnameinfo = NULL;
 pf_freeaddrinfo km_freeaddrinfo = NULL;
 #else
-typedef int (*pf_getaddrinfo)(
-    const char *node,
-    const char *service,
-    const struct addrinfo *hints,
-    struct addrinfo **res
-);
-
-typedef int (*pf_getnameinfo)(
-    const struct sockaddr *sa,
-    socklen_t salen,
-    char *host,
-    socklen_t hostlen,
-    char *serv,
-    socklen_t servlen,
-#ifdef KUMA_OS_LINUX
-    int flags
-#else
-    int flags
-#endif
-);
-
-typedef void (*pf_freeaddrinfo)(
-    struct addrinfo *res
-);
-
-pf_getaddrinfo km_getaddrinfo = getaddrinfo;
-pf_getnameinfo km_getnameinfo = getnameinfo;
-pf_freeaddrinfo km_freeaddrinfo = freeaddrinfo;
+# define km_getaddrinfo getaddrinfo
+# define km_getnameinfo getnameinfo
+# define km_freeaddrinfo freeaddrinfo
 #endif
 
 bool ipv6_api_init()

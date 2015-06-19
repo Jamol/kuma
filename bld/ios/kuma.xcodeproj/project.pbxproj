@@ -1,0 +1,439 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		6F7D5FA71B33E9E6000FF2F8 /* libkuma.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F7D5F9B1B33E9E6000FF2F8 /* libkuma.a */; };
+		6F7D5FE41B33EC65000FF2F8 /* EventLoopImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7D5FD51B33EC65000FF2F8 /* EventLoopImpl.cpp */; };
+		6F7D5FE51B33EC65000FF2F8 /* kmapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7D5FD71B33EC65000FF2F8 /* kmapi.cpp */; };
+		6F7D5FE71B33EC65000FF2F8 /* TcpServerSocketImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7D5FDC1B33EC65000FF2F8 /* TcpServerSocketImpl.cpp */; };
+		6F7D5FE81B33EC65000FF2F8 /* TcpSocketImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7D5FDE1B33EC65000FF2F8 /* TcpSocketImpl.cpp */; };
+		6F7D5FE91B33EC65000FF2F8 /* TimerManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7D5FE01B33EC65000FF2F8 /* TimerManager.cpp */; };
+		6F7D5FEA1B33EC65000FF2F8 /* UdpSocketImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7D5FE21B33EC65000FF2F8 /* UdpSocketImpl.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		6F7D5FA81B33E9E6000FF2F8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6F7D5F931B33E9E6000FF2F8 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6F7D5F9A1B33E9E6000FF2F8;
+			remoteInfo = kuma;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		6F7D5F991B33E9E6000FF2F8 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "include/$(PRODUCT_NAME)";
+			dstSubfolderSpec = 16;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		6F7D5F9B1B33E9E6000FF2F8 /* libkuma.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libkuma.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		6F7D5FA61B33E9E6000FF2F8 /* kumaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = kumaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		6F7D5FAC1B33E9E6000FF2F8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		6F7D5FD41B33EC65000FF2F8 /* evdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = evdefs.h; path = ../../src/evdefs.h; sourceTree = "<group>"; };
+		6F7D5FD51B33EC65000FF2F8 /* EventLoopImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = EventLoopImpl.cpp; path = ../../src/EventLoopImpl.cpp; sourceTree = "<group>"; };
+		6F7D5FD61B33EC65000FF2F8 /* EventLoopImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = EventLoopImpl.h; path = ../../src/EventLoopImpl.h; sourceTree = "<group>"; };
+		6F7D5FD71B33EC65000FF2F8 /* kmapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = kmapi.cpp; path = ../../src/kmapi.cpp; sourceTree = "<group>"; };
+		6F7D5FD81B33EC65000FF2F8 /* kmapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmapi.h; path = ../../src/kmapi.h; sourceTree = "<group>"; };
+		6F7D5FD91B33EC65000FF2F8 /* kmconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmconf.h; path = ../../src/kmconf.h; sourceTree = "<group>"; };
+		6F7D5FDA1B33EC65000FF2F8 /* kmdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmdefs.h; path = ../../src/kmdefs.h; sourceTree = "<group>"; };
+		6F7D5FDC1B33EC65000FF2F8 /* TcpServerSocketImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TcpServerSocketImpl.cpp; path = ../../src/TcpServerSocketImpl.cpp; sourceTree = "<group>"; };
+		6F7D5FDD1B33EC65000FF2F8 /* TcpServerSocketImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TcpServerSocketImpl.h; path = ../../src/TcpServerSocketImpl.h; sourceTree = "<group>"; };
+		6F7D5FDE1B33EC65000FF2F8 /* TcpSocketImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TcpSocketImpl.cpp; path = ../../src/TcpSocketImpl.cpp; sourceTree = "<group>"; };
+		6F7D5FDF1B33EC65000FF2F8 /* TcpSocketImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TcpSocketImpl.h; path = ../../src/TcpSocketImpl.h; sourceTree = "<group>"; };
+		6F7D5FE01B33EC65000FF2F8 /* TimerManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TimerManager.cpp; path = ../../src/TimerManager.cpp; sourceTree = "<group>"; };
+		6F7D5FE11B33EC65000FF2F8 /* TimerManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TimerManager.h; path = ../../src/TimerManager.h; sourceTree = "<group>"; };
+		6F7D5FE21B33EC65000FF2F8 /* UdpSocketImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UdpSocketImpl.cpp; path = ../../src/UdpSocketImpl.cpp; sourceTree = "<group>"; };
+		6F7D5FE31B33EC65000FF2F8 /* UdpSocketImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UdpSocketImpl.h; path = ../../src/UdpSocketImpl.h; sourceTree = "<group>"; };
+		6F7D5FEB1B33EC79000FF2F8 /* http */ = {isa = PBXFileReference; lastKnownFileType = folder; name = http; path = ../../src/http; sourceTree = "<group>"; };
+		6F7D5FEC1B33EC91000FF2F8 /* poll */ = {isa = PBXFileReference; lastKnownFileType = folder; name = poll; path = ../../src/poll; sourceTree = "<group>"; };
+		6F7D5FED1B33EC91000FF2F8 /* ssl */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ssl; path = ../../src/ssl; sourceTree = "<group>"; };
+		6F7D5FEE1B33EC91000FF2F8 /* util */ = {isa = PBXFileReference; lastKnownFileType = folder; name = util; path = ../../src/util; sourceTree = "<group>"; };
+		6F7D5FEF1B33EC91000FF2F8 /* ws */ = {isa = PBXFileReference; lastKnownFileType = folder; name = ws; path = ../../src/ws; sourceTree = "<group>"; };
+		6F7D5FF11B33ED97000FF2F8 /* kuma-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "kuma-Prefix.pch"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		6F7D5F981B33E9E6000FF2F8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6F7D5FA31B33E9E6000FF2F8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6F7D5FA71B33E9E6000FF2F8 /* libkuma.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		6F7D5F921B33E9E6000FF2F8 = {
+			isa = PBXGroup;
+			children = (
+				6F7D5FD31B33EC43000FF2F8 /* kuma */,
+				6F7D5FAA1B33E9E6000FF2F8 /* kumaTests */,
+				6F7D5F9C1B33E9E6000FF2F8 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		6F7D5F9C1B33E9E6000FF2F8 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6F7D5F9B1B33E9E6000FF2F8 /* libkuma.a */,
+				6F7D5FA61B33E9E6000FF2F8 /* kumaTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		6F7D5FAA1B33E9E6000FF2F8 /* kumaTests */ = {
+			isa = PBXGroup;
+			children = (
+				6F7D5FAB1B33E9E6000FF2F8 /* Supporting Files */,
+			);
+			path = kumaTests;
+			sourceTree = "<group>";
+		};
+		6F7D5FAB1B33E9E6000FF2F8 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				6F7D5FAC1B33E9E6000FF2F8 /* Info.plist */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		6F7D5FD31B33EC43000FF2F8 /* kuma */ = {
+			isa = PBXGroup;
+			children = (
+				6F7D5FF11B33ED97000FF2F8 /* kuma-Prefix.pch */,
+				6F7D5FEB1B33EC79000FF2F8 /* http */,
+				6F7D5FEC1B33EC91000FF2F8 /* poll */,
+				6F7D5FED1B33EC91000FF2F8 /* ssl */,
+				6F7D5FEE1B33EC91000FF2F8 /* util */,
+				6F7D5FEF1B33EC91000FF2F8 /* ws */,
+				6F7D5FD41B33EC65000FF2F8 /* evdefs.h */,
+				6F7D5FD51B33EC65000FF2F8 /* EventLoopImpl.cpp */,
+				6F7D5FD61B33EC65000FF2F8 /* EventLoopImpl.h */,
+				6F7D5FD71B33EC65000FF2F8 /* kmapi.cpp */,
+				6F7D5FD81B33EC65000FF2F8 /* kmapi.h */,
+				6F7D5FD91B33EC65000FF2F8 /* kmconf.h */,
+				6F7D5FDA1B33EC65000FF2F8 /* kmdefs.h */,
+				6F7D5FDC1B33EC65000FF2F8 /* TcpServerSocketImpl.cpp */,
+				6F7D5FDD1B33EC65000FF2F8 /* TcpServerSocketImpl.h */,
+				6F7D5FDE1B33EC65000FF2F8 /* TcpSocketImpl.cpp */,
+				6F7D5FDF1B33EC65000FF2F8 /* TcpSocketImpl.h */,
+				6F7D5FE01B33EC65000FF2F8 /* TimerManager.cpp */,
+				6F7D5FE11B33EC65000FF2F8 /* TimerManager.h */,
+				6F7D5FE21B33EC65000FF2F8 /* UdpSocketImpl.cpp */,
+				6F7D5FE31B33EC65000FF2F8 /* UdpSocketImpl.h */,
+			);
+			name = kuma;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		6F7D5F9A1B33E9E6000FF2F8 /* kuma */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6F7D5FAF1B33E9E6000FF2F8 /* Build configuration list for PBXNativeTarget "kuma" */;
+			buildPhases = (
+				6F7D5F971B33E9E6000FF2F8 /* Sources */,
+				6F7D5F981B33E9E6000FF2F8 /* Frameworks */,
+				6F7D5F991B33E9E6000FF2F8 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = kuma;
+			productName = kuma;
+			productReference = 6F7D5F9B1B33E9E6000FF2F8 /* libkuma.a */;
+			productType = "com.apple.product-type.library.static";
+		};
+		6F7D5FA51B33E9E6000FF2F8 /* kumaTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 6F7D5FB21B33E9E6000FF2F8 /* Build configuration list for PBXNativeTarget "kumaTests" */;
+			buildPhases = (
+				6F7D5FA21B33E9E6000FF2F8 /* Sources */,
+				6F7D5FA31B33E9E6000FF2F8 /* Frameworks */,
+				6F7D5FA41B33E9E6000FF2F8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				6F7D5FA91B33E9E6000FF2F8 /* PBXTargetDependency */,
+			);
+			name = kumaTests;
+			productName = kumaTests;
+			productReference = 6F7D5FA61B33E9E6000FF2F8 /* kumaTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		6F7D5F931B33E9E6000FF2F8 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0630;
+				ORGANIZATIONNAME = jamol;
+				TargetAttributes = {
+					6F7D5F9A1B33E9E6000FF2F8 = {
+						CreatedOnToolsVersion = 6.3.2;
+					};
+					6F7D5FA51B33E9E6000FF2F8 = {
+						CreatedOnToolsVersion = 6.3.2;
+					};
+				};
+			};
+			buildConfigurationList = 6F7D5F961B33E9E6000FF2F8 /* Build configuration list for PBXProject "kuma" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 6F7D5F921B33E9E6000FF2F8;
+			productRefGroup = 6F7D5F9C1B33E9E6000FF2F8 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				6F7D5F9A1B33E9E6000FF2F8 /* kuma */,
+				6F7D5FA51B33E9E6000FF2F8 /* kumaTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		6F7D5FA41B33E9E6000FF2F8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		6F7D5F971B33E9E6000FF2F8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				6F7D5FEA1B33EC65000FF2F8 /* UdpSocketImpl.cpp in Sources */,
+				6F7D5FE71B33EC65000FF2F8 /* TcpServerSocketImpl.cpp in Sources */,
+				6F7D5FE81B33EC65000FF2F8 /* TcpSocketImpl.cpp in Sources */,
+				6F7D5FE51B33EC65000FF2F8 /* kmapi.cpp in Sources */,
+				6F7D5FE41B33EC65000FF2F8 /* EventLoopImpl.cpp in Sources */,
+				6F7D5FE91B33EC65000FF2F8 /* TimerManager.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		6F7D5FA21B33E9E6000FF2F8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		6F7D5FA91B33E9E6000FF2F8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6F7D5F9A1B33E9E6000FF2F8 /* kuma */;
+			targetProxy = 6F7D5FA81B33E9E6000FF2F8 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		6F7D5FAD1B33E9E6000FF2F8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.3;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		6F7D5FAE1B33E9E6000FF2F8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 8.3;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		6F7D5FB01B33E9E6000FF2F8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "kuma-Prefix.pch";
+				OBJROOT = ../../objs/ios;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SYMROOT = ../../bin/ios;
+				USER_HEADER_SEARCH_PATHS = ../../src;
+			};
+			name = Debug;
+		};
+		6F7D5FB11B33E9E6000FF2F8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "kuma-Prefix.pch";
+				OBJROOT = ../../objs/ios;
+				OTHER_LDFLAGS = "-ObjC";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SYMROOT = ../../bin/ios;
+				USER_HEADER_SEARCH_PATHS = ../../src;
+			};
+			name = Release;
+		};
+		6F7D5FB31B33E9E6000FF2F8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(inherited)",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = kumaTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				OBJROOT = ../../objs/ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SYMROOT = ../../bin/ios;
+			};
+			name = Debug;
+		};
+		6F7D5FB41B33E9E6000FF2F8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(SDKROOT)/Developer/Library/Frameworks",
+					"$(inherited)",
+				);
+				INFOPLIST_FILE = kumaTests/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks @loader_path/Frameworks";
+				OBJROOT = ../../objs/ios;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SYMROOT = ../../bin/ios;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		6F7D5F961B33E9E6000FF2F8 /* Build configuration list for PBXProject "kuma" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6F7D5FAD1B33E9E6000FF2F8 /* Debug */,
+				6F7D5FAE1B33E9E6000FF2F8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6F7D5FAF1B33E9E6000FF2F8 /* Build configuration list for PBXNativeTarget "kuma" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6F7D5FB01B33E9E6000FF2F8 /* Debug */,
+				6F7D5FB11B33E9E6000FF2F8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		6F7D5FB21B33E9E6000FF2F8 /* Build configuration list for PBXNativeTarget "kumaTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6F7D5FB31B33E9E6000FF2F8 /* Debug */,
+				6F7D5FB41B33E9E6000FF2F8 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 6F7D5F931B33E9E6000FF2F8 /* Project object */;
+}

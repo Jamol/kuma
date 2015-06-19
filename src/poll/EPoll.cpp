@@ -21,6 +21,9 @@
 
 KUMA_NS_BEGIN
 
+#define MAX_EPOLL_FDS   5000
+#define MAX_EVENT_NUM   500
+
 class EPoll : public IOPoll
 {
 public:
@@ -49,9 +52,8 @@ private:
     IOCallbackMap   callbacks_;
 };
 
-EPoll::EPoll
+EPoll::EPoll()
 : epoll_fd_(INVALID_FD)
-()
 {
 	
 }
@@ -73,7 +75,7 @@ bool EPoll::init()
     if(!notifier_.init()) {
         return false;
     }
-    IOCallbackMap cb = [this](uint32_t ev) { notifier_.onEvent(ev); };
+    IOCallback cb ([this](uint32_t ev) { notifier_.onEvent(ev); });
     registerFd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, std::move(cb));
     return true;
 }
@@ -156,8 +158,12 @@ int EPoll::unregisterFd(SOCKET_FD fd)
 
 int EPoll::updateFd(SOCKET_FD fd, uint32_t events)
 {
+    auto it = callbacks_.find(fd);
+    if(it == callbacks_.end()) {
+        return KUMA_ERROR_FAILED;
+    }
     struct epoll_event evt = {0};
-    evt.data.ptr = handler;
+    evt.data.ptr = &(it->second);
     evt.events = get_events(events);
     if(epoll_ctl(epoll_fd_, EPOLL_CTL_MOD, fd, &evt) < 0) {
         KUMA_INFOTRACE("EPoll::updateFd error, fd="<<fd<<", errno="<<errno);
