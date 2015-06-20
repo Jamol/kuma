@@ -35,7 +35,7 @@ LOCAL_C_INCLUDES := \
 	$(MY_ROOT)/vendor
 
 LOCAL_CFLAGS := -w -O2 -D__ANDROID__
-LOCAL_CPPFLAGS += -std=c++11
+LOCAL_CPPFLAGS = -std=c++11
 LOCAL_CPP_FEATURES := rtti exceptions
 
 include $(BUILD_SHARED_LIBRARY)
