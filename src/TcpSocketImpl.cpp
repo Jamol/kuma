@@ -591,7 +591,7 @@ void TcpSocketImpl::ioReady(uint32_t events)
         case ST_CONNECTING:
         {
             if(events & KUMA_EV_ERROR) {
-                KUMA_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events="<<events
+                KUMA_ERRXTRACE("ioReady, KUMA_EV_ERROR, events="<<events
                               <<", err="<<getLastError()<<", state="<<getState());
                 onConnect(KUMA_ERROR_POLLERR);
             } else {
@@ -647,7 +647,7 @@ void TcpSocketImpl::ioReady(uint32_t events)
             }
             destroy_flag_ptr_ = nullptr;
             if((events & KUMA_EV_ERROR) && getState() == ST_OPEN) {
-                KUMA_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events="<<events
+                KUMA_ERRXTRACE("ioReady, KUMA_EV_ERROR, events="<<events
                               <<", err="<<getLastError()<<", state="<<getState());
                 onClose(KUMA_ERROR_POLLERR);
                 break;

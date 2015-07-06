@@ -20,6 +20,8 @@
 
 KUMA_NS_BEGIN
 
+#define USE_PIPE
+
 class Notifier
 {
 public:
@@ -42,6 +44,21 @@ public:
         }
     }
     bool init() {
+#if defined(USE_PIPE) && !defined(KUMA_OS_WIN)
+        if(pipe(fds_) != 0) {
+            fds_[READ_FD] = INVALID_FD;
+            fds_[WRITE_FD] = INVALID_FD;
+            return false;
+        } else {
+            int fl = fcntl(fds_[READ_FD], F_GETFL);
+            fl |= O_NONBLOCK;
+            fcntl(fds_[READ_FD], F_SETFL, fl);
+            fl = fcntl(fds_[WRITE_FD], F_GETFL);
+            fl |= O_NONBLOCK;
+            fcntl(fds_[WRITE_FD], F_SETFL, fl);
+            return true;
+        }
+#else
         fds_[READ_FD] = socket(AF_INET, SOCK_DGRAM, 0);
         fds_[WRITE_FD] = socket(AF_INET, SOCK_DGRAM, 0);
         struct addrinfo hints = {0};
@@ -70,10 +87,18 @@ public:
             return false;
         }
         return true;
+#endif
     }
     void notify() {
+#if defined(USE_PIPE) && !defined(KUMA_OS_WIN)
+        if(fds_[WRITE_FD] != INVALID_FD) {
+            int i = 1;
+            write(fds_[WRITE_FD], &i, sizeof(i));
+        }
+#else
         uint64_t d = 1;
         sendto(fds_[WRITE_FD], (const char *)&d, sizeof(d), 0, (struct sockaddr*)&ss_addr_, addr_len_);
+#endif
     }
     
     SOCKET_FD getReadFD() {
@@ -82,7 +107,11 @@ public:
     
     int onEvent(uint32_t ev) {
         char buf[1024];
+#if defined(USE_PIPE) && !defined(KUMA_OS_WIN)
+        while(read(fds_[READ_FD], buf, sizeof(buf))>0) ;
+#else
         recvfrom(fds_[READ_FD], buf, sizeof(buf), 0, NULL, NULL);
+#endif
         return KUMA_ERROR_NOERR;
     }
 private:

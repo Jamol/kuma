@@ -17,7 +17,7 @@ using namespace kuma;
 
 #define THREAD_COUNT    10
 static bool g_exit = false;
-EventLoop main_loop(POLL_TYPE_SELECT);
+EventLoop main_loop(POLL_TYPE_NONE);
 
 #ifdef KUMA_OS_WIN
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
