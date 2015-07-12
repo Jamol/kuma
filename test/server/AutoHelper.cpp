@@ -11,6 +11,13 @@ AutoHelper::AutoHelper(EventLoop* loop, long conn_id, TestLoop* server)
     
 }
 
+AutoHelper::~AutoHelper()
+{
+    if(destroy_flag_ptr_) {
+        *destroy_flag_ptr_ = true;
+    }
+}
+
 int AutoHelper::attachFd(SOCKET_FD fd)
 {
     http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });

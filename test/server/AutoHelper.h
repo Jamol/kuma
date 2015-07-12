@@ -14,6 +14,7 @@ class AutoHelper : public LoopObject
 {
 public:
     AutoHelper(EventLoop* loop, long conn_id, TestLoop* server);
+    ~AutoHelper();
 
     int attachFd(SOCKET_FD fd);
     int close();
