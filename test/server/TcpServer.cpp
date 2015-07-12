@@ -28,6 +28,8 @@ int TcpServer::startListen(const char* proto, const char* host, uint16_t port)
         proto_ = PROTO_HTTP;
     } else if(strcmp(proto, "ws") == 0) {
         proto_ = PROTO_WS;
+    } else if(strcmp(proto, "auto") == 0) {
+        proto_ = PROTO_AUTO;
     }
     loop_pool_.init(thr_count_);
     server_.setAcceptCallback([this] (SOCKET_FD fd) { onAccept(fd); });

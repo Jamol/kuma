@@ -171,7 +171,7 @@ private:
     TimerImpl* pimpl_;
 };
 
-class HttpParser
+class KUMA_API HttpParser
 {
 public:
     typedef std::function<void(const char*, uint32_t)> DataCallback;
@@ -270,6 +270,7 @@ public:
     ~HttpResponse();
     
     int attachFd(SOCKET_FD fd, uint8_t* init_data = nullptr, uint32_t init_len = 0);
+    int attachFd(SOCKET_FD fd, HttpParser&& parser, uint8_t* init_data = nullptr, uint32_t init_len = 0);
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
     int sendResponse(int status_code, const char* desc = nullptr, const char* ver = "HTTP/1.1");
@@ -319,6 +320,7 @@ public:
     int connect(const char* ws_url, EventCallback& cb);
     int connect(const char* ws_url, EventCallback&& cb);
     int attachFd(SOCKET_FD fd, uint8_t* init_data = nullptr, uint32_t init_len = 0);
+    int attachFd(SOCKET_FD fd, HttpParser&& parser, uint8_t* init_data = nullptr, uint32_t init_len = 0);
     int send(uint8_t* data, uint32_t len);
     int close();
     

@@ -16,6 +16,7 @@ public:
     WsTest(EventLoop* loop, long conn_id, TestLoop* server);
 
     int attachFd(SOCKET_FD fd);
+    int attachFd(SOCKET_FD fd, HttpParser&& parser);
     int close();
     
     void onSend(int err);
@@ -31,7 +32,6 @@ private:
     WebSocket       ws_;
     TestLoop*       server_;
     long            conn_id_;
-    
 };
 
 #endif

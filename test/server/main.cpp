@@ -46,6 +46,7 @@ static const char* g_usage =
 "   server [option] http://0.0.0.0:8443\n"
 "   server [option] ws://0.0.0.0:8443\n"
 "   server [option] udp://0.0.0.0:8443\n"
+"   server [option] auto://0.0.0.0:8443\n"
 "   -v              print version\n"
 ;
 

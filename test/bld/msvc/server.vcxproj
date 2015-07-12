@@ -163,6 +163,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\server\AutoHelper.cpp" />
     <ClCompile Include="..\..\server\Connection.cpp" />
     <ClCompile Include="..\..\server\HttpTest.cpp" />
     <ClCompile Include="..\..\server\LoopPool.cpp" />
@@ -173,6 +174,7 @@
     <ClCompile Include="..\..\server\WsTest.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\server\AutoHelper.h" />
     <ClInclude Include="..\..\server\Connection.h" />
     <ClInclude Include="..\..\server\HttpTest.h" />
     <ClInclude Include="..\..\server\LoopPool.h" />

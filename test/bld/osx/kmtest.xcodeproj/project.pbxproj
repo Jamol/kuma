@@ -15,6 +15,7 @@
 		6F29765F1B311D5900EB467D /* kuma.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F29765D1B311D5900EB467D /* kuma.dylib */; };
 		6F2D40411B1875DB00E24928 /* UdpServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2D403F1B1875DB00E24928 /* UdpServer.cpp */; };
 		6F2D40441B1877A600E24928 /* UdpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2D40421B1877A500E24928 /* UdpClient.cpp */; };
+		6F522B3F1B5274DA006EA7E0 /* AutoHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F522B3D1B5274DA006EA7E0 /* AutoHelper.cpp */; };
 		6FF211C31B1553C6006603BB /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF211C21B1553C6006603BB /* main.cpp */; };
 		6FF211C51B1553D3006603BB /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF211C41B1553D3006603BB /* main.cpp */; };
 		6FF2123F1B15A18D006603BB /* Client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF2123D1B15A18D006603BB /* Client.cpp */; };
@@ -85,6 +86,8 @@
 		6F2D40401B1875DB00E24928 /* UdpServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UdpServer.h; path = ../../../server/UdpServer.h; sourceTree = "<group>"; };
 		6F2D40421B1877A500E24928 /* UdpClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UdpClient.cpp; path = ../../../client/UdpClient.cpp; sourceTree = "<group>"; };
 		6F2D40431B1877A600E24928 /* UdpClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UdpClient.h; path = ../../../client/UdpClient.h; sourceTree = "<group>"; };
+		6F522B3D1B5274DA006EA7E0 /* AutoHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AutoHelper.cpp; path = ../../../server/AutoHelper.cpp; sourceTree = "<group>"; };
+		6F522B3E1B5274DA006EA7E0 /* AutoHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AutoHelper.h; path = ../../../server/AutoHelper.h; sourceTree = "<group>"; };
 		6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = kuma.xcodeproj; path = ../../../bld/osx/kuma.xcodeproj; sourceTree = "<group>"; };
 		6FF211AF1B155298006603BB /* client */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = client; sourceTree = BUILT_PRODUCTS_DIR; };
 		6FF211BB1B1552AA006603BB /* server */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = server; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -177,6 +180,8 @@
 		6FF211BC1B1552AA006603BB /* server */ = {
 			isa = PBXGroup;
 			children = (
+				6F522B3D1B5274DA006EA7E0 /* AutoHelper.cpp */,
+				6F522B3E1B5274DA006EA7E0 /* AutoHelper.h */,
 				6F2975B01B30101B00EB467D /* LoopPool.cpp */,
 				6F2975B11B30101B00EB467D /* LoopPool.h */,
 				6F2975611B2ECE8A00EB467D /* TestLoop.cpp */,
@@ -305,6 +310,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6FF2127A1B15B691006603BB /* TcpServer.cpp in Sources */,
+				6F522B3F1B5274DA006EA7E0 /* AutoHelper.cpp in Sources */,
 				6F2975B21B30101B00EB467D /* LoopPool.cpp in Sources */,
 				6FF7476B1B26E5590007F34D /* HttpTest.cpp in Sources */,
 				6F2975631B2ECE8A00EB467D /* TestLoop.cpp in Sources */,

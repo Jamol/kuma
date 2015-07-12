@@ -19,6 +19,15 @@ int WsTest::attachFd(SOCKET_FD fd)
     return ws_.attachFd(fd);
 }
 
+int WsTest::attachFd(SOCKET_FD fd, HttpParser&& parser)
+{
+    ws_.setWriteCallback([this] (int err) { onSend(err); });
+    ws_.setErrorCallback([this] (int err) { onClose(err); });
+    ws_.setDataCallback([this] (uint8_t* data, uint32_t len) { onData(data, len); });
+    
+    return ws_.attachFd(fd, std::move(parser));
+}
+
 int WsTest::close()
 {
     return ws_.close();

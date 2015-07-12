@@ -49,6 +49,7 @@ public:
     WSHandler();
     ~WSHandler();
     
+    void setHttpParser(HttpParserImpl&& parser);
     std::string buildRequest(const std::string& path, const std::string& host,
                              const std::string& proto, const std::string& origin);
     std::string buildResponse();

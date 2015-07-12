@@ -23,6 +23,19 @@ int HttpTest::attachFd(SOCKET_FD fd)
     return http_.attachFd(fd);
 }
 
+int HttpTest::attachFd(SOCKET_FD fd, HttpParser&& parser)
+{
+    http_.setWriteCallback([this] (int err) { onSend(err); });
+    http_.setErrorCallback([this] (int err) { onClose(err); });
+    
+    http_.setDataCallback([this] (uint8_t* data, uint32_t len) { onHttpData(data, len); });
+    http_.setHeaderCompleteCallback([this] () { onHeaderComplete(); });
+    http_.setRequestCompleteCallback([this] () { onRequestComplete(); });
+    http_.setResponseCompleteCallback([this] () { onResponseComplete(); });
+    
+    return http_.attachFd(fd, std::move(parser));
+}
+
 int HttpTest::close()
 {
     return http_.close();

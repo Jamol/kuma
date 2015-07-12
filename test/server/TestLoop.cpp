@@ -3,6 +3,7 @@
 #include "Connection.h"
 #include "HttpTest.h"
 #include "WsTest.h"
+#include "AutoHelper.h"
 
 TestLoop::TestLoop(LoopPool* server, PollType poll_type)
 : loop_(new EventLoop(poll_type))
@@ -90,11 +91,40 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
                 ws->attachFd(fd);
                 break;
             }
+            case PROTO_AUTO:
+            {
+                long conn_id = server_->getConnId();
+                AutoHelper* helper = new AutoHelper(loop_, conn_id, this);
+                addObject(conn_id, helper);
+                helper->attachFd(fd);
+                break;
+            }
                 
             default:
                 break;
         }
     });
+}
+
+#ifdef KUMA_OS_WIN
+# define strcasecmp _stricmp
+#endif
+
+void TestLoop::addFd(SOCKET_FD fd, HttpParser&& parser)
+{
+    if (strcasecmp(parser.getHeaderValue("Upgrade"), "WebSocket") == 0 &&
+        strcasecmp(parser.getHeaderValue("Connection"), "Upgrade") == 0) {
+        long conn_id = server_->getConnId();
+        WsTest* ws = new WsTest(loop_, conn_id, this);
+        addObject(conn_id, ws);
+        ws->attachFd(fd, std::move(parser));
+        return;
+    } else {
+        long conn_id = server_->getConnId();
+        HttpTest* http = new HttpTest(loop_, conn_id, this);
+        addObject(conn_id, http);
+        http->attachFd(fd, std::move(parser));
+    }
 }
 
 void TestLoop::addObject(long conn_id, LoopObject* obj)

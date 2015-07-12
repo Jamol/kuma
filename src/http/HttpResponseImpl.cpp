@@ -81,6 +81,27 @@ int HttpResponseImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_l
     return tcp_socket_.attachFd(fd, 0);
 }
 
+int HttpResponseImpl::attachFd(SOCKET_FD fd, HttpParserImpl&& parser, uint8_t* init_data, uint32_t init_len)
+{
+    if(init_data && init_len > 0) {
+        init_data = new uint8_t(init_len);
+        memcpy(init_data_, init_data, init_len);
+        init_len_ = init_len;
+    }
+    http_parser_.reset();
+    http_parser_ = std::move(parser);
+    http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });
+    http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
+    tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
+    tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
+    tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
+    int ret = tcp_socket_.attachFd(fd, 0);
+    if(http_parser_.paused()) {
+        http_parser_.resume();
+    }
+    return ret;
+}
+
 void HttpResponseImpl::addHeader(const std::string& name, const std::string& value)
 {
     if(!name.empty()) {

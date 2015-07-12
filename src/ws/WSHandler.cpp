@@ -51,6 +51,17 @@ void WSHandler::cleanup()
     ctx_.reset();
 }
 
+void WSHandler::setHttpParser(HttpParserImpl&& parser)
+{
+    http_parser_.reset();
+    http_parser_ = std::move(parser);
+    http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });
+    http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
+    if(http_parser_.paused()) {
+        http_parser_.resume();
+    }
+}
+
 #define SHA1_DIGEST_SIZE	20
 std::string generate_sec_accept_value(const std::string& sec_ws_key)
 {

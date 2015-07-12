@@ -16,7 +16,8 @@ typedef enum {
     PROTO_HTTPS,
     PROTO_WS,
     PROTO_WSS,
-    PROTO_UDP
+    PROTO_UDP,
+    PROTO_AUTO
 } Proto;
 
 class LoopObject
@@ -36,6 +37,7 @@ public:
     void stop();
     
     void addFd(SOCKET_FD fd, Proto proto);
+    void addFd(SOCKET_FD fd, HttpParser&& parser);
     
     void addObject(long conn_id, LoopObject* obj);
     void removeObject(long conn_id);

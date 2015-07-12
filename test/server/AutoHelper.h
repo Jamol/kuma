@@ -1,5 +1,5 @@
-#ifndef __HttpTest_H__
-#define __HttpTest_H__
+#ifndef __AutoHelper_H__
+#define __AutoHelper_H__
 
 #include "kmapi.h"
 #include "util/util.h"
@@ -10,31 +10,32 @@
 using namespace kuma;
 
 class TestLoop;
-class HttpTest : public LoopObject
+class AutoHelper : public LoopObject
 {
 public:
-    HttpTest(EventLoop* loop, long conn_id, TestLoop* server);
+    AutoHelper(EventLoop* loop, long conn_id, TestLoop* server);
 
     int attachFd(SOCKET_FD fd);
-    int attachFd(SOCKET_FD fd, HttpParser&& parser);
     int close();
     
     void onSend(int err);
+    void onReceive(int err);
     void onClose(int err);
     
-    void onHttpData(uint8_t*, uint32_t);
-    void onHeaderComplete();
-    void onRequestComplete();
-    void onResponseComplete();
+    void onHttpData(const char*, uint32_t);
+    void onHttpEvent(HttpEvent ev);
     
 private:
     void cleanup();
     
 private:
     EventLoop*      loop_;
-    HttpResponse    http_;
     TestLoop*       server_;
     long            conn_id_;
+    
+    TcpSocket       tcp_;
+    HttpParser      http_parser_;
+    bool*           destroy_flag_ptr_;
 };
 
 #endif

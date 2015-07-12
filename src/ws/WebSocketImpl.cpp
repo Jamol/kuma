@@ -128,6 +128,26 @@ int WebSocketImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_len)
     return tcp_socket_.attachFd(fd, 0);
 }
 
+int WebSocketImpl::attachFd(SOCKET_FD fd, HttpParserImpl&& parser, uint8_t* init_data, uint32_t init_len)
+{
+    is_server_ = true;
+    if(init_data && init_len > 0) {
+        init_data = new uint8_t(init_len);
+        memcpy(init_data_, init_data, init_len);
+        init_len_ = init_len;
+    }
+    
+    ws_handler_.setDataCallback([this] (uint8_t* data, uint32_t len) { onWsData(data, len); });
+    ws_handler_.setHandshakeCallback([this] (int err) { onWsHandshake(err); });
+    tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
+    tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
+    tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
+    setState(STATE_HANDSHAKE);
+    int ret = tcp_socket_.attachFd(fd, 0);
+    ws_handler_.setHttpParser(std::move(parser));
+    return ret;
+}
+
 int WebSocketImpl::send(uint8_t* data, uint32_t len)
 {
     if(getState() != STATE_OPEN) {
