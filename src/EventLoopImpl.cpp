@@ -71,13 +71,12 @@ int EventLoopImpl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
     if(isInEventLoopThread()) {
         return poll_->registerFd(fd, events, cb);
     }
-    LoopCallback ev([=] () mutable {
+    return runInEventLoop([=] () mutable {
         int ret = poll_->registerFd(fd, events, cb);
         if(ret != KUMA_ERROR_NOERR) {
             return ;
         }
     });
-    return runInEventLoop(std::move(ev));
 }
 
 int EventLoopImpl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb)
@@ -85,13 +84,12 @@ int EventLoopImpl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb)
     if(isInEventLoopThread()) {
         return poll_->registerFd(fd, events, std::move(cb));
     }
-    LoopCallback ev([=] () mutable {
+    return runInEventLoop([=] () mutable {
         int ret = poll_->registerFd(fd, events, cb);
         if(ret != KUMA_ERROR_NOERR) {
             return ;
         }
     });
-    return runInEventLoop(std::move(ev));
 }
 
 int EventLoopImpl::updateFd(SOCKET_FD fd, uint32_t events)
@@ -99,13 +97,12 @@ int EventLoopImpl::updateFd(SOCKET_FD fd, uint32_t events)
     if(isInEventLoopThread()) {
         return poll_->updateFd(fd, events);
     }
-    LoopCallback ev([=] {
+    return runInEventLoop([=] {
         int ret = poll_->updateFd(fd, events);
         if(ret != KUMA_ERROR_NOERR) {
             return ;
         }
     });
-    return runInEventLoop(std::move(ev));
 }
 
 int EventLoopImpl::unregisterFd(SOCKET_FD fd, bool close_fd)
@@ -117,13 +114,12 @@ int EventLoopImpl::unregisterFd(SOCKET_FD fd, bool close_fd)
         }
         return ret;
     } else {
-        LoopCallback ev([=] {
+        int ret = runInEventLoopSync([=] {
             poll_->unregisterFd(fd);
             if(close_fd) {
                 closeFd(fd);
             }
         });
-        int ret = runInEventLoopSync(ev);
         if(KUMA_ERROR_NOERR != ret) {
             return ret;
         }
@@ -216,6 +212,11 @@ int EventLoopImpl::runInEventLoopSync(LoopCallback& cb)
         cv.wait(lk, [&ready] { return ready; });
     }
     return KUMA_ERROR_NOERR;
+}
+
+int EventLoopImpl::runInEventLoopSync(LoopCallback&& cb)
+{
+    return runInEventLoopSync(cb);
 }
 
 int EventLoopImpl::queueInEventLoop(LoopCallback& cb)
