@@ -18,7 +18,11 @@
 
 #include "kmconf.h"
 
-#define KUMA_NS_BEGIN   namespace kuma {;
+#ifdef KUMA_OS_MAC
+# define KUMA_NS_BEGIN   namespace kuma {;
+#else
+# define KUMA_NS_BEGIN   namespace kuma {
+#endif
 #define KUMA_NS_END     }
 
 KUMA_NS_BEGIN

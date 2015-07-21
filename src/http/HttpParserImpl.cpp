@@ -18,6 +18,8 @@
 #include "util/util.h"
 #include "Uri.h"
 
+#include <algorithm>
+
 KUMA_NS_BEGIN
 
 #define CR  '\r'

@@ -22,6 +22,7 @@
 #include <map>
 #include <vector>
 #include <functional>
+#include <string.h>
 
 KUMA_NS_BEGIN
 

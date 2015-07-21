@@ -16,6 +16,8 @@
 #include "TimerManager.h"
 #include "EventLoopImpl.h"
 
+#include <string.h>
+
 KUMA_NS_BEGIN
 
 int find_first_set(unsigned int b);
