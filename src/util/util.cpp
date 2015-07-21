@@ -57,6 +57,9 @@ enum{
     KM_RESOLVE_IPV6    = 2
 };
 
+sockaddr_storage zero_ss_addr;
+struct addrinfo zero_addrinfo;
+
 #ifdef KUMA_OS_WIN
 typedef int (WSAAPI *pf_getaddrinfo)(
     _In_opt_  PCSTR pNodeName,
@@ -306,8 +309,8 @@ extern "C" int km_get_sock_addr(struct sockaddr * sk_addr, unsigned int sk_addr_
 
 extern "C" bool km_is_ipv6_address(const char* addr)
 {
-    sockaddr_storage ss_addr = {0};
-    struct addrinfo hints = {0};
+    sockaddr_storage ss_addr = zero_ss_addr;
+    struct addrinfo hints = zero_addrinfo;
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_NUMERICHOST;
     if(km_set_sock_addr(addr, 0, &hints, (struct sockaddr *)&ss_addr, sizeof(ss_addr)) != 0)
@@ -319,8 +322,8 @@ extern "C" bool km_is_ipv6_address(const char* addr)
 
 extern "C" bool km_is_ip_address(const char* addr)
 {
-    sockaddr_storage ss_addr = {0};
-    struct addrinfo hints = {0};
+    sockaddr_storage ss_addr = zero_ss_addr;
+    struct addrinfo hints = zero_addrinfo;
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_NUMERICHOST;
     return km_set_sock_addr(addr, 0, &hints, (struct sockaddr *)&ss_addr, sizeof(ss_addr)) == 0;
@@ -328,8 +331,8 @@ extern "C" bool km_is_ip_address(const char* addr)
 
 extern "C" bool km_is_mcast_address(const char* addr)
 {
-    sockaddr_storage ss_addr = {0};
-    struct addrinfo hints = {0};
+    sockaddr_storage ss_addr = zero_ss_addr;
+    struct addrinfo hints = zero_addrinfo;
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_NUMERICHOST|AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG

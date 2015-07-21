@@ -1,5 +1,7 @@
 #include "TcpServer.h"
 
+#include <string.h>
+
 TcpServer::TcpServer(EventLoop* loop, int count)
 : loop_(loop)
 , server_(loop_)

@@ -61,6 +61,9 @@
 
 KUMA_NS_BEGIN
 
+extern sockaddr_storage zero_ss_addr;
+extern struct addrinfo zero_addrinfo;
+
 TcpServerSocketImpl::TcpServerSocketImpl(EventLoopImpl* loop)
 : fd_(INVALID_FD)
 , loop_(loop)
@@ -99,8 +102,8 @@ void TcpServerSocketImpl::cleanup()
 int TcpServerSocketImpl::startListen(const char* host, uint16_t port)
 {
     KUMA_INFOXTRACE("startListen, host="<<host<<", port="<<port);
-    sockaddr_storage ss_addr = {0};
-    struct addrinfo hints = {0};
+    sockaddr_storage ss_addr = zero_ss_addr;
+    struct addrinfo hints = zero_addrinfo;
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
     if(km_set_sock_addr(host, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
@@ -185,7 +188,7 @@ void TcpServerSocketImpl::onAccept()
         char peer_ip[128] = {0};
         uint16_t peer_port = 0;
         
-        sockaddr_storage ss_addr = {0};
+        sockaddr_storage ss_addr = zero_ss_addr;
 #if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
         socklen_t ss_len = sizeof(ss_addr);
 #else

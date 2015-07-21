@@ -5,6 +5,7 @@
 #include "WsClient.h"
 #include "UdpClient.h"
 
+#include <string.h>
 #include <string>
 
 TestLoop::TestLoop(LoopPool* server, PollType poll_type)
@@ -29,7 +30,6 @@ bool TestLoop::init()
 {
     try {
         thread_ = std::thread([this] {
-            printf("in test loop thread\n");
             run();
         });
     }

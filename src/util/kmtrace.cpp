@@ -34,9 +34,10 @@ void TracePrint(int level, const char* szMessage, ...)
     va_start(VAList, szMessage);
     VSNPRINTF(szMsgBuf, sizeof(szMsgBuf)-1, szMessage, VAList);
     
-    std::thread::id tid = std::this_thread::get_id();
+    //std::thread::id tid = std::this_thread::get_id();
     std::stringstream ss;
-    ss << tid << ":" << getCurrentThreadId();
+    //ss << tid << ":" << getCurrentThreadId();
+    ss << getCurrentThreadId();
     std::string stid;
     ss >> stid;
     

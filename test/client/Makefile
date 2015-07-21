@@ -39,7 +39,7 @@ LIBS = $(BINDIR)/libkuma.so
 CXX=g++
 
 CXXFLAGS = -g -std=c++11 -pipe -fPIC -Wall -Wextra -pedantic
-#LDFLAGS = -Wl,-R -Wl,/Users/xxx/work/mygit/kuma/bin/linux
+LDFLAGS = -lpthread
 
 SRCS =  \
     LoopPool.cpp\

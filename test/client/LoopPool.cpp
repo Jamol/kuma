@@ -32,7 +32,7 @@ TestLoop* LoopPool::getNextLoop()
 bool LoopPool::init(int count, PollType poll_type)
 {
     for (int i=0; i < count; ++i) {
-        TestLoop* l = new TestLoop(this);
+        TestLoop* l = new TestLoop(this, poll_type);
         loops_.push_back(l);
         l->init();
     }

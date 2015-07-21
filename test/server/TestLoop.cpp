@@ -5,6 +5,8 @@
 #include "WsTest.h"
 #include "AutoHelper.h"
 
+#include <string.h>
+
 TestLoop::TestLoop(LoopPool* server, PollType poll_type)
 : loop_(new EventLoop(poll_type))
 , server_(server)
@@ -27,7 +29,6 @@ bool TestLoop::init()
 {
     try {
         thread_ = std::thread([this] {
-            printf("in test loop thread\n");
             run();
         });
     }

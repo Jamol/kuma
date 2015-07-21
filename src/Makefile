@@ -34,7 +34,7 @@ INCLUDES = -I. -I../vendor -I$(OPENSSL_INCLUDE)
 CXX=g++
 
 CXXFLAGS = -g -std=c++11 -pipe -fPIC -Wall -Wextra -pedantic
-LDFLAGS = -shared -Wl,-Bsymbolic
+LDFLAGS = -shared -Wl,-Bsymbolic -lpthread
 
 SRCS =  \
     EventLoopImpl.cpp\

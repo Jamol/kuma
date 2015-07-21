@@ -66,6 +66,9 @@
 
 KUMA_NS_BEGIN
 
+extern sockaddr_storage zero_ss_addr;
+extern struct addrinfo zero_addrinfo;
+
 UdpSocketImpl::UdpSocketImpl(EventLoopImpl* loop)
 : fd_(INVALID_FD)
 , loop_(loop)
@@ -111,7 +114,7 @@ int UdpSocketImpl::bind(const char *bind_host, uint16_t bind_port, uint32_t flag
         cleanup();
     }
     
-    struct addrinfo hints = {0};
+    struct addrinfo hints = zero_addrinfo;
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
@@ -156,7 +159,7 @@ int UdpSocketImpl::bind(const char *bind_host, uint16_t bind_port, uint32_t flag
         return KUMA_ERROR_FAILED;
     }
     
-    sockaddr_storage ss_addr = {0};
+    sockaddr_storage ss_addr = zero_ss_addr;
 #if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
     socklen_t len = sizeof(ss_addr);
 #else
@@ -204,7 +207,7 @@ int UdpSocketImpl::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
         KUMA_ERRXTRACE("mcastJoin, invalid mcast address");
         return KUMA_ERROR_INVALID_PARAM;
     }
-    struct addrinfo hints = {0};
+    struct addrinfo hints = zero_addrinfo;
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_NUMERICHOST|AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
@@ -303,8 +306,8 @@ int UdpSocketImpl::send(uint8_t* data, uint32_t length, const char* host, uint16
         return -1;
     }
     
-    sockaddr_storage ss_addr = {0};
-    struct addrinfo hints = {0};
+    sockaddr_storage ss_addr = zero_ss_addr;
+    struct addrinfo hints = zero_addrinfo;
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_NUMERICHOST|AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
@@ -355,8 +358,8 @@ int UdpSocketImpl::send(iovec* iovs, uint32_t count, const char* host, uint16_t 
     int ret = 0;
     if(0 == count) return 0;
     
-    sockaddr_storage ss_addr = {0};
-    struct addrinfo hints = {0};
+    sockaddr_storage ss_addr = zero_ss_addr;
+    struct addrinfo hints = zero_addrinfo;
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_NUMERICHOST|AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
@@ -424,7 +427,7 @@ int UdpSocketImpl::receive(uint8_t* data, uint32_t length, char* ip, uint32_t ip
     }
     
     int ret = 0;
-    sockaddr_storage ss_addr = {0};
+    sockaddr_storage ss_addr = zero_ss_addr;
 #if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
     socklen_t addr_len = sizeof(ss_addr);
 #else
