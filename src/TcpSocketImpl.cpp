@@ -68,9 +68,6 @@
 
 KUMA_NS_BEGIN
 
-extern sockaddr_storage zero_ss_addr;
-extern struct addrinfo zero_addrinfo;
-
 TcpSocketImpl::TcpSocketImpl(EventLoopImpl* loop)
 : fd_(INVALID_FD)
 , loop_(loop)
@@ -130,8 +127,8 @@ int TcpSocketImpl::bind(const char *bind_host, uint16_t bind_port)
     if(fd_ != INVALID_FD) {
         cleanup();
     }
-    sockaddr_storage ss_addr = zero_ss_addr;
-    struct addrinfo hints = zero_addrinfo;
+    sockaddr_storage ss_addr = {0};
+    struct addrinfo hints = {0};
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_NUMERICHOST;//AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
     if(km_set_sock_addr(bind_host, bind_port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
@@ -188,8 +185,8 @@ int TcpSocketImpl::connect_i(const char* host, uint16_t port, uint32_t timeout)
         return KUMA_ERROR_UNSUPPORT;
     }
 #endif
-    sockaddr_storage ss_addr = zero_ss_addr;
-    struct addrinfo hints = zero_addrinfo;
+    sockaddr_storage ss_addr = {0};
+    struct addrinfo hints = {0};
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
     if(km_set_sock_addr(host, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
