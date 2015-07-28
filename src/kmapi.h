@@ -59,6 +59,9 @@ public:
     int runInEventLoop(LoopCallback& cb);
     int runInEventLoop(LoopCallback&& cb);
     int runInEventLoopSync(LoopCallback& cb);
+    int runInEventLoopSync(LoopCallback&& cb);
+    int queueInEventLoop(LoopCallback& cb);
+    int queueInEventLoop(LoopCallback&& cb);
     void loopOnce(uint32_t max_wait_ms);
     void loop(uint32_t max_wait_ms = -1);
     void stop();

@@ -112,6 +112,21 @@ int EventLoop::runInEventLoopSync(LoopCallback& cb)
     return pimpl_->runInEventLoopSync(cb);
 }
 
+int EventLoop::runInEventLoopSync(LoopCallback&& cb)
+{
+    return pimpl_->runInEventLoopSync(std::move(cb));
+}
+
+int EventLoop::queueInEventLoop(LoopCallback& cb)
+{
+    return pimpl_->runInEventLoopSync(cb);
+}
+
+int EventLoop::queueInEventLoop(LoopCallback&& cb)
+{
+    return pimpl_->runInEventLoopSync(std::move(cb));
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 TcpSocket::TcpSocket(EventLoop* loop)
     : pimpl_(new TcpSocketImpl(loop->getPimpl()))
