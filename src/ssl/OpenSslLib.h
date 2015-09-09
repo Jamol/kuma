@@ -31,7 +31,8 @@ KUMA_NS_BEGIN
 class OpenSslLib
 {
 public:
-    static bool init();
+    static bool init(const char* path);
+    static void fini();
     
     static int verifyCallback(int ok, X509_STORE_CTX *ctx);
     static int appVerifyCallback(X509_STORE_CTX *ctx, void *arg);

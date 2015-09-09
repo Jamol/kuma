@@ -30,6 +30,12 @@
 # include <errno.h>
 # include <sys/types.h>
 # include <sys/time.h>
+# include <dlfcn.h>
+
+# ifdef KUMA_OS_MAC
+#  include "CoreFoundation/CoreFoundation.h"
+#  include <mach-o/dyld.h>
+# endif
 #endif
 
 #include <chrono>
@@ -541,17 +547,85 @@ char* trim_right(char* str, char* str_end)
     return str;
 }
 
-std::string& trim_left(std::string& str) {
+std::string& trim_left(std::string& str)
+{
     str.erase(0, str.find_first_not_of(' '));
     return str;
 }
 
-std::string& trim_right(std::string& str) {
+std::string& trim_right(std::string& str)
+{
     auto pos = str.find_last_not_of(' ');
     if(pos != std::string::npos) {
         str.erase(pos + 1);
     }
     return str;
+}
+
+std::string getExecutablePath()
+{
+    std::string str_path;
+#ifdef KUMA_OS_WIN
+    char c_path[MAX_PATH] = { 0 };
+    GetModuleFileName(NULL, c_path, sizeof(c_path));
+    str_path = c_path;
+#elif defined(KUMA_OS_MAC)
+    char c_path[PATH_MAX] = {0};
+    uint32_t size = sizeof(c_path);
+    CFBundleRef cf_bundle = CFBundleGetMainBundle();
+    if(cf_bundle) {
+        CFURLRef cf_url = CFBundleCopyBundleURL(cf_bundle);
+        if(CFURLGetFileSystemRepresentation(cf_url, TRUE, (UInt8 *)c_path, PATH_MAX)) {
+            CFStringRef cf_str = CFURLCopyFileSystemPath(cf_url, kCFURLPOSIXPathStyle);
+            CFStringGetCString(cf_str, c_path, PATH_MAX, kCFStringEncodingASCII);
+            CFRelease(cf_str);
+        }
+        CFRelease(cf_url);
+        str_path = c_path;
+        if(str_path.at(str_path.length()-1) != PATH_SEPARATOR) {
+            str_path += PATH_SEPARATOR;
+        }
+        return str_path;
+    } else {
+        _NSGetExecutablePath(c_path, &size);
+    }
+    str_path = c_path;
+#else
+    char buf[32];
+    snprintf(buf, sizeof(buf), "/proc/%u/exe", getpid());
+    char c_path[1024] = {0};
+    readlink(buf, c_path, sizeof(c_path));
+    str_path = c_path;
+#endif
+    if(str_path.empty()) {
+        return "./";
+    }
+    auto pos = str_path.rfind(PATH_SEPARATOR, str_path.size());
+    if(pos != std::string::npos) {
+        str_path.resize(pos);
+    }
+    str_path.append(1, PATH_SEPARATOR);
+    return str_path;
+}
+
+std::string getCurrentModulePath()
+{
+    std::string str_path;
+#ifdef KUMA_OS_WIN
+    char c_path[MAX_PATH] = { 0 };
+    HMODULE hModule = NULL;
+    GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, reinterpret_cast<LPCTSTR>(getCurrentModulePath), &hModule);
+    GetModuleFileName(hModule, c_path, sizeof(c_path));
+    str_path = c_path;
+#else
+    Dl_info dlInfo;
+    dladdr((void*)getCurrentModulePath, &dlInfo);
+    str_path = dlInfo.dli_fname;
+#endif
+    auto pos = str_path.rfind(PATH_SEPARATOR, str_path.size());
+    str_path.resize(pos);
+    str_path.append(1, PATH_SEPARATOR);
+    return str_path;
 }
 
 KUMA_NS_END

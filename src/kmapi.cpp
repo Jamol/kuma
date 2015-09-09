@@ -908,16 +908,18 @@ WebSocketImpl* WebSocket::getPimpl()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-void init()
+void init(const char* path)
 {
 #ifdef KUMA_HAS_OPENSSL
-    OpenSslLib::init();
+    OpenSslLib::init(path);
 #endif
 }
 
 void fini()
 {
-    
+#ifdef KUMA_HAS_OPENSSL
+    OpenSslLib::fini();
+#endif
 }
 
 KUMA_NS_END

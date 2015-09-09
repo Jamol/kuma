@@ -36,6 +36,12 @@ KUMA_NS_BEGIN
 # define getCurrentThreadId() pthread_self()
 #endif
 
+#ifdef KUMA_OS_WIN
+# define PATH_SEPARATOR '\\'
+#else
+# define PATH_SEPARATOR '/'
+#endif
+
 #ifndef TICK_COUNT_TYPE
 # define TICK_COUNT_TYPE	unsigned long
 #endif
@@ -58,6 +64,8 @@ char* trim_right(char* str);
 char* trim_right(char* str, char* str_end);
 std::string& trim_left(std::string& str);
 std::string& trim_right(std::string& str);
+std::string getExecutablePath();
+std::string getCurrentModulePath();
 
 extern "C" {
     KUMA_API int km_resolve_2_ip(const char* host_name, char *ip_buf, int ip_buf_len, int ipv = 0);

@@ -21,6 +21,7 @@
 		6F2D40481B194AE200E24928 /* TimerManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2D40461B194AE200E24928 /* TimerManager.h */; };
 		6F2D404B1B19E25B00E24928 /* HttpParserImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2D40491B19E25B00E24928 /* HttpParserImpl.cpp */; };
 		6F2D404C1B19E25B00E24928 /* HttpParserImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2D404A1B19E25B00E24928 /* HttpParserImpl.h */; };
+		6F4D603D1B9FCA61009132AF /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F4D603C1B9FCA61009132AF /* CoreFoundation.framework */; };
 		6F6208FB1A26BDB1000DAF4B /* kmconf.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208F81A26BDB1000DAF4B /* kmconf.h */; };
 		6F6208FD1A26BDB1000DAF4B /* kmapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208FA1A26BDB1000DAF4B /* kmapi.h */; };
 		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
@@ -68,6 +69,7 @@
 		6F2D40461B194AE200E24928 /* TimerManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimerManager.h; sourceTree = "<group>"; };
 		6F2D40491B19E25B00E24928 /* HttpParserImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HttpParserImpl.cpp; path = http/HttpParserImpl.cpp; sourceTree = "<group>"; };
 		6F2D404A1B19E25B00E24928 /* HttpParserImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HttpParserImpl.h; path = http/HttpParserImpl.h; sourceTree = "<group>"; };
+		6F4D603C1B9FCA61009132AF /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		6F6208F81A26BDB1000DAF4B /* kmconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmconf.h; sourceTree = "<group>"; };
 		6F6208FA1A26BDB1000DAF4B /* kmapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmapi.h; sourceTree = "<group>"; };
 		6F852DF11985E33000271D87 /* kuma.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = kuma.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -108,6 +110,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6F4D603D1B9FCA61009132AF /* CoreFoundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -128,6 +131,7 @@
 		6F852DE81985E33000271D87 = {
 			isa = PBXGroup;
 			children = (
+				6F4D603C1B9FCA61009132AF /* CoreFoundation.framework */,
 				6F852E441985EB4700271D87 /* kumaProj.xcconfig */,
 				6F852E451985EB4700271D87 /* kumaTarget.xcconfig */,
 				6F852DF31985E33000271D87 /* kuma */,

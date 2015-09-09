@@ -15,6 +15,7 @@
 
 #include "OpenSslLib.h"
 #include "util/kmtrace.h"
+#include "util/util.h"
 
 #include <string>
 #include <thread>
@@ -27,18 +28,29 @@ SSL_CTX* OpenSslLib::ssl_ctx_client_ = NULL;
 SSL_CTX* OpenSslLib::ssl_ctx_server_ = NULL;
 std::mutex* OpenSslLib::ssl_locks_ = NULL;
 
-bool OpenSslLib::init()
+bool OpenSslLib::init(const char* path)
 {
     if(ssl_ctx_client_ || ssl_ctx_server_) {
         return true;
     }
     
-    std::string server_cert_file;
-    std::string server_key_file;
-    std::string client_cert_file;
-    std::string client_key_file;
-    std::string ca_cert_file;
-    std::string ca_cert_path;
+    std::string cert_path;
+    if(path == NULL) {
+        cert_path = getCurrentModulePath();
+    } else {
+        cert_path = path;
+        if(cert_path.empty()) {
+            cert_path = getCurrentModulePath();
+        } else if(cert_path.at(cert_path.length() - 1) != PATH_SEPARATOR) {
+            cert_path += PATH_SEPARATOR;
+        }
+    }
+    
+    std::string server_cert_file = cert_path + "server.cer";
+    std::string server_key_file = cert_path + "server.key";
+    std::string client_cert_file;// = cert_path + "cleint.cer";
+    std::string client_key_file;// = cert_path + "client.key";
+    std::string ca_cert_file = cert_path + "ca.cer";
     
     SSL_library_init();
     //OpenSSL_add_all_algorithms();
@@ -116,7 +128,7 @@ bool OpenSslLib::init()
         if(!ca_cert_file.empty() &&
            SSL_CTX_load_verify_locations(ssl_ctx_client_, ca_cert_file.c_str(), NULL) != 1) {
             KUMA_WARNTRACE("OpenSslLib::init, SSL_CTX_load_verify_locations failed, file="<<ca_cert_file
-                           <<", path="<<ca_cert_path<<", err="<<ERR_reason_error_string(ERR_get_error()));
+                           <<", err="<<ERR_reason_error_string(ERR_get_error()));
             break;
         }
         if(SSL_CTX_set_default_verify_paths(ssl_ctx_client_) != 1) {
@@ -154,6 +166,11 @@ bool OpenSslLib::init()
     }
     
     return true;
+}
+
+void OpenSslLib::fini()
+{
+    
 }
 
 struct app_verify_arg
@@ -229,25 +246,15 @@ int OpenSslLib::appVerifyCallback(X509_STORE_CTX *ctx, void *arg)
 
 unsigned long OpenSslLib::threadIdCallback(void)
 {
+#if 0
     unsigned long ret = 0;
-    
     std::thread::id thread_id = std::this_thread::get_id();
     std::stringstream ss;
     ss << thread_id;
     ss >> ret;
     return ret;
-    
-#if 0
-#ifdef KUMA_OS_WIN
-    ret = GetCurrentThreadId();
-#elif defined(KUMA_OS_LINUX)
-    ret = (unsigned long)pthread_self();
-#elif defined(KUMA_OS_MAC)
-    ret = pthread_mach_thread_np(pthread_self());
 #else
-# error "UNSUPPORTED OS"
-#endif
-    return ret;
+    return getCurrentThreadId();
 #endif
 }
 
