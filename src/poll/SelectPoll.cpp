@@ -42,9 +42,8 @@ private:
     
 private:
     struct PollFD {
-        PollFD() : fd(INVALID_FD), events(0) {}
-        SOCKET_FD fd;
-        uint32_t  events;
+        SOCKET_FD fd = INVALID_FD;
+        uint32_t  events = 0;
     };
 
 private:

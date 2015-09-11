@@ -73,10 +73,8 @@ KUMA_NS_BEGIN
 
 struct PollItem
 {
-    PollItem() : fd(INVALID_FD), idx(-1) { }
-
-    SOCKET_FD fd;
-    int idx;
+    SOCKET_FD fd = INVALID_FD;
+    int idx = -1;
     IOCallback cb;
 };
 typedef std::vector<PollItem>   PollItemVector;
