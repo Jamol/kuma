@@ -95,6 +95,19 @@ public:
     virtual void notify() = 0;
     virtual PollType getType() = 0;
     virtual bool isLevelTriggered() = 0;
+    
+protected:
+    void resizePollItems(SOCKET_FD fd) {
+        auto count = poll_items_.size();
+        if (fd >= count) {
+            if(fd > count + 1024) {
+                poll_items_.resize(fd+1);
+            } else {
+                poll_items_.resize(count + 1024);
+            }
+        }
+    }
+    PollItemVector  poll_items_;
 };
 
 KUMA_NS_END

@@ -38,7 +38,6 @@ public:
     bool isLevelTriggered() { return true; }
 
 private:
-    void resizePollItems(SOCKET_FD fd);
     void updateFdSet(SOCKET_FD fd, uint32_t events);
     
 private:
@@ -51,7 +50,6 @@ private:
 private:
     typedef std::vector<PollFD> PollFdVector;
     Notifier        notifier_;
-    PollItemVector  poll_items_;
     PollFdVector    poll_fds_;
     
     fd_set          read_fds_;
@@ -82,13 +80,6 @@ bool SelectPoll::init()
     IOCallback cb ([this] (uint32_t ev) { notifier_.onEvent(ev); });
     registerFd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, std::move(cb));
     return true;
-}
-
-void SelectPoll::resizePollItems(SOCKET_FD fd)
-{
-    if (fd >= poll_items_.size()) {
-        poll_items_.resize(fd + 1);
-    }
 }
 
 int SelectPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)

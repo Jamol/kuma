@@ -44,12 +44,10 @@ public:
 private:
     uint32_t get_events(uint32_t kuma_events);
     uint32_t get_kuma_events(uint32_t events);
-    void resizePollItems(SOCKET_FD fd);
     
 private:
     typedef std::vector<pollfd> PollFdVector;
     Notifier        notifier_;
-    PollItemVector  poll_items_;
     PollFdVector    poll_fds_;
 };
 
@@ -110,13 +108,6 @@ uint32_t VPoll::get_kuma_events(uint32_t events)
         ev |= KUMA_EV_ERROR;
     }
     return ev;
-}
-
-void VPoll::resizePollItems(SOCKET_FD fd)
-{
-    if (fd >= poll_items_.size()) {
-        poll_items_.resize(fd+1);
-    }
 }
 
 int VPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
