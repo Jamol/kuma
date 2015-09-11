@@ -113,18 +113,16 @@ uint32_t VPoll::get_kuma_events(uint32_t events)
 int VPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
 {
     resizePollItems(fd);
-    int idx = -1;
     if (INVALID_FD == poll_items_[fd].fd || -1 == poll_items_[fd].idx) { // new
         pollfd pfd;
         pfd.fd = fd;
         pfd.events = get_events(events);
         poll_fds_.push_back(pfd);
-        idx = int(poll_fds_.size() - 1);
-        poll_items_[fd].idx = idx;
+        poll_items_[fd].idx = int(poll_fds_.size() - 1);
     }
     poll_items_[fd].fd = fd;
     poll_items_[fd].cb = cb;
-    KUMA_INFOTRACE("VPoll::registerFd, fd="<<fd<<", events="<<events<<", index="<<idx);
+    KUMA_INFOTRACE("VPoll::registerFd, fd="<<fd<<", events="<<events<<", index="<<poll_items_[fd].idx);
     
     return KUMA_ERROR_NOERR;
 }

@@ -31,7 +31,7 @@
 # include <sys/types.h>
 # include <sys/time.h>
 # include <dlfcn.h>
-
+# include <unistd.h>
 # ifdef KUMA_OS_MAC
 #  include "CoreFoundation/CoreFoundation.h"
 #  include <mach-o/dyld.h>
