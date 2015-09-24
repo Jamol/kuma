@@ -16,6 +16,8 @@
 #ifndef __OpenSslLib_H__
 #define __OpenSslLib_H__
 
+#ifdef KUMA_HAS_OPENSSL
+
 #include "kmdefs.h"
 
 #include <mutex>
@@ -49,5 +51,7 @@ protected:
 };
 
 KUMA_NS_END
+
+#endif // KUMA_HAS_OPENSSL
 
 #endif

@@ -16,6 +16,8 @@
 #ifndef __SslHandler_H__
 #define __SslHandler_H__
 
+#ifdef KUMA_HAS_OPENSSL
+
 #include "kmdefs.h"
 #include "evdefs.h"
 #include "OpenSslLib.h"
@@ -66,5 +68,7 @@ private:
 };
 
 KUMA_NS_END
+
+#endif // KUMA_HAS_OPENSSL
 
 #endif

@@ -15,6 +15,8 @@ void HttpClient::startRequest(std::string& url)
     http_request_.setDataCallback([this] (uint8_t* data, uint32_t len) { onData(data, len); });
     http_request_.setWriteCallback([this] (int err) { onSend(err); });
     http_request_.setErrorCallback([this] (int err) { onClose(err); });
+    http_request_.setHeaderCompleteCallback([this] { onHeaderComplete(); });
+    http_request_.setResponseCompleteCallback([this] { onRequestComplete(); });
     http_request_.sendRequest("GET", url.c_str(), "HTTP/1.1");
 }
 
@@ -39,4 +41,14 @@ void HttpClient::onClose(int err)
 {
     printf("HttpClient::onClose, err=%d\n", err);
     server_->removeObject(conn_id_);
+}
+
+void HttpClient::onHeaderComplete()
+{
+    printf("HttpClient::onHeaderComplete");
+}
+
+void HttpClient::onRequestComplete()
+{
+    printf("HttpClient::onRequestComplete");
 }

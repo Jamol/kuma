@@ -163,8 +163,7 @@ void TcpServerSocketImpl::setSocketOption()
     fcntl(fd_, F_SETFL, flag | O_NONBLOCK | O_ASYNC);
 #endif
     
-    int opt_val = 1;
-    setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt_val, sizeof(opt_val));
+    setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (int[]){1}, sizeof(int));
 }
 
 int TcpServerSocketImpl::close()

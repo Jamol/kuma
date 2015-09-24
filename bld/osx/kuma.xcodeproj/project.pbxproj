@@ -430,7 +430,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SYMROOT = ../../bin/osx;
-				USER_HEADER_SEARCH_PATHS = ../../src;
+				USER_HEADER_SEARCH_PATHS = "../../src ../../vendor";
 			};
 			name = Debug;
 		};
@@ -447,7 +447,7 @@
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SYMROOT = ../../bin/osx;
-				USER_HEADER_SEARCH_PATHS = ../../src;
+				USER_HEADER_SEARCH_PATHS = "../../src ../../vendor";
 			};
 			name = Release;
 		};

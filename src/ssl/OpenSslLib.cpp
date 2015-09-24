@@ -13,6 +13,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef KUMA_HAS_OPENSSL
+
 #include "OpenSslLib.h"
 #include "util/kmtrace.h"
 #include "util/util.h"
@@ -22,7 +24,6 @@
 #include <sstream>
 
 KUMA_NS_BEGIN
-
 
 SSL_CTX* OpenSslLib::ssl_ctx_client_ = NULL;
 SSL_CTX* OpenSslLib::ssl_ctx_server_ = NULL;
@@ -269,3 +270,5 @@ void OpenSslLib::lockingCallback(int mode, int n, const char *file, int line)
 }
 
 KUMA_NS_END
+
+#endif // KUMA_HAS_OPENSSL

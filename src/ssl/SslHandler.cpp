@@ -13,6 +13,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef KUMA_HAS_OPENSSL
+
 #include "kmconf.h"
 
 #if defined(KUMA_OS_WIN)
@@ -283,3 +285,5 @@ SslHandler::SslState SslHandler::doSslHandshake()
 }
 
 KUMA_NS_END
+
+#endif // KUMA_HAS_OPENSSL
