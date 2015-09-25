@@ -1,0 +1,93 @@
+
+#include <stdio.h>
+#include <jni.h>
+
+#include "kmapi-jni.h"
+
+using namespace kuma;
+
+EventLoop main_loop;
+
+JavaVM* java_vm = nullptr;
+extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
+{
+    java_vm = jvm;
+    JNIEnv *env = nullptr;
+    int ret = jvm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_4);
+    if (ret != JNI_OK || env == nullptr)
+    {
+        return -1;
+    }
+    return JNI_VERSION_1_4;
+}
+
+extern "C" JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved)
+{
+}
+
+JNIEnv* get_jni_env(void)
+{
+    if (nullptr == java_vm) {
+        return nullptr;
+    }
+    
+    JNIEnv *env = NULL;
+    // get jni environment
+    jint ret = java_vm->GetEnv((void**)&env, JNI_VERSION_1_4);
+    
+    switch (ret) {
+    case JNI_OK:
+        // Success!
+        return env;
+
+    case JNI_EDETACHED:
+        // Thread not attached
+
+        // TODO : If calling AttachCurrentThread() on a native thread
+        // must call DetachCurrentThread() in future.
+        // see: http://developer.android.com/guide/practices/design/jni.html
+
+        if (java_vm->AttachCurrentThread(&env, NULL) < 0) {
+            return nullptr;
+        } else {
+            // Success : Attached and obtained JNIEnv!
+            return env;
+        }
+
+    case JNI_EVERSION:
+        // Cannot recover from this error
+    default:
+        return nullptr;
+    }
+}
+
+EventLoop* get_main_loop()
+{
+    return &main_loop;
+}
+
+jfieldID get_handle_field(JNIEnv *env, jobject obj)
+{
+    jclass c = env->GetObjectClass(obj);
+    // J is the type signature for long:
+    return env->GetFieldID(c, "nativeHandle", "J");
+}
+
+void set_handle(JNIEnv *env, jobject obj, void *t)
+{
+    jlong handle = reinterpret_cast<jlong>(t);
+    env->SetLongField(obj, get_handle_field(env, obj), handle);
+}
+
+jbyteArray as_byte_array(JNIEnv* env, uint8_t* buf, int len) {
+    jbyteArray jbuf = env->NewByteArray(len);
+    env->SetByteArrayRegion(jbuf, 0, len, reinterpret_cast<jbyte*>(buf));
+    return jbuf;
+}
+
+uint8_t* as_uint8_array(JNIEnv* env, jbyteArray array) {
+    int len = env->GetArrayLength(array);
+    uint8_t* buf = new uint8_t[len];
+    env->GetByteArrayRegion(array, 0, len, reinterpret_cast<jbyte*>(buf));
+    return buf;
+}

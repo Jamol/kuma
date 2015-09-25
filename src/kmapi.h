@@ -85,7 +85,7 @@ public:
     int attachFd(SOCKET_FD fd, uint32_t flags = 0);
     int detachFd(SOCKET_FD &fd);
     int startSslHandshake(bool is_server);
-    int send(uint8_t* data, uint32_t length);
+    int send(const uint8_t* data, uint32_t length);
     int send(iovec* iovs, uint32_t count);
     int receive(uint8_t* data, uint32_t length);
     int close();
@@ -139,7 +139,7 @@ public:
     ~UdpSocket();
     
     int bind(const char* bind_host, uint16_t bind_port, uint32_t flags = 0);
-    int send(uint8_t* data, uint32_t length, const char* host, uint16_t port);
+    int send(const uint8_t* data, uint32_t length, const char* host, uint16_t port);
     int send(iovec* iovs, uint32_t count, const char* host, uint16_t port);
     int receive(uint8_t* data, uint32_t length, char* ip, uint32_t ip_len, uint16_t& port);
     int close();
@@ -236,7 +236,7 @@ public:
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
     int sendRequest(const char* method, const char* url, const char* ver = "HTTP/1.1");
-    int sendData(uint8_t* data, uint32_t len);
+    int sendData(const uint8_t* data, uint32_t len);
     int close();
     
     int getStatusCode();
@@ -277,7 +277,7 @@ public:
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
     int sendResponse(int status_code, const char* desc = nullptr, const char* ver = "HTTP/1.1");
-    int sendData(uint8_t* data, uint32_t len);
+    int sendData(const uint8_t* data, uint32_t len);
     int close();
     
     const char* getMethod();
@@ -322,9 +322,9 @@ public:
     const char* getOrigin();
     int connect(const char* ws_url, EventCallback& cb);
     int connect(const char* ws_url, EventCallback&& cb);
-    int attachFd(SOCKET_FD fd, uint8_t* init_data = nullptr, uint32_t init_len = 0);
-    int attachFd(SOCKET_FD fd, HttpParser&& parser, uint8_t* init_data = nullptr, uint32_t init_len = 0);
-    int send(uint8_t* data, uint32_t len);
+    int attachFd(SOCKET_FD fd, const uint8_t* init_data = nullptr, uint32_t init_len = 0);
+    int attachFd(SOCKET_FD fd, HttpParser&& parser, const uint8_t* init_data = nullptr, uint32_t init_len = 0);
+    int send(const uint8_t* data, uint32_t len);
     int close();
     
     void setDataCallback(DataCallback& cb);

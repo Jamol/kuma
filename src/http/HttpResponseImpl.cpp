@@ -168,7 +168,7 @@ int HttpResponseImpl::sendResponse(int status_code, const std::string& desc, con
     return KUMA_ERROR_NOERR;
 }
 
-int HttpResponseImpl::sendData(uint8_t* data, uint32_t len)
+int HttpResponseImpl::sendData(const uint8_t* data, uint32_t len)
 {
     if(!send_buffer_.empty() || getState() != STATE_SENDING_RESPONSE) {
         return 0;
@@ -189,7 +189,7 @@ int HttpResponseImpl::sendData(uint8_t* data, uint32_t len)
     return ret;
 }
 
-int HttpResponseImpl::sendChunk(uint8_t* data, uint32_t len)
+int HttpResponseImpl::sendChunk(const uint8_t* data, uint32_t len)
 {
     if(nullptr == data && 0 == len) { // chunk end
         static const std::string _chunk_end_token_ = "0\r\n\r\n";

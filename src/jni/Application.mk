@@ -9,5 +9,6 @@ else
 	NDK_APP_OUT := $(MY_ROOT)/objs/android/release
 endif
 
+APP_PLATFORM := android-19
 APP_ABI := armeabi-v7a
 APP_STL := c++_shared

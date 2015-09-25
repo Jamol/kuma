@@ -36,7 +36,7 @@ public:
     void addHeader(const std::string& name, const std::string& value);
     void addHeader(const std::string& name, uint32_t value);
     int sendRequest(const std::string& method, const std::string& url, const std::string& ver = "HTTP/1.1");
-    int sendData(uint8_t* data, uint32_t len);
+    int sendData(const uint8_t* data, uint32_t len);
     int close();
     
     int getStatusCode() { return http_parser_.getStatusCode(); }
@@ -78,7 +78,7 @@ private:
     void setState(State state) { state_ = state; }
     State getState() { return state_; }
     void buildRequest();
-    int sendChunk(uint8_t* data, uint32_t len);
+    int sendChunk(const uint8_t* data, uint32_t len);
     void cleanup();
     
     void onHttpData(const char* data, uint32_t len);

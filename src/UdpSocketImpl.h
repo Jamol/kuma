@@ -39,7 +39,7 @@ public:
     ~UdpSocketImpl();
     
     int bind(const char* bind_host, uint16_t bind_port, uint32_t flags = 0);
-    int send(uint8_t* data, uint32_t length, const char* host, uint16_t port);
+    int send(const uint8_t* data, uint32_t length, const char* host, uint16_t port);
     int send(iovec* iovs, uint32_t count, const char* host, uint16_t port);
     int receive(uint8_t* data, uint32_t length, char* ip, uint32_t ip_len, uint16_t& port);
     int close();

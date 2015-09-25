@@ -168,7 +168,7 @@ int TcpSocket::startSslHandshake(bool is_server)
     return pimpl_->startSslHandshake(is_server);
 }
 
-int TcpSocket::send(uint8_t* data, uint32_t length)
+int TcpSocket::send(const uint8_t* data, uint32_t length)
 {
     return pimpl_->send(data, length);
 }
@@ -306,7 +306,7 @@ int UdpSocket::bind(const char* bind_host, uint16_t bind_port, uint32_t flags)
     return pimpl_->bind(bind_host, bind_port, flags);
 }
 
-int UdpSocket::send(uint8_t* data, uint32_t length, const char* host, uint16_t port)
+int UdpSocket::send(const uint8_t* data, uint32_t length, const char* host, uint16_t port)
 {
     return pimpl_->send(data, length, host, port);
 }
@@ -568,7 +568,7 @@ int HttpRequest::sendRequest(const char* method, const char* url, const char* ve
     return pimpl_->sendRequest(method, url, ver);
 }
 
-int HttpRequest::sendData(uint8_t* data, uint32_t len)
+int HttpRequest::sendData(const uint8_t* data, uint32_t len)
 {
     return pimpl_->sendData(data, len);
 }
@@ -697,7 +697,7 @@ int HttpResponse::sendResponse(int status_code, const char* desc, const char* ve
     return pimpl_->sendResponse(status_code, desc, ver);
 }
 
-int HttpResponse::sendData(uint8_t* data, uint32_t len)
+int HttpResponse::sendData(const uint8_t* data, uint32_t len)
 {
     return pimpl_->sendData(data, len);
 }
@@ -852,17 +852,17 @@ int WebSocket::connect(const char* ws_url, EventCallback&& cb)
     return pimpl_->connect(ws_url, std::move(cb));
 }
 
-int WebSocket::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_len)
+int WebSocket::attachFd(SOCKET_FD fd, const uint8_t* init_data, uint32_t init_len)
 {
     return pimpl_->attachFd(fd, init_data, init_len);
 }
 
-int WebSocket::attachFd(SOCKET_FD fd, HttpParser&& parser, uint8_t* init_data, uint32_t init_len)
+int WebSocket::attachFd(SOCKET_FD fd, HttpParser&& parser, const uint8_t* init_data, uint32_t init_len)
 {
     return pimpl_->attachFd(fd, std::move((*parser.getPimpl())), init_data, init_len);
 }
 
-int WebSocket::send(uint8_t* data, uint32_t len)
+int WebSocket::send(const uint8_t* data, uint32_t len)
 {
     return pimpl_->send(data, len);
 }

@@ -193,7 +193,8 @@ void UdpSocketImpl::setSocketOption()
     fcntl(fd_, F_SETFL, flag | O_NONBLOCK | O_ASYNC);
 #endif
     
-    setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (int[]){1}, sizeof(int));
+    int opt_val = 1;
+    setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt_val, sizeof(int));
 }
 
 int UdpSocketImpl::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
@@ -295,7 +296,7 @@ int UdpSocketImpl::mcastLeave(const char* mcast_addr, uint16_t mcast_port)
     return KUMA_ERROR_NOERR;
 }
 
-int UdpSocketImpl::send(uint8_t* data, uint32_t length, const char* host, uint16_t port)
+int UdpSocketImpl::send(const uint8_t* data, uint32_t length, const char* host, uint16_t port)
 {
     if(INVALID_FD == fd_) {
         KUMA_ERRXTRACE("send, invalid fd");

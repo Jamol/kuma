@@ -44,7 +44,7 @@ public:
     int attachFd(SOCKET_FD fd, uint32_t flags = 0);
     int detachFd(SOCKET_FD &fd);
     int startSslHandshake(bool is_server);
-    int send(uint8_t* data, uint32_t length);
+    int send(const uint8_t* data, uint32_t length);
     int send(iovec* iovs, uint32_t count);
     int receive(uint8_t* data, uint32_t length);
     int close();

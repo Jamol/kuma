@@ -339,10 +339,12 @@ void TcpSocketImpl::setSocketOption()
 #endif
     
     if(0) {
-        setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (int[]){1}, sizeof(int));
+        int opt_val = 1;
+        setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt_val, sizeof(int));
     }
     
-    if(setsockopt(fd_, IPPROTO_TCP, TCP_NODELAY, (int[]){1}, sizeof(int)) != 0) {
+    int opt_val = 1;
+    if(setsockopt(fd_, IPPROTO_TCP, TCP_NODELAY, (char*)&opt_val, sizeof(int)) != 0) {
         KUMA_WARNXTRACE("setSocketOption, failed to set TCP_NODELAY, fd="<<fd_<<", err="<<getLastError());
     }
 }
@@ -362,7 +364,7 @@ bool TcpSocketImpl::isReady()
         ;
 }
 
-int TcpSocketImpl::send(uint8_t* data, uint32_t length)
+int TcpSocketImpl::send(const uint8_t* data, uint32_t length)
 {
     if(!isReady()) {
         KUMA_WARNXTRACE("send, invalid state="<<getState());

@@ -111,7 +111,7 @@ int WebSocketImpl::connect_i(const std::string& ws_url)
     return tcp_socket_.connect(uri_.getHost().c_str(), port, [this] (int err) { onConnect(err); }, flag);
 }
 
-int WebSocketImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_len)
+int WebSocketImpl::attachFd(SOCKET_FD fd, const uint8_t* init_data, uint32_t init_len)
 {
     is_server_ = true;
     if(init_data && init_len > 0) {
@@ -128,7 +128,7 @@ int WebSocketImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_len)
     return tcp_socket_.attachFd(fd, 0);
 }
 
-int WebSocketImpl::attachFd(SOCKET_FD fd, HttpParserImpl&& parser, uint8_t* init_data, uint32_t init_len)
+int WebSocketImpl::attachFd(SOCKET_FD fd, HttpParserImpl&& parser, const uint8_t* init_data, uint32_t init_len)
 {
     is_server_ = true;
     if(init_data && init_len > 0) {
@@ -148,7 +148,7 @@ int WebSocketImpl::attachFd(SOCKET_FD fd, HttpParserImpl&& parser, uint8_t* init
     return ret;
 }
 
-int WebSocketImpl::send(uint8_t* data, uint32_t len)
+int WebSocketImpl::send(const uint8_t* data, uint32_t len)
 {
     if(getState() != STATE_OPEN) {
         return -1;

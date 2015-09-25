@@ -145,7 +145,7 @@ int HttpRequestImpl::sendRequest(const std::string& method, const std::string& u
     return tcp_socket_.connect(uri_.getHost().c_str(), port, [this] (int err) { onConnect(err); }, flag);
 }
 
-int HttpRequestImpl::sendData(uint8_t* data, uint32_t len)
+int HttpRequestImpl::sendData(const uint8_t* data, uint32_t len)
 {
     if(!send_buffer_.empty() || getState() != STATE_SENDING_REQUEST) {
         return 0;
@@ -165,7 +165,7 @@ int HttpRequestImpl::sendData(uint8_t* data, uint32_t len)
     return ret;
 }
 
-int HttpRequestImpl::sendChunk(uint8_t* data, uint32_t len)
+int HttpRequestImpl::sendChunk(const uint8_t* data, uint32_t len)
 {
     if(nullptr == data && 0 == len) { // chunk end
         static const std::string _chunk_end_token_ = "0\r\n\r\n";
