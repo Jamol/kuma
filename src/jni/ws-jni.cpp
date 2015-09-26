@@ -161,6 +161,7 @@ extern "C" JNIEXPORT jint JNICALL Java_com_jamol_kuma_WebSocket_Close(JNIEnv *en
     }
     WebSocketJNI* ws = reinterpret_cast<WebSocketJNI*>(handle);
     int ret = ws->close();
+    delete ws;
     return ret;
 }
 

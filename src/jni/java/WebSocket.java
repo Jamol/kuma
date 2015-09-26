@@ -21,7 +21,9 @@ public class WebSocket {
     }
     
     public int close() {
-        return close(nativeHandle);
+        int ret = close(nativeHandle);
+        nativeHandle = 0;
+        return ret;
     }
     
     public void onConnect(int err) {
