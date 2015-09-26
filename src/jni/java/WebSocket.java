@@ -1,9 +1,11 @@
 package com.jamol.kuma;
 
+import android.util.Log;
+
 public class WebSocket {
     private WSListener listener;
-    public WebSocket() {
-        
+    public WebSocket(WSListener l) {
+        listener = l;
     }
     
     public int open(String ws_url) {
@@ -23,19 +25,27 @@ public class WebSocket {
     }
     
     public void onConnect(int err) {
-        listener.onConnect(err);
+        if(listener != null) {
+            listener.onConnect(err);
+        }
     }
     
-    public void onData(String data) {
-        listener.onData(data);
+    public void onData(String str) {
+        if(listener != null) {
+            listener.onData(str);
+        }
     }
     
     public void onData(byte[] data) {
-        listener.onData(data);
+        if(listener != null) {
+            listener.onData(data);
+        }
     }
     
     public void onClose() {
-        listener.onClose();
+        if(listener != null) {
+            listener.onClose();
+        }
     }
     
     private native int connect(String ws_url);

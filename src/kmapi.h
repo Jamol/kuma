@@ -342,6 +342,7 @@ private:
 
 KUMA_API void init(const char* path = nullptr);
 KUMA_API void fini();
+KUMA_API void setTraceFunc(std::function<void(int, const char*)> func);
 
 KUMA_NS_END
 

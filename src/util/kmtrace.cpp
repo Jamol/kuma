@@ -13,6 +13,7 @@
 #include <stdarg.h>
 #include <thread>
 #include <string>
+#include <iostream>
 #include <sstream>
 
 #ifdef KUMA_OS_WIN
@@ -27,6 +28,12 @@ KUMA_NS_BEGIN
 #define VSNPRINTF   vsnprintf
 #endif
 
+std::function<void(int, const char*)> trace_func;
+void setTraceFunc(std::function<void(int, const char*)> func)
+{
+    trace_func = func;
+}
+
 void TracePrint(int level, const char* szMessage, ...)
 {
     va_list VAList;
@@ -38,26 +45,41 @@ void TracePrint(int level, const char* szMessage, ...)
     std::stringstream ss;
     //ss << tid << ":" << getCurrentThreadId();
     ss << getCurrentThreadId();
-    std::string stid;
-    ss >> stid;
+    std::string stid = ss.str();
     
+    std::string str_log;
     switch(level)
     {
         case KUMA_TRACE_LEVEL_INFO:
-            printf("INFO: [%s] %s\n", stid.c_str(), szMsgBuf);
+            str_log = "INFO: ";
+            //printf("INFO: [%s] %s\n", stid.c_str(), szMsgBuf);
             break;
         case KUMA_TRACE_LEVEL_WARN:
-            printf("WARN: [%s] %s\n", stid.c_str(), szMsgBuf);
+            str_log = "WARN: ";
+            //printf("WARN: [%s] %s\n", stid.c_str(), szMsgBuf);
             break;
         case KUMA_TRACE_LEVEL_ERROR:
-            printf("ERROR: [%s] %s\n", stid.c_str(), szMsgBuf);
+            str_log = "ERROR: ";
+            //printf("ERROR: [%s] %s\n", stid.c_str(), szMsgBuf);
             break;
         case KUMA_TRACE_LEVEL_DEBUG:
-            printf("DEBUG: [%s] %s\n", stid.c_str(), szMsgBuf);
+            str_log = "DEBUG: ";
+            //printf("DEBUG: [%s] %s\n", stid.c_str(), szMsgBuf);
             break;
         default:
-            printf("INFO: [%s] %s\n", stid.c_str(), szMsgBuf);
+            str_log = "INFO: ";
+            //printf("INFO: [%s] %s\n", stid.c_str(), szMsgBuf);
             break;
+    }
+    str_log += "[" + stid + "] " + szMsgBuf;
+    /*ss.str("");
+    ss.clear();
+    ss << str_log << "[" << stid << "] " << szMsgBuf;
+    str_log = ss.str();*/
+    if (trace_func) {
+        trace_func(level, str_log.c_str());
+    } else {
+        printf("%s\n", str_log.c_str());
     }
 }
 

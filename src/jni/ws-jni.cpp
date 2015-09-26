@@ -12,7 +12,8 @@ typedef struct {
     bool initialized = false;
     jclass clazz;
     jmethodID mid_on_connect;
-    jmethodID mid_on_data;
+    jmethodID mid_on_data_string;
+    jmethodID mid_on_data_array;
     jmethodID mid_on_close;
 } ws_callback_t;
 
@@ -56,24 +57,24 @@ public:
     }
 
     void on_connect(int err) {
-        JNIEnv* env = get_jni_env();
+        JNIEnv* env = get_current_jni_env();
         if (env) {
-            env->CallVoidMethod(ws_callback.clazz, ws_callback.mid_on_connect, err);
+            env->CallVoidMethod(obj_, ws_callback.mid_on_connect, err);
         }
     }
 
     void on_data(uint8_t* data, uint32_t len) {
-        JNIEnv* env = get_jni_env();
+        JNIEnv* env = get_current_jni_env();
         if (env) {
             jbyteArray jdata = as_byte_array(env, data, len);
-            env->CallVoidMethod(ws_callback.clazz, ws_callback.mid_on_data, jdata);
+            env->CallVoidMethod(obj_, ws_callback.mid_on_data_array, jdata);
         }
     }
 
     void on_error(int err) {
-        JNIEnv* env = get_jni_env();
+        JNIEnv* env = get_current_jni_env();
         if (env) {
-            env->CallVoidMethod(ws_callback.clazz, ws_callback.mid_on_close, err);
+            env->CallVoidMethod(obj_, ws_callback.mid_on_close, err);
         }
     }
 
@@ -87,22 +88,42 @@ extern "C" JNIEXPORT jint JNICALL Java_com_jamol_kuma_WebSocket_connect(JNIEnv *
 {
     jobject obj = (jobject)env->NewGlobalRef(thiz);
     if (!ws_callback.initialized) {
-        jclass c = env->GetObjectClass(thiz);
-        jclass clazz = (jclass)env->NewGlobalRef(c);
-        if (!clazz) {
+        jclass jc = env->GetObjectClass(thiz);
+        if (!jc) {
             LOGE("WebSocket.connect, cannot find java class");
+            return -1;
+        }
+        jclass clazz = (jclass)env->NewGlobalRef(jc);
+        if (!clazz) {
+            LOGE("WebSocket.connect, cannot get global ref to class");
             return -1;
         }
         ws_callback.clazz = clazz;
         ws_callback.mid_on_connect = env->GetMethodID(clazz, "onConnect", "(I)V");
-        ws_callback.mid_on_data = env->GetMethodID(clazz, "onData", "(Ljava/lang/String;)V");
+        if (!ws_callback.mid_on_connect) {
+            LOGE("WebSocket.connect, cannot find method id for onConnect");
+            return -1;
+        }
+        ws_callback.mid_on_data_string = env->GetMethodID(clazz, "onData", "(Ljava/lang/String;)V");
+        if (!ws_callback.mid_on_data_string) {
+            LOGE("WebSocket.connect, cannot find method id for onDataString");
+            return -1;
+        }
+        ws_callback.mid_on_data_array = env->GetMethodID(clazz, "onData", "([B)V");
+        if (!ws_callback.mid_on_data_array) {
+            LOGE("WebSocket.connect, cannot find method id for onDataArray");
+            return -1;
+        }
         ws_callback.mid_on_close = env->GetMethodID(clazz, "onClose", "()V");
+        if (!ws_callback.mid_on_close) {
+            LOGE("WebSocket.connect, cannot find method id for onClose");
+            return -1;
+        }
         ws_callback.initialized = true;
     }
     WebSocketJNI* ws = new WebSocketJNI(get_main_loop(), obj);
     set_handle(env, obj, ws);
     const char *str_url = env->GetStringUTFChars(ws_url, 0);
-    LOGI("WebSocket.connect, ws_url=%s", str_url);
     int ret = ws->connect(str_url);
     env->ReleaseStringUTFChars(ws_url, str_url);
     return ret;
@@ -141,4 +162,15 @@ extern "C" JNIEXPORT jint JNICALL Java_com_jamol_kuma_WebSocket_Close(JNIEnv *en
     WebSocketJNI* ws = reinterpret_cast<WebSocketJNI*>(handle);
     int ret = ws->close();
     return ret;
+}
+
+void ws_fini()
+{
+    if (ws_callback.initialized){
+        JNIEnv* env = get_current_jni_env();
+        if (env) {
+            env->DeleteGlobalRef(ws_callback.clazz);
+            ws_callback.initialized = false;
+        }
+    }
 }

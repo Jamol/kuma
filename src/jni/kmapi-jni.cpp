@@ -1,12 +1,23 @@
 
 #include <stdio.h>
+#include <thread>
 #include <jni.h>
 
 #include "kmapi-jni.h"
 
 using namespace kuma;
 
+void jni_init();
+void jni_fini();
+
 EventLoop main_loop;
+std::thread net_thread;
+bool stop_loop = false;
+
+static void trace_func(int level, const char* log)
+{
+    LOGI(log);
+}
 
 JavaVM* java_vm = nullptr;
 extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
@@ -14,18 +25,20 @@ extern "C" JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *jvm, void *reserved)
     java_vm = jvm;
     JNIEnv *env = nullptr;
     int ret = jvm->GetEnv(reinterpret_cast<void**>(&env), JNI_VERSION_1_4);
-    if (ret != JNI_OK || env == nullptr)
-    {
+    if (ret != JNI_OK || env == nullptr) {
         return -1;
     }
+    setTraceFunc(trace_func);
+    jni_init();
     return JNI_VERSION_1_4;
 }
 
 extern "C" JNIEXPORT void JNICALL JNI_OnUnload(JavaVM *jvm, void *reserved)
 {
+    jni_fini();
 }
 
-JNIEnv* get_jni_env(void)
+JNIEnv* get_jni_env()
 {
     if (nullptr == java_vm) {
         return nullptr;
@@ -61,6 +74,19 @@ JNIEnv* get_jni_env(void)
     }
 }
 
+JNIEnv* get_current_jni_env()
+{
+    if (nullptr == java_vm) {
+        return nullptr;
+    }
+
+    JNIEnv *env = nullptr;
+    if (java_vm->GetEnv((void**)&env, JNI_VERSION_1_4) == JNI_OK) {
+        return env;
+    }
+    return nullptr;
+}
+
 EventLoop* get_main_loop()
 {
     return &main_loop;
@@ -90,4 +116,50 @@ uint8_t* as_uint8_array(JNIEnv* env, jbyteArray array) {
     uint8_t* buf = new uint8_t[len];
     env->GetByteArrayRegion(array, 0, len, reinterpret_cast<jbyte*>(buf));
     return buf;
+}
+
+void jni_init()
+{
+    try {
+        net_thread = std::thread([] {
+            if (!main_loop.init()) {
+                return;
+            }
+
+            JNIEnv *env;
+            bool attached = false;
+            int status = java_vm->GetEnv((void **)&env, JNI_VERSION_1_4);
+            if (status < 0) {
+                LOGE("callback_handler: failed to get JNI environment, assuming native thread");
+                status = java_vm->AttachCurrentThread(&env, NULL);
+                if (status < 0) {
+                    LOGE("callback_handler: failed to attach current thread");
+                }
+                attached = true;
+            }
+
+            main_loop.loop();
+
+            if (attached) {
+                java_vm->DetachCurrentThread();
+            }
+        });
+    }
+    catch (...) {
+
+    }
+}
+
+void jni_fini()
+{
+    stop_loop = true;
+    main_loop.stop();
+    try {
+        if (net_thread.joinable()) {
+            net_thread.join();
+        }
+    }
+    catch (...) {
+
+    }
 }
