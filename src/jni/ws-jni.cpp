@@ -26,6 +26,15 @@ public:
         : loop_(loop), ws_(nullptr), obj_(obj) {
 
     }
+    
+    ~WebSocketJNI() {
+        if(obj_) {
+            JNIEnv* env = get_current_jni_env();
+            if(env) {
+                env->DeleteGlobalRef(obj_);
+            }
+        }
+    }
 
     int connect(const char* ws_url) {
         ws_ = new WebSocket(loop_);
