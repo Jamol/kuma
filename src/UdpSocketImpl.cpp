@@ -459,7 +459,9 @@ int UdpSocketImpl::receive(uint8_t* data, uint32_t length, char* ip, uint32_t ip
 int UdpSocketImpl::close()
 {
     KUMA_INFOXTRACE("close");
-    cleanup();
+    loop_->runInEventLoopSync([this] {
+        cleanup();
+    });
     return KUMA_ERROR_NOERR;
 }
 

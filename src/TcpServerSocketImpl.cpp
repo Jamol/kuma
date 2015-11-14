@@ -140,7 +140,9 @@ int TcpServerSocketImpl::stopListen(const char* host, uint16_t port)
 {
     KUMA_INFOXTRACE("stopListen");
     stopped_ = true;
-    cleanup();
+    loop_->runInEventLoopSync([this] {
+        cleanup();
+    });
     return KUMA_ERROR_NOERR;
 }
 
@@ -170,7 +172,10 @@ void TcpServerSocketImpl::setSocketOption()
 int TcpServerSocketImpl::close()
 {
     KUMA_INFOXTRACE("close");
-    cleanup();
+    stopped_ = true;
+    loop_->runInEventLoopSync([this] {
+        cleanup();
+    });
     return KUMA_ERROR_NOERR;
 }
 

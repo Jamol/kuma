@@ -525,8 +525,10 @@ int TcpSocketImpl::receive(uint8_t* data, uint32_t length)
 int TcpSocketImpl::close()
 {
     KUMA_INFOXTRACE("close, state="<<getState());
-    cleanup();
-    setState(ST_CLOSED);
+    loop_->runInEventLoopSync([this] {
+        cleanup();
+        setState(ST_CLOSED);
+    });
     return KUMA_ERROR_NOERR;
 }
 

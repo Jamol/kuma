@@ -28,6 +28,11 @@ public:
     }
     
     ~WebSocketJNI() {
+        if (ws_) {
+            ws_->close();
+            delete ws_;
+            ws_ = nullptr;
+        }
         if(obj_) {
             JNIEnv* env = get_current_jni_env();
             if(env) {
@@ -61,6 +66,8 @@ public:
     int close() {
         if (ws_) {
             ws_->close();
+            delete ws_;
+            ws_ = nullptr;
         }
         return 0;
     }
