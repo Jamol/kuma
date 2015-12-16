@@ -29,7 +29,6 @@ public:
     {
         head_ = new TLNode(E());
         tail_ = head_;
-        count_ = 0;
     }
     ~KM_Queue()
     {
@@ -46,7 +45,6 @@ public:
         TLNode* node = new TLNode(element);
         tail_->next_ = node;
         tail_ = node;
-        ++count_;
     }
     
     void enqueue(const E &&element)
@@ -54,7 +52,6 @@ public:
         TLNode* node = new TLNode(std::forward(element));
         tail_->next_ = node;
         tail_ = node;
-        ++count_;
     }
 
     bool dequeue(E &element)
@@ -63,9 +60,8 @@ public:
             return false;
         }
         TLNode* node_to_delete = head_;
-        element = head_->next_->element_;
+        element = std::move(head_->next_->element_);
         head_ = head_->next_;
-        --count_;
         delete node_to_delete;
         return true;
     }
@@ -74,20 +70,12 @@ public:
     {
         return nullptr == head_->next_;
     }
-    
-    unsigned int size()
-    {
-        return count_;
-    }
 
 private:
     class TLNode
     {
     public:
-        TLNode(const E &e) : element_(e)
-        {
-            next_ = nullptr;
-        }
+        TLNode(const E &e) : element_(e), next_(nullptr) {}
 
         E element_;
         TLNode* next_;
@@ -95,7 +83,6 @@ private:
 
     TLNode* head_;
     TLNode* tail_;
-    unsigned int count_;
 };
 
 template <class E, class LockType>
@@ -152,7 +139,7 @@ public:
             return false;
         }
         node_to_delete = head_;
-        element = head_->next_->element_;
+        element = std::move(head_->next_->element_);
         head_ = head_->next_;
         ++de_count_;
         lockerH_.unlock();

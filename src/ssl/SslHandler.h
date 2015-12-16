@@ -42,8 +42,8 @@ public:
     
     int attachFd(SOCKET_FD fd, bool is_server);
     SslState doSslHandshake();
-    int send(uint8_t* data, uint32_t length);
-    int send(iovec* iovs, uint32_t count);
+    int send(const uint8_t* data, uint32_t length);
+    int send(const iovec* iovs, uint32_t count);
     int receive(uint8_t* data, uint32_t length);
     int close();
     

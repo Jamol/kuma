@@ -316,7 +316,7 @@ int UdpSocketImpl::send(const uint8_t* data, uint32_t length, const char* host, 
     else
         addr_len = sizeof(sockaddr_in6);
 #endif
-    int ret = ::sendto(fd_, (char*)data, length, 0, (struct sockaddr*)&ss_addr, addr_len);
+    int ret = (int)::sendto(fd_, (char*)data, length, 0, (struct sockaddr*)&ss_addr, addr_len);
     if(0 == ret) {
         KUMA_ERRXTRACE("send, peer closed, err="<<getLastError()<<", host="<<host<<", port="<<port);
         ret = -1;
@@ -386,7 +386,7 @@ int UdpSocketImpl::send(iovec* iovs, uint32_t count, const char* host, uint16_t 
     send_msg.msg_controllen = 0;
     send_msg.msg_flags = 0;
 #endif
-    ret = ::sendmsg(fd_, &send_msg, 0);
+    ret = (int)::sendmsg(fd_, &send_msg, 0);
 #endif // _WIN32
     if(0 == ret) {
         KUMA_ERRXTRACE("send, peer closed, err: "<<getLastError()<<", host="<<host<<", port="<<port);
@@ -430,7 +430,7 @@ int UdpSocketImpl::receive(uint8_t* data, uint32_t length, char* ip, uint32_t ip
 #else
     int addr_len = sizeof(ss_addr);
 #endif
-    ret = ::recvfrom(fd_, (char*)data, length, 0, (struct sockaddr*)&ss_addr, &addr_len);
+    ret = (int)::recvfrom(fd_, (char*)data, length, 0, (struct sockaddr*)&ss_addr, &addr_len);
     if(0 == ret) {
         KUMA_ERRXTRACE("recv, peer closed, err"<<getLastError());
         ret = -1;

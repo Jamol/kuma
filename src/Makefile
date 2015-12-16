@@ -5,12 +5,13 @@
 ROOTDIR = ..
 SRCDIR = $(ROOTDIR)/src
 
-OPENSSL_HOME = $(ROOTDIR)/../vendors/opensource/openssl-1.0.1c
+VENDORDIR = $(ROOTDIR)/vendor
+OPENSSL_HOME = $(VENDORDIR)/openssl
 OPENSSL_INCLUDE = $(OPENSSL_HOME)/include
-ifneq ($(flag),1)
-	OPENSSL_LIBS = $(OPENSSL_HOME)/lib64
+ifneq ($(x64),1)
+	OPENSSL_LIBS = $(OPENSSL_HOME)/lib/linux/lib
 else
-	OPENSSL_LIBS = $(OPENSSL_HOME)/lib
+	OPENSSL_LIBS = $(OPENSSL_HOME)/lib/linux/lib64
 endif
 
 BINDIR = $(ROOTDIR)/bin/linux
@@ -22,11 +23,11 @@ TARGET = libkuma.so
 ##############################################################################
 #
 
-INCLUDES = -I. -I../vendor -I$(OPENSSL_INCLUDE)
+INCLUDES = -I. -I$(VENDORDIR) -I$(OPENSSL_INCLUDE)
 #
 ##############################################################################
 #
-#LIBS = $(OPENSSL_LIBS)/libssl.a $(OPENSSL_LIBS)/libcrypto.a
+LIBS = $(OPENSSL_LIBS)/libssl.a $(OPENSSL_LIBS)/libcrypto.a
 
 #
 ##############################################################################
@@ -37,23 +38,25 @@ CXXFLAGS = -g -std=c++11 -pipe -fPIC -Wall -Wextra -pedantic
 LDFLAGS = -shared -Wl,-Bsymbolic -lpthread -ldl
 
 SRCS =  \
-    EventLoopImpl.cpp\
-    TcpSocketImpl.cpp\
-    UdpSocketImpl.cpp\
-    TimerManager.cpp\
-    TcpServerSocketImpl.cpp\
-    poll/EPoll.cpp\
-    poll/VPoll.cpp\
-    poll/SelectPoll.cpp\
-    http/Uri.cpp\
-    http/HttpParserImpl.cpp\
-    http/HttpRequestImpl.cpp\
-    http/HttpResponseImpl.cpp\
-    ws/WSHandler.cpp\
-    ws/WebSocketImpl.cpp\
-    util/util.cpp\
-    util/kmtrace.cpp\
-    util/base64.cpp\
+    EventLoopImpl.cpp \
+    TcpSocketImpl.cpp \
+    UdpSocketImpl.cpp \
+    TimerManager.cpp \
+    TcpServerSocketImpl.cpp \
+    poll/EPoll.cpp \
+    poll/VPoll.cpp \
+    poll/SelectPoll.cpp \
+    http/Uri.cpp \
+    http/HttpParserImpl.cpp \
+    http/HttpRequestImpl.cpp \
+    http/HttpResponseImpl.cpp \
+    ws/WSHandler.cpp \
+    ws/WebSocketImpl.cpp \
+    util/util.cpp \
+    util/kmtrace.cpp \
+    util/base64.cpp \
+    ssl/SslHandler.cpp \
+    ssl/OpenSslLib.cpp \
     kmapi.cpp
     
 OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(patsubst %.cpp,$(OBJDIR)/%.o,$(patsubst %.cxx,$(OBJDIR)/%.o,$(SRCS))))

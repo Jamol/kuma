@@ -382,7 +382,7 @@ int TcpSocketImpl::send(const uint8_t* data, uint32_t length)
     } else 
 #endif
     {
-        ret = ::send(fd_, (char*)data, length, 0);
+        ret = (int)::send(fd_, (char*)data, length, 0);
         if(0 == ret) {
             KUMA_WARNXTRACE("send, peer closed, err="<<getLastError());
             ret = -1;
@@ -443,7 +443,7 @@ int TcpSocketImpl::send(iovec* iovs, uint32_t count)
         bytes_sent = bytes_sent_t;
         if(0 == ret) ret = bytes_sent;
 #else
-        ret = ::writev(fd_, iovs, count);
+        ret = (int)::writev(fd_, iovs, count);
 #endif
         if(0 == ret) {
             KUMA_WARNXTRACE("send 2, peer closed");
@@ -494,7 +494,7 @@ int TcpSocketImpl::receive(uint8_t* data, uint32_t length)
     } else 
 #endif
     {
-        ret = ::recv(fd_, (char*)data, length, 0);
+        ret = (int)::recv(fd_, (char*)data, length, 0);
         if(0 == ret) {
             KUMA_WARNXTRACE("receive, peer closed, err="<<getLastError());
             ret = -1;

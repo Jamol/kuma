@@ -19,20 +19,20 @@
     <Filter Include="Header Files\http">
       <UniqueIdentifier>{763a1eba-8c74-4385-afb6-d53667fe008e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ssl">
+      <UniqueIdentifier>{e5f749f8-ebca-4342-afd6-a355908d0e0b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ws">
+      <UniqueIdentifier>{390b57f8-8452-430e-946a-c3c9274a01bf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\poll">
+      <UniqueIdentifier>{c7f6f436-5bb4-4ec3-bdd6-0f82dbfb58bb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\util">
+      <UniqueIdentifier>{681ba974-a1b3-475b-b186-265aa73590d8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\util\kmtrace.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\util\util.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\poll\SelectPoll.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\poll\VPoll.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\EventLoopImpl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -63,14 +63,32 @@
     <ClCompile Include="..\..\src\http\HttpParserImpl.cpp">
       <Filter>Source Files\http</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\ws\WebSocketImpl.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="..\..\src\ssl\OpenSslLib.cpp">
+      <Filter>Source Files\ssl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ssl\SslHandler.cpp">
+      <Filter>Source Files\ssl</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\ws\WSHandler.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\ws</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ws\WebSocketImpl.cpp">
+      <Filter>Source Files\ws</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\poll\VPoll.cpp">
+      <Filter>Source Files\poll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\poll\SelectPoll.cpp">
+      <Filter>Source Files\poll</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\util\base64.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\util\util.cpp">
+      <Filter>Source Files\util</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\util\kmtrace.cpp">
+      <Filter>Source Files\util</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

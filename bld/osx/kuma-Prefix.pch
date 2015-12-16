@@ -6,4 +6,4 @@
 
 #include <iostream>
 
-//#define KUMA_HAS_OPENSSL    1
+#define KUMA_HAS_OPENSSL    1
