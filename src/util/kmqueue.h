@@ -47,9 +47,9 @@ public:
         tail_ = node;
     }
     
-    void enqueue(const E &&element)
+    void enqueue(E &&element)
     {
-        TLNode* node = new TLNode(std::forward(element));
+        TLNode* node = new TLNode(std::move(element));
         tail_->next_ = node;
         tail_ = node;
     }
@@ -76,6 +76,7 @@ private:
     {
     public:
         TLNode(const E &e) : element_(e), next_(nullptr) {}
+        TLNode(E &&e) : element_(std::move(e)), next_(nullptr) {}
 
         E element_;
         TLNode* next_;
@@ -119,7 +120,7 @@ public:
     
     void enqueue(E &&element)
     {
-        TLNode* node = new TLNode(std::forward<E>(element));
+        TLNode* node = new TLNode(std::move(element));
         lockerT_.lock();
         tail_->next_ = node;
         tail_ = node;
@@ -153,7 +154,7 @@ public:
     }
     
     unsigned int size()
-    {
+    {// it is not precise
         return en_count_ - de_count_;
     }
 
@@ -161,10 +162,8 @@ private:
     class TLNode
     {
     public:
-        TLNode(const E &e) : element_(e)
-        {
-            next_ = nullptr;
-        }
+        TLNode(const E &e) : element_(e), next_(nullptr) {}
+        TLNode(E &&e) : element_(std::move(e)), next_(nullptr) {}
 
         E element_;
         TLNode* next_;
