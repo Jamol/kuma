@@ -66,6 +66,10 @@ bool OpenSslLib::init(const char* path)
             break;
         }
         
+        //const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
+        //SSL_CTX_set_options(ssl_ctx_server_, flags);
+        SSL_CTX_set_options(ssl_ctx_server_, SSL_OP_NO_SSLv2);
+        
         if(!server_cert_file.empty() && !server_key_file.empty()) {
             if(SSL_CTX_use_certificate_file(ssl_ctx_server_, server_cert_file.c_str(), SSL_FILETYPE_PEM) != 1) {
                 KUMA_WARNTRACE("OpenSslLib::init, SSL_CTX_use_certificate_file failed, file="<<server_cert_file
@@ -103,6 +107,15 @@ bool OpenSslLib::init(const char* path)
             break;
         }
         
+        SSL_CTX_set_verify(ssl_ctx_client_, SSL_VERIFY_PEER, verifyCallback);
+        //SSL_CTX_set_verify_depth(ssl_ctx_client_, 4);
+        //app_verify_arg arg1;
+        //SSL_CTX_set_cert_verify_callback(ssl_ctx_client_, appVerifyCallback, &arg1);
+        
+        //const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
+        //SSL_CTX_set_options(ssl_ctx_client_, flags);
+        SSL_CTX_set_options(ssl_ctx_client_, SSL_OP_NO_SSLv2);
+        
         // set AES256_SHA cipher for client.
         //if(SSL_CTX_set_cipher_list(ssl_ctx_client_,"AES256-SHA") != 1)
         //{
@@ -137,9 +150,6 @@ bool OpenSslLib::init(const char* path)
                            <<ERR_reason_error_string(ERR_get_error()));
             break;
         }
-        SSL_CTX_set_verify(ssl_ctx_client_, SSL_VERIFY_PEER, verifyCallback);
-        //app_verify_arg arg1;
-        //SSL_CTX_set_cert_verify_callback(ssl_ctx_client_, appVerifyCallback, &arg1);
         client_ctx_ok = true;
     } while(0);
     
