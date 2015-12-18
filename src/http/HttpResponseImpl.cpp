@@ -17,6 +17,8 @@
 #include "EventLoopImpl.h"
 #include "util/kmtrace.h"
 
+#include <iterator>
+
 KUMA_NS_BEGIN
 
 static const std::string str_content_type = "Content-Type";

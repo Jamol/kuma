@@ -18,6 +18,7 @@
 #include "util/util.h"
 
 #include <sstream>
+#include <iterator>
 
 KUMA_NS_BEGIN
 
