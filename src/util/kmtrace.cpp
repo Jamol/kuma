@@ -79,7 +79,12 @@ void TracePrint(int level, const char* szMessage, ...)
     if (trace_func) {
         trace_func(level, str_log.c_str());
     } else {
+#ifdef KUMA_OS_WIN
+        str_log += "\n";
+        OutputDebugString(str_log.c_str());
+#else
         printf("%s\n", str_log.c_str());
+#endif
     }
 }
 
