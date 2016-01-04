@@ -174,9 +174,13 @@ void SelectPoll::updateFdSet(SOCKET_FD fd, uint32_t events)
     if(events != 0) {
         if (events & KUMA_EV_READ) {
             FD_SET(fd, &read_fds_);
+        } else {
+            FD_CLR(fd, &read_fds_);
         }
         if (events & KUMA_EV_WRITE) {
             FD_SET(fd, &write_fds_);
+        } else {
+            FD_CLR(fd, &write_fds_);
         }
         if (events & KUMA_EV_ERROR) {
             FD_SET(fd, &except_fds_);
