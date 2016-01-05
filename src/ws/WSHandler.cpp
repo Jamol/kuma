@@ -354,6 +354,11 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, uint32_t len)
                 }
                 ctx_.buf.clear();
                 ctx_.state = FRAME_DECODE_STATE_DATA;
+                if(WS_OPCODE_CLOSE == ctx_.hdr.opcode && 0 == ctx_.hdr.length) {
+                    // connection closed
+                    ctx_.state = FRAME_DECODE_STATE_CLOSED;
+                    return WS_ERROR_CLOSED;
+                }
                 break;
             case FRAME_DECODE_STATE_DATA:
                 if(WS_OPCODE_CLOSE == ctx_.hdr.opcode) {

@@ -428,9 +428,10 @@ int TcpSocketImpl::send(iovec* iovs, uint32_t count)
     if(0 == count) return 0;
     
     uint32_t bytes_sent = 0;
+    bool eagain = false;
 #ifdef KUMA_HAS_OPENSSL
     if(SslEnabled()) {
-        ret = ssl_handler_->send(iovs, count);
+        ret = ssl_handler_->send(iovs, count, eagain);
         if(ret > 0) {
             bytes_sent = ret;
         }
@@ -468,7 +469,7 @@ int TcpSocketImpl::send(iovec* iovs, uint32_t count)
     if(ret < 0) {
         cleanup();
         setState(ST_CLOSED);
-    } else if(0 == ret) {
+    } else if(0 == ret || eagain) {
         if(loop_->isPollLT()) {
             loop_->updateFd(fd_, KUMA_EV_NETWORK);
         }

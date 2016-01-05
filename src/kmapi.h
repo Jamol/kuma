@@ -272,8 +272,8 @@ public:
     HttpResponse(EventLoop* loop);
     ~HttpResponse();
     
-    int attachFd(SOCKET_FD fd, uint8_t* init_data = nullptr, uint32_t init_len = 0);
-    int attachFd(SOCKET_FD fd, HttpParser&& parser, uint8_t* init_data = nullptr, uint32_t init_len = 0);
+    int attachFd(SOCKET_FD fd, uint32_t flags=0, uint8_t* init_data=nullptr, uint32_t init_len=0);
+    int attachFd(SOCKET_FD fd, HttpParser&& parser, uint32_t flags=0, uint8_t* init_data=nullptr, uint32_t init_len=0);
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
     int sendResponse(int status_code, const char* desc = nullptr, const char* ver = "HTTP/1.1");
@@ -322,8 +322,8 @@ public:
     const char* getOrigin();
     int connect(const char* ws_url, EventCallback& cb);
     int connect(const char* ws_url, EventCallback&& cb);
-    int attachFd(SOCKET_FD fd, const uint8_t* init_data = nullptr, uint32_t init_len = 0);
-    int attachFd(SOCKET_FD fd, HttpParser&& parser, const uint8_t* init_data = nullptr, uint32_t init_len = 0);
+    int attachFd(SOCKET_FD fd, uint32_t flags=0, const uint8_t* init_data=nullptr, uint32_t init_len=0);
+    int attachFd(SOCKET_FD fd, HttpParser&& parser, uint32_t flags=0, const uint8_t* init_data=nullptr, uint32_t init_len=0);
     int send(const uint8_t* data, uint32_t len);
     int close();
     

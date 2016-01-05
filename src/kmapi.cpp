@@ -672,14 +672,14 @@ HttpResponse::~HttpResponse()
     delete pimpl_;
 }
 
-int HttpResponse::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_len)
+int HttpResponse::attachFd(SOCKET_FD fd, uint32_t flags, uint8_t* init_data, uint32_t init_len)
 {
-    return pimpl_->attachFd(fd, init_data, init_len);
+    return pimpl_->attachFd(fd, flags, init_data, init_len);
 }
 
-int HttpResponse::attachFd(SOCKET_FD fd, HttpParser&& parser, uint8_t* init_data, uint32_t init_len)
+int HttpResponse::attachFd(SOCKET_FD fd, HttpParser&& parser, uint32_t flags, uint8_t* init_data, uint32_t init_len)
 {
-    return pimpl_->attachFd(fd, std::move((*parser.getPimpl())), init_data, init_len);
+    return pimpl_->attachFd(fd, std::move((*parser.getPimpl())), flags, init_data, init_len);
 }
 
 void HttpResponse::addHeader(const char* name, const char* value)
@@ -852,14 +852,14 @@ int WebSocket::connect(const char* ws_url, EventCallback&& cb)
     return pimpl_->connect(ws_url, std::move(cb));
 }
 
-int WebSocket::attachFd(SOCKET_FD fd, const uint8_t* init_data, uint32_t init_len)
+int WebSocket::attachFd(SOCKET_FD fd, uint32_t flags, const uint8_t* init_data, uint32_t init_len)
 {
-    return pimpl_->attachFd(fd, init_data, init_len);
+    return pimpl_->attachFd(fd, flags, init_data, init_len);
 }
 
-int WebSocket::attachFd(SOCKET_FD fd, HttpParser&& parser, const uint8_t* init_data, uint32_t init_len)
+int WebSocket::attachFd(SOCKET_FD fd, HttpParser&& parser, uint32_t flags, const uint8_t* init_data, uint32_t init_len)
 {
-    return pimpl_->attachFd(fd, std::move((*parser.getPimpl())), init_data, init_len);
+    return pimpl_->attachFd(fd, std::move((*parser.getPimpl())), flags, init_data, init_len);
 }
 
 int WebSocket::send(const uint8_t* data, uint32_t len)

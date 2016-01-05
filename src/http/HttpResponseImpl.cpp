@@ -67,7 +67,7 @@ void HttpResponseImpl::cleanup()
     send_offset_ = 0;
 }
 
-int HttpResponseImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_len)
+int HttpResponseImpl::attachFd(SOCKET_FD fd, uint32_t flags, uint8_t* init_data, uint32_t init_len)
 {
     if(init_data && init_len > 0) {
         init_data = new uint8_t(init_len);
@@ -80,10 +80,10 @@ int HttpResponseImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_l
     tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
     tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
     tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
-    return tcp_socket_.attachFd(fd, 0);
+    return tcp_socket_.attachFd(fd, flags);
 }
 
-int HttpResponseImpl::attachFd(SOCKET_FD fd, HttpParserImpl&& parser, uint8_t* init_data, uint32_t init_len)
+int HttpResponseImpl::attachFd(SOCKET_FD fd, HttpParserImpl&& parser, uint32_t flags, uint8_t* init_data, uint32_t init_len)
 {
     if(init_data && init_len > 0) {
         init_data = new uint8_t(init_len);
@@ -97,7 +97,7 @@ int HttpResponseImpl::attachFd(SOCKET_FD fd, HttpParserImpl&& parser, uint8_t* i
     tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
     tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
     tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
-    int ret = tcp_socket_.attachFd(fd, 0);
+    int ret = tcp_socket_.attachFd(fd, flags);
     if(http_parser_.paused()) {
         http_parser_.resume();
     }

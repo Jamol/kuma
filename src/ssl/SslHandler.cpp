@@ -90,7 +90,9 @@ int SslHandler::attachFd(SOCKET_FD fd, bool is_server)
 {
     cleanup();
     SSL_CTX* ctx = NULL;
-    if(is_server) {
+    is_server_ = is_server;
+    fd_ = fd;
+    if(is_server_) {
         ctx = OpenSslLib::getServerContext();
     } else {
         ctx = OpenSslLib::getClientContext();
@@ -104,7 +106,7 @@ int SslHandler::attachFd(SOCKET_FD fd, bool is_server)
         KUMA_ERRXTRACE("attachFd, SSL_new failed");
         return KUMA_ERROR_SSL_FAILED;
     }
-    int ret = SSL_set_fd(ssl_, fd);
+    int ret = SSL_set_fd(ssl_, fd_);
     if(0 == ret) {
         KUMA_ERRXTRACE("attachFd, SSL_set_fd failed, err="<<ERR_reason_error_string(ERR_get_error()));
         SSL_free(ssl_);
@@ -133,14 +135,17 @@ SslHandler::SslState SslHandler::sslConnect()
             return SSL_HANDSHAKE;
             
         default:
+        {
+            const char* err_str = ERR_reason_error_string(ERR_get_error());
             KUMA_ERRXTRACE("sslConnect, error, fd="<<fd_
                           <<", ssl_status="<<ret
                           <<", ssl_err="<<ssl_err
                           <<", os_err="<<getLastError()
-                          <<", err_msg="<<ERR_reason_error_string(ERR_get_error()));
+                           <<", err_msg="<<(err_str?err_str:""));
             SSL_free(ssl_);
             ssl_ = NULL;
             return SSL_ERROR;
+        }
     }
     
     return SSL_HANDSHAKE;
@@ -165,14 +170,17 @@ SslHandler::SslState SslHandler::sslAccept()
             return SSL_HANDSHAKE;
             
         default:
+        {
+            const char* err_str = ERR_reason_error_string(ERR_get_error());
             KUMA_ERRXTRACE("sslAccept, error, fd="<<fd_
                           <<", ssl_status="<<ret
                           <<", ssl_err="<<ssl_err
                           <<", os_err="<<getLastError()
-                          <<", err_msg="<<ERR_reason_error_string(ERR_get_error()) );
+                           <<", err_msg="<<(err_str?err_str:""));
             SSL_free(ssl_);
             ssl_ = NULL;
             return SSL_ERROR;
+        }
     }
     
     return SSL_HANDSHAKE;
@@ -196,13 +204,16 @@ int SslHandler::send(const uint8_t* data, uint32_t length)
             ret = 0;
             break;
         default:
+        {
+            const char* err_str = ERR_reason_error_string(ERR_get_error());
             KUMA_ERRXTRACE( "send, SSL_write failed, fd="<<fd_
                           <<", ssl_status="<<ret
                           <<", ssl_err="<<ssl_err
                           <<", errno="<<getLastError()
-                          <<", err_msg="<<ERR_reason_error_string(ERR_get_error()));
+                           <<", err_msg="<<(err_str?err_str:""));
             ret = -1;
             break;
+        }
     }
     
     if(ret < 0) {
@@ -212,9 +223,10 @@ int SslHandler::send(const uint8_t* data, uint32_t length)
     return ret;
 }
 
-int SslHandler::send(const iovec* iovs, uint32_t count)
+int SslHandler::send(const iovec* iovs, uint32_t count, bool& eagain)
 {
     uint32_t bytes_sent = 0;
+    eagain = false;
     for (uint32_t i=0; i < count; ++i) {
         int ret = SslHandler::send((const uint8_t*)iovs[i].iov_base, uint32_t(iovs[i].iov_len));
         if(ret < 0) {
@@ -222,6 +234,7 @@ int SslHandler::send(const iovec* iovs, uint32_t count)
         } else {
             bytes_sent += ret;
             if(ret < iovs[i].iov_len) {
+                eagain = true;
                 break;
             }
         }
@@ -247,13 +260,16 @@ int SslHandler::receive(uint8_t* data, uint32_t length)
             ret = 0;
             break;
         default:
+        {
+            const char* err_str = ERR_reason_error_string(ERR_get_error());
             KUMA_ERRXTRACE("receive, SSL_read failed, fd="<<fd_
                           <<", ssl_status="<<ret
                           <<", ssl_err="<<ssl_err
                           <<", os_err="<<getLastError()
-                          <<", err_msg="<<ERR_reason_error_string(ERR_get_error()));
+                           <<", err_msg="<<(err_str?err_str:""));
             ret = -1;
             break;
+        }
     }
 
     if(ret < 0) {

@@ -38,8 +38,8 @@ public:
     const std::string& getOrigin() { return origin_; }
     int connect(const std::string& ws_url, EventCallback& cb);
     int connect(const std::string& ws_url, EventCallback&& cb);
-    int attachFd(SOCKET_FD fd, const uint8_t* init_data = nullptr, uint32_t init_len = 0);
-    int attachFd(SOCKET_FD fd, HttpParserImpl&& parser, const uint8_t* init_data = nullptr, uint32_t init_len = 0);
+    int attachFd(SOCKET_FD fd, uint32_t flags, const uint8_t* init_data = nullptr, uint32_t init_len = 0);
+    int attachFd(SOCKET_FD fd, HttpParserImpl&& parser, uint32_t flags, const uint8_t* init_data = nullptr, uint32_t init_len = 0);
     int send(const uint8_t* data, uint32_t len);
     int close();
     

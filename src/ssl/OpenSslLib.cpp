@@ -69,6 +69,8 @@ bool OpenSslLib::init(const char* path)
         //const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
         //SSL_CTX_set_options(ssl_ctx_server_, flags);
         SSL_CTX_set_options(ssl_ctx_server_, SSL_OP_NO_SSLv2);
+        SSL_CTX_set_mode(ssl_ctx_server_, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+        SSL_CTX_set_mode(ssl_ctx_server_, SSL_MODE_ENABLE_PARTIAL_WRITE);
         
         if(!server_cert_file.empty() && !server_key_file.empty()) {
             if(SSL_CTX_use_certificate_file(ssl_ctx_server_, server_cert_file.c_str(), SSL_FILETYPE_PEM) != 1) {
@@ -115,6 +117,8 @@ bool OpenSslLib::init(const char* path)
         //const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
         //SSL_CTX_set_options(ssl_ctx_client_, flags);
         SSL_CTX_set_options(ssl_ctx_client_, SSL_OP_NO_SSLv2);
+        SSL_CTX_set_mode(ssl_ctx_client_, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+        SSL_CTX_set_mode(ssl_ctx_client_, SSL_MODE_ENABLE_PARTIAL_WRITE);
         
         // set AES256_SHA cipher for client.
         //if(SSL_CTX_set_cipher_list(ssl_ctx_client_,"AES256-SHA") != 1)

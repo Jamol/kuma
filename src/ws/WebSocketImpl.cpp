@@ -111,7 +111,7 @@ int WebSocketImpl::connect_i(const std::string& ws_url)
     return tcp_socket_.connect(uri_.getHost().c_str(), port, [this] (int err) { onConnect(err); }, flag);
 }
 
-int WebSocketImpl::attachFd(SOCKET_FD fd, const uint8_t* init_data, uint32_t init_len)
+int WebSocketImpl::attachFd(SOCKET_FD fd, uint32_t flags, const uint8_t* init_data, uint32_t init_len)
 {
     is_server_ = true;
     if(init_data && init_len > 0) {
@@ -125,10 +125,10 @@ int WebSocketImpl::attachFd(SOCKET_FD fd, const uint8_t* init_data, uint32_t ini
     tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
     tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
     setState(STATE_HANDSHAKE);
-    return tcp_socket_.attachFd(fd, 0);
+    return tcp_socket_.attachFd(fd, flags);
 }
 
-int WebSocketImpl::attachFd(SOCKET_FD fd, HttpParserImpl&& parser, const uint8_t* init_data, uint32_t init_len)
+int WebSocketImpl::attachFd(SOCKET_FD fd, HttpParserImpl&& parser, uint32_t flags, const uint8_t* init_data, uint32_t init_len)
 {
     is_server_ = true;
     if(init_data && init_len > 0) {
@@ -143,7 +143,7 @@ int WebSocketImpl::attachFd(SOCKET_FD fd, HttpParserImpl&& parser, const uint8_t
     tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
     tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
     setState(STATE_HANDSHAKE);
-    int ret = tcp_socket_.attachFd(fd, 0);
+    int ret = tcp_socket_.attachFd(fd, flags);
     ws_handler_.setHttpParser(std::move(parser));
     return ret;
 }
