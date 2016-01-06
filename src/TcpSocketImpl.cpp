@@ -424,13 +424,14 @@ int TcpSocketImpl::send(iovec* iovs, uint32_t count)
         return -1;
     }
     
-    int ret = 0;
-    if(0 == count) return 0;
-    
     uint32_t total_len = 0;
     for (uint32_t i = 0; i < count; ++i) {
         total_len += iovs[i].iov_len;
     }
+    if (total_len == 0) {
+        return 0;
+    }
+    int ret = 0;
     uint32_t bytes_sent = 0;
 #ifdef KUMA_HAS_OPENSSL
     if(SslEnabled()) {
