@@ -293,7 +293,7 @@ int TcpSocketImpl::detachFd(SOCKET_FD &fd)
 #ifdef KUMA_HAS_OPENSSL
 int TcpSocketImpl::attachFd(SOCKET_FD fd, SSL* ssl, uint32_t flags)
 {
-    KUMA_INFOXTRACE("attachFd, fd="<<fd<<", state="<<getState());
+    KUMA_INFOXTRACE("attachFd, with ssl, fd="<<fd<<", flags="<<flags<<", state="<<getState());
     if(getState() != ST_IDLE) {
         KUMA_ERRXTRACE("attachFd, invalid state, state="<<getState());
         return KUMA_ERROR_INVALID_STATE;
@@ -323,7 +323,7 @@ int TcpSocketImpl::attachFd(SOCKET_FD fd, SSL* ssl, uint32_t flags)
 
 int TcpSocketImpl::detachFd(SOCKET_FD &fd, SSL* &ssl)
 {
-    KUMA_INFOXTRACE("detachFd, fd="<<fd_<<", state="<<getState());
+    KUMA_INFOXTRACE("detachFd, with ssl, fd="<<fd_<<", state="<<getState());
     fd = fd_;
     fd_ = INVALID_FD;
     if(registered_) {
