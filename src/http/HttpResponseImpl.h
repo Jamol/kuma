@@ -39,6 +39,7 @@ public:
     void addHeader(const std::string& name, uint32_t value);
     int sendResponse(int status_code, const std::string& desc = nullptr, const std::string& ver = "HTTP/1.1");
     int sendData(const uint8_t* data, uint32_t len);
+    void reset(); // reset for connection reuse
     int close();
     
     const std::string& getMethod() { return http_parser_.getMethod(); }
@@ -74,7 +75,9 @@ private:
     enum State {
         STATE_IDLE,
         STATE_RECVING_REQUEST,
-        STATE_SENDING_RESPONSE,
+        STATE_WAIT_FOR_RESPONSE,
+        STATE_SENDING_HEADER,
+        STATE_SENDING_BODY,
         STATE_COMPLETE,
         STATE_ERROR,
         STATE_CLOSED

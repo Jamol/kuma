@@ -162,6 +162,20 @@ int WebSocketImpl::send(const uint8_t* data, uint32_t len)
         opcode = WSHandler::WSOpcode::WS_OPCODE_TEXT;
     }
     int hdr_len = ws_handler_.encodeFrameHeader(opcode, len, hdr);
+#if 0
+    send_buffer_.resize(hdr_len + len);
+    memcpy(&send_buffer_[0], hdr, hdr_len);
+    memcpy(&send_buffer_[0] + hdr_len, data, len);
+    int ret = tcp_socket_.send(&send_buffer_[0], hdr_len + len);
+    if(ret < 0) {
+        return ret;
+    } else if(ret < hdr_len + len) {
+        send_offset_ = ret;
+    } else {
+        send_buffer_.clear();
+        send_offset_ = 0;
+    }
+#else
     iovec iovs[2];
     iovs[0].iov_base = (char*)hdr;
     iovs[0].iov_len = hdr_len;
@@ -175,8 +189,8 @@ int WebSocketImpl::send(const uint8_t* data, uint32_t len)
         send_buffer_.reserve(total_len - ret);
         send_offset_ = 0;
         for (auto &iov : iovs) {
-            uint8_t* first = ((uint8_t*)iov.iov_base) + ret;
-            uint8_t* last = ((uint8_t*)iov.iov_base) + iov.iov_len;
+            const uint8_t* first = ((uint8_t*)iov.iov_base) + ret;
+            const uint8_t* last = ((uint8_t*)iov.iov_base) + iov.iov_len;
             if(first < last) {
                 send_buffer_.insert(send_buffer_.end(), first, last);
                 ret = 0;
@@ -185,6 +199,7 @@ int WebSocketImpl::send(const uint8_t* data, uint32_t len)
             }
         }
     }
+#endif
     return len;
 }
 

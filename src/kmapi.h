@@ -237,6 +237,7 @@ public:
     void addHeader(const char* name, uint32_t value);
     int sendRequest(const char* method, const char* url, const char* ver = "HTTP/1.1");
     int sendData(const uint8_t* data, uint32_t len);
+    void reset(); // reset for connection reuse
     int close();
     
     int getStatusCode();
@@ -278,6 +279,7 @@ public:
     void addHeader(const char* name, uint32_t value);
     int sendResponse(int status_code, const char* desc = nullptr, const char* ver = "HTTP/1.1");
     int sendData(const uint8_t* data, uint32_t len);
+    void reset(); // reset for connection reuse
     int close();
     
     const char* getMethod();

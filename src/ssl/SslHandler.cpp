@@ -186,14 +186,14 @@ SslHandler::SslState SslHandler::sslAccept()
     return SSL_HANDSHAKE;
 }
 
-int SslHandler::send(const uint8_t* data, uint32_t length)
+int SslHandler::send(const uint8_t* data, uint32_t size)
 {
     if(NULL == ssl_) {
         KUMA_ERRXTRACE("send, ssl is NULL");
         return -1;
     }
     
-    int ret = SSL_write(ssl_, data, length);
+    int ret = SSL_write(ssl_, data, size);
     int ssl_err = SSL_get_error(ssl_, ret);
     switch (ssl_err)
     {
@@ -242,14 +242,14 @@ int SslHandler::send(const iovec* iovs, uint32_t count, bool& eagain)
     return bytes_sent;
 }
 
-int SslHandler::receive(uint8_t* data, uint32_t length)
+int SslHandler::receive(uint8_t* data, uint32_t size)
 {
     if(NULL == ssl_) {
         KUMA_ERRXTRACE("receive, ssl is NULL");
         return -1;
     }
     
-    int ret = SSL_read(ssl_, data, length);
+    int ret = SSL_read(ssl_, data, size);
     int ssl_err = SSL_get_error(ssl_, ret);
     switch (ssl_err)
     {
@@ -273,7 +273,8 @@ int SslHandler::receive(uint8_t* data, uint32_t length)
     }
 
     if(ret < 0) {
-        cleanup();    }
+        cleanup();
+    }
     
     //KUMA_INFOXTRACE("receive, ret: "<<ret);
     return ret;

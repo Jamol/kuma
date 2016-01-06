@@ -37,6 +37,7 @@ public:
     void addHeader(const std::string& name, uint32_t value);
     int sendRequest(const std::string& method, const std::string& url, const std::string& ver = "HTTP/1.1");
     int sendData(const uint8_t* data, uint32_t len);
+    void reset(); // reset for connection reuse
     int close();
     
     int getStatusCode() { return http_parser_.getStatusCode(); }
@@ -69,9 +70,11 @@ private:
     enum State {
         STATE_IDLE,
         STATE_CONNECTING,
-        STATE_SENDING_REQUEST,
+        STATE_SENDING_HEADER,
+        STATE_SENDING_BODY,
         STATE_RECVING_RESPONSE,
         STATE_COMPLETE,
+        STATE_WAIT_FOR_REUSE,
         STATE_ERROR,
         STATE_CLOSED
     };
@@ -80,6 +83,7 @@ private:
     void buildRequest();
     int sendChunk(const uint8_t* data, uint32_t len);
     void cleanup();
+    void sendRequestHeader();
     
     void onHttpData(const char* data, uint32_t len);
     void onHttpEvent(HttpEvent ev);

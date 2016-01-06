@@ -112,6 +112,9 @@ void HttpRequestImpl::buildRequest()
 
 int HttpRequestImpl::sendRequest(const std::string& method, const std::string& url, const std::string& ver)
 {
+    if (getState() != STATE_IDLE && getState() != STATE_WAIT_FOR_REUSE) {
+        return KUMA_ERROR_INVALID_STATE;
+    }
     method_ = method;
     url_ = url;
     version_ = ver;
@@ -129,26 +132,31 @@ int HttpRequestImpl::sendRequest(const std::string& method, const std::string& u
         is_chunked_ = true;
     }
     
-    tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
-    tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
-    tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
-    setState(STATE_CONNECTING);
-    std::string str_port = uri_.getPort();
-    uint16_t port = 80;
-    uint32_t flag = 0;
-    if(is_equal("https", uri_.getScheme())) {
-        port = 443;
-        flag = FLAG_HAS_SSL;
+    if (getState() == STATE_IDLE) {
+        tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
+        tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
+        tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
+        setState(STATE_CONNECTING);
+        std::string str_port = uri_.getPort();
+        uint16_t port = 80;
+        uint32_t flag = 0;
+        if(is_equal("https", uri_.getScheme())) {
+            port = 443;
+            flag = FLAG_HAS_SSL;
+        }
+        if(!str_port.empty()) {
+            port = atoi(str_port.c_str());
+        }
+        return tcp_socket_.connect(uri_.getHost().c_str(), port, [this] (int err) { onConnect(err); }, flag);
+    } else { // connection reuse
+        sendRequestHeader();
+        return KUMA_ERROR_NOERR;
     }
-    if(!str_port.empty()) {
-        port = atoi(str_port.c_str());
-    }
-    return tcp_socket_.connect(uri_.getHost().c_str(), port, [this] (int err) { onConnect(err); }, flag);
 }
 
 int HttpRequestImpl::sendData(const uint8_t* data, uint32_t len)
 {
-    if(!send_buffer_.empty() || getState() != STATE_SENDING_REQUEST) {
+    if(!send_buffer_.empty() || getState() != STATE_SENDING_BODY) {
         return 0;
     }
     if(is_chunked_) {
@@ -160,8 +168,11 @@ int HttpRequestImpl::sendData(const uint8_t* data, uint32_t len)
     int ret = tcp_socket_.send(data, len);
     if(ret < 0) {
         setState(STATE_ERROR);
-    } else if(ret > 0 && has_content_length_ && body_bytes_sent_ >= content_length_) {
-        setState(STATE_RECVING_RESPONSE);
+    } else if(ret > 0) {
+        body_bytes_sent_ += ret;
+        if (body_bytes_sent_ >= content_length_) {
+            setState(STATE_RECVING_RESPONSE);
+        }
     }
     return ret;
 }
@@ -177,6 +188,8 @@ int HttpRequestImpl::sendChunk(const uint8_t* data, uint32_t len)
         } else if(ret < 5) {
             std::copy(_chunk_end_token_.begin() + ret, _chunk_end_token_.end(), back_inserter(send_buffer_));
             send_offset_ = 0;
+        } else {
+            setState(STATE_RECVING_RESPONSE);
         }
         return 0;
     } else {
@@ -214,6 +227,21 @@ int HttpRequestImpl::sendChunk(const uint8_t* data, uint32_t len)
     }
 }
 
+void HttpRequestImpl::reset()
+{
+    http_parser_.reset();
+    header_map_.clear();
+    send_buffer_.clear();
+    send_offset_ = 0;
+    has_content_length_ = false;
+    content_length_ = 0;
+    body_bytes_sent_ = 0;
+    is_chunked_ = false;
+    if (getState() == STATE_COMPLETE) {
+        setState(STATE_WAIT_FOR_REUSE);
+    }
+}
+
 int HttpRequestImpl::close()
 {
     KUMA_INFOXTRACE("close");
@@ -222,17 +250,13 @@ int HttpRequestImpl::close()
     return KUMA_ERROR_NOERR;
 }
 
-void HttpRequestImpl::onConnect(int err)
+void HttpRequestImpl::sendRequestHeader()
 {
-    if(err != KUMA_ERROR_NOERR) {
-        if(cb_error_) cb_error_(err);
-        return ;
-    }
     body_bytes_sent_ = 0;
     http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     buildRequest();
-    setState(STATE_SENDING_REQUEST);
+    setState(STATE_SENDING_HEADER);
     int ret = tcp_socket_.send(&send_buffer_[0] + send_offset_, (uint32_t)send_buffer_.size() - send_offset_);
     if(ret < 0) {
         cleanup();
@@ -244,11 +268,25 @@ void HttpRequestImpl::onConnect(int err)
         if(send_offset_ == send_buffer_.size()) {
             send_offset_ = 0;
             send_buffer_.clear();
-            if(0 == content_length_ && !is_chunked_) {
+            if(!is_chunked_ && 0 == content_length_) {
                 setState(STATE_RECVING_RESPONSE);
+            } else {
+                setState(STATE_SENDING_BODY);
+                if (cb_write_) {
+                    cb_write_(0);
+                }
             }
         }
     }
+}
+
+void HttpRequestImpl::onConnect(int err)
+{
+    if(err != KUMA_ERROR_NOERR) {
+        if(cb_error_) cb_error_(err);
+        return ;
+    }
+    sendRequestHeader();
 }
 
 void HttpRequestImpl::onSend(int err)
@@ -265,9 +303,19 @@ void HttpRequestImpl::onSend(int err)
             if(send_offset_ == send_buffer_.size()) {
                 send_offset_ = 0;
                 send_buffer_.clear();
-                if(!is_chunked_ && body_bytes_sent_ >= content_length_) {
-                    setState(STATE_RECVING_RESPONSE);
-                    return;
+                if (getState() == STATE_SENDING_HEADER) {
+                    if(!is_chunked_ && 0 == content_length_) {
+                        setState(STATE_RECVING_RESPONSE);
+                        return;
+                    } else {
+                        setState(STATE_SENDING_BODY);
+                    }
+                } else if (getState() == STATE_SENDING_BODY) {
+                    body_bytes_sent_ += ret;
+                    if (!is_chunked_ && body_bytes_sent_ >= content_length_) {
+                        setState(STATE_RECVING_RESPONSE);
+                        return;
+                    }
                 }
             }
         }

@@ -573,6 +573,11 @@ int HttpRequest::sendData(const uint8_t* data, uint32_t len)
     return pimpl_->sendData(data, len);
 }
 
+void HttpRequest::reset()
+{
+    pimpl_->reset();
+}
+
 int HttpRequest::close()
 {
     return pimpl_->close();
@@ -700,6 +705,11 @@ int HttpResponse::sendResponse(int status_code, const char* desc, const char* ve
 int HttpResponse::sendData(const uint8_t* data, uint32_t len)
 {
     return pimpl_->sendData(data, len);
+}
+
+void HttpResponse::reset()
+{
+    pimpl_->reset();
 }
 
 int HttpResponse::close()
