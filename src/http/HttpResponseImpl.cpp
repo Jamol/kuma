@@ -336,7 +336,7 @@ void HttpResponseImpl::onReceive(int err)
         init_data_ = nullptr;
         init_len_ = 0;
     }
-    char buf[256*1024];
+    char buf[128*1024];
     do {
         int ret = tcp_socket_.receive((uint8_t*)buf, sizeof(buf));
         if(ret < 0) {

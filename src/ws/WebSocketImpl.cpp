@@ -291,7 +291,7 @@ void WebSocketImpl::onReceive(int err)
             return;
         }
     }
-    uint8_t buf[256*1024];
+    uint8_t buf[128*1024];
     do {
         int ret = tcp_socket_.receive(buf, sizeof(buf));
         if(ret < 0) {
