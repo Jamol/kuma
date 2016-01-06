@@ -409,7 +409,7 @@ int TcpSocketImpl::send(const uint8_t* data, uint32_t length)
             loop_->updateFd(fd_, KUMA_EV_NETWORK);
         }
     }
-    //WTP_INFOXTRACE("send, ret="<<ret<<", len="<<len);
+    //KUMA_INFOXTRACE("send, ret="<<ret<<", len="<<len);
     return ret;
 }
 
@@ -427,11 +427,14 @@ int TcpSocketImpl::send(iovec* iovs, uint32_t count)
     int ret = 0;
     if(0 == count) return 0;
     
+    uint32_t total_len = 0;
+    for (uint32_t i = 0; i < count; ++i) {
+        total_len += iovs[i].iov_len;
+    }
     uint32_t bytes_sent = 0;
-    bool eagain = false;
 #ifdef KUMA_HAS_OPENSSL
     if(SslEnabled()) {
-        ret = ssl_handler_->send(iovs, count, eagain);
+        ret = ssl_handler_->send(iovs, count);
         if(ret > 0) {
             bytes_sent = ret;
         }
@@ -469,13 +472,13 @@ int TcpSocketImpl::send(iovec* iovs, uint32_t count)
     if(ret < 0) {
         cleanup();
         setState(ST_CLOSED);
-    } else if(0 == ret || eagain) {
+    } else if(ret < total_len) {
         if(loop_->isPollLT()) {
             loop_->updateFd(fd_, KUMA_EV_NETWORK);
         }
     }
     
-    //WTP_INFOXTRACE("send, ret="<<ret<<", bytes_sent="<<bytes_sent);
+    //KUMA_INFOXTRACE("send, ret="<<ret<<", bytes_sent="<<bytes_sent);
     return ret<0?ret:bytes_sent;
 }
 

@@ -207,9 +207,9 @@ int SslHandler::send(const uint8_t* data, uint32_t size)
         {
             const char* err_str = ERR_reason_error_string(ERR_get_error());
             KUMA_ERRXTRACE( "send, SSL_write failed, fd="<<fd_
-                          <<", ssl_status="<<ret
-                          <<", ssl_err="<<ssl_err
-                          <<", errno="<<getLastError()
+                           <<", ssl_status="<<ret
+                           <<", ssl_err="<<ssl_err
+                           <<", errno="<<getLastError()
                            <<", err_msg="<<(err_str?err_str:""));
             ret = -1;
             break;
@@ -223,10 +223,9 @@ int SslHandler::send(const uint8_t* data, uint32_t size)
     return ret;
 }
 
-int SslHandler::send(const iovec* iovs, uint32_t count, bool& eagain)
+int SslHandler::send(const iovec* iovs, uint32_t count)
 {
     uint32_t bytes_sent = 0;
-    eagain = false;
     for (uint32_t i=0; i < count; ++i) {
         int ret = SslHandler::send((const uint8_t*)iovs[i].iov_base, uint32_t(iovs[i].iov_len));
         if(ret < 0) {
@@ -234,7 +233,6 @@ int SslHandler::send(const iovec* iovs, uint32_t count, bool& eagain)
         } else {
             bytes_sent += ret;
             if(ret < iovs[i].iov_len) {
-                eagain = true;
                 break;
             }
         }
