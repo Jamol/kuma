@@ -34,7 +34,7 @@ public:
     ~HttpResponseImpl();
     
     int attachFd(SOCKET_FD fd, uint32_t flags, uint8_t* init_data = nullptr, uint32_t init_len = 0);
-    int attachFd(SOCKET_FD fd, HttpParserImpl&& parser, uint32_t flags, uint8_t* init_data = nullptr, uint32_t init_len = 0);
+    int attachTcp(TcpSocketImpl &tcp, HttpParserImpl&& parser, uint32_t flags, uint8_t* init_data = nullptr, uint32_t init_len = 0);
     void addHeader(const std::string& name, const std::string& value);
     void addHeader(const std::string& name, uint32_t value);
     int sendResponse(int status_code, const std::string& desc = nullptr, const std::string& ver = "HTTP/1.1");

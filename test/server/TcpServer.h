@@ -2,7 +2,6 @@
 #define __TcpServer_H__
 
 #include "kmapi.h"
-#include "util/util.h"
 #include "TestLoop.h"
 #include "LoopPool.h"
 

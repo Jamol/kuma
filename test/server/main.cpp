@@ -102,6 +102,8 @@ int main(int argc, char *argv[])
         return -1;
     }
     
+    kuma::init();
+    
     if (!main_loop.init()) {
         printf("failed to init EventLoop\n");
         return -1;
@@ -118,7 +120,7 @@ int main(int argc, char *argv[])
         main_loop.loop();
         tcp_server.stopListen();
     }
-    
+    kuma::fini();
     printf("main exit...\n");
 #ifdef KUMA_OS_WIN
     SetConsoleCtrlHandler(HandlerRoutine, FALSE);

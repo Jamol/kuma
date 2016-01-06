@@ -5,6 +5,7 @@ AutoHelper::AutoHelper(EventLoop* loop, long conn_id, TestLoop* server)
 : loop_(loop)
 , server_(server)
 , conn_id_(conn_id)
+, flags_(0)
 , tcp_(loop_)
 , destroy_flag_ptr_(nullptr)
 {
@@ -18,15 +19,16 @@ AutoHelper::~AutoHelper()
     }
 }
 
-int AutoHelper::attachFd(SOCKET_FD fd)
+int AutoHelper::attachFd(SOCKET_FD fd, uint32_t flags)
 {
+    flags_ = flags;
     http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     
     tcp_.setReadCallback([this] (int err) { onReceive(err); });
     tcp_.setErrorCallback([this] (int err) { onClose(err); });
     
-    return tcp_.attachFd(fd);
+    return tcp_.attachFd(fd, flags);
 }
 
 int AutoHelper::close()
@@ -48,9 +50,7 @@ void AutoHelper::onHttpEvent(HttpEvent ev)
         case HTTP_HEADER_COMPLETE:
         {
             http_parser_.pause();
-            SOCKET_FD fd = INVALID_FD;
-            tcp_.detachFd(fd);
-            server_->addFd(fd, std::move(http_parser_));
+            server_->addTcp(tcp_, std::move(http_parser_), flags_);
             server_->removeObject(conn_id_);
             break;
         }

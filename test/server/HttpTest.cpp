@@ -6,11 +6,12 @@ HttpTest::HttpTest(EventLoop* loop, long conn_id, TestLoop* server)
 , http_(loop_)
 , server_(server)
 , conn_id_(conn_id)
+, is_options_(false)
 {
     
 }
 
-int HttpTest::attachFd(SOCKET_FD fd)
+int HttpTest::attachFd(SOCKET_FD fd, uint32_t flags)
 {
     http_.setWriteCallback([this] (int err) { onSend(err); });
     http_.setErrorCallback([this] (int err) { onClose(err); });
@@ -20,10 +21,10 @@ int HttpTest::attachFd(SOCKET_FD fd)
     http_.setRequestCompleteCallback([this] () { onRequestComplete(); });
     http_.setResponseCompleteCallback([this] () { onResponseComplete(); });
     
-    return http_.attachFd(fd);
+    return http_.attachFd(fd, flags);
 }
 
-int HttpTest::attachFd(SOCKET_FD fd, HttpParser&& parser)
+int HttpTest::attachTcp(TcpSocket &tcp, HttpParser&& parser, uint32_t flags)
 {
     http_.setWriteCallback([this] (int err) { onSend(err); });
     http_.setErrorCallback([this] (int err) { onClose(err); });
@@ -33,7 +34,7 @@ int HttpTest::attachFd(SOCKET_FD fd, HttpParser&& parser)
     http_.setRequestCompleteCallback([this] () { onRequestComplete(); });
     http_.setResponseCompleteCallback([this] () { onResponseComplete(); });
     
-    return http_.attachFd(fd, std::move(parser));
+    return http_.attachTcp(tcp, std::move(parser), flags);
 }
 
 int HttpTest::close()
@@ -65,11 +66,44 @@ void HttpTest::onHeaderComplete()
 void HttpTest::onRequestComplete()
 {
     printf("HttpTest::onRequestComplete\n");
-    http_.addHeader("Content-Length", (uint32_t)0);
+    if (strcasecmp(http_.getMethod(), "OPTIONS") == 0) {
+        http_.addHeader("Content-Length", (uint32_t)0);
+        is_options_ = true;
+    } else {
+        http_.addHeader("Content-Length", (uint32_t)256*1024*1024);
+        is_options_ = false;
+    }
+    http_.addHeader("Access-Control-Allow-Origin", "*");
+    const char* hdr = http_.getHeaderValue("Access-Control-Request-Headers");
+    if (hdr) {
+        http_.addHeader("Access-Control-Allow-Headers", hdr);
+    }
+    hdr = http_.getHeaderValue("Access-Control-Request-Method");
+    if (hdr) {
+        http_.addHeader("Access-Control-Allow-Methods", hdr);
+    }
     http_.sendResponse(200, "OK");
 }
 
 void HttpTest::onResponseComplete()
 {
     printf("HttpTest::onResponseComplete\n");
+    http_.reset();
+}
+
+void HttpTest::sendTestData()
+{
+    if (is_options_) {
+        return;
+    }
+    uint8_t buf[128*1024];
+    memset(buf, 'a', sizeof(buf));
+    while (true) {
+        int ret = http_.sendData(buf, sizeof(buf));
+        if (ret < 0) {
+            break;
+        } else if (ret < sizeof(buf)) {
+            break;
+        }
+    }
 }

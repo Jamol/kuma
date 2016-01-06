@@ -247,11 +247,12 @@ int TcpSocketImpl::connect_i(const char* host, uint16_t port, uint32_t timeout)
 
 int TcpSocketImpl::attachFd(SOCKET_FD fd, uint32_t flags)
 {
-    KUMA_INFOXTRACE("attachFd, fd="<<fd<<", state="<<getState());
+    KUMA_INFOXTRACE("attachFd, fd="<<fd<<", flags="<<flags<<", state="<<getState());
     if(getState() != ST_IDLE) {
         KUMA_ERRXTRACE("attachFd, invalid state, state="<<getState());
         return KUMA_ERROR_INVALID_STATE;
     }
+    flags_ = flags;
 #ifndef KUMA_HAS_OPENSSL
     if (SslEnabled()) {
         KUMA_ERRXTRACE("attachFd, OpenSSL is disabled");
@@ -260,7 +261,6 @@ int TcpSocketImpl::attachFd(SOCKET_FD fd, uint32_t flags)
 #endif
     
     fd_ = fd;
-    flags_ = flags;
     setSocketOption();
     setState(ST_OPEN);
 #ifdef KUMA_HAS_OPENSSL
@@ -289,6 +289,55 @@ int TcpSocketImpl::detachFd(SOCKET_FD &fd)
     setState(ST_CLOSED);
     return KUMA_ERROR_NOERR;
 }
+
+#ifdef KUMA_HAS_OPENSSL
+int TcpSocketImpl::attachFd(SOCKET_FD fd, SSL* ssl, uint32_t flags)
+{
+    KUMA_INFOXTRACE("attachFd, fd="<<fd<<", state="<<getState());
+    if(getState() != ST_IDLE) {
+        KUMA_ERRXTRACE("attachFd, invalid state, state="<<getState());
+        return KUMA_ERROR_INVALID_STATE;
+    }
+    
+    fd_ = fd;
+    flags_ = flags;
+    setSocketOption();
+    setState(ST_OPEN);
+    
+    if(SslEnabled()) {
+        if (ssl) {
+            ssl_handler_ = new SslHandler();
+            ssl_handler_->attachSsl(ssl);
+        } else {
+            int ret = startSslHandshake(true);
+            if(ret != KUMA_ERROR_NOERR) {
+                return ret;
+            }
+        }
+    }
+
+    loop_->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
+    registered_ = true;
+    return KUMA_ERROR_NOERR;
+}
+
+int TcpSocketImpl::detachFd(SOCKET_FD &fd, SSL* &ssl)
+{
+    KUMA_INFOXTRACE("detachFd, fd="<<fd_<<", state="<<getState());
+    fd = fd_;
+    fd_ = INVALID_FD;
+    if(registered_) {
+        registered_ = false;
+        loop_->unregisterFd(fd, false);
+    }
+    if (ssl_handler_) {
+        ssl_handler_->detachSsl(ssl);
+    }
+    cleanup();
+    setState(ST_CLOSED);
+    return KUMA_ERROR_NOERR;
+}
+#endif
 
 int TcpSocketImpl::startSslHandshake(bool is_server)
 {

@@ -2,7 +2,6 @@
 #define __WsTest_H__
 
 #include "kmapi.h"
-#include "util/util.h"
 #include "TestLoop.h"
 
 #include <map>
@@ -15,8 +14,8 @@ class WsTest : public LoopObject
 public:
     WsTest(EventLoop* loop, long conn_id, TestLoop* server);
 
-    int attachFd(SOCKET_FD fd);
-    int attachFd(SOCKET_FD fd, HttpParser&& parser);
+    int attachFd(SOCKET_FD fd, uint32_t flags);
+    int attachTcp(TcpSocket &tcp, HttpParser&& parser, uint32_t flags);
     int close();
     
     void onSend(int err);

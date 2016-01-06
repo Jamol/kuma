@@ -10,22 +10,22 @@ WsTest::WsTest(EventLoop* loop, long conn_id, TestLoop* server)
     
 }
 
-int WsTest::attachFd(SOCKET_FD fd)
+int WsTest::attachFd(SOCKET_FD fd, uint32_t flags)
 {
     ws_.setWriteCallback([this] (int err) { onSend(err); });
     ws_.setErrorCallback([this] (int err) { onClose(err); });
     ws_.setDataCallback([this] (uint8_t* data, uint32_t len) { onData(data, len); });
     
-    return ws_.attachFd(fd);
+    return ws_.attachFd(fd, flags);
 }
 
-int WsTest::attachFd(SOCKET_FD fd, HttpParser&& parser)
+int WsTest::attachTcp(TcpSocket &tcp, HttpParser&& parser, uint32_t flags)
 {
     ws_.setWriteCallback([this] (int err) { onSend(err); });
     ws_.setErrorCallback([this] (int err) { onClose(err); });
     ws_.setDataCallback([this] (uint8_t* data, uint32_t len) { onData(data, len); });
     
-    return ws_.attachFd(fd, std::move(parser));
+    return ws_.attachTcp(tcp, std::move(parser), flags);
 }
 
 int WsTest::close()

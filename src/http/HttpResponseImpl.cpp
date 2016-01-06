@@ -84,7 +84,7 @@ int HttpResponseImpl::attachFd(SOCKET_FD fd, uint32_t flags, uint8_t* init_data,
     return tcp_socket_.attachFd(fd, flags);
 }
 
-int HttpResponseImpl::attachFd(SOCKET_FD fd, HttpParserImpl&& parser, uint32_t flags, uint8_t* init_data, uint32_t init_len)
+int HttpResponseImpl::attachTcp(TcpSocketImpl &tcp, HttpParserImpl&& parser, uint32_t flags, uint8_t* init_data, uint32_t init_len)
 {
     if(init_data && init_len > 0) {
         init_data = new uint8_t(init_len);
@@ -99,7 +99,16 @@ int HttpResponseImpl::attachFd(SOCKET_FD fd, HttpParserImpl&& parser, uint32_t f
     tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
     tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
     tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
-    int ret = tcp_socket_.attachFd(fd, flags);
+#ifdef KUMA_HAS_OPENSSL
+    SOCKET_FD fd;
+    SSL* ssl = nullptr;
+    int ret = tcp.detachFd(fd, ssl);
+    ret = tcp_socket_.attachFd(fd, ssl, flags);
+#else
+    SOCKET_FD fd;
+    int ret = tcp.detachFd(fd);
+    ret = tcp_socket_.attachFd(fd, flags);
+#endif
     if(http_parser_.paused()) {
         http_parser_.resume();
     }

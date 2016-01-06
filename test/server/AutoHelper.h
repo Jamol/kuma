@@ -2,7 +2,6 @@
 #define __AutoHelper_H__
 
 #include "kmapi.h"
-#include "util/util.h"
 #include "TestLoop.h"
 
 #include <map>
@@ -16,7 +15,7 @@ public:
     AutoHelper(EventLoop* loop, long conn_id, TestLoop* server);
     ~AutoHelper();
 
-    int attachFd(SOCKET_FD fd);
+    int attachFd(SOCKET_FD fd, uint32_t flags);
     int close();
     
     void onSend(int err);
@@ -33,6 +32,7 @@ private:
     EventLoop*      loop_;
     TestLoop*       server_;
     long            conn_id_;
+    uint32_t        flags_;
     
     TcpSocket       tcp_;
     HttpParser      http_parser_;

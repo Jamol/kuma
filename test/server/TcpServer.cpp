@@ -28,10 +28,16 @@ int TcpServer::startListen(const char* proto, const char* host, uint16_t port)
         proto_ = PROTO_TCP;
     } else if(strcmp(proto, "http") == 0) {
         proto_ = PROTO_HTTP;
+    } else if(strcmp(proto, "https") == 0) {
+        proto_ = PROTO_HTTPS;
     } else if(strcmp(proto, "ws") == 0) {
         proto_ = PROTO_WS;
+    } else if(strcmp(proto, "wss") == 0) {
+        proto_ = PROTO_WSS;
     } else if(strcmp(proto, "auto") == 0) {
         proto_ = PROTO_AUTO;
+    } else if(strcmp(proto, "autos") == 0) {
+        proto_ = PROTO_AUTOS;
     }
     loop_pool_.init(thr_count_);
     server_.setAcceptCallback([this] (SOCKET_FD fd) { onAccept(fd); });

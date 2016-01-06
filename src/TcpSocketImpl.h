@@ -25,10 +25,13 @@
 # include <sys/socket.h>
 #endif
 
+#ifdef KUMA_HAS_OPENSSL
+#include "SslHandler.h"
+#endif
+
 KUMA_NS_BEGIN
 
 class EventLoopImpl;
-class SslHandler;
 
 class TcpSocketImpl
 {
@@ -41,8 +44,12 @@ public:
     int bind(const char* bind_host, uint16_t bind_port);
     int connect(const char* host, uint16_t port, EventCallback& cb, uint32_t flags = 0, uint32_t timeout = 0);
     int connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t flags = 0, uint32_t timeout = 0);
-    int attachFd(SOCKET_FD fd, uint32_t flags = 0);
+    int attachFd(SOCKET_FD fd, uint32_t flags);
     int detachFd(SOCKET_FD &fd);
+#ifdef KUMA_HAS_OPENSSL
+    int attachFd(SOCKET_FD fd, SSL* ssl, uint32_t flags);
+    int detachFd(SOCKET_FD &fd, SSL* &ssl);
+#endif
     int startSslHandshake(bool is_server);
     int send(const uint8_t* data, uint32_t length);
     int send(iovec* iovs, uint32_t count);

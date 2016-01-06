@@ -84,14 +84,16 @@ void SslHandler::cleanup()
         SSL_free(ssl_);
         ssl_ = NULL;
     }
+    setState(SSL_NONE);
 }
 
 int SslHandler::attachFd(SOCKET_FD fd, bool is_server)
 {
     cleanup();
-    SSL_CTX* ctx = NULL;
     is_server_ = is_server;
     fd_ = fd;
+
+    SSL_CTX* ctx = NULL;
     if(is_server_) {
         ctx = OpenSslLib::getServerContext();
     } else {
@@ -113,6 +115,23 @@ int SslHandler::attachFd(SOCKET_FD fd, bool is_server)
         ssl_ = NULL;
         return KUMA_ERROR_SSL_FAILED;
     }
+    return KUMA_ERROR_NOERR;
+}
+
+int SslHandler::attachSsl(SSL* ssl)
+{
+    cleanup();
+    ssl_ = ssl;
+    if (ssl_) {
+        setState(SSL_SUCCESS);
+    }
+    return KUMA_ERROR_NOERR;
+}
+
+int SslHandler::detachSsl(SSL* &ssl)
+{
+    ssl = ssl_;
+    ssl_ = nullptr;
     return KUMA_ERROR_NOERR;
 }
 

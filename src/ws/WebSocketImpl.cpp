@@ -128,7 +128,7 @@ int WebSocketImpl::attachFd(SOCKET_FD fd, uint32_t flags, const uint8_t* init_da
     return tcp_socket_.attachFd(fd, flags);
 }
 
-int WebSocketImpl::attachFd(SOCKET_FD fd, HttpParserImpl&& parser, uint32_t flags, const uint8_t* init_data, uint32_t init_len)
+int WebSocketImpl::attachTcp(TcpSocketImpl &tcp, HttpParserImpl&& parser, uint32_t flags, const uint8_t* init_data, uint32_t init_len)
 {
     is_server_ = true;
     if(init_data && init_len > 0) {
@@ -143,7 +143,18 @@ int WebSocketImpl::attachFd(SOCKET_FD fd, HttpParserImpl&& parser, uint32_t flag
     tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
     tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
     setState(STATE_HANDSHAKE);
-    int ret = tcp_socket_.attachFd(fd, flags);
+
+#ifdef KUMA_HAS_OPENSSL
+    SOCKET_FD fd;
+    SSL* ssl = nullptr;
+    int ret = tcp.detachFd(fd, ssl);
+    ret = tcp_socket_.attachFd(fd, ssl, flags);
+#else
+    SOCKET_FD fd;
+    int ret = tcp.detachFd(fd);
+    ret = tcp_socket_.attachFd(fd, flags);
+#endif
+    
     ws_handler_.setHttpParser(std::move(parser));
     return ret;
 }

@@ -77,27 +77,30 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
                 break;
             }
             case PROTO_HTTP:
+            case PROTO_HTTPS:
             {
                 long conn_id = server_->getConnId();
                 HttpTest* http = new HttpTest(loop_, conn_id, this);
                 addObject(conn_id, http);
-                http->attachFd(fd);
+                http->attachFd(fd, proto==PROTO_HTTPS?FLAG_HAS_SSL:0);
                 break;
             }
             case PROTO_WS:
+            case PROTO_WSS:
             {
                 long conn_id = server_->getConnId();
                 WsTest* ws = new WsTest(loop_, conn_id, this);
                 addObject(conn_id, ws);
-                ws->attachFd(fd);
+                ws->attachFd(fd, proto==PROTO_WSS?FLAG_HAS_SSL:0);
                 break;
             }
             case PROTO_AUTO:
+            case PROTO_AUTOS:
             {
                 long conn_id = server_->getConnId();
                 AutoHelper* helper = new AutoHelper(loop_, conn_id, this);
                 addObject(conn_id, helper);
-                helper->attachFd(fd);
+                helper->attachFd(fd, proto==PROTO_AUTOS?FLAG_HAS_SSL:0);
                 break;
             }
                 
@@ -111,20 +114,20 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
 # define strcasecmp _stricmp
 #endif
 
-void TestLoop::addFd(SOCKET_FD fd, HttpParser&& parser)
+void TestLoop::addTcp(TcpSocket &tcp, HttpParser&& parser, uint32_t flags)
 {
     if (strcasecmp(parser.getHeaderValue("Upgrade"), "WebSocket") == 0 &&
         strcasecmp(parser.getHeaderValue("Connection"), "Upgrade") == 0) {
         long conn_id = server_->getConnId();
         WsTest* ws = new WsTest(loop_, conn_id, this);
         addObject(conn_id, ws);
-        ws->attachFd(fd, std::move(parser));
+        ws->attachTcp(tcp, std::move(parser), flags);
         return;
     } else {
         long conn_id = server_->getConnId();
         HttpTest* http = new HttpTest(loop_, conn_id, this);
         addObject(conn_id, http);
-        http->attachFd(fd, std::move(parser));
+        http->attachTcp(tcp, std::move(parser), flags);
     }
 }
 

@@ -735,7 +735,7 @@ void HttpParserImpl::forEachHeader(EnumrateCallback&& cb)
 bool HttpParserImpl::getLine(const char*& cur_pos, const char* end, const char*& line, const char*& line_end)
 {
     const char* lf = std::find(cur_pos, end, LF);
-    if(lf == cur_pos) {
+    if(lf == end) {
         return false;
     }
     line = cur_pos;
