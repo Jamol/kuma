@@ -35,7 +35,7 @@ $ ndk-build
 
 ## OpenSSL
 ```
-certificates location is same as your binary by default.
+certificates location is same as your binary folder by default.
 
 copy all CA certificates used to ca.cer
 copy your server certificate to server.cer
