@@ -84,13 +84,8 @@ int HttpResponseImpl::attachFd(SOCKET_FD fd, uint32_t flags, uint8_t* init_data,
     return tcp_socket_.attachFd(fd, flags);
 }
 
-int HttpResponseImpl::attachTcp(TcpSocketImpl &tcp, HttpParserImpl&& parser, uint32_t flags, uint8_t* init_data, uint32_t init_len)
+int HttpResponseImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
 {
-    if(init_data && init_len > 0) {
-        init_data = new uint8_t(init_len);
-        memcpy(init_data_, init_data, init_len);
-        init_len_ = init_len;
-    }
     setState(STATE_RECVING_REQUEST);
     http_parser_.reset();
     http_parser_ = std::move(parser);
@@ -102,10 +97,12 @@ int HttpResponseImpl::attachTcp(TcpSocketImpl &tcp, HttpParserImpl&& parser, uin
 #ifdef KUMA_HAS_OPENSSL
     SOCKET_FD fd;
     SSL* ssl = nullptr;
+    uint32_t flags = tcp.getFlags();
     int ret = tcp.detachFd(fd, ssl);
     ret = tcp_socket_.attachFd(fd, ssl, flags);
 #else
     SOCKET_FD fd;
+    uint32_t flags = tcp.getFlags();
     int ret = tcp.detachFd(fd);
     ret = tcp_socket_.attachFd(fd, flags);
 #endif

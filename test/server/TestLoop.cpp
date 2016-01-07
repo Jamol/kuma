@@ -114,20 +114,20 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
 # define strcasecmp _stricmp
 #endif
 
-void TestLoop::addTcp(TcpSocket &tcp, HttpParser&& parser, uint32_t flags)
+void TestLoop::addTcp(TcpSocket&& tcp, HttpParser&& parser)
 {
     if (strcasecmp(parser.getHeaderValue("Upgrade"), "WebSocket") == 0 &&
         strcasecmp(parser.getHeaderValue("Connection"), "Upgrade") == 0) {
         long conn_id = server_->getConnId();
         WsTest* ws = new WsTest(loop_, conn_id, this);
         addObject(conn_id, ws);
-        ws->attachTcp(tcp, std::move(parser), flags);
+        ws->attachSocket(std::move(tcp), std::move(parser));
         return;
     } else {
         long conn_id = server_->getConnId();
         HttpTest* http = new HttpTest(loop_, conn_id, this);
         addObject(conn_id, http);
-        http->attachTcp(tcp, std::move(parser), flags);
+        http->attachSocket(std::move(tcp), std::move(parser));
     }
 }
 

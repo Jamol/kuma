@@ -38,7 +38,7 @@ public:
     void stop();
     
     void addFd(SOCKET_FD fd, Proto proto);
-    void addTcp(TcpSocket &tcp, HttpParser&& parser, uint32_t flags);
+    void addTcp(TcpSocket&& tcp, HttpParser&& parser);
     
     void addObject(long conn_id, LoopObject* obj);
     void removeObject(long conn_id);

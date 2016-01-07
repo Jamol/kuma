@@ -68,6 +68,8 @@ public:
     
     SOCKET_FD getFd() { return fd_; }
     
+    uint32_t getFlags() { return flags_; }
+    
 protected:
     const char* getObjKey();
     

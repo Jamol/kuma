@@ -19,13 +19,13 @@ int WsTest::attachFd(SOCKET_FD fd, uint32_t flags)
     return ws_.attachFd(fd, flags);
 }
 
-int WsTest::attachTcp(TcpSocket &tcp, HttpParser&& parser, uint32_t flags)
+int WsTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
 {
     ws_.setWriteCallback([this] (int err) { onSend(err); });
     ws_.setErrorCallback([this] (int err) { onClose(err); });
     ws_.setDataCallback([this] (uint8_t* data, uint32_t len) { onData(data, len); });
     
-    return ws_.attachTcp(tcp, std::move(parser), flags);
+    return ws_.attachSocket(std::move(tcp), std::move(parser));
 }
 
 int WsTest::close()

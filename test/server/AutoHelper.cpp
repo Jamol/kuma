@@ -50,7 +50,7 @@ void AutoHelper::onHttpEvent(HttpEvent ev)
         case HTTP_HEADER_COMPLETE:
         {
             http_parser_.pause();
-            server_->addTcp(tcp_, std::move(http_parser_), flags_);
+            server_->addTcp(std::move(tcp_), std::move(http_parser_));
             server_->removeObject(conn_id_);
             break;
         }

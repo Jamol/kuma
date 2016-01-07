@@ -24,7 +24,7 @@ int HttpTest::attachFd(SOCKET_FD fd, uint32_t flags)
     return http_.attachFd(fd, flags);
 }
 
-int HttpTest::attachTcp(TcpSocket &tcp, HttpParser&& parser, uint32_t flags)
+int HttpTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
 {
     http_.setWriteCallback([this] (int err) { onSend(err); });
     http_.setErrorCallback([this] (int err) { onClose(err); });
@@ -34,7 +34,7 @@ int HttpTest::attachTcp(TcpSocket &tcp, HttpParser&& parser, uint32_t flags)
     http_.setRequestCompleteCallback([this] () { onRequestComplete(); });
     http_.setResponseCompleteCallback([this] () { onResponseComplete(); });
     
-    return http_.attachTcp(tcp, std::move(parser), flags);
+    return http_.attachSocket(std::move(tcp), std::move(parser));
 }
 
 int HttpTest::close()

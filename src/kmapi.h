@@ -274,7 +274,7 @@ public:
     ~HttpResponse();
     
     int attachFd(SOCKET_FD fd, uint32_t flags=0, uint8_t* init_data=nullptr, uint32_t init_len=0);
-    int attachTcp(TcpSocket &tcp, HttpParser&& parser, uint32_t flags=0, uint8_t* init_data=nullptr, uint32_t init_len=0);
+    int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
     int sendResponse(int status_code, const char* desc = nullptr, const char* ver = "HTTP/1.1");
@@ -325,7 +325,7 @@ public:
     int connect(const char* ws_url, EventCallback& cb);
     int connect(const char* ws_url, EventCallback&& cb);
     int attachFd(SOCKET_FD fd, uint32_t flags=0, const uint8_t* init_data=nullptr, uint32_t init_len=0);
-    int attachTcp(TcpSocket &tcp, HttpParser&& parser, uint32_t flags=0, const uint8_t* init_data=nullptr, uint32_t init_len=0);
+    int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
     int send(const uint8_t* data, uint32_t len);
     int close();
     

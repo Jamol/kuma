@@ -128,15 +128,9 @@ int WebSocketImpl::attachFd(SOCKET_FD fd, uint32_t flags, const uint8_t* init_da
     return tcp_socket_.attachFd(fd, flags);
 }
 
-int WebSocketImpl::attachTcp(TcpSocketImpl &tcp, HttpParserImpl&& parser, uint32_t flags, const uint8_t* init_data, uint32_t init_len)
+int WebSocketImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
 {
     is_server_ = true;
-    if(init_data && init_len > 0) {
-        init_data = new uint8_t(init_len);
-        memcpy(init_data_, init_data, init_len);
-        init_len_ = init_len;
-    }
-    
     ws_handler_.setDataCallback([this] (uint8_t* data, uint32_t len) { onWsData(data, len); });
     ws_handler_.setHandshakeCallback([this] (int err) { onWsHandshake(err); });
     tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
@@ -147,10 +141,12 @@ int WebSocketImpl::attachTcp(TcpSocketImpl &tcp, HttpParserImpl&& parser, uint32
 #ifdef KUMA_HAS_OPENSSL
     SOCKET_FD fd;
     SSL* ssl = nullptr;
+    uint32_t flags = tcp.getFlags();
     int ret = tcp.detachFd(fd, ssl);
     ret = tcp_socket_.attachFd(fd, ssl, flags);
 #else
     SOCKET_FD fd;
+    uint32_t flags = tcp.getFlags();
     int ret = tcp.detachFd(fd);
     ret = tcp_socket_.attachFd(fd, flags);
 #endif

@@ -15,7 +15,7 @@ public:
     WsTest(EventLoop* loop, long conn_id, TestLoop* server);
 
     int attachFd(SOCKET_FD fd, uint32_t flags);
-    int attachTcp(TcpSocket &tcp, HttpParser&& parser, uint32_t flags);
+    int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
     int close();
     
     void onSend(int err);

@@ -39,7 +39,7 @@ public:
     int connect(const std::string& ws_url, EventCallback& cb);
     int connect(const std::string& ws_url, EventCallback&& cb);
     int attachFd(SOCKET_FD fd, uint32_t flags, const uint8_t* init_data = nullptr, uint32_t init_len = 0);
-    int attachTcp(TcpSocketImpl &tcp, HttpParserImpl&& parser, uint32_t flags, const uint8_t* init_data = nullptr, uint32_t init_len = 0);
+    int attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
     int send(const uint8_t* data, uint32_t len);
     int close();
     
