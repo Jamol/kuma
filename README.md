@@ -37,6 +37,8 @@ $ ndk-build
 ``
 certificates location is same as your binary by default.
 ``
+
+``
 copy all CA certificates used to ca.cer
 copy your server certificate to server.cer
 copy your server private key to server.key
