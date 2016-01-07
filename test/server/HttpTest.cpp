@@ -44,7 +44,7 @@ int HttpTest::close()
 
 void HttpTest::onSend(int err)
 {
-    
+    sendTestData();
 }
 
 void HttpTest::onClose(int err)

@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <vector>
 #include <thread>
 #include <string>
 #include <sstream>
@@ -17,7 +16,7 @@
 
 using namespace kuma;
 
-#define THREAD_COUNT    10
+#define THREAD_COUNT    5
 
 static bool g_exit = false;
 EventLoop main_loop(POLL_TYPE_NONE);

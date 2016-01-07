@@ -25,6 +25,7 @@ public:
     
 private:
     void cleanup();
+    void sendTestData();
     
 private:
     EventLoop*      loop_;

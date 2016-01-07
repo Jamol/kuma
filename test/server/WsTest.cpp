@@ -35,7 +35,7 @@ int WsTest::close()
 
 void WsTest::onSend(int err)
 {
-    
+    sendTestData();
 }
 
 void WsTest::onClose(int err)
@@ -54,3 +54,17 @@ void WsTest::onData(uint8_t* data, uint32_t len)
     }
 }
 
+void WsTest::sendTestData()
+{
+    uint8_t buf[128*1024] = {0};
+    memset(buf, 'a', sizeof(buf));
+    while (true) {
+        int ret = ws_.send(buf, sizeof(buf));
+        if (ret < 0) {
+            break;
+        } else if (ret < sizeof(buf)) {
+            //printf("WsTest::sendTestData, break, ret=%d\n", ret);
+            break;
+        }
+    }
+}

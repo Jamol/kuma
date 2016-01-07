@@ -18,7 +18,7 @@ class AutoCleaner
 public:
     AutoCleaner(std::function<void (void)> f) : f_(f) {};
     ~AutoCleaner() { if(f_) f_(); }
-    void reset() { f_.reset(); }
+    void reset() { f_ = nullptr; }
     
 private:
     std::function<void (void)> f_;
