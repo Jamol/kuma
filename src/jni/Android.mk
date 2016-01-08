@@ -32,9 +32,7 @@ LOCAL_SRC_FILES := \
     util/base64.cpp \
     ssl/SslHandler.cpp \
     ssl/OpenSslLib.cpp \
-    kmapi.cpp \
-    jni/kmapi-jni.cpp \
-    jni/ws-jni.cpp
+    kmapi.cpp 
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH) \
