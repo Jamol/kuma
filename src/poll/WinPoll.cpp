@@ -31,14 +31,14 @@ public:
     ~WinPoll();
     
     bool init();
-    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb);
+    int registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb);
     int registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb);
     int unregisterFd(SOCKET_FD fd);
     int updateFd(SOCKET_FD fd, uint32_t events);
     int wait(uint32_t wait_ms);
     void notify();
-    PollType getType() { return POLL_TYPE_WIN; }
-    bool isLevelTriggered() { return false; }
+    PollType getType() const { return POLL_TYPE_WIN; }
+    bool isLevelTriggered() const { return false; }
 
 public:
     void on_socket_notify(SOCKET_FD fd, uint32_t events);
@@ -126,7 +126,7 @@ void WinPoll::resizePollItems(SOCKET_FD fd)
     }
 }
 
-int WinPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
+int WinPoll::registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb)
 {
     KUMA_INFOTRACE("WinPoll::registerFd, fd=" << fd << ", events=" << events);
     resizePollItems(fd);

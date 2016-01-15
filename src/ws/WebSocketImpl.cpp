@@ -47,7 +47,7 @@ WebSocketImpl::~WebSocketImpl()
     }
 }
 
-const char* WebSocketImpl::getObjKey()
+const char* WebSocketImpl::getObjKey() const
 {
     return "WebSocket";
 }
@@ -69,7 +69,7 @@ void WebSocketImpl::setOrigin(const std::string& origin)
     origin_ = origin;
 }
 
-int WebSocketImpl::connect(const std::string& ws_url, EventCallback& cb)
+int WebSocketImpl::connect(const std::string& ws_url, const EventCallback& cb)
 {
     if(getState() != STATE_IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());

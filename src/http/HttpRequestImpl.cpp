@@ -44,7 +44,7 @@ HttpRequestImpl::~HttpRequestImpl()
     }
 }
 
-const char* HttpRequestImpl::getObjKey()
+const char* HttpRequestImpl::getObjKey() const
 {
     return "HttpRequest";
 }

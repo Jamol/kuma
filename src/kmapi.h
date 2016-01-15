@@ -46,21 +46,21 @@ public:
     
 public:
     bool init();
-    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb);
+    int registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb);
     int registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb);
     int updateFd(SOCKET_FD fd, uint32_t events);
     int unregisterFd(SOCKET_FD fd, bool close_fd);
     
-    PollType getPollType();
-    bool isPollLT(); // level trigger
+    PollType getPollType() const;
+    bool isPollLT() const; // level trigger
     
 public:
-    bool isInEventLoopThread();
-    int runInEventLoop(LoopCallback& cb);
+    bool isInEventLoopThread() const;
+    int runInEventLoop(const LoopCallback& cb);
+    int runInEventLoopSync(const LoopCallback& cb);
+    int queueInEventLoop(const LoopCallback& cb);
     int runInEventLoop(LoopCallback&& cb);
-    int runInEventLoopSync(LoopCallback& cb);
     int runInEventLoopSync(LoopCallback&& cb);
-    int queueInEventLoop(LoopCallback& cb);
     int queueInEventLoop(LoopCallback&& cb);
     void loopOnce(uint32_t max_wait_ms);
     void loop(uint32_t max_wait_ms = -1);
@@ -80,8 +80,8 @@ public:
     ~TcpSocket();
     
     int bind(const char* bind_host, uint16_t bind_port);
-    int connect(const char* host, uint16_t port, EventCallback& cb, uint32_t flags = 0, uint32_t timeout = 0);
-    int connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t flags = 0, uint32_t timeout = 0);
+    int connect(const char* host, uint16_t port, const EventCallback& cb, uint32_t flags = 0, uint32_t timeout_ms = 0);
+    int connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t flags = 0, uint32_t timeout_ms = 0);
     int attachFd(SOCKET_FD fd, uint32_t flags = 0);
     int detachFd(SOCKET_FD &fd);
     int startSslHandshake(bool is_server);
@@ -93,14 +93,14 @@ public:
     int pause();
     int resume();
     
-    void setReadCallback(EventCallback& cb);
-    void setWriteCallback(EventCallback& cb);
-    void setErrorCallback(EventCallback& cb);
+    void setReadCallback(const EventCallback& cb);
+    void setWriteCallback(const EventCallback& cb);
+    void setErrorCallback(const EventCallback& cb);
     void setReadCallback(EventCallback&& cb);
     void setWriteCallback(EventCallback&& cb);
     void setErrorCallback(EventCallback&& cb);
     
-    SOCKET_FD getFd();
+    SOCKET_FD getFd() const;
     TcpSocketImpl* getPimpl();
     
 private:
@@ -120,8 +120,8 @@ public:
     int stopListen(const char* host, uint16_t port);
     int close();
     
-    void setAcceptCallback(AcceptCallback& cb);
-    void setErrorCallback(ErrorCallback& cb);
+    void setAcceptCallback(const AcceptCallback& cb);
+    void setErrorCallback(const ErrorCallback& cb);
     void setAcceptCallback(AcceptCallback&& cb);
     void setErrorCallback(ErrorCallback&& cb);
     TcpServerSocketImpl* getPimpl();
@@ -147,8 +147,8 @@ public:
     int mcastJoin(const char* mcast_addr, uint16_t mcast_port);
     int mcastLeave(const char* mcast_addr, uint16_t mcast_port);
     
-    void setReadCallback(EventCallback& cb);
-    void setErrorCallback(EventCallback& cb);
+    void setReadCallback(const EventCallback& cb);
+    void setErrorCallback(const EventCallback& cb);
     void setReadCallback(EventCallback&& cb);
     void setErrorCallback(EventCallback&& cb);
     UdpSocketImpl* getPimpl();
@@ -165,7 +165,7 @@ public:
     Timer(EventLoop* loop);
     ~Timer();
     
-    bool schedule(unsigned int time_elapse, TimerCallback& cb, bool repeat = false);
+    bool schedule(unsigned int time_elapse, const TimerCallback& cb, bool repeat = false);
     bool schedule(unsigned int time_elapse, TimerCallback&& cb, bool repeat = false);
     void cancel();
     TimerImpl* getPimpl();
@@ -179,7 +179,7 @@ class KUMA_API HttpParser
 public:
     typedef std::function<void(const char*, uint32_t)> DataCallback;
     typedef std::function<void(HttpEvent)> EventCallback;
-    typedef std::function<void(const char* name, const char* value)> EnumrateCallback;
+    typedef std::function<void(const char*, const char*)> EnumrateCallback;
     
     HttpParser();
     ~HttpParser();
@@ -193,27 +193,27 @@ public:
     bool setEOF();
     void reset();
     
-    bool isRequest();
-    bool headerComplete();
-    bool complete();
-    bool error();
-    bool paused();
+    bool isRequest() const;
+    bool headerComplete() const;
+    bool complete() const;
+    bool error() const;
+    bool paused() const;
     
-    int getStatusCode();
-    const char* getUrl();
-    const char* getUrlPath();
-    const char* getMethod();
-    const char* getVersion();
-    const char* getParamValue(const char* name);
-    const char* getHeaderValue(const char* name);
+    int getStatusCode() const;
+    const char* getUrl() const;
+    const char* getUrlPath() const;
+    const char* getMethod() const;
+    const char* getVersion() const;
+    const char* getParamValue(const char* name) const;
+    const char* getHeaderValue(const char* name) const;
     
-    void forEachParam(EnumrateCallback& cb);
-    void forEachHeader(EnumrateCallback& cb);
+    void forEachParam(const EnumrateCallback& cb);
+    void forEachHeader(const EnumrateCallback& cb);
     void forEachParam(EnumrateCallback&& cb);
     void forEachHeader(EnumrateCallback&& cb);
     
-    void setDataCallback(DataCallback& cb);
-    void setEventCallback(EventCallback& cb);
+    void setDataCallback(const DataCallback& cb);
+    void setEventCallback(const EventCallback& cb);
     void setDataCallback(DataCallback&& cb);
     void setEventCallback(EventCallback&& cb);
     
@@ -240,17 +240,17 @@ public:
     void reset(); // reset for connection reuse
     int close();
     
-    int getStatusCode();
-    const char* getVersion();
-    const char* getHeaderValue(const char* name);
-    void forEachHeader(HttpParser::EnumrateCallback& cb);
+    int getStatusCode() const;
+    const char* getVersion() const;
+    const char* getHeaderValue(const char* name) const;
+    void forEachHeader(const HttpParser::EnumrateCallback& cb);
     void forEachHeader(HttpParser::EnumrateCallback&& cb);
     
-    void setDataCallback(DataCallback& cb);
-    void setWriteCallback(EventCallback& cb);
-    void setErrorCallback(EventCallback& cb);
-    void setHeaderCompleteCallback(HttpEventCallback& cb);
-    void setResponseCompleteCallback(HttpEventCallback& cb);
+    void setDataCallback(const DataCallback& cb);
+    void setWriteCallback(const EventCallback& cb);
+    void setErrorCallback(const EventCallback& cb);
+    void setHeaderCompleteCallback(const HttpEventCallback& cb);
+    void setResponseCompleteCallback(const HttpEventCallback& cb);
     void setDataCallback(DataCallback&& cb);
     void setWriteCallback(EventCallback&& cb);
     void setErrorCallback(EventCallback&& cb);
@@ -282,20 +282,20 @@ public:
     void reset(); // reset for connection reuse
     int close();
     
-    const char* getMethod();
-    const char* getUrl();
-    const char* getVersion();
-    const char* getParamValue(const char* name);
-    const char* getHeaderValue(const char* name);
-    void forEachHeader(HttpParser::EnumrateCallback& cb);
+    const char* getMethod() const;
+    const char* getUrl() const;
+    const char* getVersion() const;
+    const char* getParamValue(const char* name) const;
+    const char* getHeaderValue(const char* name) const;
+    void forEachHeader(const HttpParser::EnumrateCallback& cb);
     void forEachHeader(HttpParser::EnumrateCallback&& cb);
     
-    void setDataCallback(DataCallback& cb);
-    void setWriteCallback(EventCallback& cb);
-    void setErrorCallback(EventCallback& cb);
-    void setHeaderCompleteCallback(HttpEventCallback& cb);
-    void setRequestCompleteCallback(HttpEventCallback& cb);
-    void setResponseCompleteCallback(HttpEventCallback& cb);
+    void setDataCallback(const DataCallback& cb);
+    void setWriteCallback(const EventCallback& cb);
+    void setErrorCallback(const EventCallback& cb);
+    void setHeaderCompleteCallback(const HttpEventCallback& cb);
+    void setRequestCompleteCallback(const HttpEventCallback& cb);
+    void setResponseCompleteCallback(const HttpEventCallback& cb);
     void setDataCallback(DataCallback&& cb);
     void setWriteCallback(EventCallback&& cb);
     void setErrorCallback(EventCallback&& cb);
@@ -319,19 +319,19 @@ public:
     ~WebSocket();
     
     void setProtocol(const char* proto);
-    const char* getProtocol();
+    const char* getProtocol() const;
     void setOrigin(const char* origin);
-    const char* getOrigin();
-    int connect(const char* ws_url, EventCallback& cb);
+    const char* getOrigin() const;
+    int connect(const char* ws_url, const EventCallback& cb);
     int connect(const char* ws_url, EventCallback&& cb);
     int attachFd(SOCKET_FD fd, uint32_t flags=0, const uint8_t* init_data=nullptr, uint32_t init_len=0);
     int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
     int send(const uint8_t* data, uint32_t len);
     int close();
     
-    void setDataCallback(DataCallback& cb);
-    void setWriteCallback(EventCallback& cb);
-    void setErrorCallback(EventCallback& cb);
+    void setDataCallback(const DataCallback& cb);
+    void setWriteCallback(const EventCallback& cb);
+    void setErrorCallback(const EventCallback& cb);
     void setDataCallback(DataCallback&& cb);
     void setWriteCallback(EventCallback&& cb);
     void setErrorCallback(EventCallback&& cb);

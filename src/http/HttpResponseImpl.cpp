@@ -55,7 +55,7 @@ HttpResponseImpl::~HttpResponseImpl()
     }
 }
 
-const char* HttpResponseImpl::getObjKey()
+const char* HttpResponseImpl::getObjKey() const
 {
     return "HttpResponse";
 }

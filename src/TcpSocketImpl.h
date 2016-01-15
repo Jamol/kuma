@@ -42,8 +42,8 @@ public:
     ~TcpSocketImpl();
     
     int bind(const char* bind_host, uint16_t bind_port);
-    int connect(const char* host, uint16_t port, EventCallback& cb, uint32_t flags = 0, uint32_t timeout = 0);
-    int connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t flags = 0, uint32_t timeout = 0);
+    int connect(const char* host, uint16_t port, const EventCallback& cb, uint32_t flags = 0, uint32_t timeout_ms = 0);
+    int connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t flags = 0, uint32_t timeout_ms = 0);
     int attachFd(SOCKET_FD fd, uint32_t flags);
     int detachFd(SOCKET_FD &fd);
 #ifdef KUMA_HAS_OPENSSL
@@ -59,22 +59,22 @@ public:
     int pause();
     int resume();
     
-    void setReadCallback(EventCallback& cb) { cb_read_ = cb; }
-    void setWriteCallback(EventCallback& cb) { cb_write_ = cb; }
-    void setErrorCallback(EventCallback& cb) { cb_error_ = cb; }
+    void setReadCallback(const EventCallback& cb) { cb_read_ = cb; }
+    void setWriteCallback(const EventCallback& cb) { cb_write_ = cb; }
+    void setErrorCallback(const EventCallback& cb) { cb_error_ = cb; }
     void setReadCallback(EventCallback&& cb) { cb_read_ = std::move(cb); }
     void setWriteCallback(EventCallback&& cb) { cb_write_ = std::move(cb); }
     void setErrorCallback(EventCallback&& cb) { cb_error_ = std::move(cb); }
     
-    SOCKET_FD getFd() { return fd_; }
+    SOCKET_FD getFd() const { return fd_; }
     
-    uint32_t getFlags() { return flags_; }
+    uint32_t getFlags() const { return flags_; }
     
 protected:
-    const char* getObjKey();
+    const char* getObjKey() const;
     
 private:
-    int connect_i(const char* addr, uint16_t port, uint32_t timeout);
+    int connect_i(const char* addr, uint16_t port, uint32_t timeout_ms);
     void setSocketOption();
     void ioReady(uint32_t events);
     void onConnect(int err);
@@ -90,7 +90,7 @@ private:
         ST_CLOSED
     };
     
-    State getState() { return state_; }
+    State getState() const { return state_; }
     void setState(State state) { state_ = state; }
     void cleanup();
     bool SslEnabled();

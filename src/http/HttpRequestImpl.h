@@ -40,17 +40,17 @@ public:
     void reset(); // reset for connection reuse
     int close();
     
-    int getStatusCode() { return http_parser_.getStatusCode(); }
-    const std::string& getVersion() { return http_parser_.getVersion(); }
-    const std::string& getHeaderValue(const char* name) { return http_parser_.getHeaderValue(name); }
-    void forEachHeader(HttpParserImpl::EnumrateCallback& cb) { return http_parser_.forEachHeader(cb); }
+    int getStatusCode() const { return http_parser_.getStatusCode(); }
+    const std::string& getVersion() const { return http_parser_.getVersion(); }
+    const std::string& getHeaderValue(const char* name) const { return http_parser_.getHeaderValue(name); }
+    void forEachHeader(const HttpParserImpl::EnumrateCallback& cb) { return http_parser_.forEachHeader(cb); }
     void forEachHeader(HttpParserImpl::EnumrateCallback&& cb) { return http_parser_.forEachHeader(cb); }
     
-    void setDataCallback(DataCallback& cb) { cb_data_ = cb; }
-    void setWriteCallback(EventCallback& cb) { cb_write_ = cb; }
-    void setErrorCallback(EventCallback& cb) { cb_error_ = cb; }
-    void setHeaderCompleteCallback(HttpEventCallback& cb) { cb_header_ = cb; }
-    void setResponseCompleteCallback(HttpEventCallback& cb) { cb_response_ = cb; }
+    void setDataCallback(const DataCallback& cb) { cb_data_ = cb; }
+    void setWriteCallback(const EventCallback& cb) { cb_write_ = cb; }
+    void setErrorCallback(const EventCallback& cb) { cb_error_ = cb; }
+    void setHeaderCompleteCallback(const HttpEventCallback& cb) { cb_header_ = cb; }
+    void setResponseCompleteCallback(const HttpEventCallback& cb) { cb_response_ = cb; }
     void setDataCallback(DataCallback&& cb) { cb_data_ = std::move(cb); }
     void setWriteCallback(EventCallback&& cb) { cb_write_ = std::move(cb); }
     void setErrorCallback(EventCallback&& cb) { cb_error_ = std::move(cb); }
@@ -64,7 +64,7 @@ protected: // callbacks of tcp_socket
     void onClose(int err);
     
 protected:
-    const char* getObjKey();
+    const char* getObjKey() const;
 
 private:
     enum State {
@@ -79,7 +79,7 @@ private:
         STATE_CLOSED
     };
     void setState(State state) { state_ = state; }
-    State getState() { return state_; }
+    State getState() const { return state_; }
     void buildRequest();
     int sendChunk(const uint8_t* data, uint32_t len);
     void cleanup();

@@ -39,7 +39,7 @@ TimerImpl::~TimerImpl()
     cancel();
 }
 
-bool TimerImpl::schedule(unsigned int time_elapse, TimerCallback& cb, bool repeat)
+bool TimerImpl::schedule(unsigned int time_elapse, const TimerCallback& cb, bool repeat)
 {
     TimerManagerPtr mgr = timer_mgr_.lock();
     if(mgr) {

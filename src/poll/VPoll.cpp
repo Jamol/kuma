@@ -32,14 +32,14 @@ public:
     ~VPoll();
     
     bool init();
-    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb);
+    int registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb);
     int registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb);
     int unregisterFd(SOCKET_FD fd);
     int updateFd(SOCKET_FD fd, uint32_t events);
     int wait(uint32_t wait_ms);
     void notify();
-    PollType getType() { return POLL_TYPE_POLL; }
-    bool isLevelTriggered() { return true; }
+    PollType getType() const { return POLL_TYPE_POLL; }
+    bool isLevelTriggered() const { return true; }
     
 private:
     uint32_t get_events(uint32_t kuma_events);
@@ -110,7 +110,7 @@ uint32_t VPoll::get_kuma_events(uint32_t events)
     return ev;
 }
 
-int VPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
+int VPoll::registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb)
 {
     resizePollItems(fd);
     if (INVALID_FD == poll_items_[fd].fd || -1 == poll_items_[fd].idx) { // new

@@ -32,12 +32,12 @@ public:
 
     bool parse(const std::string& url);
     
-    const std::string& getScheme() { return scheme_; }
-    const std::string& getHost() { return host_; }
-    const std::string& getPort() { return port_; }
-    const std::string& getPath() { return path_; }
-    const std::string& getQuery() { return query_; }
-    const std::string& getFragment() { return fragment_; }
+    const std::string& getScheme() const { return scheme_; }
+    const std::string& getHost() const { return host_; }
+    const std::string& getPort() const { return port_; }
+    const std::string& getPath() const { return path_; }
+    const std::string& getQuery() const { return query_; }
+    const std::string& getFragment() const { return fragment_; }
     
 private:
     bool parse_host_port(const std::string& hostport, std::string& host, std::string& port);

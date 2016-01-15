@@ -85,14 +85,14 @@ public:
     virtual ~IOPoll() {}
     
     virtual bool init() = 0;
-    virtual int registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb) = 0;
+    virtual int registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb) = 0;
     virtual int registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb) = 0;
     virtual int unregisterFd(SOCKET_FD fd) = 0;
     virtual int updateFd(SOCKET_FD fd, uint32_t events) = 0;
     virtual int wait(uint32_t wait_time_ms) = 0;
     virtual void notify() = 0;
-    virtual PollType getType() = 0;
-    virtual bool isLevelTriggered() = 0;
+    virtual PollType getType() const = 0;
+    virtual bool isLevelTriggered() const = 0;
     
 protected:
     void resizePollItems(SOCKET_FD fd) {

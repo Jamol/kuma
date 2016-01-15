@@ -28,14 +28,14 @@ public:
     ~SelectPoll();
     
     bool init();
-    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb);
+    int registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb);
     int registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb);
     int unregisterFd(SOCKET_FD fd);
     int updateFd(SOCKET_FD fd, uint32_t events);
     int wait(uint32_t wait_time_ms);
     void notify();
-    PollType getType() { return POLL_TYPE_SELECT; }
-    bool isLevelTriggered() { return true; }
+    PollType getType() const { return POLL_TYPE_SELECT; }
+    bool isLevelTriggered() const { return true; }
 
 private:
     void updateFdSet(SOCKET_FD fd, uint32_t events);
@@ -81,7 +81,7 @@ bool SelectPoll::init()
     return true;
 }
 
-int SelectPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
+int SelectPoll::registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb)
 {
     KUMA_INFOTRACE("SelectPoll::registerFd, fd="<<fd);
     resizePollItems(fd);

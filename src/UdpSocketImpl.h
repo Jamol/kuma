@@ -47,13 +47,13 @@ public:
     int mcastJoin(const char* mcast_addr, uint16_t mcast_port);
     int mcastLeave(const char* mcast_addr, uint16_t mcast_port);
     
-    void setReadCallback(EventCallback& cb) { cb_read_ = cb; }
-    void setErrorCallback(EventCallback& cb) { cb_error_ = cb; }
+    void setReadCallback(const EventCallback& cb) { cb_read_ = cb; }
+    void setErrorCallback(const EventCallback& cb) { cb_error_ = cb; }
     void setReadCallback(EventCallback&& cb) { cb_read_ = std::move(cb); }
     void setErrorCallback(EventCallback&& cb) { cb_error_ = std::move(cb); }
     
 protected:
-    const char* getObjKey();
+    const char* getObjKey() const;
     
 private:
     void setSocketOption();

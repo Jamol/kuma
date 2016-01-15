@@ -36,15 +36,15 @@ public:
     int stopListen(const char* host, uint16_t port);
     int close();
     
-    void setAcceptCallback(AcceptCallback& cb) { cb_accept_ = cb; }
-    void setErrorCallback(ErrorCallback& cb) { cb_error_ = cb; }
+    void setAcceptCallback(const AcceptCallback& cb) { cb_accept_ = cb; }
+    void setErrorCallback(const ErrorCallback& cb) { cb_error_ = cb; }
     void setAcceptCallback(AcceptCallback&& cb) { cb_accept_ = std::move(cb); }
     void setErrorCallback(ErrorCallback&& cb) { cb_error_ = std::move(cb); }
     
-    SOCKET_FD getFd() { return fd_; }
+    SOCKET_FD getFd() const { return fd_; }
     
 protected:
-    const char* getObjKey();
+    const char* getObjKey() const;
     
 private:
     void setSocketOption();

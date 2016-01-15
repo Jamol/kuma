@@ -47,17 +47,17 @@ bool EventLoop::init()
     return pimpl_->init();
 }
 
-PollType EventLoop::getPollType()
+PollType EventLoop::getPollType() const
 {
     return pimpl_->getPollType();
 }
 
-bool EventLoop::isPollLT()
+bool EventLoop::isPollLT() const
 {
     return  pimpl_->isPollLT();
 }
 
-int EventLoop::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
+int EventLoop::registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb)
 {
     return pimpl_->registerFd(fd, events, cb);
 }
@@ -97,7 +97,7 @@ EventLoopImpl* EventLoop::getPimpl()
     return pimpl_;
 }
 
-int EventLoop::runInEventLoop(LoopCallback& cb)
+int EventLoop::runInEventLoop(const LoopCallback& cb)
 {
     return pimpl_->runInEventLoop(cb);
 }
@@ -107,7 +107,7 @@ int EventLoop::runInEventLoop(LoopCallback&& cb)
     return pimpl_->runInEventLoop(std::move(cb));
 }
 
-int EventLoop::runInEventLoopSync(LoopCallback& cb)
+int EventLoop::runInEventLoopSync(const LoopCallback& cb)
 {
     return pimpl_->runInEventLoopSync(cb);
 }
@@ -117,7 +117,7 @@ int EventLoop::runInEventLoopSync(LoopCallback&& cb)
     return pimpl_->runInEventLoopSync(std::move(cb));
 }
 
-int EventLoop::queueInEventLoop(LoopCallback& cb)
+int EventLoop::queueInEventLoop(const LoopCallback& cb)
 {
     return pimpl_->runInEventLoopSync(cb);
 }
@@ -143,7 +143,7 @@ int TcpSocket::bind(const char* bind_host, uint16_t bind_port)
 {
     return pimpl_->bind(bind_host, bind_port);
 }
-int TcpSocket::connect(const char* host, uint16_t port, EventCallback& cb, uint32_t flags, uint32_t timeout)
+int TcpSocket::connect(const char* host, uint16_t port, const EventCallback& cb, uint32_t flags, uint32_t timeout)
 {
     return pimpl_->connect(host, port, cb, flags, timeout);
 }
@@ -198,17 +198,17 @@ int TcpSocket::resume()
     return pimpl_->resume();
 }
 
-void TcpSocket::setReadCallback(EventCallback& cb)
+void TcpSocket::setReadCallback(const EventCallback& cb)
 {
     pimpl_->setReadCallback(cb);
 }
 
-void TcpSocket::setWriteCallback(EventCallback& cb)
+void TcpSocket::setWriteCallback(const EventCallback& cb)
 {
     pimpl_->setWriteCallback(cb);
 }
 
-void TcpSocket::setErrorCallback(EventCallback& cb)
+void TcpSocket::setErrorCallback(const EventCallback& cb)
 {
     pimpl_->setErrorCallback(cb);
 }
@@ -228,7 +228,7 @@ void TcpSocket::setErrorCallback(EventCallback&& cb)
     pimpl_->setErrorCallback(std::move(cb));
 }
 
-SOCKET_FD TcpSocket::getFd()
+SOCKET_FD TcpSocket::getFd() const
 {
     return pimpl_->getFd();
 }
@@ -264,12 +264,12 @@ int TcpServerSocket::close()
     return pimpl_->close();
 }
 
-void TcpServerSocket::setAcceptCallback(AcceptCallback& cb)
+void TcpServerSocket::setAcceptCallback(const AcceptCallback& cb)
 {
     pimpl_->setAcceptCallback(cb);
 }
 
-void TcpServerSocket::setErrorCallback(ErrorCallback& cb)
+void TcpServerSocket::setErrorCallback(const ErrorCallback& cb)
 {
     pimpl_->setErrorCallback(cb);
 }
@@ -336,12 +336,12 @@ int UdpSocket::mcastLeave(const char* mcast_addr, uint16_t mcast_port)
     return pimpl_->mcastLeave(mcast_addr, mcast_port);
 }
 
-void UdpSocket::setReadCallback(EventCallback& cb)
+void UdpSocket::setReadCallback(const EventCallback& cb)
 {
     pimpl_->setReadCallback(cb);
 }
 
-void UdpSocket::setErrorCallback(EventCallback& cb)
+void UdpSocket::setErrorCallback(const EventCallback& cb)
 {
     pimpl_->setErrorCallback(cb);
 }
@@ -374,7 +374,7 @@ Timer::~Timer()
     delete pimpl_;
 }
 
-bool Timer::schedule(unsigned int time_elapse, TimerCallback& cb, bool repeat)
+bool Timer::schedule(unsigned int time_elapse, const TimerCallback& cb, bool repeat)
 {
     return pimpl_->schedule(time_elapse, cb, repeat);
 }
@@ -432,75 +432,75 @@ void HttpParser::reset()
     pimpl_->reset();
 }
 
-bool HttpParser::isRequest()
+bool HttpParser::isRequest() const
 {
     return pimpl_->isRequest();
 }
 
-bool HttpParser::headerComplete()
+bool HttpParser::headerComplete() const
 {
     return pimpl_->headerComplete();
 }
 
-bool HttpParser::complete()
+bool HttpParser::complete() const
 {
     return pimpl_->complete();
 }
 
-bool HttpParser::error()
+bool HttpParser::error() const
 {
     return pimpl_->error();
 }
 
-bool HttpParser::paused()
+bool HttpParser::paused() const
 {
     return pimpl_->paused();
 }
 
-int HttpParser::getStatusCode()
+int HttpParser::getStatusCode() const
 {
     return pimpl_->getStatusCode();
 }
 
-const char* HttpParser::getUrl()
+const char* HttpParser::getUrl() const
 {
     return pimpl_->getLocation().c_str();
 }
 
-const char* HttpParser::getUrlPath()
+const char* HttpParser::getUrlPath() const
 {
     return pimpl_->getUrlPath().c_str();
 }
 
-const char* HttpParser::getMethod()
+const char* HttpParser::getMethod() const
 {
     return pimpl_->getMethod().c_str();
 }
 
-const char* HttpParser::getVersion()
+const char* HttpParser::getVersion() const
 {
     return pimpl_->getVersion().c_str();
 }
 
-const char* HttpParser::getParamValue(const char* name)
+const char* HttpParser::getParamValue(const char* name) const
 {
     return pimpl_->getParamValue(name).c_str();
 }
 
-const char* HttpParser::getHeaderValue(const char* name)
+const char* HttpParser::getHeaderValue(const char* name) const
 {
     return pimpl_->getHeaderValue(name).c_str();
 }
 
 
-void HttpParser::forEachParam(EnumrateCallback& cb)
+void HttpParser::forEachParam(const EnumrateCallback& cb)
 {
     pimpl_->forEachParam([&cb] (const std::string& name, const std::string& value) {
         cb(name.c_str(), value.c_str());
     });
 }
 
-void HttpParser::forEachHeader(EnumrateCallback& cb)
+void HttpParser::forEachHeader(const EnumrateCallback& cb)
 {
     pimpl_->forEachHeader([&cb] (const std::string& name, const std::string& value) {
         cb(name.c_str(), value.c_str());
@@ -517,12 +517,12 @@ void HttpParser::forEachHeader(EnumrateCallback&& cb)
     forEachHeader(cb);
 }
 
-void HttpParser::setDataCallback(DataCallback& cb)
+void HttpParser::setDataCallback(const DataCallback& cb)
 {
     pimpl_->setDataCallback(cb);
 }
 
-void HttpParser::setEventCallback(EventCallback& cb)
+void HttpParser::setEventCallback(const EventCallback& cb)
 {
     pimpl_->setEventCallback(cb);
 }
@@ -583,22 +583,22 @@ int HttpRequest::close()
     return pimpl_->close();
 }
 
-int HttpRequest::getStatusCode()
+int HttpRequest::getStatusCode() const
 {
     return pimpl_->getStatusCode();
 }
 
-const char* HttpRequest::getVersion()
+const char* HttpRequest::getVersion() const
 {
     return pimpl_->getVersion().c_str();
 }
 
-const char* HttpRequest::getHeaderValue(const char* name)
+const char* HttpRequest::getHeaderValue(const char* name) const
 {
     return pimpl_->getHeaderValue(name).c_str();
 }
 
-void HttpRequest::forEachHeader(HttpParser::EnumrateCallback& cb)
+void HttpRequest::forEachHeader(const HttpParser::EnumrateCallback& cb)
 {
     pimpl_->forEachHeader([&cb] (const std::string& name, const std::string& value) {
         cb(name.c_str(), value.c_str());
@@ -610,27 +610,27 @@ void HttpRequest::forEachHeader(HttpParser::EnumrateCallback&& cb)
     forEachHeader(cb);
 }
 
-void HttpRequest::setDataCallback(DataCallback& cb)
+void HttpRequest::setDataCallback(const DataCallback& cb)
 {
     pimpl_->setDataCallback(cb);
 }
 
-void HttpRequest::setWriteCallback(EventCallback& cb)
+void HttpRequest::setWriteCallback(const EventCallback& cb)
 {
     pimpl_->setWriteCallback(cb);
 }
 
-void HttpRequest::setErrorCallback(EventCallback& cb)
+void HttpRequest::setErrorCallback(const EventCallback& cb)
 {
     pimpl_->setErrorCallback(cb);
 }
 
-void HttpRequest::setHeaderCompleteCallback(HttpEventCallback& cb)
+void HttpRequest::setHeaderCompleteCallback(const HttpEventCallback& cb)
 {
     pimpl_->setHeaderCompleteCallback(cb);
 }
 
-void HttpRequest::setResponseCompleteCallback(HttpEventCallback& cb)
+void HttpRequest::setResponseCompleteCallback(const HttpEventCallback& cb)
 {
     pimpl_->setResponseCompleteCallback(cb);
 }
@@ -717,32 +717,32 @@ int HttpResponse::close()
     return pimpl_->close();
 }
 
-const char* HttpResponse::getMethod()
+const char* HttpResponse::getMethod() const
 {
     return pimpl_->getMethod().c_str();
 }
 
-const char* HttpResponse::getUrl()
+const char* HttpResponse::getUrl() const
 {
     return pimpl_->getUrl().c_str();
 }
 
-const char* HttpResponse::getVersion()
+const char* HttpResponse::getVersion() const
 {
     return pimpl_->getVersion().c_str();
 }
 
-const char* HttpResponse::getParamValue(const char* name)
+const char* HttpResponse::getParamValue(const char* name) const
 {
     return pimpl_->getParamValue(name).c_str();
 }
 
-const char* HttpResponse::getHeaderValue(const char* name)
+const char* HttpResponse::getHeaderValue(const char* name) const
 {
     return pimpl_->getHeaderValue(name).c_str();
 }
 
-void HttpResponse::forEachHeader(HttpParser::EnumrateCallback& cb)
+void HttpResponse::forEachHeader(const HttpParser::EnumrateCallback& cb)
 {
     pimpl_->forEachHeader([&cb] (const std::string& name, const std::string& value) {
         cb(name.c_str(), value.c_str());
@@ -754,32 +754,32 @@ void HttpResponse::forEachHeader(HttpParser::EnumrateCallback&& cb)
     forEachHeader(cb);
 }
 
-void HttpResponse::setDataCallback(DataCallback& cb)
+void HttpResponse::setDataCallback(const DataCallback& cb)
 {
     pimpl_->setDataCallback(cb);
 }
 
-void HttpResponse::setWriteCallback(EventCallback& cb)
+void HttpResponse::setWriteCallback(const EventCallback& cb)
 {
     pimpl_->setWriteCallback(cb);
 }
 
-void HttpResponse::setErrorCallback(EventCallback& cb)
+void HttpResponse::setErrorCallback(const EventCallback& cb)
 {
     pimpl_->setErrorCallback(cb);
 }
 
-void HttpResponse::setHeaderCompleteCallback(HttpEventCallback& cb)
+void HttpResponse::setHeaderCompleteCallback(const HttpEventCallback& cb)
 {
     pimpl_->setHeaderCompleteCallback(cb);
 }
 
-void HttpResponse::setRequestCompleteCallback(HttpEventCallback& cb)
+void HttpResponse::setRequestCompleteCallback(const HttpEventCallback& cb)
 {
     pimpl_->setRequestCompleteCallback(cb);
 }
 
-void HttpResponse::setResponseCompleteCallback(HttpEventCallback& cb)
+void HttpResponse::setResponseCompleteCallback(const HttpEventCallback& cb)
 {
     pimpl_->setResponseCompleteCallback(cb);
 }
@@ -837,7 +837,7 @@ void WebSocket::setProtocol(const char* proto)
     pimpl_->setProtocol(proto);
 }
 
-const char* WebSocket::getProtocol()
+const char* WebSocket::getProtocol() const
 {
     return pimpl_->getProtocol().c_str();
 }
@@ -847,12 +847,12 @@ void WebSocket::setOrigin(const char* origin)
     pimpl_->setOrigin(origin);
 }
 
-const char* WebSocket::getOrigin()
+const char* WebSocket::getOrigin() const
 {
     return pimpl_->getOrigin().c_str();
 }
 
-int WebSocket::connect(const char* ws_url, EventCallback& cb)
+int WebSocket::connect(const char* ws_url, const  EventCallback& cb)
 {
     return pimpl_->connect(ws_url, cb);
 }
@@ -882,17 +882,17 @@ int WebSocket::close()
     return pimpl_->close();
 }
 
-void WebSocket::setDataCallback(DataCallback& cb)
+void WebSocket::setDataCallback(const  DataCallback& cb)
 {
     pimpl_->setDataCallback(cb);
 }
 
-void WebSocket::setWriteCallback(EventCallback& cb)
+void WebSocket::setWriteCallback(const  EventCallback& cb)
 {
     pimpl_->setWriteCallback(cb);
 }
 
-void WebSocket::setErrorCallback(EventCallback& cb)
+void WebSocket::setErrorCallback(const  EventCallback& cb)
 {
     pimpl_->setErrorCallback(cb);
 }

@@ -31,7 +31,7 @@ class HttpParserImpl
 public:
     typedef std::function<void(const char*, uint32_t)> DataCallback;
     typedef std::function<void(HttpEvent)> EventCallback;
-    typedef std::function<void(const std::string& name, const std::string& value)> EnumrateCallback;
+    typedef std::function<void(const std::string&, const std::string&)> EnumrateCallback;
     
     struct CaseIgnoreLess : public std::binary_function<std::string, std::string, bool> {
         bool operator()(const std::string &lhs, const std::string &rhs) const {
@@ -55,28 +55,28 @@ public:
     bool setEOF();
     void reset();
     
-    bool isRequest() { return is_request_; }
-    bool headerComplete() { return header_complete_; }
-    bool complete();
-    bool error();
-    bool paused() { return paused_; }
+    bool isRequest() const { return is_request_; }
+    bool headerComplete() const { return header_complete_; }
+    bool complete() const;
+    bool error() const;
+    bool paused() const { return paused_; }
     
-    int getStatusCode() { return status_code_; }
-    const std::string& getLocation() { return getHeaderValue("Location"); }
-    const std::string& getUrl() { return url_; }
-    const std::string& getUrlPath() { return url_path_; }
-    const std::string& getMethod() { return method_; }
-    const std::string& getVersion() { return version_; }
-    const std::string& getParamValue(const std::string& name);
-    const std::string& getHeaderValue(const std::string& name);
+    int getStatusCode() const { return status_code_; }
+    const std::string& getLocation() const { return getHeaderValue("Location"); }
+    const std::string& getUrl() const { return url_; }
+    const std::string& getUrlPath() const { return url_path_; }
+    const std::string& getMethod() const { return method_; }
+    const std::string& getVersion() const { return version_; }
+    const std::string& getParamValue(const std::string& name) const;
+    const std::string& getHeaderValue(const std::string& name) const;
     
-    void forEachParam(EnumrateCallback& cb);
-    void forEachHeader(EnumrateCallback& cb);
+    void forEachParam(const EnumrateCallback& cb);
+    void forEachHeader(const EnumrateCallback& cb);
     void forEachParam(EnumrateCallback&& cb);
     void forEachHeader(EnumrateCallback&& cb);
     
-    void setDataCallback(DataCallback& cb) { cb_data_ = cb; }
-    void setEventCallback(EventCallback& cb) { cb_event_ = cb; }
+    void setDataCallback(const DataCallback& cb) { cb_data_ = cb; }
+    void setEventCallback(const EventCallback& cb) { cb_event_ = cb; }
     void setDataCallback(DataCallback&& cb) { cb_data_ = std::move(cb); }
     void setEventCallback(EventCallback&& cb) { cb_event_ = std::move(cb); }
     

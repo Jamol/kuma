@@ -50,7 +50,7 @@ bool EventLoopImpl::init()
     return true;
 }
 
-PollType EventLoopImpl::getPollType()
+PollType EventLoopImpl::getPollType() const
 {
     if(poll_) {
         return poll_->getType();
@@ -58,7 +58,7 @@ PollType EventLoopImpl::getPollType()
     return POLL_TYPE_NONE;
 }
 
-bool EventLoopImpl::isPollLT()
+bool EventLoopImpl::isPollLT() const
 {
     if(poll_) {
         return poll_->isLevelTriggered();
@@ -66,7 +66,7 @@ bool EventLoopImpl::isPollLT()
     return false;
 }
 
-int EventLoopImpl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
+int EventLoopImpl::registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb)
 {
     if(isInEventLoopThread()) {
         return poll_->registerFd(fd, events, cb);
@@ -169,7 +169,7 @@ void EventLoopImpl::stop()
     poll_->notify();
 }
 
-int EventLoopImpl::runInEventLoop(LoopCallback& cb)
+int EventLoopImpl::runInEventLoop(const LoopCallback& cb)
 {
     if(isInEventLoopThread()) {
         cb();
@@ -191,7 +191,7 @@ int EventLoopImpl::runInEventLoop(LoopCallback&& cb)
     return KUMA_ERROR_NOERR;
 }
 
-int EventLoopImpl::runInEventLoopSync(LoopCallback& cb)
+int EventLoopImpl::runInEventLoopSync(const LoopCallback& cb)
 {
     if(isInEventLoopThread()) {
         cb();
@@ -219,7 +219,7 @@ int EventLoopImpl::runInEventLoopSync(LoopCallback&& cb)
     return runInEventLoopSync(cb);
 }
 
-int EventLoopImpl::queueInEventLoop(LoopCallback& cb)
+int EventLoopImpl::queueInEventLoop(const LoopCallback& cb)
 {
     cb_queue_.enqueue(cb);
     if(!isInEventLoopThread()) {

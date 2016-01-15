@@ -76,7 +76,7 @@ TcpServerSocketImpl::~TcpServerSocketImpl()
 
 }
 
-const char* TcpServerSocketImpl::getObjKey()
+const char* TcpServerSocketImpl::getObjKey() const
 {
     return "TcpServerSocket";
 }

@@ -90,7 +90,7 @@ TcpSocketImpl::~TcpSocketImpl()
     cleanup();
 }
 
-const char* TcpSocketImpl::getObjKey()
+const char* TcpSocketImpl::getObjKey() const
 {
     return "TcpSocket";
 }
@@ -154,7 +154,7 @@ int TcpSocketImpl::bind(const char *bind_host, uint16_t bind_port)
     return KUMA_ERROR_NOERR;
 }
 
-int TcpSocketImpl::connect(const char *host, uint16_t port, EventCallback& cb, uint32_t flags, uint32_t timeout)
+int TcpSocketImpl::connect(const char *host, uint16_t port, const EventCallback& cb, uint32_t flags, uint32_t timeout_ms)
 {
     if(getState() != ST_IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
@@ -162,10 +162,10 @@ int TcpSocketImpl::connect(const char *host, uint16_t port, EventCallback& cb, u
     }
     cb_connect_ = cb;
     flags_ = flags;
-    return connect_i(host, port, timeout);
+    return connect_i(host, port, timeout_ms);
 }
 
-int TcpSocketImpl::connect(const char *host, uint16_t port, EventCallback&& cb, uint32_t flags, uint32_t timeout)
+int TcpSocketImpl::connect(const char *host, uint16_t port, EventCallback&& cb, uint32_t flags, uint32_t timeout_ms)
 {
     if(getState() != ST_IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
@@ -173,10 +173,10 @@ int TcpSocketImpl::connect(const char *host, uint16_t port, EventCallback&& cb, 
     }
     cb_connect_ = std::move(cb);
     flags_ = flags;
-    return connect_i(host, port, timeout);
+    return connect_i(host, port, timeout_ms);
 }
 
-int TcpSocketImpl::connect_i(const char* host, uint16_t port, uint32_t timeout)
+int TcpSocketImpl::connect_i(const char* host, uint16_t port, uint32_t timeout_ms)
 {
     KUMA_INFOXTRACE("connect_i, host="<<host<<", port="<<port<<", this="<<this);
 #ifndef KUMA_HAS_OPENSSL

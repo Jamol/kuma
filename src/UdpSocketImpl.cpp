@@ -84,7 +84,7 @@ UdpSocketImpl::~UdpSocketImpl()
     cleanup();
 }
 
-const char* UdpSocketImpl::getObjKey()
+const char* UdpSocketImpl::getObjKey() const
 {
     return "UdpSocket";
 }

@@ -128,7 +128,7 @@ public:
     TimerImpl(TimerManagerPtr mgr);
     ~TimerImpl();
     
-    bool schedule(unsigned int time_elapse, TimerCallback& cb, bool repeat = false);
+    bool schedule(unsigned int time_elapse, const TimerCallback& cb, bool repeat = false);
     bool schedule(unsigned int time_elapse, TimerCallback&& cb, bool repeat = false);
     void cancel();
     

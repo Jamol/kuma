@@ -210,12 +210,12 @@ void HttpParserImpl::reset()
     header_map_.clear();
 }
 
-bool HttpParserImpl::complete()
+bool HttpParserImpl::complete() const
 {
     return HTTP_READ_DONE == read_state_;
 }
 
-bool HttpParserImpl::error()
+bool HttpParserImpl::error() const
 {
     return HTTP_READ_ERROR == read_state_;
 }
@@ -690,7 +690,7 @@ void HttpParserImpl::addHeaderValue(std::string& name, std::string& value)
     }
 }
 
-const std::string& HttpParserImpl::getParamValue(const std::string& name)
+const std::string& HttpParserImpl::getParamValue(const std::string& name) const
 {
     auto it = param_map_.find(name);
     if (it != param_map_.end()) {
@@ -699,7 +699,7 @@ const std::string& HttpParserImpl::getParamValue(const std::string& name)
     return str_empty;
 }
 
-const std::string& HttpParserImpl::getHeaderValue(const std::string& name)
+const std::string& HttpParserImpl::getHeaderValue(const std::string& name) const
 {
     auto it = header_map_.find(name);
     if (it != header_map_.end()) {
@@ -708,14 +708,14 @@ const std::string& HttpParserImpl::getHeaderValue(const std::string& name)
     return str_empty;
 }
 
-void HttpParserImpl::forEachParam(EnumrateCallback& cb)
+void HttpParserImpl::forEachParam(const EnumrateCallback& cb)
 {
     for (auto &kv : param_map_) {
         cb(kv.first, kv.second);
     }
 }
 
-void HttpParserImpl::forEachHeader(EnumrateCallback& cb)
+void HttpParserImpl::forEachHeader(const EnumrateCallback& cb)
 {
     for (auto &kv : header_map_) {
         cb(kv.first, kv.second);

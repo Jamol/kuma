@@ -31,14 +31,14 @@ public:
     ~EPoll();
     
     bool init();
-    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb);
+    int registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb);
     int registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb);
     int unregisterFd(SOCKET_FD fd);
     int updateFd(SOCKET_FD fd, uint32_t events);
     int wait(uint32_t wait_time_ms);
     void notify();
-    PollType getType() { return POLL_TYPE_EPOLL; }
-    bool isLevelTriggered() { return false; }
+    PollType getType() const { return POLL_TYPE_EPOLL; }
+    bool isLevelTriggered() const { return false; }
     
 private:
     uint32_t get_events(uint32_t kuma_events);
@@ -109,7 +109,7 @@ uint32_t EPoll::get_kuma_events(uint32_t events)
     return ev;
 }
 
-int EPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback& cb)
+int EPoll::registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb)
 {
     resizePollItems(fd);
     int epoll_op = EPOLL_CTL_ADD;
