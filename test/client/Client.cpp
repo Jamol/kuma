@@ -28,7 +28,7 @@ int Client::connect(const char* host, uint16_t port)
     tcp_.setReadCallback([this] (int err) { onReceive(err); });
     tcp_.setWriteCallback([this] (int err) { onSend(err); });
     tcp_.setErrorCallback([this] (int err) { onClose(err); });
-    timer_.schedule(1000, [this] { onTimer(); }, true);
+    timer_.schedule(1000, [this] { onTimer(); }, TimerMode::REPEATING);
     return tcp_.connect(host, port, [this] (int err) { onConnect(err); });
 }
 

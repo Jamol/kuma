@@ -63,8 +63,20 @@ typedef enum {
     SSL_ALLOW_INVALID_CERT_CN   = 0X04,
     SSL_ALLOW_EXPIRED_ROOT      = 0X08,
     SSL_ALLOW_ANY_ROOT          = 0x10,
-    SSL_ALLOW_REVOKED_CERT      = 0X20,
+    SSL_ALLOW_REVOKED_CERT      = 0X20
 }SslFlag;
+
+typedef enum {
+    IS_CLIENT,
+    IS_SERVER
+}SslRole;
+
+typedef enum {
+    ONE_SHOT,
+    REPEATING
+}TimerMode;
+
+#define UDP_FLAG_MULTICAST  1
 
 #ifdef KUMA_OS_WIN
 struct iovec {

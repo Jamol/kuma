@@ -104,7 +104,7 @@ void UdpSocketImpl::cleanup()
     }
 }
 
-int UdpSocketImpl::bind(const char *bind_host, uint16_t bind_port, bool mcast)
+int UdpSocketImpl::bind(const char *bind_host, uint16_t bind_port, uint32_t udp_flags)
 {
     KUMA_INFOTRACE("bind, bind_host="<<bind_host<<", bind_port="<<bind_port);
     if(fd_ != INVALID_FD) {
@@ -129,14 +129,14 @@ int UdpSocketImpl::bind(const char *bind_host, uint16_t bind_port, bool mcast)
     if(AF_INET == bind_addr_.ss_family) {
         struct sockaddr_in *sa = (struct sockaddr_in*)&bind_addr_;
 #if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
-        if(mcast) {
+        if(udp_flags & UDP_FLAG_MULTICAST) {
             sa->sin_addr.s_addr = htonl(INADDR_ANY);
         }
 #endif
     } else if(AF_INET6 == bind_addr_.ss_family) {
         struct sockaddr_in6 *sa = (struct sockaddr_in6*)&bind_addr_;
 #if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
-        if(mcast) {
+        if(udp_flags & UDP_FLAG_MULTICAST) {
             sa->sin6_addr = in6addr_any;
         }
 #endif

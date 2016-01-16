@@ -52,7 +52,7 @@ void WsClient::onConnect(int err)
     sendData();
     if (getSendInterval() > 0) {
         timed_sending_ = true;
-        timer_.schedule(getSendInterval(), [this] { sendData(); }, true);
+        timer_.schedule(getSendInterval(), [this] { sendData(); }, TimerMode::REPEATING);
     }
 }
 

@@ -87,10 +87,10 @@ void SslHandler::cleanup()
     setState(SSL_NONE);
 }
 
-int SslHandler::attachFd(SOCKET_FD fd, bool is_server)
+int SslHandler::attachFd(SOCKET_FD fd, SslRole ssl_role)
 {
     cleanup();
-    is_server_ = is_server;
+    is_server_ = ssl_role == IS_SERVER;
     fd_ = fd;
 
     SSL_CTX* ctx = NULL;

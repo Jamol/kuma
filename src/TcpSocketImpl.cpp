@@ -275,7 +275,7 @@ int TcpSocketImpl::attachFd(SOCKET_FD fd)
     setState(ST_OPEN);
 #ifdef KUMA_HAS_OPENSSL
     if(SslEnabled()) {
-        int ret = startSslHandshake(true);
+        int ret = startSslHandshake(IS_SERVER);
         if(ret != KUMA_ERROR_NOERR) {
             return ret;
         }
@@ -318,7 +318,7 @@ int TcpSocketImpl::attachFd(SOCKET_FD fd, SSL* ssl)
             ssl_handler_ = new SslHandler();
             ssl_handler_->attachSsl(ssl);
         } else {
-            int ret = startSslHandshake(true);
+            int ret = startSslHandshake(IS_SERVER);
             if(ret != KUMA_ERROR_NOERR) {
                 return ret;
             }
@@ -348,10 +348,10 @@ int TcpSocketImpl::detachFd(SOCKET_FD &fd, SSL* &ssl)
 }
 #endif
 
-int TcpSocketImpl::startSslHandshake(bool is_server)
+int TcpSocketImpl::startSslHandshake(SslRole ssl_role)
 {
 #ifdef KUMA_HAS_OPENSSL
-    KUMA_INFOXTRACE("startSslHandshake, is_server="<<is_server<<", fd="<<fd_<<", state="<<getState());
+    KUMA_INFOXTRACE("startSslHandshake, ssl_role="<<ssl_role<<", fd="<<fd_<<", state="<<getState());
     if(INVALID_FD == fd_) {
         KUMA_ERRXTRACE("startSslHandshake, invalid fd");
         return KUMA_ERROR_INVALID_STATE;
@@ -362,7 +362,7 @@ int TcpSocketImpl::startSslHandshake(bool is_server)
         ssl_handler_ = nullptr;
     }
     ssl_handler_ = new SslHandler();
-    int ret = ssl_handler_->attachFd(fd_, is_server);
+    int ret = ssl_handler_->attachFd(fd_, ssl_role);
     if(ret != KUMA_ERROR_NOERR) {
         return ret;
     }
@@ -612,7 +612,7 @@ void TcpSocketImpl::onConnect(int err)
         setState(ST_OPEN);
 #ifdef KUMA_HAS_OPENSSL
         if(SslEnabled()) {
-            err = startSslHandshake(false);
+            err = startSslHandshake(IS_CLIENT);
             if(KUMA_ERROR_NOERR == err && ssl_handler_->getState() == SslHandler::SslState::SSL_HANDSHAKE) {
                 return; // continue to SSL handshake
             }

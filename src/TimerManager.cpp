@@ -39,22 +39,22 @@ TimerImpl::~TimerImpl()
     cancel();
 }
 
-bool TimerImpl::schedule(unsigned int time_elapse, const TimerCallback& cb, bool repeat)
+bool TimerImpl::schedule(uint32_t delay_ms, const TimerCallback& cb, TimerMode mode)
 {
     TimerManagerPtr mgr = timer_mgr_.lock();
     if(mgr) {
         cb_ = cb;
-        return mgr->scheduleTimer(this, time_elapse, repeat);
+        return mgr->scheduleTimer(this, delay_ms, mode);
     }
     return false;
 }
 
-bool TimerImpl::schedule(unsigned int time_elapse, TimerCallback&& cb, bool repeat)
+bool TimerImpl::schedule(uint32_t delay_ms, TimerCallback&& cb, TimerMode mode)
 {
     TimerManagerPtr mgr = timer_mgr_.lock();
     if(mgr) {
         cb_ = std::move(cb);
-        return mgr->scheduleTimer(this, time_elapse, repeat);
+        return mgr->scheduleTimer(this, delay_ms, mode);
     }
     return false;
 }
@@ -92,10 +92,10 @@ TimerManager::~TimerManager()
     
 }
 
-bool TimerManager::scheduleTimer(TimerImpl* timer, unsigned int time_elapse, bool repeat)
+bool TimerManager::scheduleTimer(TimerImpl* timer, uint32_t delay_ms, TimerMode mode)
 {
     TimerNode* timer_node = &timer->timer_node_;
-    if(isTimerPending(timer_node) && time_elapse == timer_node->elapse_) {
+    if(isTimerPending(timer_node) && delay_ms == timer_node->delay_ms_) {
         return true;
     }
     TICK_COUNT_TYPE now_tick = get_tick_count_ms();
@@ -108,15 +108,15 @@ bool TimerManager::scheduleTimer(TimerImpl* timer, unsigned int time_elapse, boo
             removeTimer(timer_node);
         }
         timer_node->start_tick_ = now_tick;
-        timer_node->elapse_ = time_elapse;
-        timer_node->repeat_ = repeat;
+        timer_node->delay_ms_ = delay_ms;
+        timer_node->repeating_ = mode == TimerMode::REPEATING;
         
         ret = addTimer(timer_node, true);
         if(reschedule_node_ == timer_node) {
             reschedule_node_ = nullptr;
         }
         long diff = now_tick - last_tick_;
-        if(last_remain_ms_ == -1 || (diff >= 0 && time_elapse < last_remain_ms_ - diff)) {
+        if(last_remain_ms_ == -1 || (diff >= 0 && delay_ms < last_remain_ms_ - diff)) {
             // need update poll wait time
             need_notify = !loop_->isInEventLoopThread();
         }
@@ -269,7 +269,7 @@ bool TimerManager::addTimer(TimerNode* timer_node, bool from_schedule)
     if(0 == timer_count_) {
         last_tick_ = timer_node->start_tick_;
     }
-    TICK_COUNT_TYPE fire_tick = timer_node->elapse_ + timer_node->start_tick_;
+    TICK_COUNT_TYPE fire_tick = timer_node->delay_ms_ + timer_node->start_tick_;
     if(fire_tick - last_tick_ > (((TICK_COUNT_TYPE)-1)>>1)) // time backward
     {// fire it right now
         fire_tick = last_tick_;
@@ -410,7 +410,7 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
     while(!list_empty(&tmp_head))
     {
         running_node_ = tmp_head.next_;
-        if(!running_node_->cancelled_ && running_node_->repeat_) {
+        if(!running_node_->cancelled_ && running_node_->repeating_) {
             reschedule_node_ = running_node_;
         }
         list_remove_node(running_node_);
@@ -458,4 +458,3 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
 }
 
 KUMA_NS_END
-

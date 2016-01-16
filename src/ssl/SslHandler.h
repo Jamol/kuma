@@ -40,7 +40,7 @@ public:
     SslHandler();
     ~SslHandler();
     
-    int attachFd(SOCKET_FD fd, bool is_server);
+    int attachFd(SOCKET_FD fd, SslRole ssl_role);
     int attachSsl(SSL* ssl);
     int detachSsl(SSL* &ssl);
     SslState doSslHandshake();

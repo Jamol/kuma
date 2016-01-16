@@ -41,7 +41,7 @@ public:
     TimerManager(EventLoopImpl* loop);
     ~TimerManager();
 
-    bool scheduleTimer(TimerImpl* timer, unsigned int time_elapse, bool repeat);
+    bool scheduleTimer(TimerImpl* timer, uint32_t delay_ms, TimerMode mode);
     void cancelTimer(TimerImpl* timer);
 
     int checkExpire(unsigned long* remain_ms = nullptr);
@@ -52,8 +52,8 @@ public:
     public:
         TimerNode()
         : cancelled_(true)
-        , repeat_(false)
-        , elapse_(0)
+        , repeating_(false)
+        , delay_ms_(0)
         , start_tick_(0)
         , timer_(nullptr)
         , tv_index_(-1)
@@ -70,8 +70,8 @@ public:
         }
         
         bool            cancelled_;
-        bool            repeat_;
-        unsigned int	elapse_;
+        bool            repeating_;
+        uint32_t        delay_ms_;
         TICK_COUNT_TYPE start_tick_;
         TimerImpl*      timer_;
         
@@ -114,8 +114,8 @@ private:
     TimerNode*  reschedule_node_;
     unsigned long last_remain_ms_;
     TICK_COUNT_TYPE last_tick_;
-    unsigned int timer_count_;
-    unsigned int tv0_bitmap_[8]; // 1 -- have timer in this slot
+    uint32_t timer_count_;
+    uint32_t tv0_bitmap_[8]; // 1 -- have timer in this slot
     TimerNode tv_[TV_COUNT][TIMER_VECTOR_SIZE]; // timer vectors
 };
 typedef std::shared_ptr<TimerManager> TimerManagerPtr;
@@ -128,8 +128,8 @@ public:
     TimerImpl(TimerManagerPtr mgr);
     ~TimerImpl();
     
-    bool schedule(unsigned int time_elapse, const TimerCallback& cb, bool repeat = false);
-    bool schedule(unsigned int time_elapse, TimerCallback&& cb, bool repeat = false);
+    bool schedule(uint32_t delay_ms, const TimerCallback& cb, TimerMode mode);
+    bool schedule(uint32_t delay_ms, TimerCallback&& cb, TimerMode mode);
     void cancel();
     
 private:

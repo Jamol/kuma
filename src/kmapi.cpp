@@ -173,9 +173,9 @@ int TcpSocket::detachFd(SOCKET_FD &fd)
     return pimpl_->detachFd(fd);
 }
 
-int TcpSocket::startSslHandshake(bool is_server)
+int TcpSocket::startSslHandshake(SslRole ssl_role)
 {
-    return pimpl_->startSslHandshake(is_server);
+    return pimpl_->startSslHandshake(ssl_role);
 }
 
 int TcpSocket::send(const uint8_t* data, uint32_t length)
@@ -311,9 +311,9 @@ UdpSocket::~UdpSocket()
     delete pimpl_;
 }
 
-int UdpSocket::bind(const char* bind_host, uint16_t bind_port, bool mcast)
+int UdpSocket::bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags)
 {
-    return pimpl_->bind(bind_host, bind_port, mcast);
+    return pimpl_->bind(bind_host, bind_port, udp_flags);
 }
 
 int UdpSocket::send(const uint8_t* data, uint32_t length, const char* host, uint16_t port)
@@ -384,14 +384,14 @@ Timer::~Timer()
     delete pimpl_;
 }
 
-bool Timer::schedule(unsigned int time_elapse, const TimerCallback& cb, bool repeat)
+bool Timer::schedule(uint32_t delay_ms, const TimerCallback& cb, TimerMode mode)
 {
-    return pimpl_->schedule(time_elapse, cb, repeat);
+    return pimpl_->schedule(delay_ms, cb, mode);
 }
 
-bool Timer::schedule(unsigned int time_elapse, TimerCallback&& cb, bool repeat)
+bool Timer::schedule(uint32_t delay_ms, TimerCallback&& cb, TimerMode mode)
 {
-    return pimpl_->schedule(time_elapse, std::move(cb), repeat);
+    return pimpl_->schedule(delay_ms, std::move(cb), mode);
 }
 
 void Timer::cancel()

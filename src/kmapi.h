@@ -86,7 +86,7 @@ public:
     int connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t timeout_ms = 0);
     int attachFd(SOCKET_FD fd);
     int detachFd(SOCKET_FD &fd);
-    int startSslHandshake(bool is_server);
+    int startSslHandshake(SslRole ssl_role);
     int send(const uint8_t* data, uint32_t length);
     int send(iovec* iovs, uint32_t count);
     int receive(uint8_t* data, uint32_t length);
@@ -140,7 +140,7 @@ public:
     UdpSocket(EventLoop* loop);
     ~UdpSocket();
     
-    int bind(const char* bind_host, uint16_t bind_port, bool mcast=false);
+    int bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags=0);
     int send(const uint8_t* data, uint32_t length, const char* host, uint16_t port);
     int send(iovec* iovs, uint32_t count, const char* host, uint16_t port);
     int receive(uint8_t* data, uint32_t length, char* ip, uint32_t ip_len, uint16_t& port);
@@ -167,8 +167,8 @@ public:
     Timer(EventLoop* loop);
     ~Timer();
     
-    bool schedule(unsigned int time_elapse, const TimerCallback& cb, bool repeat = false);
-    bool schedule(unsigned int time_elapse, TimerCallback&& cb, bool repeat = false);
+    bool schedule(uint32_t delay_ms, const TimerCallback& cb, TimerMode mode=ONE_SHOT);
+    bool schedule(uint32_t delay_ms, TimerCallback&& cb, TimerMode mode=ONE_SHOT);
     void cancel();
     TimerImpl* getPimpl();
     

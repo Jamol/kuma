@@ -52,7 +52,7 @@ public:
     int attachFd(SOCKET_FD fd, SSL* ssl);
     int detachFd(SOCKET_FD &fd, SSL* &ssl);
 #endif
-    int startSslHandshake(bool is_server);
+    int startSslHandshake(SslRole ssl_role);
     int send(const uint8_t* data, uint32_t length);
     int send(iovec* iovs, uint32_t count);
     int receive(uint8_t* data, uint32_t length);
