@@ -82,7 +82,7 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
                 long conn_id = server_->getConnId();
                 HttpTest* http = new HttpTest(loop_, conn_id, this);
                 addObject(conn_id, http);
-                http->attachFd(fd, proto==PROTO_HTTPS?FLAG_HAS_SSL:0);
+                http->attachFd(fd, proto==PROTO_HTTPS?SSL_ENABLE:0);
                 break;
             }
             case PROTO_WS:
@@ -91,7 +91,7 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
                 long conn_id = server_->getConnId();
                 WsTest* ws = new WsTest(loop_, conn_id, this);
                 addObject(conn_id, ws);
-                ws->attachFd(fd, proto==PROTO_WSS?FLAG_HAS_SSL:0);
+                ws->attachFd(fd, proto==PROTO_WSS?SSL_ENABLE:0);
                 break;
             }
             case PROTO_AUTO:
@@ -100,7 +100,7 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
                 long conn_id = server_->getConnId();
                 AutoHelper* helper = new AutoHelper(loop_, conn_id, this);
                 addObject(conn_id, helper);
-                helper->attachFd(fd, proto==PROTO_AUTOS?FLAG_HAS_SSL:0);
+                helper->attachFd(fd, proto==PROTO_AUTOS?SSL_ENABLE:0);
                 break;
             }
                 

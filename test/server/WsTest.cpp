@@ -10,13 +10,13 @@ WsTest::WsTest(EventLoop* loop, long conn_id, TestLoop* server)
     
 }
 
-int WsTest::attachFd(SOCKET_FD fd, uint32_t flags)
+int WsTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
 {
     ws_.setWriteCallback([this] (int err) { onSend(err); });
     ws_.setErrorCallback([this] (int err) { onClose(err); });
     ws_.setDataCallback([this] (uint8_t* data, uint32_t len) { onData(data, len); });
-    
-    return ws_.attachFd(fd, flags);
+    ws_.setSslFlags(ssl_flags);
+    return ws_.attachFd(fd);
 }
 
 int WsTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser)

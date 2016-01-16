@@ -139,23 +139,33 @@ TcpSocket::~TcpSocket()
     delete pimpl_;
 }
 
+int TcpSocket::setSslFlags(uint32_t ssl_flags)
+{
+    return pimpl_->setSslFlags(ssl_flags);
+}
+
+uint32_t TcpSocket::getSslFlags() const
+{
+    return pimpl_->getSslFlags();
+}
+
 int TcpSocket::bind(const char* bind_host, uint16_t bind_port)
 {
     return pimpl_->bind(bind_host, bind_port);
 }
-int TcpSocket::connect(const char* host, uint16_t port, const EventCallback& cb, uint32_t flags, uint32_t timeout)
+int TcpSocket::connect(const char* host, uint16_t port, const EventCallback& cb, uint32_t timeout)
 {
-    return pimpl_->connect(host, port, cb, flags, timeout);
+    return pimpl_->connect(host, port, cb, timeout);
 }
 
-int TcpSocket::connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t flags, uint32_t timeout)
+int TcpSocket::connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t timeout)
 {
-    return pimpl_->connect(host, port, std::move(cb), flags, timeout);
+    return pimpl_->connect(host, port, std::move(cb), timeout);
 }
 
-int TcpSocket::attachFd(SOCKET_FD fd, uint32_t flags)
+int TcpSocket::attachFd(SOCKET_FD fd)
 {
-    return pimpl_->attachFd(fd, flags);
+    return pimpl_->attachFd(fd);
 }
 
 int TcpSocket::detachFd(SOCKET_FD &fd)
@@ -301,9 +311,9 @@ UdpSocket::~UdpSocket()
     delete pimpl_;
 }
 
-int UdpSocket::bind(const char* bind_host, uint16_t bind_port, uint32_t flags)
+int UdpSocket::bind(const char* bind_host, uint16_t bind_port, bool mcast)
 {
-    return pimpl_->bind(bind_host, bind_port, flags);
+    return pimpl_->bind(bind_host, bind_port, mcast);
 }
 
 int UdpSocket::send(const uint8_t* data, uint32_t length, const char* host, uint16_t port)
@@ -553,6 +563,11 @@ HttpRequest::~HttpRequest()
     delete pimpl_;
 }
 
+int HttpRequest::setSslFlags(uint32_t ssl_flags)
+{
+    return pimpl_->setSslFlags(ssl_flags);
+}
+
 void HttpRequest::addHeader(const char* name, const char* value)
 {
     pimpl_->addHeader(name, value);
@@ -677,9 +692,14 @@ HttpResponse::~HttpResponse()
     delete pimpl_;
 }
 
-int HttpResponse::attachFd(SOCKET_FD fd, uint32_t flags, uint8_t* init_data, uint32_t init_len)
+int HttpResponse::setSslFlags(uint32_t ssl_flags)
 {
-    return pimpl_->attachFd(fd, flags, init_data, init_len);
+    return pimpl_->setSslFlags(ssl_flags);
+}
+
+int HttpResponse::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_len)
+{
+    return pimpl_->attachFd(fd, init_data, init_len);
 }
 
 int HttpResponse::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
@@ -832,6 +852,11 @@ WebSocket::~WebSocket()
     delete pimpl_;
 }
 
+int WebSocket::setSslFlags(uint32_t ssl_flags)
+{
+    return pimpl_->setSslFlags(ssl_flags);
+}
+
 void WebSocket::setProtocol(const char* proto)
 {
     pimpl_->setProtocol(proto);
@@ -862,9 +887,9 @@ int WebSocket::connect(const char* ws_url, EventCallback&& cb)
     return pimpl_->connect(ws_url, std::move(cb));
 }
 
-int WebSocket::attachFd(SOCKET_FD fd, uint32_t flags, const uint8_t* init_data, uint32_t init_len)
+int WebSocket::attachFd(SOCKET_FD fd, const uint8_t* init_data, uint32_t init_len)
 {
-    return pimpl_->attachFd(fd, flags, init_data, init_len);
+    return pimpl_->attachFd(fd, init_data, init_len);
 }
 
 int WebSocket::attachSocket(TcpSocket&& tcp, HttpParser&& parser)

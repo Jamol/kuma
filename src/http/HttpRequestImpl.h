@@ -33,6 +33,7 @@ public:
     HttpRequestImpl(EventLoopImpl* loop);
     ~HttpRequestImpl();
     
+    int setSslFlags(uint32_t ssl_flags);
     void addHeader(const std::string& name, const std::string& value);
     void addHeader(const std::string& name, uint32_t value);
     int sendRequest(const std::string& method, const std::string& url, const std::string& ver = "HTTP/1.1");

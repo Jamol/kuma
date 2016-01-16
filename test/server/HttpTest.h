@@ -14,7 +14,7 @@ class HttpTest : public LoopObject
 public:
     HttpTest(EventLoop* loop, long conn_id, TestLoop* server);
 
-    int attachFd(SOCKET_FD fd, uint32_t flags);
+    int attachFd(SOCKET_FD fd, uint32_t ssl_flags);
     int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
     int close();
     

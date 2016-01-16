@@ -32,13 +32,14 @@ public:
     WebSocketImpl(EventLoopImpl* loop);
     ~WebSocketImpl();
     
+    int setSslFlags(uint32_t ssl_flags);
     void setProtocol(const std::string& proto);
     const std::string& getProtocol() const { return proto_; }
     void setOrigin(const std::string& origin);
     const std::string& getOrigin() const { return origin_; }
     int connect(const std::string& ws_url, const EventCallback& cb);
     int connect(const std::string& ws_url, EventCallback&& cb);
-    int attachFd(SOCKET_FD fd, uint32_t flags, const uint8_t* init_data = nullptr, uint32_t init_len = 0);
+    int attachFd(SOCKET_FD fd, const uint8_t* init_data = nullptr, uint32_t init_len = 0);
     int attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
     int send(const uint8_t* data, uint32_t len);
     int close();

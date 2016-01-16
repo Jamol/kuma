@@ -2,6 +2,7 @@
 #include "util/util.h"
 #include "TcpServer.h"
 #include "UdpServer.h"
+#include "AutoCleaner.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -102,7 +103,7 @@ int main(int argc, char *argv[])
     }
     
     kuma::init();
-    
+    AUTO_CLEAN([]{ kuma::fini(); });
     if (!main_loop.init()) {
         printf("failed to init EventLoop\n");
         return -1;

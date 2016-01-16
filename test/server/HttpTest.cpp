@@ -11,7 +11,7 @@ HttpTest::HttpTest(EventLoop* loop, long conn_id, TestLoop* server)
     
 }
 
-int HttpTest::attachFd(SOCKET_FD fd, uint32_t flags)
+int HttpTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
 {
     http_.setWriteCallback([this] (int err) { onSend(err); });
     http_.setErrorCallback([this] (int err) { onClose(err); });
@@ -20,8 +20,8 @@ int HttpTest::attachFd(SOCKET_FD fd, uint32_t flags)
     http_.setHeaderCompleteCallback([this] () { onHeaderComplete(); });
     http_.setRequestCompleteCallback([this] () { onRequestComplete(); });
     http_.setResponseCompleteCallback([this] () { onResponseComplete(); });
-    
-    return http_.attachFd(fd, flags);
+    http_.setSslFlags(ssl_flags);
+    return http_.attachFd(fd);
 }
 
 int HttpTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser)

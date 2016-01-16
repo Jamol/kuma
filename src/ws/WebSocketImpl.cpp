@@ -59,6 +59,11 @@ void WebSocketImpl::cleanup()
     send_offset_ = 0;
 }
 
+int WebSocketImpl::setSslFlags(uint32_t ssl_flags)
+{
+    return tcp_socket_.setSslFlags(ssl_flags);
+}
+
 void WebSocketImpl::setProtocol(const std::string& proto)
 {
     proto_ = proto;
@@ -100,18 +105,19 @@ int WebSocketImpl::connect_i(const std::string& ws_url)
     setState(STATE_CONNECTING);
     std::string str_port = uri_.getPort();
     uint16_t port = 80;
-    uint32_t flag = 0;
+    uint32_t ssl_flags = SSL_NONE;
     if(is_equal("wss", uri_.getScheme())) {
         port = 443;
-        flag = FLAG_HAS_SSL;
+        ssl_flags = SSL_ENABLE | tcp_socket_.getSslFlags();
     }
     if(!str_port.empty()) {
         port = atoi(str_port.c_str());
     }
-    return tcp_socket_.connect(uri_.getHost().c_str(), port, [this] (int err) { onConnect(err); }, flag);
+    tcp_socket_.setSslFlags(ssl_flags);
+    return tcp_socket_.connect(uri_.getHost().c_str(), port, [this] (int err) { onConnect(err); });
 }
 
-int WebSocketImpl::attachFd(SOCKET_FD fd, uint32_t flags, const uint8_t* init_data, uint32_t init_len)
+int WebSocketImpl::attachFd(SOCKET_FD fd, const uint8_t* init_data, uint32_t init_len)
 {
     is_server_ = true;
     if(init_data && init_len > 0) {
@@ -125,7 +131,7 @@ int WebSocketImpl::attachFd(SOCKET_FD fd, uint32_t flags, const uint8_t* init_da
     tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
     tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
     setState(STATE_HANDSHAKE);
-    return tcp_socket_.attachFd(fd, flags);
+    return tcp_socket_.attachFd(fd);
 }
 
 int WebSocketImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
@@ -141,14 +147,14 @@ int WebSocketImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
 #ifdef KUMA_HAS_OPENSSL
     SOCKET_FD fd;
     SSL* ssl = nullptr;
-    uint32_t flags = tcp.getFlags();
+    uint32_t ssl_flags = tcp.getSslFlags();
     int ret = tcp.detachFd(fd, ssl);
-    ret = tcp_socket_.attachFd(fd, ssl, flags);
+    tcp_socket_.setSslFlags(ssl_flags);
+    ret = tcp_socket_.attachFd(fd, ssl);
 #else
     SOCKET_FD fd;
-    uint32_t flags = tcp.getFlags();
     int ret = tcp.detachFd(fd);
-    ret = tcp_socket_.attachFd(fd, flags);
+    ret = tcp_socket_.attachFd(fd);
 #endif
     
     ws_handler_.setHttpParser(std::move(parser));

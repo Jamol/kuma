@@ -56,6 +56,14 @@ void HttpRequestImpl::cleanup()
     send_offset_ = 0;
 }
 
+int HttpRequestImpl::setSslFlags(uint32_t ssl_flags)
+{
+    if (getState() == STATE_IDLE) {
+        return tcp_socket_.setSslFlags(ssl_flags);
+    }
+    return KUMA_ERROR_INVALID_STATE;
+}
+
 void HttpRequestImpl::addHeader(const std::string& name, const std::string& value)
 {
     if(!name.empty()) {
@@ -139,15 +147,16 @@ int HttpRequestImpl::sendRequest(const std::string& method, const std::string& u
         setState(STATE_CONNECTING);
         std::string str_port = uri_.getPort();
         uint16_t port = 80;
-        uint32_t flag = 0;
+        uint32_t ssl_flags = SSL_NONE;
         if(is_equal("https", uri_.getScheme())) {
             port = 443;
-            flag = FLAG_HAS_SSL;
+            ssl_flags = SSL_ENABLE | tcp_socket_.getSslFlags();
         }
         if(!str_port.empty()) {
             port = atoi(str_port.c_str());
         }
-        return tcp_socket_.connect(uri_.getHost().c_str(), port, [this] (int err) { onConnect(err); }, flag);
+        tcp_socket_.setSslFlags(ssl_flags);
+        return tcp_socket_.connect(uri_.getHost().c_str(), port, [this] (int err) { onConnect(err); });
     } else { // connection reuse
         sendRequestHeader();
         return KUMA_ERROR_NOERR;

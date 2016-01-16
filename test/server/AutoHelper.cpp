@@ -5,7 +5,6 @@ AutoHelper::AutoHelper(EventLoop* loop, long conn_id, TestLoop* server)
 : loop_(loop)
 , server_(server)
 , conn_id_(conn_id)
-, flags_(0)
 , tcp_(loop_)
 , destroy_flag_ptr_(nullptr)
 {
@@ -19,16 +18,15 @@ AutoHelper::~AutoHelper()
     }
 }
 
-int AutoHelper::attachFd(SOCKET_FD fd, uint32_t flags)
+int AutoHelper::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
 {
-    flags_ = flags;
     http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     
     tcp_.setReadCallback([this] (int err) { onReceive(err); });
     tcp_.setErrorCallback([this] (int err) { onClose(err); });
-    
-    return tcp_.attachFd(fd, flags);
+    tcp_.setSslFlags(ssl_flags);
+    return tcp_.attachFd(fd);
 }
 
 int AutoHelper::close()

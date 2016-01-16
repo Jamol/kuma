@@ -33,7 +33,8 @@ public:
     HttpResponseImpl(EventLoopImpl* loop);
     ~HttpResponseImpl();
     
-    int attachFd(SOCKET_FD fd, uint32_t flags, uint8_t* init_data = nullptr, uint32_t init_len = 0);
+    int setSslFlags(uint32_t ssl_flags);
+    int attachFd(SOCKET_FD fd, uint8_t* init_data = nullptr, uint32_t init_len = 0);
     int attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
     void addHeader(const std::string& name, const std::string& value);
     void addHeader(const std::string& name, uint32_t value);

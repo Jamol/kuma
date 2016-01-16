@@ -56,8 +56,15 @@ typedef enum {
     HTTP_ERROR
 }HttpEvent;
 
-#define FLAG_HAS_SSL    0x01
-#define FLAG_HAS_MCAST  0x02
+typedef enum {
+    SSL_NONE                    = 0,
+    SSL_ENABLE                  = 1,
+    SSL_ALLOW_EXPIRED_CERT      = 0X02,
+    SSL_ALLOW_INVALID_CERT_CN   = 0X04,
+    SSL_ALLOW_EXPIRED_ROOT      = 0X08,
+    SSL_ALLOW_ANY_ROOT          = 0x10,
+    SSL_ALLOW_REVOKED_CERT      = 0X20,
+}SslFlag;
 
 #ifdef KUMA_OS_WIN
 struct iovec {

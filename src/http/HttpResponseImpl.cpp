@@ -67,7 +67,12 @@ void HttpResponseImpl::cleanup()
     send_offset_ = 0;
 }
 
-int HttpResponseImpl::attachFd(SOCKET_FD fd, uint32_t flags, uint8_t* init_data, uint32_t init_len)
+int HttpResponseImpl::setSslFlags(uint32_t ssl_flags)
+{
+    return tcp_socket_.setSslFlags(ssl_flags);
+}
+
+int HttpResponseImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_len)
 {
     if(init_data && init_len > 0) {
         init_data = new uint8_t(init_len);
@@ -81,7 +86,7 @@ int HttpResponseImpl::attachFd(SOCKET_FD fd, uint32_t flags, uint8_t* init_data,
     tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
     tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
     tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
-    return tcp_socket_.attachFd(fd, flags);
+    return tcp_socket_.attachFd(fd);
 }
 
 int HttpResponseImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
@@ -97,14 +102,14 @@ int HttpResponseImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
 #ifdef KUMA_HAS_OPENSSL
     SOCKET_FD fd;
     SSL* ssl = nullptr;
-    uint32_t flags = tcp.getFlags();
+    uint32_t ssl_flags = tcp.getSslFlags();
     int ret = tcp.detachFd(fd, ssl);
-    ret = tcp_socket_.attachFd(fd, ssl, flags);
+    tcp_socket_.setSslFlags(ssl_flags);
+    ret = tcp_socket_.attachFd(fd, ssl);
 #else
     SOCKET_FD fd;
-    uint32_t flags = tcp.getFlags();
     int ret = tcp.detachFd(fd);
-    ret = tcp_socket_.attachFd(fd, flags);
+    ret = tcp_socket_.attachFd(fd);
 #endif
     if(http_parser_.paused()) {
         http_parser_.resume();

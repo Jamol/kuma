@@ -79,10 +79,12 @@ public:
     TcpSocket(EventLoop* loop);
     ~TcpSocket();
     
+    int setSslFlags(uint32_t ssl_flags);
+    uint32_t getSslFlags() const ;
     int bind(const char* bind_host, uint16_t bind_port);
-    int connect(const char* host, uint16_t port, const EventCallback& cb, uint32_t flags = 0, uint32_t timeout_ms = 0);
-    int connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t flags = 0, uint32_t timeout_ms = 0);
-    int attachFd(SOCKET_FD fd, uint32_t flags = 0);
+    int connect(const char* host, uint16_t port, const EventCallback& cb, uint32_t timeout_ms = 0);
+    int connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t timeout_ms = 0);
+    int attachFd(SOCKET_FD fd);
     int detachFd(SOCKET_FD &fd);
     int startSslHandshake(bool is_server);
     int send(const uint8_t* data, uint32_t length);
@@ -138,7 +140,7 @@ public:
     UdpSocket(EventLoop* loop);
     ~UdpSocket();
     
-    int bind(const char* bind_host, uint16_t bind_port, uint32_t flags = 0);
+    int bind(const char* bind_host, uint16_t bind_port, bool mcast=false);
     int send(const uint8_t* data, uint32_t length, const char* host, uint16_t port);
     int send(iovec* iovs, uint32_t count, const char* host, uint16_t port);
     int receive(uint8_t* data, uint32_t length, char* ip, uint32_t ip_len, uint16_t& port);
@@ -233,6 +235,7 @@ public:
     HttpRequest(EventLoop* loop);
     ~HttpRequest();
     
+    int setSslFlags(uint32_t ssl_flags);
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
     int sendRequest(const char* method, const char* url, const char* ver = "HTTP/1.1");
@@ -273,7 +276,8 @@ public:
     HttpResponse(EventLoop* loop);
     ~HttpResponse();
     
-    int attachFd(SOCKET_FD fd, uint32_t flags=0, uint8_t* init_data=nullptr, uint32_t init_len=0);
+    int setSslFlags(uint32_t ssl_flags);
+    int attachFd(SOCKET_FD fd, uint8_t* init_data=nullptr, uint32_t init_len=0);
     int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
@@ -318,13 +322,14 @@ public:
     WebSocket(EventLoop* loop);
     ~WebSocket();
     
+    int setSslFlags(uint32_t ssl_flags);
     void setProtocol(const char* proto);
     const char* getProtocol() const;
     void setOrigin(const char* origin);
     const char* getOrigin() const;
     int connect(const char* ws_url, const EventCallback& cb);
     int connect(const char* ws_url, EventCallback&& cb);
-    int attachFd(SOCKET_FD fd, uint32_t flags=0, const uint8_t* init_data=nullptr, uint32_t init_len=0);
+    int attachFd(SOCKET_FD fd, const uint8_t* init_data=nullptr, uint32_t init_len=0);
     int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
     int send(const uint8_t* data, uint32_t len);
     int close();

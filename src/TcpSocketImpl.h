@@ -41,13 +41,15 @@ public:
     TcpSocketImpl(EventLoopImpl* loop);
     ~TcpSocketImpl();
     
+    int setSslFlags(uint32_t ssl_flags);
+    uint32_t getSslFlags() const { return ssl_flags_; }
     int bind(const char* bind_host, uint16_t bind_port);
-    int connect(const char* host, uint16_t port, const EventCallback& cb, uint32_t flags = 0, uint32_t timeout_ms = 0);
-    int connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t flags = 0, uint32_t timeout_ms = 0);
-    int attachFd(SOCKET_FD fd, uint32_t flags);
+    int connect(const char* host, uint16_t port, const EventCallback& cb, uint32_t timeout_ms = 0);
+    int connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t timeout_ms = 0);
+    int attachFd(SOCKET_FD fd);
     int detachFd(SOCKET_FD &fd);
 #ifdef KUMA_HAS_OPENSSL
-    int attachFd(SOCKET_FD fd, SSL* ssl, uint32_t flags);
+    int attachFd(SOCKET_FD fd, SSL* ssl);
     int detachFd(SOCKET_FD &fd, SSL* &ssl);
 #endif
     int startSslHandshake(bool is_server);
@@ -67,8 +69,6 @@ public:
     void setErrorCallback(EventCallback&& cb) { cb_error_ = std::move(cb); }
     
     SOCKET_FD getFd() const { return fd_; }
-    
-    uint32_t getFlags() const { return flags_; }
     
 protected:
     const char* getObjKey() const;
@@ -102,7 +102,7 @@ private:
     State           state_;
     bool            registered_;
     bool*           destroy_flag_ptr_;
-    uint32_t        flags_;
+    uint32_t        ssl_flags_;
     
 #ifdef KUMA_HAS_OPENSSL
     SslHandler*     ssl_handler_;
