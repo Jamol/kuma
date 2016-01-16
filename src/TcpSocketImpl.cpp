@@ -275,7 +275,7 @@ int TcpSocketImpl::attachFd(SOCKET_FD fd)
     setState(ST_OPEN);
 #ifdef KUMA_HAS_OPENSSL
     if(SslEnabled()) {
-        int ret = startSslHandshake(IS_SERVER);
+        int ret = startSslHandshake(AS_SERVER);
         if(ret != KUMA_ERROR_NOERR) {
             return ret;
         }
@@ -318,7 +318,7 @@ int TcpSocketImpl::attachFd(SOCKET_FD fd, SSL* ssl)
             ssl_handler_ = new SslHandler();
             ssl_handler_->attachSsl(ssl);
         } else {
-            int ret = startSslHandshake(IS_SERVER);
+            int ret = startSslHandshake(AS_SERVER);
             if(ret != KUMA_ERROR_NOERR) {
                 return ret;
             }
@@ -612,7 +612,7 @@ void TcpSocketImpl::onConnect(int err)
         setState(ST_OPEN);
 #ifdef KUMA_HAS_OPENSSL
         if(SslEnabled()) {
-            err = startSslHandshake(IS_CLIENT);
+            err = startSslHandshake(AS_CLIENT);
             if(KUMA_ERROR_NOERR == err && ssl_handler_->getState() == SslHandler::SslState::SSL_HANDSHAKE) {
                 return; // continue to SSL handshake
             }

@@ -67,8 +67,8 @@ typedef enum {
 }SslFlag;
 
 typedef enum {
-    IS_CLIENT,
-    IS_SERVER
+    AS_CLIENT,
+    AS_SERVER
 }SslRole;
 
 typedef enum {
