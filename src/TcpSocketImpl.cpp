@@ -120,11 +120,8 @@ void TcpSocketImpl::cleanup()
 int TcpSocketImpl::setSslFlags(uint32_t ssl_flags)
 {
 #ifdef KUMA_HAS_OPENSSL
-    if(getState() == ST_IDLE) {
-        ssl_flags_ = ssl_flags;
-        return KUMA_ERROR_NOERR;
-    }
-    return KUMA_ERROR_INVALID_STATE;
+    ssl_flags_ = ssl_flags;
+    return KUMA_ERROR_NOERR;
 #else
     return KUMA_ERROR_UNSUPPORT;
 #endif
