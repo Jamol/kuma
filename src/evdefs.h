@@ -18,7 +18,6 @@
 
 #include "kmdefs.h"
 
-#include <mutex>
 #include <functional>
 
 KUMA_NS_BEGIN

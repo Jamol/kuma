@@ -35,7 +35,7 @@ int WsTest::close()
 
 void WsTest::onSend(int err)
 {
-    sendTestData();
+    //sendTestData();
 }
 
 void WsTest::onClose(int err)
