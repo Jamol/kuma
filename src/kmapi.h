@@ -31,7 +31,7 @@ KUMA_NS_BEGIN
 class EventLoopImpl;
 class TcpSocketImpl;
 class UdpSocketImpl;
-class TcpServerSocketImpl;
+class TcpListenerImpl;
 class TimerImpl;
 class HttpParserImpl;
 class HttpRequestImpl;
@@ -109,27 +109,27 @@ private:
     TcpSocketImpl* pimpl_;
 };
 
-class KUMA_API TcpServerSocket
+class KUMA_API TcpListener
 {
 public:
-    typedef std::function<void(SOCKET_FD)> AcceptCallback;
+    typedef std::function<void(SOCKET_FD)> ListenCallback;
     typedef std::function<void(int)> ErrorCallback;
     
-    TcpServerSocket(EventLoop* loop);
-    ~TcpServerSocket();
+    TcpListener(EventLoop* loop);
+    ~TcpListener();
     
     int startListen(const char* host, uint16_t port);
     int stopListen(const char* host, uint16_t port);
     int close();
     
-    void setAcceptCallback(const AcceptCallback& cb);
+    void setListenCallback(const ListenCallback& cb);
     void setErrorCallback(const ErrorCallback& cb);
-    void setAcceptCallback(AcceptCallback&& cb);
+    void setListenCallback(ListenCallback&& cb);
     void setErrorCallback(ErrorCallback&& cb);
-    TcpServerSocketImpl* getPimpl();
+    TcpListenerImpl* getPimpl();
     
 private:
-    TcpServerSocketImpl* pimpl_;
+    TcpListenerImpl* pimpl_;
 };
 
 class KUMA_API UdpSocket

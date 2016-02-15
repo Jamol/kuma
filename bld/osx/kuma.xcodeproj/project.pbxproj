@@ -26,8 +26,8 @@
 		6F6208FD1A26BDB1000DAF4B /* kmapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208FA1A26BDB1000DAF4B /* kmapi.h */; };
 		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
 		6FA951421A3808450033C9CF /* kmdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FA951411A3808450033C9CF /* kmdefs.h */; };
-		6FF211031B130A2F006603BB /* TcpServerSocketImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF211011B130A2F006603BB /* TcpServerSocketImpl.cpp */; };
-		6FF211041B130A2F006603BB /* TcpServerSocketImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF211021B130A2F006603BB /* TcpServerSocketImpl.h */; };
+		6FF211031B130A2F006603BB /* TcpListenerImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF211011B130A2F006603BB /* TcpListenerImpl.cpp */; };
+		6FF211041B130A2F006603BB /* TcpListenerImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF211021B130A2F006603BB /* TcpListenerImpl.h */; };
 		6FF211CB1B1556C5006603BB /* OpenSslLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF211C71B1556C5006603BB /* OpenSslLib.cpp */; };
 		6FF211CC1B1556C5006603BB /* OpenSslLib.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF211C81B1556C5006603BB /* OpenSslLib.h */; };
 		6FF211CD1B1556C5006603BB /* SslHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF211C91B1556C5006603BB /* SslHandler.cpp */; };
@@ -77,8 +77,8 @@
 		6F852E441985EB4700271D87 /* kumaProj.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaProj.xcconfig; sourceTree = "<group>"; };
 		6F852E451985EB4700271D87 /* kumaTarget.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaTarget.xcconfig; sourceTree = "<group>"; };
 		6FA951411A3808450033C9CF /* kmdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmdefs.h; sourceTree = "<group>"; };
-		6FF211011B130A2F006603BB /* TcpServerSocketImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TcpServerSocketImpl.cpp; sourceTree = "<group>"; };
-		6FF211021B130A2F006603BB /* TcpServerSocketImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpServerSocketImpl.h; sourceTree = "<group>"; };
+		6FF211011B130A2F006603BB /* TcpListenerImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TcpListenerImpl.cpp; sourceTree = "<group>"; };
+		6FF211021B130A2F006603BB /* TcpListenerImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpListenerImpl.h; sourceTree = "<group>"; };
 		6FF211C71B1556C5006603BB /* OpenSslLib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = OpenSslLib.cpp; path = ssl/OpenSslLib.cpp; sourceTree = "<group>"; };
 		6FF211C81B1556C5006603BB /* OpenSslLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = OpenSslLib.h; path = ssl/OpenSslLib.h; sourceTree = "<group>"; };
 		6FF211C91B1556C5006603BB /* SslHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SslHandler.cpp; path = ssl/SslHandler.cpp; sourceTree = "<group>"; };
@@ -162,8 +162,8 @@
 				6FA951411A3808450033C9CF /* kmdefs.h */,
 				6FF212921B181103006603BB /* kmapi.cpp */,
 				6F6208FA1A26BDB1000DAF4B /* kmapi.h */,
-				6FF211011B130A2F006603BB /* TcpServerSocketImpl.cpp */,
-				6FF211021B130A2F006603BB /* TcpServerSocketImpl.h */,
+				6FF211011B130A2F006603BB /* TcpListenerImpl.cpp */,
+				6FF211021B130A2F006603BB /* TcpListenerImpl.h */,
 				6F0098B21B03124400122C15 /* TcpSocketImpl.cpp */,
 				6F0098AC1B01FEC800122C15 /* TcpSocketImpl.h */,
 				6F2D40451B194AE200E24928 /* TimerManager.cpp */,
@@ -250,7 +250,7 @@
 				6F2D404C1B19E25B00E24928 /* HttpParserImpl.h in Headers */,
 				6F0098B11B03110100122C15 /* UdpSocketImpl.h in Headers */,
 				6FF746F01B2196240007F34D /* Uri.h in Headers */,
-				6FF211041B130A2F006603BB /* TcpServerSocketImpl.h in Headers */,
+				6FF211041B130A2F006603BB /* TcpListenerImpl.h in Headers */,
 				6F29634D1A18AB0D00C3C79B /* DataPacket.h in Headers */,
 				6FF746A31B2009100007F34D /* HttpRequestImpl.h in Headers */,
 				6FF211DA1B1556FB006603BB /* EventLoopImpl.h in Headers */,
@@ -329,7 +329,7 @@
 				6F2D403E1B1834D300E24928 /* UdpSocketImpl.cpp in Sources */,
 				6FF7476F1B27D6540007F34D /* WebSocketImpl.cpp in Sources */,
 				6FF212931B181103006603BB /* kmapi.cpp in Sources */,
-				6FF211031B130A2F006603BB /* TcpServerSocketImpl.cpp in Sources */,
+				6FF211031B130A2F006603BB /* TcpListenerImpl.cpp in Sources */,
 				6F2D40471B194AE200E24928 /* TimerManager.cpp in Sources */,
 				6FF212911B17229C006603BB /* SelectPoll.cpp in Sources */,
 				6F2963531A18AB0D00C3C79B /* kmtrace.cpp in Sources */,

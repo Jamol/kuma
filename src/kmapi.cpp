@@ -16,7 +16,7 @@
 #include "EventLoopImpl.h"
 #include "TcpSocketImpl.h"
 #include "UdpSocketImpl.h"
-#include "TcpServerSocketImpl.h"
+#include "TcpListenerImpl.h"
 #include "TimerManager.h"
 #include "http/HttpParserImpl.h"
 #include "http/HttpRequestImpl.h"
@@ -249,52 +249,52 @@ TcpSocketImpl* TcpSocket::getPimpl()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-TcpServerSocket::TcpServerSocket(EventLoop* loop)
-: pimpl_(new TcpServerSocketImpl(loop->getPimpl()))
+TcpListener::TcpListener(EventLoop* loop)
+: pimpl_(new TcpListenerImpl(loop->getPimpl()))
 {
 
 }
-TcpServerSocket::~TcpServerSocket()
+TcpListener::~TcpListener()
 {
     delete pimpl_;
 }
 
-int TcpServerSocket::startListen(const char* host, uint16_t port)
+int TcpListener::startListen(const char* host, uint16_t port)
 {
     return pimpl_->startListen(host, port);
 }
 
-int TcpServerSocket::stopListen(const char* host, uint16_t port)
+int TcpListener::stopListen(const char* host, uint16_t port)
 {
     return pimpl_->stopListen(host, port);
 }
 
-int TcpServerSocket::close()
+int TcpListener::close()
 {
     return pimpl_->close();
 }
 
-void TcpServerSocket::setAcceptCallback(const AcceptCallback& cb)
+void TcpListener::setListenCallback(const ListenCallback& cb)
 {
-    pimpl_->setAcceptCallback(cb);
+    pimpl_->setListenCallback(cb);
 }
 
-void TcpServerSocket::setErrorCallback(const ErrorCallback& cb)
+void TcpListener::setErrorCallback(const ErrorCallback& cb)
 {
     pimpl_->setErrorCallback(cb);
 }
 
-void TcpServerSocket::setAcceptCallback(AcceptCallback&& cb)
+void TcpListener::setListenCallback(ListenCallback&& cb)
 {
-    pimpl_->setAcceptCallback(std::move(cb));
+    pimpl_->setListenCallback(std::move(cb));
 }
 
-void TcpServerSocket::setErrorCallback(ErrorCallback&& cb)
+void TcpListener::setErrorCallback(ErrorCallback&& cb)
 {
     pimpl_->setErrorCallback(std::move(cb));
 }
 
-TcpServerSocketImpl* TcpServerSocket::getPimpl()
+TcpListenerImpl* TcpListener::getPimpl()
 {
     return pimpl_;
 }

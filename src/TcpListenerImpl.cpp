@@ -55,13 +55,13 @@
 #include <errno.h>
 
 #include "EventLoopImpl.h"
-#include "TcpServerSocketImpl.h"
+#include "TcpListenerImpl.h"
 #include "util/util.h"
 #include "util/kmtrace.h"
 
 KUMA_NS_BEGIN
 
-TcpServerSocketImpl::TcpServerSocketImpl(EventLoopImpl* loop)
+TcpListenerImpl::TcpListenerImpl(EventLoopImpl* loop)
 : fd_(INVALID_FD)
 , loop_(loop)
 , registered_(false)
@@ -71,17 +71,17 @@ TcpServerSocketImpl::TcpServerSocketImpl(EventLoopImpl* loop)
     
 }
 
-TcpServerSocketImpl::~TcpServerSocketImpl()
+TcpListenerImpl::~TcpListenerImpl()
 {
 
 }
 
-const char* TcpServerSocketImpl::getObjKey() const
+const char* TcpListenerImpl::getObjKey() const
 {
-    return "TcpServerSocket";
+    return "TcpListener";
 }
 
-void TcpServerSocketImpl::cleanup()
+void TcpListenerImpl::cleanup()
 {
     if(INVALID_FD != fd_) {
         SOCKET_FD fd = fd_;
@@ -96,7 +96,7 @@ void TcpServerSocketImpl::cleanup()
     }
 }
 
-int TcpServerSocketImpl::startListen(const char* host, uint16_t port)
+int TcpListenerImpl::startListen(const char* host, uint16_t port)
 {
     KUMA_INFOXTRACE("startListen, host="<<host<<", port="<<port);
     sockaddr_storage ss_addr = {0};
@@ -136,7 +136,7 @@ int TcpServerSocketImpl::startListen(const char* host, uint16_t port)
     return KUMA_ERROR_NOERR;
 }
 
-int TcpServerSocketImpl::stopListen(const char* host, uint16_t port)
+int TcpListenerImpl::stopListen(const char* host, uint16_t port)
 {
     KUMA_INFOXTRACE("stopListen");
     stopped_ = true;
@@ -146,7 +146,7 @@ int TcpServerSocketImpl::stopListen(const char* host, uint16_t port)
     return KUMA_ERROR_NOERR;
 }
 
-void TcpServerSocketImpl::setSocketOption()
+void TcpListenerImpl::setSocketOption()
 {
     if(INVALID_FD == fd_) {
         return ;
@@ -169,7 +169,7 @@ void TcpServerSocketImpl::setSocketOption()
     setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt_val, sizeof(int));
 }
 
-int TcpServerSocketImpl::close()
+int TcpListenerImpl::close()
 {
     KUMA_INFOXTRACE("close");
     stopped_ = true;
@@ -179,7 +179,7 @@ int TcpServerSocketImpl::close()
     return KUMA_ERROR_NOERR;
 }
 
-void TcpServerSocketImpl::onAccept()
+void TcpListenerImpl::onAccept()
 {
     SOCKET_FD fd = INVALID_FD;
     while(!stopped_) {
@@ -212,14 +212,14 @@ void TcpServerSocketImpl::onAccept()
     }
 }
 
-void TcpServerSocketImpl::onClose(int err)
+void TcpListenerImpl::onClose(int err)
 {
     KUMA_INFOXTRACE("onClose, err="<<err);
     cleanup();
     if(cb_error_) cb_error_(err);
 }
 
-void TcpServerSocketImpl::ioReady(uint32_t events)
+void TcpListenerImpl::ioReady(uint32_t events)
 {
     if(events & KUMA_EV_ERROR) {
         KUMA_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events="<<events<<", err="<<getLastError());

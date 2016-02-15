@@ -28,7 +28,7 @@ private:
     
 private:
     EventLoop*      loop_;
-    TcpServerSocket server_;
+    TcpListener     server_;
     Proto           proto_;
     int             thr_count_;
     LoopPool        loop_pool_;

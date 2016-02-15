@@ -40,7 +40,7 @@ int TcpServer::startListen(const char* proto, const char* host, uint16_t port)
         proto_ = PROTO_AUTOS;
     }
     loop_pool_.init(thr_count_);
-    server_.setAcceptCallback([this] (SOCKET_FD fd) { onAccept(fd); });
+    server_.setListenCallback([this] (SOCKET_FD fd) { onAccept(fd); });
     server_.setErrorCallback([this] (int err) { onError(err); });
     return server_.startListen(host, port);
 }

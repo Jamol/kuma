@@ -171,7 +171,7 @@
     <ClCompile Include="..\..\src\poll\VPoll.cpp" />
     <ClCompile Include="..\..\src\ssl\OpenSslLib.cpp" />
     <ClCompile Include="..\..\src\ssl\SslHandler.cpp" />
-    <ClCompile Include="..\..\src\TcpServerSocketImpl.cpp" />
+    <ClCompile Include="..\..\src\TcpListenerImpl.cpp" />
     <ClCompile Include="..\..\src\TcpSocketImpl.cpp" />
     <ClCompile Include="..\..\src\TimerManager.cpp" />
     <ClCompile Include="..\..\src\UdpSocketImpl.cpp" />
@@ -193,7 +193,7 @@
     <ClInclude Include="..\..\src\kmdefs.h" />
     <ClInclude Include="..\..\src\poll\IOPoll.h" />
     <ClInclude Include="..\..\src\poll\Notifier.h" />
-    <ClInclude Include="..\..\src\TcpServerSocketImpl.h" />
+    <ClInclude Include="..\..\src\TcpListenerImpl.h" />
     <ClInclude Include="..\..\src\TcpSocketImpl.h" />
     <ClInclude Include="..\..\src\TimerManager.h" />
     <ClInclude Include="..\..\src\UdpSocketImpl.h" />

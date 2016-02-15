@@ -7,10 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6F66AC3D1C71B03F00BB37B9 /* TcpListenerImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F66AC3B1C71B03F00BB37B9 /* TcpListenerImpl.cpp */; };
 		6F7D5FA71B33E9E6000FF2F8 /* libkuma.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F7D5F9B1B33E9E6000FF2F8 /* libkuma.a */; };
 		6F7D5FE41B33EC65000FF2F8 /* EventLoopImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7D5FD51B33EC65000FF2F8 /* EventLoopImpl.cpp */; };
 		6F7D5FE51B33EC65000FF2F8 /* kmapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7D5FD71B33EC65000FF2F8 /* kmapi.cpp */; };
-		6F7D5FE71B33EC65000FF2F8 /* TcpServerSocketImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7D5FDC1B33EC65000FF2F8 /* TcpServerSocketImpl.cpp */; };
 		6F7D5FE81B33EC65000FF2F8 /* TcpSocketImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7D5FDE1B33EC65000FF2F8 /* TcpSocketImpl.cpp */; };
 		6F7D5FE91B33EC65000FF2F8 /* TimerManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7D5FE01B33EC65000FF2F8 /* TimerManager.cpp */; };
 		6F7D5FEA1B33EC65000FF2F8 /* UdpSocketImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7D5FE21B33EC65000FF2F8 /* UdpSocketImpl.cpp */; };
@@ -52,6 +52,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		6F66AC3B1C71B03F00BB37B9 /* TcpListenerImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TcpListenerImpl.cpp; path = ../../src/TcpListenerImpl.cpp; sourceTree = "<group>"; };
+		6F66AC3C1C71B03F00BB37B9 /* TcpListenerImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TcpListenerImpl.h; path = ../../src/TcpListenerImpl.h; sourceTree = "<group>"; };
 		6F7D5F9B1B33E9E6000FF2F8 /* libkuma.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libkuma.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F7D5FA61B33E9E6000FF2F8 /* kumaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = kumaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F7D5FAC1B33E9E6000FF2F8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -62,8 +64,6 @@
 		6F7D5FD81B33EC65000FF2F8 /* kmapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmapi.h; path = ../../src/kmapi.h; sourceTree = "<group>"; };
 		6F7D5FD91B33EC65000FF2F8 /* kmconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmconf.h; path = ../../src/kmconf.h; sourceTree = "<group>"; };
 		6F7D5FDA1B33EC65000FF2F8 /* kmdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmdefs.h; path = ../../src/kmdefs.h; sourceTree = "<group>"; };
-		6F7D5FDC1B33EC65000FF2F8 /* TcpServerSocketImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TcpServerSocketImpl.cpp; path = ../../src/TcpServerSocketImpl.cpp; sourceTree = "<group>"; };
-		6F7D5FDD1B33EC65000FF2F8 /* TcpServerSocketImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TcpServerSocketImpl.h; path = ../../src/TcpServerSocketImpl.h; sourceTree = "<group>"; };
 		6F7D5FDE1B33EC65000FF2F8 /* TcpSocketImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TcpSocketImpl.cpp; path = ../../src/TcpSocketImpl.cpp; sourceTree = "<group>"; };
 		6F7D5FDF1B33EC65000FF2F8 /* TcpSocketImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TcpSocketImpl.h; path = ../../src/TcpSocketImpl.h; sourceTree = "<group>"; };
 		6F7D5FE01B33EC65000FF2F8 /* TimerManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TimerManager.cpp; path = ../../src/TimerManager.cpp; sourceTree = "<group>"; };
@@ -169,8 +169,8 @@
 				6F7D5FD81B33EC65000FF2F8 /* kmapi.h */,
 				6F7D5FD91B33EC65000FF2F8 /* kmconf.h */,
 				6F7D5FDA1B33EC65000FF2F8 /* kmdefs.h */,
-				6F7D5FDC1B33EC65000FF2F8 /* TcpServerSocketImpl.cpp */,
-				6F7D5FDD1B33EC65000FF2F8 /* TcpServerSocketImpl.h */,
+				6F66AC3B1C71B03F00BB37B9 /* TcpListenerImpl.cpp */,
+				6F66AC3C1C71B03F00BB37B9 /* TcpListenerImpl.h */,
 				6F7D5FDE1B33EC65000FF2F8 /* TcpSocketImpl.cpp */,
 				6F7D5FDF1B33EC65000FF2F8 /* TcpSocketImpl.h */,
 				6F7D5FE01B33EC65000FF2F8 /* TimerManager.cpp */,
@@ -337,13 +337,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				6F7D5FEA1B33EC65000FF2F8 /* UdpSocketImpl.cpp in Sources */,
-				6F7D5FE71B33EC65000FF2F8 /* TcpServerSocketImpl.cpp in Sources */,
 				6FECED041C2138E700310F52 /* Uri.cpp in Sources */,
 				6FECED1D1C2139CA00310F52 /* kmtrace.cpp in Sources */,
 				6FECED0E1C2139A400310F52 /* VPoll.cpp in Sources */,
 				6FECED0D1C2139A400310F52 /* SelectPoll.cpp in Sources */,
 				6F7D5FE81B33EC65000FF2F8 /* TcpSocketImpl.cpp in Sources */,
 				6FECED231C2139D600310F52 /* WebSocketImpl.cpp in Sources */,
+				6F66AC3D1C71B03F00BB37B9 /* TcpListenerImpl.cpp in Sources */,
 				6FECED031C2138E700310F52 /* HttpResponseImpl.cpp in Sources */,
 				6FECED141C2139B100310F52 /* SslHandler.cpp in Sources */,
 				6FECED1C1C2139CA00310F52 /* base64.cpp in Sources */,

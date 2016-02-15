@@ -1,6 +1,10 @@
 #include "HttpTest.h"
 #include "TestLoop.h"
 
+#ifdef KUMA_OS_WIN
+#define strcasecmp _stricmp
+#endif
+
 HttpTest::HttpTest(EventLoop* loop, long conn_id, TestLoop* server)
 : loop_(loop)
 , http_(loop_)

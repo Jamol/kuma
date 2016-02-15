@@ -13,8 +13,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __TcpServerSocketImpl_H__
-#define __TcpServerSocketImpl_H__
+#ifndef __TcpListenerImpl_H__
+#define __TcpListenerImpl_H__
 
 #include "kmdefs.h"
 #include "evdefs.h"
@@ -23,22 +23,22 @@ KUMA_NS_BEGIN
 
 class EventLoopImpl;
 
-class TcpServerSocketImpl
+class TcpListenerImpl
 {
 public:
-    typedef std::function<void(SOCKET_FD)> AcceptCallback;
+    typedef std::function<void(SOCKET_FD)> ListenCallback;
     typedef std::function<void(int)> ErrorCallback;
     
-    TcpServerSocketImpl(EventLoopImpl* loop);
-    ~TcpServerSocketImpl();
+    TcpListenerImpl(EventLoopImpl* loop);
+    ~TcpListenerImpl();
     
     int startListen(const char* host, uint16_t port);
     int stopListen(const char* host, uint16_t port);
     int close();
     
-    void setAcceptCallback(const AcceptCallback& cb) { cb_accept_ = cb; }
+    void setListenCallback(const ListenCallback& cb) { cb_accept_ = cb; }
     void setErrorCallback(const ErrorCallback& cb) { cb_error_ = cb; }
-    void setAcceptCallback(AcceptCallback&& cb) { cb_accept_ = std::move(cb); }
+    void setListenCallback(ListenCallback&& cb) { cb_accept_ = std::move(cb); }
     void setErrorCallback(ErrorCallback&& cb) { cb_error_ = std::move(cb); }
     
     SOCKET_FD getFd() const { return fd_; }
@@ -62,7 +62,7 @@ private:
     uint32_t        flags_;
     bool            stopped_;
     
-    AcceptCallback  cb_accept_;
+    ListenCallback  cb_accept_;
     ErrorCallback   cb_error_;
 };
 
