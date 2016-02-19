@@ -20,7 +20,7 @@ public:
     int startListen(const char* proto, const char* host, uint16_t port);
     int stopListen();
     
-    void onAccept(SOCKET_FD);
+    void onAccept(SOCKET_FD, const char* ip, uint16_t port);
     void onError(int err);
     
 private:

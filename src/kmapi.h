@@ -112,7 +112,7 @@ private:
 class KUMA_API TcpListener
 {
 public:
-    typedef std::function<void(SOCKET_FD)> ListenCallback;
+    typedef std::function<void(SOCKET_FD, const char*, uint16_t)> ListenCallback;
     typedef std::function<void(int)> ErrorCallback;
     
     TcpListener(EventLoop* loop);
