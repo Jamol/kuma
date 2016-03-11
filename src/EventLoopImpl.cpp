@@ -46,6 +46,7 @@ bool EventLoopImpl::init()
     if(!poll_->init()) {
         return false;
     }
+    stop_loop_ = false;
     thread_id_ = std::this_thread::get_id();
     return true;
 }

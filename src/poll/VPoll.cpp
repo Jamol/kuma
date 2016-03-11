@@ -64,11 +64,13 @@ VPoll::~VPoll()
 
 bool VPoll::init()
 {
-    if(!notifier_.init()) {
-        return false;
+    if (!notifier_.ready()) {
+        if (!notifier_.init()) {
+            return false;
+        }
+        IOCallback cb([this](uint32_t ev) { notifier_.onEvent(ev); });
+        registerFd(notifier_.getReadFD(), KUMA_EV_READ | KUMA_EV_ERROR, std::move(cb));
     }
-    IOCallback cb ([this] (uint32_t ev) { notifier_.onEvent(ev); });
-    registerFd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, std::move(cb));
     return true;
 }
 
