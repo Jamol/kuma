@@ -82,6 +82,7 @@ void Client::onReceive(int err)
             break;
         } else {
             printf("Client::onReceive, err=%d\n", getLastError());
+            break;
         }
     } while (true);
 }
