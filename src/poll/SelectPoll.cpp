@@ -209,8 +209,8 @@ int SelectPoll::wait(uint32_t wait_ms)
     memcpy(&readfds, &read_fds_, sizeof(read_fds_));
     memcpy(&writefds, &write_fds_, sizeof(write_fds_));
     memcpy(&exceptfds, &except_fds_, sizeof(except_fds_));
-    struct timeval tval;
-    if(wait_ms > 0) {
+    struct timeval tval { 0, 0 };
+    if(wait_ms != -1) {
         tval.tv_sec = wait_ms/1000;
         tval.tv_usec = (wait_ms - tval.tv_sec*1000)*1000;
     }
