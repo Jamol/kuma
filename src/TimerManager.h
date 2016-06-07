@@ -84,7 +84,12 @@ public:
     };
     
 private:
-    bool addTimer(TimerNode* timer_node, bool from_schedule=false);
+    typedef enum {
+        FROM_SCHEDULE,
+        FROM_CASCADE,
+        FROM_RESCHEDULE
+    } FROM;
+    bool addTimer(TimerNode* timer_node, FROM from);
     void removeTimer(TimerNode* timer_node);
     int cascadeTimer(int tv_idx, int tl_idx);
     bool isTimerPending(TimerNode* timer_node)

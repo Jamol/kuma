@@ -15,6 +15,7 @@
 
 #include "TimerManager.h"
 #include "EventLoopImpl.h"
+#include "util/kmtrace.h"
 
 #include <string.h>
 
@@ -111,7 +112,7 @@ bool TimerManager::scheduleTimer(TimerImpl* timer, uint32_t delay_ms, TimerMode 
         timer_node->delay_ms_ = delay_ms;
         timer_node->repeating_ = mode == TimerMode::REPEATING;
         
-        ret = addTimer(timer_node, true);
+        ret = addTimer(timer_node, FROM_SCHEDULE);
         if(reschedule_node_ == timer_node) {
             reschedule_node_ = nullptr;
         }
@@ -264,9 +265,9 @@ int TimerManager::find_first_set_in_bitmap(int idx)
     return pos;
 }
 
-bool TimerManager::addTimer(TimerNode* timer_node, bool from_schedule)
+bool TimerManager::addTimer(TimerNode* timer_node, FROM from)
 {
-    if(0 == timer_count_) {
+    if(0 == timer_count_ && FROM_SCHEDULE == from) {
         last_tick_ = timer_node->start_tick_;
     }
     TICK_COUNT_TYPE fire_tick = timer_node->delay_ms_ + timer_node->start_tick_;
@@ -311,7 +312,7 @@ bool TimerManager::addTimer(TimerNode* timer_node, bool from_schedule)
         return false;
     }
     list_add_node(head, timer_node);
-    if(from_schedule) {
+    if(FROM_SCHEDULE == from || FROM_RESCHEDULE == from) {
         ++timer_count_;
     }
     return true;
@@ -342,7 +343,7 @@ int TimerManager::cascadeTimer(int tv_idx, int tl_idx)
     {
         tmp_node = next_node;
         next_node = next_node->next_;
-        addTimer(tmp_node);
+        addTimer(tmp_node, FROM_CASCADE);
     }
 
     return tl_idx;
@@ -376,9 +377,9 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
     TICK_COUNT_TYPE cur_jiffies = now_tick;
     TICK_COUNT_TYPE next_jiffies = last_tick_+1;
     last_tick_ = now_tick;
+    TICK_COUNT_TYPE last_tick = now_tick;
     TimerNode tmp_head;
     list_init_head(&tmp_head);
-    
     mutex_.lock();
     while(cur_jiffies >= next_jiffies)
     {
@@ -393,6 +394,7 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
             idx &= TIMER_VECTOR_MASK;
             next_jiffies += delta;
             if(next_jiffies > cur_jiffies) {
+                next_jiffies = cur_jiffies + 1;
                 break;
             }
         }
@@ -407,6 +409,7 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
         clear_tv0_bitmap(idx);
     }
     int count = 0;
+    
     while(!list_empty(&tmp_head))
     {
         running_node_ = tmp_head.next_;
@@ -416,7 +419,10 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
         list_remove_node(running_node_);
         --timer_count_;
         mutex_.unlock(); // sync nodes in tmp_list with cancel_timer.
-        
+        TICK_COUNT_TYPE now_ms = 0;
+        if (reschedule_node_) {
+            now_ms = get_tick_count_ms();
+        }
         running_mutex_.lock();
         if(running_node_) {
             if(running_node_->timer_) {
@@ -431,8 +437,8 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
         
         mutex_.lock();
         if(reschedule_node_ && !reschedule_node_->cancelled_ && !isTimerPending(reschedule_node_)) {
-            reschedule_node_->start_tick_ = get_tick_count_ms();
-            addTimer(reschedule_node_, true);
+            reschedule_node_->start_tick_ = now_ms;//get_tick_count_ms();
+            addTimer(reschedule_node_, FROM_RESCHEDULE);
             reschedule_node_ = nullptr;
         }
     }
@@ -446,7 +452,7 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
     mutex_.unlock();
     if(remain_ms) { // revise the remain time
         now_tick = get_tick_count_ms();
-        delta_tick = calc_time_elapse_delta_ms(now_tick, last_tick_);
+        delta_tick = calc_time_elapse_delta_ms(now_tick, last_tick);
         if(*remain_ms <= delta_tick) {
             *remain_ms = 0;
         } else {
