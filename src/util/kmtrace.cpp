@@ -47,7 +47,7 @@ void TracePrint(int level, const char* szMessage, ...)
     
     std::stringstream ss;
     
-    auto now_p = std::chrono::system_clock::now();
+    /*auto now_p = std::chrono::system_clock::now();
     auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now_p.time_since_epoch());
     auto now_c = std::chrono::system_clock::to_time_t(now_p);
     struct tm tm_buf;
@@ -55,23 +55,23 @@ void TracePrint(int level, const char* szMessage, ...)
     ss << std::put_time(&tm_buf, "%F %T.");
     ss.width(3);
     ss.fill('0');
-    ss << (now_ms.count()%1000);
+    ss << (now_ms.count()%1000) << " ";*/
     switch(level)
     {
         case KUMA_TRACE_LEVEL_INFO:
-            ss << " INFO: ";
+            ss << "INFO: ";
             break;
         case KUMA_TRACE_LEVEL_WARN:
-            ss << " WARN: ";
+            ss << "WARN: ";
             break;
         case KUMA_TRACE_LEVEL_ERROR:
-            ss << " ERROR: ";
+            ss << "ERROR: ";
             break;
         case KUMA_TRACE_LEVEL_DEBUG:
-            ss << " DEBUG: ";
+            ss << "DEBUG: ";
             break;
         default:
-            ss << " INFO: ";
+            ss << "INFO: ";
             break;
     }
     ss << "[" << getCurrentThreadId() << "] " << szMsgBuf;
