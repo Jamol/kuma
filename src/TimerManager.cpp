@@ -19,11 +19,15 @@
 
 #include <string.h>
 
+using namespace kuma;
+
 KUMA_NS_BEGIN
 
 int find_first_set(unsigned int b);
 TICK_COUNT_TYPE get_tick_count_ms();
 TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_TYPE& start_tick);
+
+KUMA_NS_END
 
 //////////////////////////////////////////////////////////////////////////
 // TimerImpl
@@ -462,5 +466,3 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
     }
     return count;
 }
-
-KUMA_NS_END

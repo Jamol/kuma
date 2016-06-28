@@ -56,7 +56,7 @@
 #include "SslHandler.h"
 #include "util/kmtrace.h"
 
-KUMA_NS_BEGIN
+using namespace kuma;
 
 SslHandler::SslHandler()
 : fd_(INVALID_FD)
@@ -317,7 +317,5 @@ SslHandler::SslState SslHandler::doSslHandshake()
     }
     return state;
 }
-
-KUMA_NS_END
 
 #endif // KUMA_HAS_OPENSSL

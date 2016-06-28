@@ -20,6 +20,8 @@
 
 #include <algorithm>
 
+using namespace kuma;
+
 KUMA_NS_BEGIN
 
 #define CR  '\r'
@@ -42,6 +44,8 @@ typedef enum{
     CHUNK_READ_DATACRLF,
     CHUNK_READ_TRAILER
 }ChunkReadState;
+
+KUMA_NS_END
 
 static const std::string str_empty = "";
 
@@ -746,5 +750,3 @@ bool HttpParserImpl::getLine(const char*& cur_pos, const char* end, const char*&
     }
     return true;
 }
-
-KUMA_NS_END

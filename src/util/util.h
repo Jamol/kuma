@@ -67,6 +67,37 @@ std::string& trim_right(std::string& str);
 std::string getExecutablePath();
 std::string getCurrentModulePath();
 
+//#define decode_u32(buf) ((buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3])
+//#define decode_u24(buf) ((buf[0] << 16) | (buf[1] << 8) | buf[2])
+//#define decode_u16(buf) ((buf[0] << 8) | buf[1])
+//#define encode_u32(buf, u) buf[0] = uint8_t(u >> 24), buf[1] = uint8_t(u >> 16), buf[2] = uint8_t(u >> 8), buf[3] = uint8_t(u)
+//#define encode_u24(buf, u) buf[0] = uint8_t(u >> 16), buf[1] = uint8_t(u >> 8), buf[2] = uint8_t(u)
+//#define encode_u16(buf, u) buf[0] = uint8_t(u >> 8), buf[1] = uint8_t(u)
+
+inline uint32_t decode_u32(const uint8_t *buf) {
+    return (buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3];
+}
+
+inline uint32_t decode_u24(const uint8_t *buf) {
+    return (buf[0] << 16) | (buf[1] << 8) | buf[2];
+}
+
+inline uint16_t decode_u16(const uint8_t *buf) {
+    return (buf[0] << 8) | buf[1];
+}
+
+inline void encode_u32(uint32_t u, uint8_t *buf) {
+    buf[0] = u >> 24, buf[1] = u >> 16, buf[2] = u >> 8, buf[3] = u;
+}
+
+inline void encode_u24(uint32_t u, uint8_t *buf) {
+    buf[0] = u >> 16, buf[1] = u >> 8, buf[2] = u;
+}
+
+inline void encode_u16(uint32_t u, uint8_t *buf) {
+    buf[0] = u >> 8, buf[1] = u;
+}
+
 extern "C" {
     KUMA_API int km_resolve_2_ip(const char* host_name, char *ip_buf, int ip_buf_len, int ipv = 0);
     KUMA_API int km_parse_address(const char* addr,

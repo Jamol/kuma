@@ -66,7 +66,7 @@
 # include "ssl/SslHandler.h"
 #endif
 
-KUMA_NS_BEGIN
+using namespace kuma;
 
 TcpSocketImpl::TcpSocketImpl(EventLoopImpl* loop)
 : fd_(INVALID_FD)
@@ -725,5 +725,3 @@ void TcpSocketImpl::ioReady(uint32_t events)
             break;
     }
 }
-
-KUMA_NS_END

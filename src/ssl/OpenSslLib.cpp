@@ -23,7 +23,7 @@
 #include <thread>
 #include <sstream>
 
-KUMA_NS_BEGIN
+using namespace kuma;
 
 SSL_CTX* OpenSslLib::ssl_ctx_client_ = NULL;
 SSL_CTX* OpenSslLib::ssl_ctx_server_ = NULL;
@@ -282,7 +282,5 @@ void OpenSslLib::lockingCallback(int mode, int n, const char *file, int line)
         ssl_locks_[n].unlock();
     }
 }
-
-KUMA_NS_END
 
 #endif // KUMA_HAS_OPENSSL

@@ -27,7 +27,7 @@
 #define SHA1 sha1::calc
 #endif
 
-KUMA_NS_BEGIN
+using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
 WSHandler::WSHandler()
@@ -424,5 +424,3 @@ WSHandler::WSError WSHandler::handleDataMask(FrameHeader& hdr, uint8_t* data, ui
     
     return WS_ERROR_NOERR;
 }
-
-KUMA_NS_END

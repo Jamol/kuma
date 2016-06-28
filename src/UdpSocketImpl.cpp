@@ -64,7 +64,7 @@
 #define IPV6_DROP_MEMBERSHIP IPV6_LEAVE_GROUP
 #endif
 
-KUMA_NS_BEGIN
+using namespace kuma;
 
 UdpSocketImpl::UdpSocketImpl(EventLoopImpl* loop)
 : fd_(INVALID_FD)
@@ -506,5 +506,3 @@ void UdpSocketImpl::ioReady(uint32_t events)
         onSend(0);
     }
 }
-
-KUMA_NS_END

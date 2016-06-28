@@ -19,7 +19,7 @@
 
 #include <sstream>
 
-KUMA_NS_BEGIN
+using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
 WebSocketImpl::WebSocketImpl(EventLoopImpl* loop)
@@ -398,5 +398,3 @@ void WebSocketImpl::onWsHandshake(int err)
         if(cb_error_) cb_error_(KUMA_ERROR_FAILED);
     }
 }
-
-KUMA_NS_END

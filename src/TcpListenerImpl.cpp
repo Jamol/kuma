@@ -59,7 +59,7 @@
 #include "util/util.h"
 #include "util/kmtrace.h"
 
-KUMA_NS_BEGIN
+using namespace kuma;
 
 TcpListenerImpl::TcpListenerImpl(EventLoopImpl* loop)
 : fd_(INVALID_FD)
@@ -228,5 +228,3 @@ void TcpListenerImpl::ioReady(uint32_t events)
         onAccept();
     }
 }
-
-KUMA_NS_END

@@ -20,7 +20,7 @@
 #include <sstream>
 #include <iterator>
 
-KUMA_NS_BEGIN
+using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
 HttpRequestImpl::HttpRequestImpl(EventLoopImpl* loop)
@@ -416,5 +416,3 @@ void HttpRequestImpl::onHttpEvent(HttpEvent ev)
             break;
     }
 }
-
-KUMA_NS_END

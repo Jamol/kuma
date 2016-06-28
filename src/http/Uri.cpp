@@ -15,7 +15,7 @@
 
 #include "Uri.h"
 
-KUMA_NS_BEGIN
+using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
 Uri::Uri()
@@ -114,5 +114,3 @@ bool Uri::parse_host_port(const std::string& hostport, std::string& host, std::s
     }
     return true;
 }
-
-KUMA_NS_END

@@ -19,7 +19,7 @@
 
 #include <iterator>
 
-KUMA_NS_BEGIN
+using namespace kuma;
 
 static const std::string str_content_type = "Content-Type";
 static const std::string str_content_length = "Content-Length";
@@ -420,5 +420,3 @@ void HttpResponseImpl::notifyComplete()
 {
     if(cb_response_) cb_response_();
 }
-
-KUMA_NS_END
