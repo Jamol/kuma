@@ -10,23 +10,26 @@
 #define __HPACK_H__
 
 #include "kmdefs.h"
+#include <string>
 #include <deque>
 #include <map>
+#include <vector>
 
 KUMA_NS_BEGIN
-
-using KeyValuePair = std::pair<std::string, std::string>;
-using KeyValueQueue = std::deque<KeyValuePair>;
-using KeyValueVector = std::deque<KeyValuePair>;
-using IndexMap = std::map<std::string, std::pair<int, int>>;
 
 class HPacker
 {
 public:
+    using KeyValuePair = std::pair<std::string, std::string>;
+    using KeyValueQueue = std::deque<KeyValuePair>;
+    using KeyValueVector = std::vector<KeyValuePair>;
+    using IndexMap = std::map<std::string, std::pair<int, int>>;
+    
+public:
     HPacker();
     
     int encode(KeyValueVector headers, uint8_t *buf, size_t len);
-    int decode(const uint8_t *buf, size_t len);
+    int decode(const uint8_t *buf, size_t len, KeyValueVector &headers);
     
 private:
     int encodeHeader(const std::string &name, const std::string &value, uint8_t *buf, size_t len);
@@ -46,15 +49,22 @@ private:
     };
     IndexingType getIndexingType(const std::string &name);
     
+    int getDynamicIndex(int idxSeq);
+    void updateIndex(const std::string &name, int idxSeq);
+    void removeIndex(const std::string &name);
+    bool getIndex(const std::string &name, int &indexD, int &indexS);
+    int getHPackIndex(const std::string &name, const std::string &value, bool &valueIndexed);
+    
 private:
     KeyValueQueue dynamicTable_;
     size_t tableSize_ = 0;
     size_t tableSizeLimit_ = 4096;
     size_t tableSizeMax_ = 4096;
     
-    bool updateTableSize = true;
-    bool isEncoder = true;
-    IndexMap indexMap_; // <header name, <dynamic index, static index>>
+    bool updateTableSize_ = true;
+    bool isEncoder_ = true;
+    int indexSequence_ = 0;
+    IndexMap indexMap_; // <header name, <dynamic index sequence, static index>>
 };
 
 KUMA_NS_END

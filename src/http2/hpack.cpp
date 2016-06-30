@@ -1,17 +1,97 @@
-//
-//  hpack.cpp
-//  kuma
-//
-//  Created by Jamol Bao on 6/24/16.
-//  Copyright © 2016 Jamol. All rights reserved.
-//
+/* Copyright (c) 2014-2016, Fengping Bao <jamol@live.com>
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 
 #include "hpack.h"
+#include "hpack_huffman_table.h"
+
 #include <math.h>
+#include <vector>
 
 KUMA_NS_BEGIN
 
-int encodeInteger(uint8_t N, uint64_t I, uint8_t *buf, size_t len) {
+#include "StaticTable.h"
+
+static char *huffDecodeBits(char *dst, uint8_t bits, uint8_t *state, bool *ending) {
+    const auto &entry = huff_decode_table[*state][bits];
+    
+    if ((entry.flags & NGHTTP2_HUFF_FAIL) != 0)
+        return nullptr;
+    if ((entry.flags & NGHTTP2_HUFF_SYM) != 0)
+        *dst++ = entry.sym;
+    *state = entry.state;
+    *ending = (entry.flags & NGHTTP2_HUFF_ACCEPTED) != 0;
+    
+    return dst;
+}
+
+static int huffDecode(const uint8_t *src, size_t len, std::string &str) {
+    uint8_t state = 0;
+    bool ending = false;
+    const uint8_t *src_end = src + len;
+
+    std::vector<char> str_buf;
+    str_buf.resize(2*len);
+    char *ptr = &str_buf[0];
+    
+    for (; src != src_end; ++src) {
+        if ((ptr = huffDecodeBits(ptr, *src >> 4, &state, &ending)) == nullptr)
+            return -1;
+        if ((ptr = huffDecodeBits(ptr, *src & 0xf, &state, &ending)) == nullptr)
+            return -1;
+    }
+    if (!ending) {
+        return -1;
+    }
+    int str_len = int(ptr - &str_buf[0]);
+    str.assign(&str_buf[0], str_len);
+    return str_len;
+}
+static int huffEncode(const std::string &str, uint8_t *buf, size_t len) {
+    uint8_t *ptr = buf;
+    const uint8_t *end = buf + len;
+    const char* src = str.c_str();
+    const char* src_end = src + str.length();
+    
+    uint64_t current = 0;
+    uint32_t n = 0;
+    
+    for (; src != src_end;) {
+        const auto &sym = huff_sym_table[*src++];
+        uint32_t code = sym.code;
+        uint32_t nbits = sym.nbits;
+        
+        current <<= nbits;
+        current |= code;
+        n += nbits;
+        
+        while (n >= 8) {
+            n -= 8;
+            *ptr++ = current >> n;
+        }
+    }
+    
+    if (n > 0) {
+        current <<= (8 - n);
+        current |= (0xFF >> n);
+        *ptr++ = current;
+    }
+    
+    return int(ptr - buf);
+}
+
+static int encodeInteger(uint8_t N, uint64_t I, uint8_t *buf, size_t len) {
     uint8_t *ptr = buf;
     const uint8_t *end = buf + len;
     if (ptr == end) {
@@ -37,26 +117,33 @@ int encodeInteger(uint8_t N, uint64_t I, uint8_t *buf, size_t len) {
     return int(ptr - buf);
 }
 
-int encodeString(const std::string &str, uint8_t *buf, size_t len) {
+static int encodeString(const std::string &str, bool H, uint8_t *buf, size_t len) {
     uint8_t *ptr = buf;
     uint8_t *end = buf + len;
-    bool H = false;
     *ptr = H ? 0x80 : 0;
     int ret = encodeInteger(7, str.length(), ptr, end - ptr);
     if (ret <= 0) {
         return -1;
     }
     ptr += ret;
-    if (end - ptr < str.length()) {
-        return -1;
+    if (H) {
+        int ret = huffEncode(str, ptr, end - ptr);
+        if (ret < 0) {
+            return -1;
+        }
+        ptr += ret;
+    } else {
+        if (end - ptr < str.length()) {
+            return -1;
+        }
+        memcpy(ptr, str.c_str(), str.length());
+        ptr += str.length();
     }
-    memcpy(ptr, str.c_str(), str.length());
-    ptr += str.length();
     
     return int(ptr - buf);
 }
 
-int decodeInteger(uint8_t N, const uint8_t *buf, size_t len, uint64_t &I) {
+static int decodeInteger(uint8_t N, const uint8_t *buf, size_t len, uint64_t &I) {
     if (N > 8) {
         return -1;
     }
@@ -90,7 +177,7 @@ int decodeInteger(uint8_t N, const uint8_t *buf, size_t len, uint64_t &I) {
     return int(ptr - buf);
 }
 
-int decodeString(const uint8_t *buf, size_t len, std::string &str)
+static int decodeString(const uint8_t *buf, size_t len, std::string &str)
 {
     const uint8_t *ptr = buf;
     const uint8_t *end = buf + len;
@@ -108,7 +195,13 @@ int decodeString(const uint8_t *buf, size_t len, std::string &str)
     if ( str_len > end - ptr) {
         return -1;
     }
-    str.assign((const char*)ptr, str_len);
+    if (H) {
+        if(huffDecode(ptr, str_len, str) < 0) {
+            return -1;
+        }
+    } else {
+        str.assign((const char*)ptr, str_len);
+    }
     ptr += str_len;
     
     return int(ptr - buf);
@@ -121,7 +214,7 @@ enum class PrefixType {
     TABLE_SIZE_UPDATE
 };
 
-int decodePrefix(const uint8_t *buf, size_t len, PrefixType &type, uint64_t &I) {
+static int decodePrefix(const uint8_t *buf, size_t len, PrefixType &type, uint64_t &I) {
     const uint8_t *ptr = buf;
     const uint8_t *end = buf + len;
     uint8_t N = 0;
@@ -146,88 +239,9 @@ int decodePrefix(const uint8_t *buf, size_t len, PrefixType &type, uint64_t &I) 
     return int(ptr - buf);
 }
 
-#define TABLE_ENTRY_SIZE_EXTRA 32
-#define HPACK_DYNAMIC_START_INDEX 62
-#define HPACK_STATIC_TABLE_SIZE 61
-static KeyValuePair hpackStaticTable[HPACK_STATIC_TABLE_SIZE] = {
-    std::make_pair(":authority", ""),
-    std::make_pair(":method", "GET"),
-    std::make_pair(":method", "POST"),
-    std::make_pair(":path", "/"),
-    std::make_pair(":path", "/index.html"),
-    
-    std::make_pair(":scheme", "http"),
-    std::make_pair(":scheme", "https"),
-    std::make_pair(":status", "200"),
-    std::make_pair(":status", "204"),
-    std::make_pair(":status", "206"),
-    
-    std::make_pair(":status", "304"),
-    std::make_pair(":status", "400"),
-    std::make_pair(":status", "404"),
-    std::make_pair(":status", "500"),
-    std::make_pair("accept-charset", ""),
-    
-    std::make_pair("accept-encoding", "gzip, deflate"),
-    std::make_pair("accept-language", ""),
-    std::make_pair("accept-ranges", ""),
-    std::make_pair("accept", ""),
-    std::make_pair("access-control-allow-origin", ""),
-    
-    std::make_pair("age", ""),
-    std::make_pair("allow", ""),
-    std::make_pair("authorization", ""),
-    std::make_pair("cache-control", ""),
-    std::make_pair("content-disposition", ""),
-    
-    std::make_pair("content-encoding", ""),
-    std::make_pair("content-language", ""),
-    std::make_pair("content-length", ""),
-    std::make_pair("content-location", ""),
-    std::make_pair("content-range", ""),
-    
-    std::make_pair("content-type", ""),
-    std::make_pair("cookie", ""),
-    std::make_pair("date", ""),
-    std::make_pair("etag", ""),
-    std::make_pair("expect", ""),
-    
-    std::make_pair("expires", ""),
-    std::make_pair("from", ""),
-    std::make_pair("host", ""),
-    std::make_pair("if-match", ""),
-    std::make_pair("if-modified-since", ""),
-    
-    std::make_pair("if-none-match", ""),
-    std::make_pair("if-range", ""),
-    std::make_pair("if-unmodified-since", ""),
-    std::make_pair("last-modified", ""),
-    std::make_pair("link", ""),
-    
-    std::make_pair("location", ""),
-    std::make_pair("max-forwards", ""),
-    std::make_pair("proxy-authenticate", ""),
-    std::make_pair("proxy-authorization", ""),
-    std::make_pair("range", ""),
-    
-    std::make_pair("referer", ""),
-    std::make_pair("refresh", ""),
-    std::make_pair("retry-after", ""),
-    std::make_pair("server", ""),
-    std::make_pair("set-cookie", ""),
-    
-    std::make_pair("strict-transport-security", ""),
-    std::make_pair("transfer-encoding", ""),
-    std::make_pair("user-agent", ""),
-    std::make_pair("vary", ""),
-    std::make_pair("via", ""),
-    
-    std::make_pair("www-authenticate", "")
-};
-
 HPacker::HPacker() {
     for (int i = 0; i < HPACK_STATIC_TABLE_SIZE; ++i) {
-        indexMap_.emplace(hpackStaticTable[i].first, std::make_pair(-1 , i));
+        indexMap_.emplace(hpackStaticTable[i].first, std::make_pair(-1, i));
     }
 }
 
@@ -271,6 +285,9 @@ bool HPacker::addHeaderToTable(const std::string &name, const std::string &value
     }
     dynamicTable_.push_front(std::make_pair(name, value));
     tableSize_ += entrySize;
+    if (isEncoder_) {
+        updateIndex(name, ++indexSequence_);
+    }
     return true;
 }
 
@@ -289,20 +306,75 @@ void HPacker::evictTableBySize(size_t size)
         auto &entry = dynamicTable_.back();
         uint32_t entrySize = uint32_t(entry.first.length() + entry.second.length() + TABLE_ENTRY_SIZE_EXTRA);
         tableSize_ -= tableSize_ > entrySize ? entrySize : tableSize_;
-        if (isEncoder) {
-            auto it = indexMap_.find(entry.first);
-            if (it != indexMap_.end() && it->second.first == dynamicTable_.size() - 1) {
-                it->second.first = -1; // reset dynamic table index
-            }
+        if (isEncoder_) {
+            removeIndex(entry.first);
         }
         dynamicTable_.pop_back();
         evicted += entrySize;
     }
 }
 
+int HPacker::getDynamicIndex(int idxSeq)
+{
+    return -1 == idxSeq ? -1 : indexSequence_ - idxSeq;
+}
+
+void HPacker::updateIndex(const std::string &name, int idxSeq)
+{
+    auto it = indexMap_.find(name);
+    if (it != indexMap_.end()) {
+        it->second.first = idxSeq;
+    } else {
+        indexMap_.emplace(name, std::make_pair(idxSeq, -1));
+    }
+}
+
+void HPacker::removeIndex(const std::string &name)
+{
+    auto it = indexMap_.find(name);
+    if (it != indexMap_.end()) {
+        int idx = getDynamicIndex(it->second.first);
+        if (idx == dynamicTable_.size() - 1) {
+            if (it->second.second == -1) {
+                indexMap_.erase(it);
+            } else {
+                it->second.first = -1; // reset dynamic table index
+            }
+        }
+    }
+}
+
+bool HPacker::getIndex(const std::string &name, int &indexD, int &indexS)
+{
+    indexD = -1;
+    indexS = -1;
+    auto it = indexMap_.find(name);
+    if (it != indexMap_.end()) {
+        indexD = getDynamicIndex(it->second.first);
+        indexS = it->second.second;
+        return true;
+    }
+    return false;
+}
+
+int HPacker::getHPackIndex(const std::string &name, const std::string &value, bool &valueIndexed)
+{
+    int index = -1, indexD = -1, indexS = -1;
+    valueIndexed = false;
+    getIndex(name, indexD, indexS);
+    if (indexD != -1 && indexD < dynamicTable_.size() && name == dynamicTable_[indexD].first) {
+        index = indexD + HPACK_DYNAMIC_START_INDEX;
+        valueIndexed = dynamicTable_[indexD].second == value;
+    } else if (indexS != -1 && indexS < HPACK_STATIC_TABLE_SIZE && name == hpackStaticTable[indexS].first) {
+        index = indexS + 1;
+        valueIndexed = hpackStaticTable[indexS].second == value;
+    }
+    return index;
+}
+
 HPacker::IndexingType HPacker::getIndexingType(const std::string &name)
 {
-    if (name == "cookie") {
+    if (name == "cookie" || name == ":authority" || name == "user-agent" || name == "pragma") {
         return IndexingType::ALL;
     }
     return IndexingType::NONE;
@@ -325,46 +397,34 @@ int HPacker::encodeHeader(const std::string &name, const std::string &value, uin
 {
     uint8_t *ptr = buf;
     const uint8_t *end = buf + len;
-    int index = -1;
+    
     bool valueIndexed = false;
-    auto it = indexMap_.find(name);
-    if (it != indexMap_.end()) {
-        int indexD = it->second.first;
-        int indexS = it->second.second;
-        if (indexD != -1 && indexD < dynamicTable_.size() && name == dynamicTable_[indexD].first) {
-            index = indexD + HPACK_DYNAMIC_START_INDEX;
-            valueIndexed = dynamicTable_[indexD].second == value;
-        } else if (indexS != -1 && indexS < HPACK_STATIC_TABLE_SIZE && name == hpackStaticTable[indexS].first) {
-            index = indexS + 1;
-            valueIndexed = hpackStaticTable[indexS].second == value;
-        }
-    }
+    int index = getHPackIndex(name, value, valueIndexed);
     bool addToTable = false;
     if (index != -1) {
+        uint8_t N = 0;
         if (valueIndexed) { // name and value indexed
-            *ptr &= 0x80;
-            int ret = encodeInteger(7, index, ptr, end - ptr);
-            if (ret <= 0) {
-                return -1;
-            }
-            ptr += ret;
+            *ptr = 0x80;
+            N = 7;
         } else { // name indexed
             IndexingType idxType = getIndexingType(name);
-            uint8_t N = 0;
             if (idxType == IndexingType::ALL) {
-                *ptr &= 0x40;
+                *ptr = 0x40;
                 N = 6;
                 addToTable = true;
             } else {
-                *ptr &= 0x00;
+                *ptr = 0x10;
                 N = 4;
             }
-            int ret = encodeInteger(N, index, ptr, end - ptr);
-            if (ret <= 0) {
-                return -1;
-            }
-            ptr += ret;
-            ret = encodeString(value, ptr, end - ptr);
+        }
+        // encode prefix Bits
+        int ret = encodeInteger(N, index, ptr, end - ptr);
+        if (ret <= 0) {
+            return -1;
+        }
+        ptr += ret;
+        if (!valueIndexed) {
+            ret = encodeString(value, true, ptr, end - ptr);
             if (ret <= 0) {
                 return -1;
             }
@@ -376,14 +436,14 @@ int HPacker::encodeHeader(const std::string &name, const std::string &value, uin
             *ptr++ = 0x40;
             addToTable = true;
         } else {
-            *ptr++ = 0x00;
+            *ptr++ = 0x10;
         }
-        int ret = encodeString(name, ptr, end - ptr);
+        int ret = encodeString(name, true, ptr, end - ptr);
         if (ret <= 0) {
             return -1;
         }
         ptr += ret;
-        ret = encodeString(value, ptr, end - ptr);
+        ret = encodeString(value, true, ptr, end - ptr);
         if (ret <= 0) {
             return -1;
         }
@@ -396,12 +456,12 @@ int HPacker::encodeHeader(const std::string &name, const std::string &value, uin
 }
 
 int HPacker::encode(KeyValueVector headers, uint8_t *buf, size_t len) {
-    isEncoder = true;
+    isEncoder_ = true;
     uint8_t *ptr = buf;
     const uint8_t *end = buf + len;
     
-    if (updateTableSize) {
-        updateTableSize = false;
+    if (updateTableSize_) {
+        updateTableSize_ = false;
         updateTableLimit(tableSizeMax_);
         int ret = encodeSizeUpdate(int(tableSizeLimit_), ptr, end - ptr);
         if (ret <= 0) {
@@ -419,8 +479,8 @@ int HPacker::encode(KeyValueVector headers, uint8_t *buf, size_t len) {
     return int(ptr - buf);
 }
 
-int HPacker::decode(const uint8_t *buf, size_t len) {
-    isEncoder = false;
+int HPacker::decode(const uint8_t *buf, size_t len, KeyValueVector &headers) {
+    isEncoder_ = false;
     const uint8_t *ptr = buf;
     const uint8_t *end = buf + len;
     
@@ -463,6 +523,7 @@ int HPacker::decode(const uint8_t *buf, size_t len) {
             }
             updateTableLimit(I);
         }
+        headers.emplace_back(std::make_pair(name, value));
     }
     return int(len);
 }

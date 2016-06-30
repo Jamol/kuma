@@ -87,6 +87,7 @@
 		6F852E451985EB4700271D87 /* kumaTarget.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaTarget.xcconfig; sourceTree = "<group>"; };
 		6F9797FE1D1D213A001C02B2 /* hpack.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hpack.cpp; sourceTree = "<group>"; };
 		6F9797FF1D1D213A001C02B2 /* hpack.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = hpack.h; sourceTree = "<group>"; };
+		6F9E73321D241276005E04B2 /* StaticTable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StaticTable.h; sourceTree = "<group>"; };
 		6FA951411A3808450033C9CF /* kmdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmdefs.h; sourceTree = "<group>"; };
 		6FBB2C8C1D139C430024550F /* IOPoll.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IOPoll.h; sourceTree = "<group>"; };
 		6FBB2C8D1D139C430024550F /* Notifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Notifier.h; sourceTree = "<group>"; };
@@ -236,6 +237,7 @@
 				6FBB2CCF1D13EBBD0024550F /* H2Stream.h */,
 				6F9797FE1D1D213A001C02B2 /* hpack.cpp */,
 				6F9797FF1D1D213A001C02B2 /* hpack.h */,
+				6F9E73321D241276005E04B2 /* StaticTable.h */,
 			);
 			path = http2;
 			sourceTree = "<group>";
