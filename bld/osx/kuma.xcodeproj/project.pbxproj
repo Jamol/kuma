@@ -25,6 +25,8 @@
 		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
 		6F9798001D1D213A001C02B2 /* HPacker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F9797FE1D1D213A001C02B2 /* HPacker.cpp */; };
 		6F9798011D1D213A001C02B2 /* HPacker.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F9797FF1D1D213A001C02B2 /* HPacker.h */; };
+		6F9E73701D251337005E04B2 /* HPackTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F9E736E1D251337005E04B2 /* HPackTable.cpp */; };
+		6F9E73711D251337005E04B2 /* HPackTable.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F9E736F1D251337005E04B2 /* HPackTable.h */; };
 		6FA951421A3808450033C9CF /* kmdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FA951411A3808450033C9CF /* kmdefs.h */; };
 		6FBB2C901D139C430024550F /* IOPoll.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FBB2C8C1D139C430024550F /* IOPoll.h */; };
 		6FBB2C911D139C430024550F /* Notifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FBB2C8D1D139C430024550F /* Notifier.h */; };
@@ -88,6 +90,8 @@
 		6F9797FE1D1D213A001C02B2 /* HPacker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HPacker.cpp; sourceTree = "<group>"; };
 		6F9797FF1D1D213A001C02B2 /* HPacker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HPacker.h; sourceTree = "<group>"; };
 		6F9E73321D241276005E04B2 /* StaticTable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StaticTable.h; sourceTree = "<group>"; };
+		6F9E736E1D251337005E04B2 /* HPackTable.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HPackTable.cpp; sourceTree = "<group>"; };
+		6F9E736F1D251337005E04B2 /* HPackTable.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HPackTable.h; sourceTree = "<group>"; };
 		6FA951411A3808450033C9CF /* kmdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmdefs.h; sourceTree = "<group>"; };
 		6FBB2C8C1D139C430024550F /* IOPoll.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IOPoll.h; sourceTree = "<group>"; };
 		6FBB2C8D1D139C430024550F /* Notifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Notifier.h; sourceTree = "<group>"; };
@@ -238,6 +242,8 @@
 				6F9797FE1D1D213A001C02B2 /* HPacker.cpp */,
 				6F9797FF1D1D213A001C02B2 /* HPacker.h */,
 				6F9E73321D241276005E04B2 /* StaticTable.h */,
+				6F9E736E1D251337005E04B2 /* HPackTable.cpp */,
+				6F9E736F1D251337005E04B2 /* HPackTable.h */,
 			);
 			path = http2;
 			sourceTree = "<group>";
@@ -305,6 +311,7 @@
 				6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */,
 				6FA951421A3808450033C9CF /* kmdefs.h in Headers */,
 				6F6208FD1A26BDB1000DAF4B /* kmapi.h in Headers */,
+				6F9E73711D251337005E04B2 /* HPackTable.h in Headers */,
 				6FBB2C911D139C430024550F /* Notifier.h in Headers */,
 				6F2963541A18AB0D00C3C79B /* kmtrace.h in Headers */,
 				6F29634F1A18AB0D00C3C79B /* kmqueue.h in Headers */,
@@ -371,6 +378,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6F9E73701D251337005E04B2 /* HPackTable.cpp in Sources */,
 				6FBB2CB41D139C700024550F /* OpenSslLib.cpp in Sources */,
 				6F9798001D1D213A001C02B2 /* HPacker.cpp in Sources */,
 				6FBB2CAE1D139C560024550F /* Uri.cpp in Sources */,

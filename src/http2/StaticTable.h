@@ -3,7 +3,7 @@
 #define TABLE_ENTRY_SIZE_EXTRA 32
 #define HPACK_DYNAMIC_START_INDEX 62
 #define HPACK_STATIC_TABLE_SIZE 61
-static const HPacker::KeyValuePair hpackStaticTable[HPACK_STATIC_TABLE_SIZE] = {
+static const HPackTable::KeyValuePair hpackStaticTable[HPACK_STATIC_TABLE_SIZE] = {
     std::make_pair(":authority", ""),
     std::make_pair(":method", "GET"),
     std::make_pair(":method", "POST"),
