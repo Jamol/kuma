@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2016, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2016, Fengping Bao <jamol@live.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,7 +13,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "hpack.h"
+#include "HPacker.h"
 #include "hpack_huffman_table.h"
 
 #include <math.h>
@@ -41,9 +41,9 @@ static int huffDecode(const uint8_t *src, size_t len, std::string &str) {
     bool ending = false;
     const uint8_t *src_end = src + len;
 
-    std::vector<char> str_buf;
-    str_buf.resize(2*len);
-    char *ptr = &str_buf[0];
+    std::vector<char> sbuf;
+    sbuf.resize(2*len);
+    char *ptr = &sbuf[0];
     
     for (; src != src_end; ++src) {
         if ((ptr = huffDecodeBits(ptr, *src >> 4, &state, &ending)) == nullptr)
@@ -54,9 +54,9 @@ static int huffDecode(const uint8_t *src, size_t len, std::string &str) {
     if (!ending) {
         return -1;
     }
-    int str_len = int(ptr - &str_buf[0]);
-    str.assign(&str_buf[0], str_len);
-    return str_len;
+    int slen = int(ptr - &sbuf[0]);
+    str.assign(&sbuf[0], slen);
+    return slen;
 }
 
 static int huffEncode(const std::string &str, uint8_t *buf, size_t len) {
@@ -127,26 +127,31 @@ static int encodeInteger(uint8_t N, uint64_t I, uint8_t *buf, size_t len) {
     return int(ptr - buf);
 }
 
-static int encodeString(const std::string &str, bool H, uint8_t *buf, size_t len) {
+static int encodeString(const std::string &str, uint8_t *buf, size_t len) {
     uint8_t *ptr = buf;
     uint8_t *end = buf + len;
-    *ptr = H ? 0x80 : 0;
-    int dlen = int(str.length());
-    if (H) {
-        dlen = huffEncodeLength(str);
-    }
-    int ret = encodeInteger(7, dlen, ptr, end - ptr);
-    if (ret <= 0) {
-        return -1;
-    }
-    ptr += ret;
-    if (H) {
-        int ret = huffEncode(str, ptr, end - ptr);
+    
+    int slen = int(str.length());
+    int hlen = huffEncodeLength(str);
+    if (hlen < slen) {
+        *ptr = 0x80;
+        int ret = encodeInteger(7, hlen, ptr, end - ptr);
+        if (ret <= 0) {
+            return -1;
+        }
+        ptr += ret;
+        ret = huffEncode(str, ptr, end - ptr);
         if (ret < 0) {
             return -1;
         }
         ptr += ret;
     } else {
+        *ptr = 0;
+        int ret = encodeInteger(7, slen, ptr, end - ptr);
+        if (ret <= 0) {
+            return -1;
+        }
+        ptr += ret;
         if (end - ptr < str.length()) {
             return -1;
         }
@@ -199,23 +204,23 @@ static int decodeString(const uint8_t *buf, size_t len, std::string &str)
         return -1;
     }
     bool H = *ptr & 0x80;
-    uint64_t str_len = 0;
-    int ret = decodeInteger(7, ptr, end - ptr, str_len);
+    uint64_t slen = 0;
+    int ret = decodeInteger(7, ptr, end - ptr, slen);
     if (ret <= 0) {
         return -1;
     }
     ptr += ret;
-    if ( str_len > end - ptr) {
+    if ( slen > end - ptr) {
         return -1;
     }
     if (H) {
-        if(huffDecode(ptr, str_len, str) < 0) {
+        if(huffDecode(ptr, slen, str) < 0) {
             return -1;
         }
     } else {
-        str.assign((const char*)ptr, str_len);
+        str.assign((const char*)ptr, slen);
     }
-    ptr += str_len;
+    ptr += slen;
     
     return int(ptr - buf);
 }
@@ -413,7 +418,6 @@ int HPacker::encodeHeader(const std::string &name, const std::string &value, uin
     
     bool valueIndexed = false;
     int index = getHPackIndex(name, value, valueIndexed);
-    bool enableHuffman = true;
     bool addToTable = false;
     if (index != -1) {
         uint8_t N = 0;
@@ -438,7 +442,7 @@ int HPacker::encodeHeader(const std::string &name, const std::string &value, uin
         }
         ptr += ret;
         if (!valueIndexed) {
-            ret = encodeString(value, enableHuffman, ptr, end - ptr);
+            ret = encodeString(value, ptr, end - ptr);
             if (ret <= 0) {
                 return -1;
             }
@@ -452,12 +456,12 @@ int HPacker::encodeHeader(const std::string &name, const std::string &value, uin
         } else {
             *ptr++ = 0x10;
         }
-        int ret = encodeString(name, enableHuffman, ptr, end - ptr);
+        int ret = encodeString(name, ptr, end - ptr);
         if (ret <= 0) {
             return -1;
         }
         ptr += ret;
-        ret = encodeString(value, enableHuffman, ptr, end - ptr);
+        ret = encodeString(value, ptr, end - ptr);
         if (ret <= 0) {
             return -1;
         }
@@ -497,6 +501,7 @@ int HPacker::decode(const uint8_t *buf, size_t len, KeyValueVector &headers) {
     isEncoder_ = false;
     const uint8_t *ptr = buf;
     const uint8_t *end = buf + len;
+    headers.clear();
     
     while (ptr < end) {
         std::string name;

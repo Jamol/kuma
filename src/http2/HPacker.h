@@ -1,13 +1,20 @@
-//
-//  hpack.hpp
-//  kuma
-//
-//  Created by Jamol Bao on 6/24/16.
-//  Copyright © 2016 Jamol. All rights reserved.
-//
+/* Copyright (c) 2016, Fengping Bao <jamol@live.com>
+ *
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
 
-#ifndef __HPACK_H__
-#define __HPACK_H__
+#ifndef __HPacker_H__
+#define __HPacker_H__
 
 #include "kmdefs.h"
 #include <string>
@@ -30,6 +37,7 @@ public:
     
     int encode(KeyValueVector headers, uint8_t *buf, size_t len);
     int decode(const uint8_t *buf, size_t len, KeyValueVector &headers);
+    void setMaxTableSize(size_t maxSize) { tableSizeMax_ = maxSize; }
     
 private:
     int encodeHeader(const std::string &name, const std::string &value, uint8_t *buf, size_t len);

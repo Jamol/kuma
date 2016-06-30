@@ -1,4 +1,4 @@
-/* Copyright (c) 2014, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2016, Fengping Bao <jamol@live.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -18,6 +18,7 @@
 
 #include "kmdefs.h"
 #include "FrameParser.h"
+#include "HPacker.h"
 
 #include <map>
 
@@ -35,6 +36,8 @@ public:
 
 private:
     FrameParser parser_;
+    HPacker hpEncoder_;
+    HPacker hpDecoder_;
 };
 
 KUMA_NS_END
