@@ -141,7 +141,7 @@ SslHandler::SslState SslHandler::sslConnect()
         KUMA_ERRXTRACE("sslConnect, ssl_ is NULL");
         return SSL_ERROR;
     }
-    
+    ERR_clear_error();
     int ret = SSL_connect(ssl_);
     int ssl_err = SSL_get_error (ssl_, ret);
     switch (ssl_err)
@@ -176,7 +176,7 @@ SslHandler::SslState SslHandler::sslAccept()
         KUMA_ERRXTRACE("sslAccept, ssl_ is NULL");
         return SSL_ERROR;
     }
-    
+    ERR_clear_error();
     int ret = SSL_accept(ssl_);
     int ssl_err = SSL_get_error(ssl_, ret);
     switch (ssl_err)
@@ -211,7 +211,7 @@ int SslHandler::send(const uint8_t* data, uint32_t size)
         KUMA_ERRXTRACE("send, ssl is NULL");
         return -1;
     }
-    
+    ERR_clear_error();
     int ret = SSL_write(ssl_, data, size);
     int ssl_err = SSL_get_error(ssl_, ret);
     switch (ssl_err)
@@ -265,7 +265,7 @@ int SslHandler::receive(uint8_t* data, uint32_t size)
         KUMA_ERRXTRACE("receive, ssl is NULL");
         return -1;
     }
-    
+    ERR_clear_error();
     int ret = SSL_read(ssl_, data, size);
     int ssl_err = SSL_get_error(ssl_, ret);
     switch (ssl_err)
