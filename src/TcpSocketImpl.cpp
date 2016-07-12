@@ -298,6 +298,12 @@ int TcpSocketImpl::detachFd(SOCKET_FD &fd)
 }
 
 #ifdef KUMA_HAS_OPENSSL
+int TcpSocketImpl::setAlpnProtocols(const AlpnProtos &protocols)
+{
+    alpn_protos_ = protocols;
+    return KUMA_ERROR_NOERR;
+}
+
 int TcpSocketImpl::attachFd(SOCKET_FD fd, SSL* ssl)
 {
     KUMA_INFOXTRACE("attachFd, with ssl, fd="<<fd<<", flags="<<ssl_flags_<<", state="<<getState());
@@ -343,11 +349,9 @@ int TcpSocketImpl::detachFd(SOCKET_FD &fd, SSL* &ssl)
     setState(ST_CLOSED);
     return KUMA_ERROR_NOERR;
 }
-#endif
 
 int TcpSocketImpl::startSslHandshake(SslRole ssl_role)
 {
-#ifdef KUMA_HAS_OPENSSL
     KUMA_INFOXTRACE("startSslHandshake, ssl_role="<<ssl_role<<", fd="<<fd_<<", state="<<getState());
     if(INVALID_FD == fd_) {
         KUMA_ERRXTRACE("startSslHandshake, invalid fd");
@@ -363,16 +367,17 @@ int TcpSocketImpl::startSslHandshake(SslRole ssl_role)
     if(ret != KUMA_ERROR_NOERR) {
         return ret;
     }
+    if (ssl_role == SslRole::AS_CLIENT && !alpn_protos_.empty()) {
+        ssl_handler_->setAlpnProtocols(alpn_protos_);
+    }
     ssl_flags_ |= SSL_ENABLE;
     SslHandler::SslState ssl_state = ssl_handler_->doSslHandshake();
     if(SslHandler::SslState::SSL_ERROR == ssl_state) {
         return KUMA_ERROR_SSL_FAILED;
     }
     return KUMA_ERROR_NOERR;
-#else
-    return KUMA_ERROR_UNSUPPORT;
-#endif
 }
+#endif
 
 void TcpSocketImpl::setSocketOption()
 {
@@ -406,7 +411,11 @@ void TcpSocketImpl::setSocketOption()
 
 bool TcpSocketImpl::SslEnabled()
 {
+#ifdef KUMA_HAS_OPENSSL
     return ssl_flags_ != SSL_NONE;
+#else
+    return false;
+#endif
 }
 
 bool TcpSocketImpl::isReady()

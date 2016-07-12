@@ -29,6 +29,8 @@
 #include "SslHandler.h"
 #endif
 
+#include <vector>
+
 KUMA_NS_BEGIN
 
 class EventLoopImpl;
@@ -43,16 +45,18 @@ public:
     
     int setSslFlags(uint32_t ssl_flags);
     uint32_t getSslFlags() const { return ssl_flags_; }
+    bool SslEnabled();
     int bind(const char* bind_host, uint16_t bind_port);
     int connect(const char* host, uint16_t port, const EventCallback& cb, uint32_t timeout_ms = 0);
     int connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t timeout_ms = 0);
     int attachFd(SOCKET_FD fd);
     int detachFd(SOCKET_FD &fd);
 #ifdef KUMA_HAS_OPENSSL
+    int setAlpnProtocols(const AlpnProtos &protocols);
     int attachFd(SOCKET_FD fd, SSL* ssl);
     int detachFd(SOCKET_FD &fd, SSL* &ssl);
-#endif
     int startSslHandshake(SslRole ssl_role);
+#endif
     int send(const uint8_t* data, uint32_t length);
     int send(iovec* iovs, uint32_t count);
     int receive(uint8_t* data, uint32_t length);
@@ -93,7 +97,6 @@ private:
     State getState() const { return state_; }
     void setState(State state) { state_ = state; }
     void cleanup();
-    bool SslEnabled();
     bool isReady();
     
 private:
@@ -106,6 +109,7 @@ private:
     
 #ifdef KUMA_HAS_OPENSSL
     SslHandler*     ssl_handler_;
+    AlpnProtos      alpn_protos_;
 #endif
     
     EventCallback   cb_connect_;

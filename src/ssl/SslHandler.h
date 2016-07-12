@@ -40,6 +40,7 @@ public:
     SslHandler();
     ~SslHandler();
     
+    int setAlpnProtocols(const AlpnProtos &protocols);
     int attachFd(SOCKET_FD fd, SslRole ssl_role);
     int attachSsl(SSL* ssl);
     int detachSsl(SSL* &ssl);

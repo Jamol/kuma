@@ -21,14 +21,16 @@
 #include "kmdefs.h"
 
 #include <mutex>
+#include <vector>
 
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#include <openssl/engine.h>
 
 KUMA_NS_BEGIN
+
+using AlpnProtos = std::vector<uint8_t>;
 
 class OpenSslLib
 {
@@ -40,14 +42,23 @@ public:
     static int appVerifyCallback(X509_STORE_CTX *ctx, void *arg);
     static unsigned long threadIdCallback(void);
     static void lockingCallback(int mode, int n, const char *file, int line);
+    static int alpnCallback(SSL *ssl, const unsigned char **out, unsigned char *outlen, const unsigned char *_in, unsigned int inlen, void *_protocols);
     
-    static SSL_CTX* getClientContext() { return ssl_ctx_client_; }
-    static SSL_CTX* getServerContext() { return ssl_ctx_server_; }
+    static SSL_CTX* getClientContext();
+    static SSL_CTX* getServerContext();
+    
+private:
+    static SSL_CTX* createSSLContext(const SSL_METHOD *method, const std::string &ca, const std::string &cert, const std::string &key, bool clientMode);
     
 protected:
-    static SSL_CTX*     ssl_ctx_client_;
-    static SSL_CTX*     ssl_ctx_server_;
-    static std::mutex*  ssl_locks_;
+    using SSL_CTX_ptr = std::unique_ptr<SSL_CTX, decltype(&::SSL_CTX_free)>;
+    static bool             initialized_;
+    static std::string      certs_path_;
+    static SSL_CTX*         ssl_ctx_client_;
+    static std::once_flag   once_flag_client_;
+    static SSL_CTX*         ssl_ctx_server_;
+    static std::once_flag   once_flag_server_;
+    static std::mutex*      ssl_locks_;
 };
 
 KUMA_NS_END

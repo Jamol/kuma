@@ -22,152 +22,41 @@
 #include <string>
 #include <thread>
 #include <sstream>
+#include <vector>
 
 using namespace kuma;
 
-SSL_CTX* OpenSslLib::ssl_ctx_client_ = NULL;
-SSL_CTX* OpenSslLib::ssl_ctx_server_ = NULL;
-std::mutex* OpenSslLib::ssl_locks_ = NULL;
+bool OpenSslLib::initialized_ = false;
+std::string OpenSslLib::certs_path_;
+SSL_CTX* OpenSslLib::ssl_ctx_client_ = nullptr;
+std::once_flag OpenSslLib::once_flag_client_;
+SSL_CTX* OpenSslLib::ssl_ctx_server_ = nullptr;
+std::once_flag OpenSslLib::once_flag_server_;
+std::mutex* OpenSslLib::ssl_locks_ = nullptr;
+
+KUMA_NS_BEGIN
+static const AlpnProtos alpnProtos {2, 'h', '2'};
+KUMA_NS_END
 
 bool OpenSslLib::init(const char* path)
 {
-    if(ssl_ctx_client_ || ssl_ctx_server_) {
+    if (initialized_) {
         return true;
     }
-    
-    std::string cert_path;
-    if(path == NULL) {
-        cert_path = getCurrentModulePath();
+    if(!path) {
+        certs_path_ = getCurrentModulePath();
     } else {
-        cert_path = path;
-        if(cert_path.empty()) {
-            cert_path = getCurrentModulePath();
-        } else if(cert_path.at(cert_path.length() - 1) != PATH_SEPARATOR) {
-            cert_path += PATH_SEPARATOR;
+        certs_path_ = path;
+        if(certs_path_.empty()) {
+            certs_path_ = getCurrentModulePath();
+        } else if(certs_path_.at(certs_path_.length() - 1) != PATH_SEPARATOR) {
+            certs_path_ += PATH_SEPARATOR;
         }
     }
-    
-    std::string server_cert_file = cert_path + "server.cer";
-    std::string server_key_file = cert_path + "server.key";
-    std::string client_cert_file;// = cert_path + "cleint.cer";
-    std::string client_key_file;// = cert_path + "client.key";
-    std::string ca_cert_file = cert_path + "ca.cer";
     
     SSL_library_init();
     //OpenSSL_add_all_algorithms();
     SSL_load_error_strings();
-    
-    bool server_ctx_ok = false;
-    bool client_ctx_ok = false;
-    do {
-        ssl_ctx_server_ = SSL_CTX_new(SSLv23_server_method());
-        if(NULL == ssl_ctx_server_) {
-            KUMA_WARNTRACE("OpenSslLib::init, SSL_CTX_new failed, err="<<ERR_reason_error_string(ERR_get_error()));
-            break;
-        }
-        
-        //const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
-        //SSL_CTX_set_options(ssl_ctx_server_, flags);
-        SSL_CTX_set_options(ssl_ctx_server_, SSL_OP_NO_SSLv2);
-        SSL_CTX_set_mode(ssl_ctx_server_, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
-        SSL_CTX_set_mode(ssl_ctx_server_, SSL_MODE_ENABLE_PARTIAL_WRITE);
-        
-        if(!server_cert_file.empty() && !server_key_file.empty()) {
-            if(SSL_CTX_use_certificate_file(ssl_ctx_server_, server_cert_file.c_str(), SSL_FILETYPE_PEM) != 1) {
-                KUMA_WARNTRACE("OpenSslLib::init, SSL_CTX_use_certificate_file failed, file="<<server_cert_file
-                               <<", err="<<ERR_reason_error_string(ERR_get_error()));
-                break;
-            }
-            if(SSL_CTX_use_PrivateKey_file(ssl_ctx_server_, server_key_file.c_str(), SSL_FILETYPE_PEM) != 1) {
-                KUMA_WARNTRACE("OpenSslLib::init, SSL_CTX_use_PrivateKey_file failed, file:"<<server_key_file
-                               <<", err="<<ERR_reason_error_string(ERR_get_error()));
-                break;
-            }
-            if(SSL_CTX_check_private_key(ssl_ctx_server_) != 1) {
-                KUMA_WARNTRACE("OpenSslLib::init, SSL_CTX_check_private_key failed, err="<<ERR_reason_error_string(ERR_get_error()));
-                break;
-            }
-        }
-        
-        /*
-         SSL_CTX_set_verify(ssl_ctx_client_, SSL_VERIFY_PEER|SSL_VERIFY_FAIL_IF_NO_PEER_CERT, verifyCallback);
-         app_verify_arg arg0;
-         SSL_CTX_set_cert_verify_callback(ssl_ctx_server_, appVerifyCallback, &arg0);
-         
-         int session_id_context = 1;
-         if(SSL_CTX_set_session_id_context(ssl_ctx_server_, (unsigned char *)&session_id_context, sizeof(session_id_context)) != 1)
-         {
-         }
-         */
-        server_ctx_ok = true;
-    } while(0);
-    
-    do {
-        ssl_ctx_client_ = SSL_CTX_new(SSLv23_client_method());
-        if(NULL == ssl_ctx_client_) {
-            KUMA_WARNTRACE("OpenSslLib::init, SSL_CTX_new failed, err="<<ERR_reason_error_string(ERR_get_error()));
-            break;
-        }
-        
-        SSL_CTX_set_verify(ssl_ctx_client_, SSL_VERIFY_PEER, verifyCallback);
-        //SSL_CTX_set_verify_depth(ssl_ctx_client_, 4);
-        //app_verify_arg arg1;
-        //SSL_CTX_set_cert_verify_callback(ssl_ctx_client_, appVerifyCallback, &arg1);
-        
-        //const long flags = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_COMPRESSION;
-        //SSL_CTX_set_options(ssl_ctx_client_, flags);
-        SSL_CTX_set_options(ssl_ctx_client_, SSL_OP_NO_SSLv2);
-        SSL_CTX_set_mode(ssl_ctx_client_, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
-        SSL_CTX_set_mode(ssl_ctx_client_, SSL_MODE_ENABLE_PARTIAL_WRITE);
-        
-        // set AES256_SHA cipher for client.
-        //if(SSL_CTX_set_cipher_list(ssl_ctx_client_,"AES256-SHA") != 1)
-        //{
-        //	KUMA_WARNTRACE("OpenSslLib::init, SSL_CTX_set_cipher_list failed, err="<<ERR_reason_error_string(ERR_get_error()));
-        //}
-        
-        if(!client_cert_file.empty() && !client_key_file.empty()) {
-            if(SSL_CTX_use_certificate_file(ssl_ctx_client_, client_cert_file.c_str(), SSL_FILETYPE_PEM) != 1) {
-                KUMA_WARNTRACE("OpenSslLib::init, SSL_CTX_use_certificate_file failed, file="<<client_cert_file
-                               <<", err="<<ERR_reason_error_string(ERR_get_error()));
-                break;
-            }
-            if(SSL_CTX_use_PrivateKey_file(ssl_ctx_client_, client_key_file.c_str(), SSL_FILETYPE_PEM) != 1) {
-                KUMA_WARNTRACE("OpenSslLib::init, SSL_CTX_use_PrivateKey_file failed, file="<<client_key_file
-                               <<", err="<<ERR_reason_error_string(ERR_get_error()));
-                break;
-            }
-            if(SSL_CTX_check_private_key(ssl_ctx_client_) != 1) {
-                KUMA_WARNTRACE("OpenSslLib::init, SSL_CTX_check_private_key failed, err="<<ERR_reason_error_string(ERR_get_error()));
-                break;
-            }
-        }
-        
-        if(!ca_cert_file.empty() &&
-           SSL_CTX_load_verify_locations(ssl_ctx_client_, ca_cert_file.c_str(), NULL) != 1) {
-            KUMA_WARNTRACE("OpenSslLib::init, SSL_CTX_load_verify_locations failed, file="<<ca_cert_file
-                           <<", err="<<ERR_reason_error_string(ERR_get_error()));
-            break;
-        }
-        if(SSL_CTX_set_default_verify_paths(ssl_ctx_client_) != 1) {
-            KUMA_WARNTRACE("OpenSslLib::init, SSL_CTX_set_default_verify_paths failed, err="
-                           <<ERR_reason_error_string(ERR_get_error()));
-            break;
-        }
-        client_ctx_ok = true;
-    } while(0);
-    
-    if(!server_ctx_ok && ssl_ctx_server_) {
-        SSL_CTX_free(ssl_ctx_server_);
-        ssl_ctx_server_ = NULL;
-    }
-    if(!client_ctx_ok && ssl_ctx_client_) {
-        SSL_CTX_free(ssl_ctx_client_);
-        ssl_ctx_client_ = NULL;
-    }
-    if(!server_ctx_ok && !client_ctx_ok) {
-        return false;
-    }
     
     ssl_locks_ = new std::mutex[CRYPTO_num_locks()];
     CRYPTO_set_id_callback(threadIdCallback);
@@ -179,13 +68,123 @@ bool OpenSslLib::init(const char* path)
         unsigned short rand_ret = rand() % 65536;
         RAND_seed(&rand_ret, sizeof(rand_ret));
     }
-    
+    initialized_ = true;
     return true;
+}
+
+SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::string &caFile, const std::string &certFile, const std::string &keyFile, bool clientMode)
+{
+    SSL_CTX *ssl_ctx = nullptr;
+    bool ctx_ok = false;
+    do {
+        ssl_ctx = SSL_CTX_new(method);
+        if(!ssl_ctx) {
+            KUMA_WARNTRACE("SSL_CTX_new failed, err="<<ERR_reason_error_string(ERR_get_error()));
+            break;
+        }
+        
+#if 1
+        if (SSL_CTX_set_ecdh_auto(ssl_ctx, 1) != 1) {
+            KUMA_WARNTRACE("SSL_CTX_set_ecdh_auto failed, err="<<ERR_reason_error_string(ERR_get_error()));
+        }
+#endif
+        
+        long flags = SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_COMPRESSION;
+        // SSL_OP_SAFARI_ECDHE_ECDSA_BUG
+        SSL_CTX_set_options(ssl_ctx, flags);
+        SSL_CTX_set_mode(ssl_ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+        SSL_CTX_set_mode(ssl_ctx, SSL_MODE_ENABLE_PARTIAL_WRITE);
+        
+#if 0
+        if (clientMode) {
+            const char* cipherList =
+            "ECDHE-RSA-AES128-GCM-SHA256"
+            "ECDHE-RSA-AES256-GCM-SHA384"
+            "ECDHE-ECDSA-AES128-GCM-SHA256"
+            "ECDHE-ECDSA-AES256-GCM-SHA384"
+            "DHE-RSA-AES128-GCM-SHA256"
+            "DHE-DSS-AES128-GCM-SHA256"
+            "DHE-RSA-AES256-GCM-SHA384"
+            "DHE-DSS-AES256-GCM-SHA384"
+            ;
+            if (SSL_CTX_set_cipher_list(ssl_ctx, "ECDHE-RSA-AES128-GCM-SHA256") != 1) {
+                KUMA_WARNTRACE("SSL_CTX_set_cipher_list failed, err="<<ERR_reason_error_string(ERR_get_error()));
+            }
+        }
+#endif
+        
+        if(!certFile.empty() && !keyFile.empty()) {
+            //if(SSL_CTX_use_certificate_file(ssl_ctx, certFile.c_str(), SSL_FILETYPE_PEM) != 1) {
+            if(SSL_CTX_use_certificate_chain_file(ssl_ctx, certFile.c_str()) != 1) {
+                KUMA_WARNTRACE("SSL_CTX_use_certificate_chain_file failed, file="<<certFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
+                break;
+            }
+            if(SSL_CTX_use_PrivateKey_file(ssl_ctx, keyFile.c_str(), SSL_FILETYPE_PEM) != 1) {
+                KUMA_WARNTRACE("SSL_CTX_use_PrivateKey_file failed, file="<<keyFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
+                break;
+            }
+            if(SSL_CTX_check_private_key(ssl_ctx) != 1) {
+                KUMA_WARNTRACE("SSL_CTX_check_private_key failed, err="<<ERR_reason_error_string(ERR_get_error()));
+                break;
+            }
+        }
+        
+        if (!caFile.empty()) {
+            if(SSL_CTX_load_verify_locations(ssl_ctx, caFile.c_str(), NULL) != 1) {
+                KUMA_WARNTRACE("SSL_CTX_load_verify_locations failed, file="<<caFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
+                break;
+            }
+            if(SSL_CTX_set_default_verify_paths(ssl_ctx) != 1) {
+                KUMA_WARNTRACE("SSL_CTX_set_default_verify_paths failed, err="<<ERR_reason_error_string(ERR_get_error()));
+                break;
+            }
+            SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, verifyCallback);
+            //SSL_CTX_set_verify_depth(ssl_ctx, 4);
+            //app_verify_arg arg1;
+            //SSL_CTX_set_cert_verify_callback(ssl_ctx, appVerifyCallback, &arg1);
+        }
+        if (!clientMode) {
+            SSL_CTX_set_alpn_select_cb(ssl_ctx, alpnCallback, (void*)&alpnProtos);
+        }
+        ctx_ok = true;
+    } while(0);
+    if(!ctx_ok && ssl_ctx) {
+        SSL_CTX_free(ssl_ctx);
+        ssl_ctx = nullptr;
+    }
+    return ssl_ctx;
+}
+
+SSL_CTX* OpenSslLib::getClientContext()
+{
+    if (!ssl_ctx_client_) {
+        std::call_once(once_flag_client_, []{
+            std::string certFile;// = certs_path + "cleint.cer";
+            std::string keyFile;// = certs_path + "client.key";
+            std::string caFile = certs_path_ + "ca.cer";
+            ssl_ctx_client_ = createSSLContext(SSLv23_client_method(), caFile, certFile, keyFile, true);
+        });
+    }
+    return ssl_ctx_client_;
+}
+
+SSL_CTX* OpenSslLib::getServerContext()
+{
+    if (!ssl_ctx_server_) {
+        std::call_once(once_flag_server_, []{
+            std::string certFile = certs_path_ + "server.cer";
+            std::string keyFile = certs_path_ + "server.key";
+            std::string caFile;
+            ssl_ctx_server_ = createSSLContext(SSLv23_server_method(), caFile, certFile, keyFile, false);
+        });
+    }
+    return ssl_ctx_server_;
 }
 
 void OpenSslLib::fini()
 {
-    
+    EVP_cleanup();
+    ERR_free_strings();
 }
 
 struct app_verify_arg
@@ -281,6 +280,17 @@ void OpenSslLib::lockingCallback(int mode, int n, const char *file, int line)
     else {
         ssl_locks_[n].unlock();
     }
+}
+
+int OpenSslLib::alpnCallback(SSL *ssl, const unsigned char **out, unsigned char *outlen, const unsigned char *_in, unsigned int inlen,
+                          void *arg)
+{
+    const AlpnProtos *protos = (AlpnProtos*)arg;
+    
+    if (SSL_select_next_proto((unsigned char**) out, outlen, &(*protos)[0], (unsigned int)protos->size(), _in, inlen) != OPENSSL_NPN_NEGOTIATED) {
+        return SSL_TLSEXT_ERR_NOACK;
+    }
+    return SSL_TLSEXT_ERR_OK;
 }
 
 #endif // KUMA_HAS_OPENSSL

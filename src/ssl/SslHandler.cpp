@@ -87,6 +87,14 @@ void SslHandler::cleanup()
     setState(SSL_NONE);
 }
 
+int SslHandler::setAlpnProtocols(const AlpnProtos &protocols)
+{
+    if (ssl_ && SSL_set_alpn_protos(ssl_, &protocols[0], (unsigned int)protocols.size()) == 1) {
+        return KUMA_ERROR_NOERR;
+    }
+    return KUMA_ERROR_SSL_FAILED;
+}
+
 int SslHandler::attachFd(SOCKET_FD fd, SslRole ssl_role)
 {
     cleanup();
@@ -141,7 +149,7 @@ SslHandler::SslState SslHandler::sslConnect()
         KUMA_ERRXTRACE("sslConnect, ssl_ is NULL");
         return SSL_ERROR;
     }
-    ERR_clear_error();
+    
     int ret = SSL_connect(ssl_);
     int ssl_err = SSL_get_error (ssl_, ret);
     switch (ssl_err)
@@ -176,7 +184,7 @@ SslHandler::SslState SslHandler::sslAccept()
         KUMA_ERRXTRACE("sslAccept, ssl_ is NULL");
         return SSL_ERROR;
     }
-    ERR_clear_error();
+    
     int ret = SSL_accept(ssl_);
     int ssl_err = SSL_get_error(ssl_, ret);
     switch (ssl_err)
