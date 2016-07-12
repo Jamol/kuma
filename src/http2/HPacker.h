@@ -1,8 +1,14 @@
 /* Copyright (c) 2016, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -16,15 +22,12 @@
 #ifndef __HPacker_H__
 #define __HPacker_H__
 
-#include "kmdefs.h"
 #include <string>
-#include <deque>
-#include <map>
 #include <vector>
 
 #include "HPackTable.h"
 
-KUMA_NS_BEGIN
+namespace hpack {
 
 class HPacker
 {
@@ -33,9 +36,7 @@ public:
     using KeyValueVector = std::vector<KeyValuePair>;
     
 public:
-    HPacker();
-    
-    int encode(KeyValueVector headers, uint8_t *buf, size_t len);
+    int encode(const KeyValueVector &headers, uint8_t *buf, size_t len);
     int decode(const uint8_t *buf, size_t len, KeyValueVector &headers);
     void setMaxTableSize(size_t maxSize) { table_.setMaxSize(maxSize); }
     
@@ -55,6 +56,6 @@ private:
     bool updateTableSize_ = true;
 };
 
-KUMA_NS_END
+} // namespace hpack
 
-#endif /* __HPACK_H__ */
+#endif /* __HPacker_H__ */

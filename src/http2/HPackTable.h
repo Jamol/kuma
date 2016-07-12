@@ -1,8 +1,14 @@
 /* Copyright (c) 2016, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -21,13 +27,12 @@
 #include <deque>
 #include <map>
 
-KUMA_NS_BEGIN
+namespace hpack {
 
-class HPackTable {
+class HPackTable
+{
 public:
     using KeyValuePair = std::pair<std::string, std::string>;
-    using KeyValueQueue = std::deque<KeyValuePair>;
-    using IndexMap = std::map<std::string, std::pair<int, int>>;
     
 public:
     HPackTable();
@@ -51,6 +56,9 @@ private:
     void evictTableBySize(size_t size);
     
 private:
+    using KeyValueQueue = std::deque<KeyValuePair>;
+    using IndexMap = std::map<std::string, std::pair<int, int>>;
+    
     KeyValueQueue dynamicTable_;
     size_t tableSize_ = 0;
     size_t limitSize_ = 4096;
@@ -61,6 +69,6 @@ private:
     IndexMap indexMap_; // <header name, <dynamic index sequence, static index>>
 };
 
-KUMA_NS_END
+} // namespace hpack
 
 #endif /* __HPackTable_H__ */

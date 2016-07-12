@@ -1,8 +1,14 @@
 /* Copyright (c) 2016, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -17,9 +23,8 @@
 #include "hpack_huffman_table.h"
 
 #include <math.h>
-#include <vector>
 
-KUMA_NS_BEGIN
+namespace hpack {
 
 static char *huffDecodeBits(char *dst, uint8_t bits, uint8_t *state, bool *ending) {
     const auto &entry = huff_decode_table[*state][bits];
@@ -255,10 +260,6 @@ static int decodePrefix(const uint8_t *buf, size_t len, PrefixType &type, uint64
     return int(ptr - buf);
 }
 
-HPacker::HPacker() {
-    
-}
-
 HPacker::IndexingType HPacker::getIndexingType(const std::string &name)
 {
     if (name == "cookie" || name == ":authority" || name == "user-agent" || name == "pragma") {
@@ -342,7 +343,7 @@ int HPacker::encodeHeader(const std::string &name, const std::string &value, uin
     return int(ptr - buf);
 }
 
-int HPacker::encode(KeyValueVector headers, uint8_t *buf, size_t len) {
+int HPacker::encode(const KeyValueVector &headers, uint8_t *buf, size_t len) {
     table_.setMode(true);
     uint8_t *ptr = buf;
     const uint8_t *end = buf + len;
@@ -355,7 +356,7 @@ int HPacker::encode(KeyValueVector headers, uint8_t *buf, size_t len) {
         }
         ptr += ret;
     }
-    for (auto &hdr : headers) {
+    for (const auto &hdr : headers) {
         int ret = encodeHeader(hdr.first, hdr.second, ptr, end - ptr);
         if (ret <= 0) {
             return -1;
@@ -416,4 +417,4 @@ int HPacker::decode(const uint8_t *buf, size_t len, KeyValueVector &headers) {
     return int(len);
 }
 
-KUMA_NS_END
+} // namespace hpack

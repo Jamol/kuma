@@ -1,4 +1,5 @@
 
+namespace hpack {
 
 #define TABLE_ENTRY_SIZE_EXTRA 32
 #define HPACK_DYNAMIC_START_INDEX 62
@@ -78,3 +79,5 @@ static const HPackTable::KeyValuePair hpackStaticTable[HPACK_STATIC_TABLE_SIZE] 
     
     std::make_pair("www-authenticate", "")
 };
+
+} // namespace hpack
