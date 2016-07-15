@@ -164,17 +164,7 @@ int TcpSocketImpl::bind(const char *bind_host, uint16_t bind_port)
     return KUMA_ERROR_NOERR;
 }
 
-int TcpSocketImpl::connect(const char *host, uint16_t port, const EventCallback& cb, uint32_t timeout_ms)
-{
-    if(getState() != ST_IDLE) {
-        KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
-        return KUMA_ERROR_INVALID_STATE;
-    }
-    cb_connect_ = cb;
-    return connect_i(host, port, timeout_ms);
-}
-
-int TcpSocketImpl::connect(const char *host, uint16_t port, EventCallback&& cb, uint32_t timeout_ms)
+int TcpSocketImpl::connect(const char *host, uint16_t port, EventCallback cb, uint32_t timeout_ms)
 {
     if(getState() != ST_IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
@@ -428,7 +418,7 @@ bool TcpSocketImpl::isReady()
         ;
 }
 
-int TcpSocketImpl::send(const uint8_t* data, uint32_t length)
+int TcpSocketImpl::send(const uint8_t* data, size_t length)
 {
     if(!isReady()) {
         KUMA_WARNXTRACE("send, invalid state="<<getState());
@@ -477,7 +467,7 @@ int TcpSocketImpl::send(const uint8_t* data, uint32_t length)
     return ret;
 }
 
-int TcpSocketImpl::send(iovec* iovs, uint32_t count)
+int TcpSocketImpl::send(iovec* iovs, int count)
 {
     if(!isReady()) {
         KUMA_WARNXTRACE("send 2, invalid state="<<getState());
@@ -547,7 +537,7 @@ int TcpSocketImpl::send(iovec* iovs, uint32_t count)
     return ret<0?ret:bytes_sent;
 }
 
-int TcpSocketImpl::receive(uint8_t* data, uint32_t length)
+int TcpSocketImpl::receive(uint8_t* data, size_t length)
 {
     if(!isReady()) {
         return 0;

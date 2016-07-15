@@ -20,7 +20,7 @@ AutoHelper::~AutoHelper()
 
 int AutoHelper::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
 {
-    http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });
+    http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     
     tcp_.setReadCallback([this] (int err) { onReceive(err); });
@@ -36,7 +36,7 @@ int AutoHelper::close()
     return 0;
 }
 
-void AutoHelper::onHttpData(const char* data, uint32_t len)
+void AutoHelper::onHttpData(const char* data, size_t len)
 {
     printf("AutoHelper::onHttpData, len=%u\n", len);
 }

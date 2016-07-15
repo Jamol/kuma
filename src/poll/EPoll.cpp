@@ -31,8 +31,7 @@ public:
     ~EPoll();
     
     bool init();
-    int registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb);
-    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb);
+    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
     int unregisterFd(SOCKET_FD fd);
     int updateFd(SOCKET_FD fd, uint32_t events);
     int wait(uint32_t wait_time_ms);
@@ -111,28 +110,7 @@ uint32_t EPoll::get_kuma_events(uint32_t events)
     return ev;
 }
 
-int EPoll::registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb)
-{
-    resizePollItems(fd);
-    int epoll_op = EPOLL_CTL_ADD;
-    if (INVALID_FD != poll_items_[fd].fd) {
-        epoll_op = EPOLL_CTL_MOD;
-    }
-    poll_items_[fd].fd = fd;
-    poll_items_[fd].cb = cb;
-    struct epoll_event evt = {0};
-    evt.data.ptr = (void*)(long)fd;
-    evt.events = get_events(events);//EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLET;
-    if(epoll_ctl(epoll_fd_, epoll_op, fd, &evt) < 0) {
-        KUMA_ERRTRACE("EPoll::registerFd error, fd="<<fd<<", ev="<<evt.events<<", errno="<<errno);
-        return -1;
-    }
-    KUMA_INFOTRACE("EPoll::registerFd, fd="<<fd<<", ev="<<evt.events);
-
-    return KUMA_ERROR_NOERR;
-}
-
-int EPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb)
+int EPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
 {
     resizePollItems(fd);
     int epoll_op = EPOLL_CTL_ADD;

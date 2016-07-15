@@ -39,18 +39,16 @@ public:
     ~UdpSocketImpl();
     
     int bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags);
-    int send(const uint8_t* data, uint32_t length, const char* host, uint16_t port);
-    int send(iovec* iovs, uint32_t count, const char* host, uint16_t port);
-    int receive(uint8_t* data, uint32_t length, char* ip, uint32_t ip_len, uint16_t& port);
+    int send(const uint8_t* data, size_t length, const char* host, uint16_t port);
+    int send(iovec* iovs, int count, const char* host, uint16_t port);
+    int receive(uint8_t* data, size_t length, char* ip, size_t ip_len, uint16_t& port);
     int close();
     
     int mcastJoin(const char* mcast_addr, uint16_t mcast_port);
     int mcastLeave(const char* mcast_addr, uint16_t mcast_port);
-    
-    void setReadCallback(const EventCallback& cb) { cb_read_ = cb; }
-    void setErrorCallback(const EventCallback& cb) { cb_error_ = cb; }
-    void setReadCallback(EventCallback&& cb) { cb_read_ = std::move(cb); }
-    void setErrorCallback(EventCallback&& cb) { cb_error_ = std::move(cb); }
+
+    void setReadCallback(EventCallback cb) { cb_read_ = std::move(cb); }
+    void setErrorCallback(EventCallback cb) { cb_error_ = std::move(cb); }
     
 protected:
     const char* getObjKey() const;

@@ -74,17 +74,7 @@ void WebSocketImpl::setOrigin(const std::string& origin)
     origin_ = origin;
 }
 
-int WebSocketImpl::connect(const std::string& ws_url, const EventCallback& cb)
-{
-    if(getState() != STATE_IDLE) {
-        KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
-        return KUMA_ERROR_INVALID_STATE;
-    }
-    cb_connect_ = cb;
-    return connect_i(ws_url);
-}
-
-int WebSocketImpl::connect(const std::string& ws_url, EventCallback&& cb)
+int WebSocketImpl::connect(const std::string& ws_url, EventCallback cb)
 {
     if(getState() != STATE_IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
@@ -117,7 +107,7 @@ int WebSocketImpl::connect_i(const std::string& ws_url)
     return tcp_socket_.connect(uri_.getHost().c_str(), port, [this] (int err) { onConnect(err); });
 }
 
-int WebSocketImpl::attachFd(SOCKET_FD fd, const uint8_t* init_data, uint32_t init_len)
+int WebSocketImpl::attachFd(SOCKET_FD fd, const uint8_t* init_data, size_t init_len)
 {
     is_server_ = true;
     if(init_data && init_len > 0) {
@@ -125,7 +115,7 @@ int WebSocketImpl::attachFd(SOCKET_FD fd, const uint8_t* init_data, uint32_t ini
         memcpy(init_data_, init_data, init_len);
         init_len_ = init_len;
     }
-    ws_handler_.setDataCallback([this] (uint8_t* data, uint32_t len) { onWsData(data, len); });
+    ws_handler_.setDataCallback([this] (uint8_t* data, size_t len) { onWsData(data, len); });
     ws_handler_.setHandshakeCallback([this] (int err) { onWsHandshake(err); });
     tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
     tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
@@ -137,7 +127,7 @@ int WebSocketImpl::attachFd(SOCKET_FD fd, const uint8_t* init_data, uint32_t ini
 int WebSocketImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
 {
     is_server_ = true;
-    ws_handler_.setDataCallback([this] (uint8_t* data, uint32_t len) { onWsData(data, len); });
+    ws_handler_.setDataCallback([this] (uint8_t* data, size_t len) { onWsData(data, len); });
     ws_handler_.setHandshakeCallback([this] (int err) { onWsHandshake(err); });
     tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
     tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
@@ -161,7 +151,7 @@ int WebSocketImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
     return ret;
 }
 
-int WebSocketImpl::send(const uint8_t* data, uint32_t len)
+int WebSocketImpl::send(const uint8_t* data, size_t len)
 {
     if(getState() != STATE_OPEN) {
         return -1;
@@ -213,7 +203,7 @@ int WebSocketImpl::send(const uint8_t* data, uint32_t len)
         }
     }
 #endif
-    return len;
+    return (int)len;
 }
 
 int WebSocketImpl::close()
@@ -230,7 +220,7 @@ void WebSocketImpl::onConnect(int err)
         if(cb_error_) cb_error_(err);
         return ;
     }
-    ws_handler_.setDataCallback([this] (uint8_t* data, uint32_t len) { onWsData(data, len); });
+    ws_handler_.setDataCallback([this] (uint8_t* data, size_t len) { onWsData(data, len); });
     ws_handler_.setHandshakeCallback([this] (int err) { onWsHandshake(err); });
     body_bytes_sent_ = 0;
     std::string str(ws_handler_.buildRequest(uri_.getPath(), uri_.getHost(), proto_, origin_));
@@ -380,7 +370,7 @@ void WebSocketImpl::onStateOpen()
     }
 }
 
-void WebSocketImpl::onWsData(uint8_t* data, uint32_t len)
+void WebSocketImpl::onWsData(uint8_t* data, size_t len)
 {
     if(cb_data_) cb_data_(data, len);
 }

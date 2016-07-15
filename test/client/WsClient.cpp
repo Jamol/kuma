@@ -23,7 +23,7 @@ WsClient::WsClient(EventLoop* loop, long conn_id, TestLoop* server)
 
 void WsClient::startRequest(std::string& url)
 {
-    ws_.setDataCallback([this] (uint8_t* data, uint32_t len) { onData(data, len); });
+    ws_.setDataCallback([this] (uint8_t* data, size_t len) { onData(data, len); });
     ws_.setWriteCallback([this] (int err) { onSend(err); });
     ws_.setErrorCallback([this] (int err) { onClose(err); });
     //timer_.schedule(1000, [this] { onTimer(); }, true);
@@ -61,14 +61,14 @@ void WsClient::onSend(int err)
     //printf("Client::onSend\n");
 }
 
-void WsClient::onData(uint8_t* data, uint32_t len)
+void WsClient::onData(uint8_t* data, size_t len)
 {
     uint32_t index = 0;
     if(len >= 4) {
         index = ntohl(*(uint32_t*)data);
     }
     if(index % 10000 == 0) {
-        printf("WsClient::onReceive, bytes_read=%d, index=%d\n", len, index);
+        printf("WsClient::onReceive, bytes_read=%zu, index=%d\n", len, index);
     }
     if(index < max_send_count_) {
         if (!timed_sending_) {
@@ -78,7 +78,7 @@ void WsClient::onData(uint8_t* data, uint32_t len)
         timer_.cancel();
         std::chrono::steady_clock::time_point end_point = std::chrono::steady_clock::now();
         std::chrono::milliseconds diff_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_point - start_point_);
-        printf("spent %u ms to echo %u packets\n", diff_ms.count(), max_send_count_);
+        printf("spent %lld ms to echo %u packets\n", diff_ms.count(), max_send_count_);
         server_->removeObject(conn_id_);
     }
 }

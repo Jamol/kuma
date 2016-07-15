@@ -133,8 +133,7 @@ public:
     TimerImpl(TimerManagerPtr mgr);
     ~TimerImpl();
     
-    bool schedule(uint32_t delay_ms, const TimerCallback& cb, TimerMode mode);
-    bool schedule(uint32_t delay_ms, TimerCallback&& cb, TimerMode mode);
+    bool schedule(uint32_t delay_ms, TimerCallback cb, TimerMode mode);
     void cancel();
     
 private:

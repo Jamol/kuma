@@ -21,7 +21,7 @@ public:
     void onSend(int err);
     void onClose(int err);
     
-    void onHttpData(uint8_t*, uint32_t);
+    void onHttpData(uint8_t*, size_t);
     void onHeaderComplete();
     void onRequestComplete();
     void onResponseComplete();

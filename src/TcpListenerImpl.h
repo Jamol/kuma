@@ -36,10 +36,8 @@ public:
     int stopListen(const char* host, uint16_t port);
     int close();
     
-    void setListenCallback(const ListenCallback& cb) { cb_accept_ = cb; }
-    void setErrorCallback(const ErrorCallback& cb) { cb_error_ = cb; }
-    void setListenCallback(ListenCallback&& cb) { cb_accept_ = std::move(cb); }
-    void setErrorCallback(ErrorCallback&& cb) { cb_error_ = std::move(cb); }
+    void setListenCallback(ListenCallback cb) { cb_accept_ = std::move(cb); }
+    void setErrorCallback(ErrorCallback cb) { cb_error_ = std::move(cb); }
     
     SOCKET_FD getFd() const { return fd_; }
     

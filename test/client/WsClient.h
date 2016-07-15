@@ -17,7 +17,7 @@ public:
     void startRequest(std::string& url);
     int close();
     
-    void onData(uint8_t*, uint32_t);
+    void onData(uint8_t*, size_t);
     void onConnect(int err);
     void onSend(int err);
     void onClose(int err);

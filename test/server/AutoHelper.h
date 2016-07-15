@@ -22,7 +22,7 @@ public:
     void onReceive(int err);
     void onClose(int err);
     
-    void onHttpData(const char*, uint32_t);
+    void onHttpData(const char*, size_t);
     void onHttpEvent(HttpEvent ev);
     
 private:

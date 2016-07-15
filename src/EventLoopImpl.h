@@ -38,8 +38,7 @@ public:
 
 public:
     bool init();
-    int registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb);
-    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb);
+    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
     int updateFd(SOCKET_FD fd, uint32_t events);
     int unregisterFd(SOCKET_FD fd, bool close_fd);
     TimerManagerPtr getTimerMgr() { return timer_mgr_; }
@@ -49,12 +48,9 @@ public:
     
 public:
     bool isInEventLoopThread() const { return std::this_thread::get_id() == thread_id_; }
-    int runInEventLoop(const LoopCallback& cb);
-    int runInEventLoopSync(const LoopCallback& cb);
-    int queueInEventLoop(const LoopCallback& cb);
-    int runInEventLoop(LoopCallback&& cb);
-    int runInEventLoopSync(LoopCallback&& cb);
-    int queueInEventLoop(LoopCallback&& cb);
+    int runInEventLoop(LoopCallback cb);
+    int runInEventLoopSync(LoopCallback cb);
+    int queueInEventLoop(LoopCallback cb);
     void loopOnce(uint32_t max_wait_ms);
     void loop(uint32_t max_wait_ms = -1);
     void notify();

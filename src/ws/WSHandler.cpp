@@ -35,7 +35,7 @@ WSHandler::WSHandler()
 , opcode_(WS_OPCODE_BINARY)
 , destroy_flag_ptr_(nullptr)
 {
-    http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });
+    http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
 }
 
@@ -55,7 +55,7 @@ void WSHandler::setHttpParser(HttpParserImpl&& parser)
 {
     http_parser_.reset();
     http_parser_ = std::move(parser);
-    http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });
+    http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     if(http_parser_.paused()) {
         http_parser_.resume();
@@ -126,7 +126,7 @@ const std::string WSHandler::getOrigin()
     return http_parser_.getHeaderValue("Origin");
 }
 
-void WSHandler::onHttpData(const char* data, uint32_t len)
+void WSHandler::onHttpData(const char* data, size_t len)
 {
     KUMA_ERRTRACE("WSHandler::onHttpData, len="<<len);
 }
@@ -189,7 +189,7 @@ void WSHandler::handleResponse()
     }
 }
 
-WSHandler::WSError WSHandler::handleData(uint8_t* data, uint32_t len)
+WSHandler::WSError WSHandler::handleData(uint8_t* data, size_t len)
 {
     if(state_ == STATE_OPEN) {
         return decodeFrame(data, len);
@@ -215,7 +215,7 @@ WSHandler::WSError WSHandler::handleData(uint8_t* data, uint32_t len)
     return WS_ERROR_NOERR;
 }
 
-int WSHandler::encodeFrameHeader(WSOpcode opcode, uint32_t frame_len, uint8_t frame_hdr[10])
+int WSHandler::encodeFrameHeader(WSOpcode opcode, size_t frame_len, uint8_t frame_hdr[10])
 {
     uint8_t first_byte = 0x80 | opcode;
     uint8_t second_byte = 0x00;
@@ -257,11 +257,11 @@ int WSHandler::encodeFrameHeader(WSOpcode opcode, uint32_t frame_len, uint8_t fr
     return hdr_len;
 }
 
-WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, uint32_t len)
+WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
 {
 #define WS_MAX_FRAME_DATA_LENGTH	10*1024*1024
     
-    uint32_t pos = 0;
+    size_t pos = 0;
     uint8_t b = 0;
     while(pos < len)
     {
@@ -413,12 +413,12 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, uint32_t len)
     return ctx_.state == FRAME_DECODE_STATE_HDR1 ? WS_ERROR_NOERR : WS_ERROR_NEED_MORE_DATA;
 }
 
-WSHandler::WSError WSHandler::handleDataMask(FrameHeader& hdr, uint8_t* data, uint32_t len)
+WSHandler::WSError WSHandler::handleDataMask(FrameHeader& hdr, uint8_t* data, size_t len)
 {
     if(0 == hdr.mask) return WS_ERROR_NOERR;
     if(nullptr == data || 0 == len) return WS_ERROR_INVALID_FRAME;
     
-    for(uint32_t i=0; i < len; ++i) {
+    for(size_t i=0; i < len; ++i) {
         data[i] = data[i] ^ hdr.maskey[i%4];
     }
     

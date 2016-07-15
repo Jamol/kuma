@@ -261,7 +261,7 @@ bool HttpParserImpl::hasBody()
     }
 }
 
-int HttpParserImpl::parse(const char* data, uint32_t len)
+int HttpParserImpl::parse(const char* data, size_t len)
 {
     if(HTTP_READ_DONE == read_state_ || HTTP_READ_ERROR == read_state_) {
         KUMA_WARNTRACE("HttpParser::parse, invalid state="<<read_state_);
@@ -271,7 +271,7 @@ int HttpParserImpl::parse(const char* data, uint32_t len)
     {// return directly, read untill EOF
         total_bytes_read_ += len;
         if(cb_data_) cb_data_(data, len);
-        return len;
+        return (int)len;
     }
     const char* pos = data;
     const char* end = data + len;
@@ -712,28 +712,18 @@ const std::string& HttpParserImpl::getHeaderValue(const std::string& name) const
     return str_empty;
 }
 
-void HttpParserImpl::forEachParam(const EnumrateCallback& cb)
+void HttpParserImpl::forEachParam(EnumrateCallback cb)
 {
     for (auto &kv : param_map_) {
         cb(kv.first, kv.second);
     }
 }
 
-void HttpParserImpl::forEachHeader(const EnumrateCallback& cb)
+void HttpParserImpl::forEachHeader(EnumrateCallback cb)
 {
     for (auto &kv : header_map_) {
         cb(kv.first, kv.second);
     }
-}
-
-void HttpParserImpl::forEachParam(EnumrateCallback&& cb)
-{
-    forEachParam(cb);
-}
-
-void HttpParserImpl::forEachHeader(EnumrateCallback&& cb)
-{
-    forEachHeader(cb);
 }
 
 bool HttpParserImpl::getLine(const char*& cur_pos, const char* end, const char*& line, const char*& line_end)

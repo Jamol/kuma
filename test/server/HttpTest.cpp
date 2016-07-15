@@ -20,7 +20,7 @@ int HttpTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
     http_.setWriteCallback([this] (int err) { onSend(err); });
     http_.setErrorCallback([this] (int err) { onClose(err); });
     
-    http_.setDataCallback([this] (uint8_t* data, uint32_t len) { onHttpData(data, len); });
+    http_.setDataCallback([this] (uint8_t* data, size_t len) { onHttpData(data, len); });
     http_.setHeaderCompleteCallback([this] () { onHeaderComplete(); });
     http_.setRequestCompleteCallback([this] () { onRequestComplete(); });
     http_.setResponseCompleteCallback([this] () { onResponseComplete(); });
@@ -33,7 +33,7 @@ int HttpTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
     http_.setWriteCallback([this] (int err) { onSend(err); });
     http_.setErrorCallback([this] (int err) { onClose(err); });
     
-    http_.setDataCallback([this] (uint8_t* data, uint32_t len) { onHttpData(data, len); });
+    http_.setDataCallback([this] (uint8_t* data, size_t len) { onHttpData(data, len); });
     http_.setHeaderCompleteCallback([this] () { onHeaderComplete(); });
     http_.setRequestCompleteCallback([this] () { onRequestComplete(); });
     http_.setResponseCompleteCallback([this] () { onResponseComplete(); });
@@ -57,7 +57,7 @@ void HttpTest::onClose(int err)
     server_->removeObject(conn_id_);
 }
 
-void HttpTest::onHttpData(uint8_t* data, uint32_t len)
+void HttpTest::onHttpData(uint8_t* data, size_t len)
 {
     printf("HttpTest::onHttpData, len=%u\n", len);
 }

@@ -44,17 +44,7 @@ TimerImpl::~TimerImpl()
     cancel();
 }
 
-bool TimerImpl::schedule(uint32_t delay_ms, const TimerCallback& cb, TimerMode mode)
-{
-    TimerManagerPtr mgr = timer_mgr_.lock();
-    if(mgr) {
-        cb_ = cb;
-        return mgr->scheduleTimer(this, delay_ms, mode);
-    }
-    return false;
-}
-
-bool TimerImpl::schedule(uint32_t delay_ms, TimerCallback&& cb, TimerMode mode)
+bool TimerImpl::schedule(uint32_t delay_ms, TimerCallback cb, TimerMode mode)
 {
     TimerManagerPtr mgr = timer_mgr_.lock();
     if(mgr) {

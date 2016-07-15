@@ -28,8 +28,7 @@ public:
     ~SelectPoll();
     
     bool init();
-    int registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb);
-    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb);
+    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
     int unregisterFd(SOCKET_FD fd);
     int updateFd(SOCKET_FD fd, uint32_t events);
     int wait(uint32_t wait_time_ms);
@@ -83,24 +82,7 @@ bool SelectPoll::init()
     return true;
 }
 
-int SelectPoll::registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb)
-{
-    KUMA_INFOTRACE("SelectPoll::registerFd, fd="<<fd);
-    resizePollItems(fd);
-    if (INVALID_FD == poll_items_[fd].fd || -1 == poll_items_[fd].idx) {
-        PollFD pfd;
-        pfd.fd = fd;
-        pfd.events = events;
-        poll_fds_.push_back(pfd);
-        poll_items_[fd].idx = int(poll_fds_.size() - 1);
-    }
-    poll_items_[fd].fd = fd;
-    poll_items_[fd].cb = cb;
-    updateFdSet(fd, events);
-    return KUMA_ERROR_NOERR;
-}
-
-int SelectPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb)
+int SelectPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
 {
     KUMA_INFOTRACE("SelectPoll::registerFd, fd=" << fd);
     resizePollItems(fd);

@@ -29,7 +29,7 @@ KUMA_NS_BEGIN
 class HttpParserImpl
 {
 public:
-    typedef std::function<void(const char*, uint32_t)> DataCallback;
+    typedef std::function<void(const char*, size_t)> DataCallback;
     typedef std::function<void(HttpEvent)> EventCallback;
     typedef std::function<void(const std::string&, const std::string&)> EnumrateCallback;
     
@@ -48,7 +48,7 @@ public:
     HttpParserImpl& operator=(HttpParserImpl&& other);
     
     // return bytes parsed
-    int parse(const char* data, uint32_t len);
+    int parse(const char* data, size_t len);
     void pause();
     void resume();
     // true - http completed
@@ -70,15 +70,11 @@ public:
     const std::string& getParamValue(const std::string& name) const;
     const std::string& getHeaderValue(const std::string& name) const;
     
-    void forEachParam(const EnumrateCallback& cb);
-    void forEachHeader(const EnumrateCallback& cb);
-    void forEachParam(EnumrateCallback&& cb);
-    void forEachHeader(EnumrateCallback&& cb);
+    void forEachParam(EnumrateCallback cb);
+    void forEachHeader(EnumrateCallback cb);
     
-    void setDataCallback(const DataCallback& cb) { cb_data_ = cb; }
-    void setEventCallback(const EventCallback& cb) { cb_event_ = cb; }
-    void setDataCallback(DataCallback&& cb) { cb_data_ = std::move(cb); }
-    void setEventCallback(EventCallback&& cb) { cb_event_ = std::move(cb); }
+    void setDataCallback(DataCallback cb) { cb_data_ = std::move(cb); }
+    void setEventCallback(EventCallback cb) { cb_event_ = std::move(cb); }
     
 private:
     typedef enum{

@@ -1,4 +1,4 @@
-/* Copyright (c) 2016, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -13,27 +13,19 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "H2Connection.h"
+#ifndef __HTTPDEFS_H__
+#define __HTTPDEFS_H__
 
-using namespace kuma;
+#include "kmdefs.h"
+#include <string>
 
-//////////////////////////////////////////////////////////////////////////
-H2Connection::H2Connection()
-: parser_(this)
-{
-    
-}
+KUMA_NS_BEGIN
 
-H2Connection::~H2Connection()
-{
-    
-}
+const std::string strVersionHTTP2_0 = "HTTP/2.0";
+const std::string strVersionHTTP1_1 = "HTTP/1.1";
+const std::string strEmpty = "";
+const std::string strUserAgent = "kuma 1.0";
 
-void H2Connection::onFrame(H2Frame *frame)
-{
-}
+KUMA_NS_END
 
-void H2Connection::onFrameError(const FrameHeader &hdr, H2Error err)
-{
-    
-}
+#endif

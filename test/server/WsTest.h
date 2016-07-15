@@ -21,7 +21,7 @@ public:
     void onSend(int err);
     void onClose(int err);
     
-    void onData(uint8_t*, uint32_t);
+    void onData(uint8_t*, size_t);
     
 private:
     void cleanup();

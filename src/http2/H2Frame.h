@@ -1,8 +1,14 @@
 /* Copyright (c) 2016, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -26,12 +32,16 @@ KUMA_NS_BEGIN
 class FrameHeader
 {
 public:
-    bool encode(uint8_t *buf, uint32_t len);
-    bool decode(const uint8_t *buf, uint32_t len);
+    int encode(uint8_t *buf, size_t len);
+    bool decode(const uint8_t *buf, size_t len);
     
+    void setLength(uint32_t length) { length_ = length; }
     uint32_t getLength() const { return length_; }
+    void setType(uint8_t type) { type_ = type; }
     uint8_t getType() const { return type_; }
+    void setFlags(uint8_t flags) { flags_ = flags; }
     uint8_t getFlags() const { return flags_; }
+    void setStreamId(uint32_t streamId) { streamId_ = streamId; }
     uint32_t getStreamId() const { return streamId_; }
     
 protected:
@@ -39,6 +49,12 @@ protected:
     uint8_t type_;
     uint8_t flags_ = 0;
     uint32_t streamId_ = H2_MAX_STREAM_ID;
+};
+
+struct h2_priority_t {
+    uint32_t streamId = 0;
+    uint16_t weight = 16;
+    bool exclusive = false;
 };
 
 class H2Frame
@@ -50,8 +66,13 @@ public:
 
     virtual H2FrameType type() = 0;
     virtual H2Error decode(const FrameHeader &hdr, const uint8_t *payload) = 0;
+    int encodeHeader(uint8_t *dst, size_t len, FrameHeader &hdr);
     
     uint32_t getStreamId() { return hdr_.getStreamId(); }
+    
+public:
+    static H2Error decodePriority(const uint8_t *src, size_t len, h2_priority_t &pri);
+    static int encodePriority(uint8_t *dst, size_t len, h2_priority_t pri);
     
 protected:
     FrameHeader hdr_;
@@ -76,20 +97,20 @@ class HeadersFrame : public H2Frame
 public:
     H2FrameType type() { return H2FrameType::HEADERS; }
     H2Error decode(const FrameHeader &hdr, const uint8_t *payload);
+    int encode(uint8_t *dst, size_t len, uint32_t streamId, const uint8_t *block, size_t bsize, h2_priority_t *pri=nullptr, uint8_t flags=0);
+    int encode(uint8_t *dst, size_t len, uint32_t streamId, size_t bsize, h2_priority_t *pri=nullptr, uint8_t flags=0);
     
     bool hasPriority() { return hdr_.getFlags() & H2_FRAME_FLAG_PRIORITY; }
     bool hasEndHeaders() { return hdr_.getFlags() & H2_FRAME_FLAG_END_HEADERS; }
     const uint8_t* getBlock() { return block_; }
-    uint32_t getBlockSize() { return size_; }
+    size_t getBlockSize() { return size_; }
     void setBlock(const uint8_t *block) { block_ = block; }
     void setBlockSize(uint32_t sz) { size_ = sz; }
     
 private:
-    uint32_t depStreamId_ = 0;
-    uint16_t weight_ = 16;
-    bool exclusive_ = false;
+    h2_priority_t pri_;
     const uint8_t *block_ = nullptr;
-    uint32_t size_ = 0;
+    size_t size_ = 0;
 };
 
 class PriorityFrame : public H2Frame
@@ -98,17 +119,11 @@ public:
     H2FrameType type() { return H2FrameType::PRIORITY; }
     H2Error decode(const FrameHeader &hdr, const uint8_t *payload);
     
-    uint32_t getDepStreamId() { return depStreamId_; }
-    uint16_t getWeight() { return weight_; }
-    bool isExclusive() { return exclusive_; }
-    void setDepStreamId(uint32_t streamId) { depStreamId_ = streamId; }
-    void setWeight(uint16_t w) { weight_ = w; }
-    void setExclusive(bool e) { exclusive_ = e; }
+    h2_priority_t getPriority() { return pri_; }
+    void setPriority(h2_priority_t pri) { pri_ = pri; }
     
 private:
-    uint32_t depStreamId_ = 0;
-    uint16_t weight_ = 16;
-    bool exclusive_ = false;
+    h2_priority_t pri_;
 };
 
 class RSTStreamFrame : public H2Frame
@@ -127,9 +142,9 @@ private:
 class SettingsFrame : public H2Frame
 {
 public:
-    using ParamVector = std::vector<std::pair<uint16_t, uint32_t>>;
-public:
     H2FrameType type() { return H2FrameType::SETTINGS; }
+    int encode(uint8_t *dst, size_t len, ParamVector &params, bool ack);
+    int encodePayload(uint8_t *dst, size_t len, ParamVector &params);
     H2Error decode(const FrameHeader &hdr, const uint8_t *payload);
     
     bool isAck() { return hdr_.getFlags() & H2_FRAME_FLAG_ACK; }

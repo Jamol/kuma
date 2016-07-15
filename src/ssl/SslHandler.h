@@ -45,9 +45,9 @@ public:
     int attachSsl(SSL* ssl);
     int detachSsl(SSL* &ssl);
     SslState doSslHandshake();
-    int send(const uint8_t* data, uint32_t size);
-    int send(const iovec* iovs, uint32_t count);
-    int receive(uint8_t* data, uint32_t size);
+    int send(const uint8_t* data, size_t size);
+    int send(const iovec* iovs, int count);
+    int receive(uint8_t* data, size_t size);
     int close();
     
     bool isServer() { return is_server_; }

@@ -76,7 +76,7 @@ void Client::onReceive(int err)
                 timer_.cancel();
                 std::chrono::steady_clock::time_point end_point = std::chrono::steady_clock::now();
                 std::chrono::milliseconds diff_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_point - start_point_);
-                printf("spent %u ms to echo %u packets\n", diff_ms.count(), max_send_count_);
+                printf("spent %lld ms to echo %u packets\n", diff_ms.count(), max_send_count_);
             }
         } else if (0 == bytes_read) {
             break;

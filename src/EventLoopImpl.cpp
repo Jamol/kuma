@@ -67,20 +67,7 @@ bool EventLoopImpl::isPollLT() const
     return false;
 }
 
-int EventLoopImpl::registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb)
-{
-    if(isInEventLoopThread()) {
-        return poll_->registerFd(fd, events, cb);
-    }
-    return runInEventLoop([=] () mutable {
-        int ret = poll_->registerFd(fd, events, cb);
-        if(ret != KUMA_ERROR_NOERR) {
-            return ;
-        }
-    });
-}
-
-int EventLoopImpl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb)
+int EventLoopImpl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
 {
     if(isInEventLoopThread()) {
         return poll_->registerFd(fd, events, std::move(cb));
@@ -170,18 +157,7 @@ void EventLoopImpl::stop()
     poll_->notify();
 }
 
-int EventLoopImpl::runInEventLoop(const LoopCallback& cb)
-{
-    if(isInEventLoopThread()) {
-        cb();
-    } else {
-        cb_queue_.enqueue(cb);
-        poll_->notify();
-    }
-    return KUMA_ERROR_NOERR;
-}
-
-int EventLoopImpl::runInEventLoop(LoopCallback&& cb)
+int EventLoopImpl::runInEventLoop(LoopCallback cb)
 {
     if(isInEventLoopThread()) {
         cb();
@@ -192,7 +168,7 @@ int EventLoopImpl::runInEventLoop(LoopCallback&& cb)
     return KUMA_ERROR_NOERR;
 }
 
-int EventLoopImpl::runInEventLoopSync(const LoopCallback& cb)
+int EventLoopImpl::runInEventLoopSync(LoopCallback cb)
 {
     if(isInEventLoopThread()) {
         cb();
@@ -215,21 +191,7 @@ int EventLoopImpl::runInEventLoopSync(const LoopCallback& cb)
     return KUMA_ERROR_NOERR;
 }
 
-int EventLoopImpl::runInEventLoopSync(LoopCallback&& cb)
-{
-    return runInEventLoopSync(cb);
-}
-
-int EventLoopImpl::queueInEventLoop(const LoopCallback& cb)
-{
-    cb_queue_.enqueue(cb);
-    if(!isInEventLoopThread()) {
-        poll_->notify();
-    }
-    return KUMA_ERROR_NOERR;
-}
-
-int EventLoopImpl::queueInEventLoop(LoopCallback&& cb)
+int EventLoopImpl::queueInEventLoop(LoopCallback cb)
 {
     cb_queue_.enqueue(std::move(cb));
     if(!isInEventLoopThread()) {

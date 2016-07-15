@@ -31,8 +31,7 @@ public:
     ~WinPoll();
     
     bool init();
-    int registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb);
-    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb);
+    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
     int unregisterFd(SOCKET_FD fd);
     int updateFd(SOCKET_FD fd, uint32_t events);
     int wait(uint32_t wait_ms);
@@ -126,17 +125,7 @@ void WinPoll::resizePollItems(SOCKET_FD fd)
     }
 }
 
-int WinPoll::registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb)
-{
-    KUMA_INFOTRACE("WinPoll::registerFd, fd=" << fd << ", events=" << events);
-    resizePollItems(fd);
-    poll_items_[fd].fd = fd;
-    poll_items_[fd].cb = cb;
-    WSAAsyncSelect(fd, hwnd_, WM_SOCKET_NOTIFY, get_events(events) | FD_CONNECT);
-    return KUMA_ERROR_NOERR;
-}
-
-int WinPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb)
+int WinPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
 {
     KUMA_INFOTRACE("WinPoll::registerFd, fd=" << fd << ", events=" << events);
     resizePollItems(fd);

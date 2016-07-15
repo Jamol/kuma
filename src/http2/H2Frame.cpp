@@ -1,8 +1,14 @@
 /* Copyright (c) 2016, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -19,31 +25,31 @@
 using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
-bool FrameHeader::encode(uint8_t *buf, uint32_t len)
+int FrameHeader::encode(uint8_t *dst, size_t len)
 {
-    if (!buf || len < H2_FRAME_HEADER_SIZE) {
-        return false;
+    if (!dst || len < H2_FRAME_HEADER_SIZE) {
+        return -1;
     }
-    encode_u24(length_, buf);
-    buf[3] = type_;
-    buf[4] = flags_;
-    encode_u32(streamId_, buf + 5);
+    encode_u24(dst, length_);
+    dst[3] = type_;
+    dst[4] = flags_;
+    encode_u32(dst + 5, streamId_);
     
-    return true;
+    return H2_FRAME_HEADER_SIZE;
 }
 
-bool FrameHeader::decode(const uint8_t *buf, uint32_t len)
+bool FrameHeader::decode(const uint8_t *src, size_t len)
 {
-    if (!buf || len < H2_FRAME_HEADER_SIZE) {
+    if (!src || len < H2_FRAME_HEADER_SIZE) {
         return false;
     }
-    if (buf[5] & 0x80) { // check reserved bit
+    if (src[5] & 0x80) { // check reserved bit
         
     }
-    length_ = decode_u24(buf);
-    type_ = buf[3];
-    flags_ = buf[4];
-    streamId_ = decode_u32(buf + 5) & 0x7FFFFFFF;
+    length_ = decode_u24(src);
+    type_ = src[3];
+    flags_ = src[4];
+    streamId_ = decode_u32(src + 5) & 0x7FFFFFFF;
     return true;
 }
 
@@ -51,6 +57,38 @@ bool FrameHeader::decode(const uint8_t *buf, uint32_t len)
 void H2Frame::setFrameHeader(const FrameHeader &hdr)
 {
     hdr_ = hdr;
+}
+
+int H2Frame::encodeHeader(uint8_t *dst, size_t len, FrameHeader &hdr)
+{
+    return hdr.encode(dst, len);
+}
+
+H2Error H2Frame::decodePriority(const uint8_t *src, size_t len, h2_priority_t &pri)
+{
+    if (len < H2_PRIORITY_PAYLOAD_SIZE) {
+        return H2Error::FRAME_SIZE_ERROR;
+    }
+    pri.streamId = decode_u32(src);
+    pri.exclusive = pri.streamId & 0x80000000;
+    pri.streamId &= 0x7FFFFFFF;
+    pri.weight = (uint16_t)(src[4]) + 1;
+    return H2Error::NO_ERROR;
+}
+
+int H2Frame::encodePriority(uint8_t *dst, size_t len, h2_priority_t pri)
+{
+    if (len < H2_PRIORITY_PAYLOAD_SIZE) {
+        return -1;
+    }
+    pri.streamId &= 0x7FFFFFFF;
+    if (pri.exclusive) {
+        pri.streamId |= 0x80000000;
+    }
+    encode_u32(dst, pri.streamId);
+    dst[4] = pri.weight;
+    
+    return H2_PRIORITY_PAYLOAD_SIZE;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -84,7 +122,7 @@ H2Error HeadersFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
         return H2Error::PROTOCOL_ERROR;
     }
     const uint8_t *ptr = payload;
-    uint32_t len = hdr.getLength();
+    size_t len = hdr.getLength();
     uint8_t pad_len = 0;
     if (hdr.getFlags() & H2_FRAME_FLAG_PADDED) {
         pad_len = *ptr++;
@@ -94,20 +132,63 @@ H2Error HeadersFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
         len -= pad_len + 1;
     }
     if (hdr.getFlags() & H2_FRAME_FLAG_PRIORITY) {
-        if (len < 5) {
-            return H2Error::FRAME_SIZE_ERROR;
+        H2Error err = decodePriority(ptr, len, pri_);
+        if (err != H2Error::NO_ERROR) {
+            return err;
         }
-        depStreamId_ = decode_u32(ptr);
-        exclusive_ = depStreamId_ & 0x80000000;
-        depStreamId_ &= 0x7FFFFFFF;
-        ptr += 4;
-        len -= 4;
-        weight_ = (uint16_t)(*ptr++) + 1;
-        --len;
+        ptr += H2_PRIORITY_PAYLOAD_SIZE;
+        len -= H2_PRIORITY_PAYLOAD_SIZE;
     }
     block_ = ptr;
     size_ = len;
     return H2Error::NO_ERROR;
+}
+
+int HeadersFrame::encode(uint8_t *dst, size_t len, uint32_t streamId, const uint8_t *block, size_t bsize, h2_priority_t *pri, uint8_t flags)
+{
+    uint8_t *ptr = dst;
+    const uint8_t *end = dst + len;
+    
+    int ret = encode(ptr, end - ptr, streamId, bsize, pri, flags);
+    if (ret < 0) {
+        return ret;
+    }
+    ptr += ret;
+    if (end - ptr < bsize) {
+        return -1;
+    }
+    memcpy(ptr, block, bsize);
+    ptr += bsize;
+    return int(ptr - dst);
+}
+
+int HeadersFrame::encode(uint8_t *dst, size_t len, uint32_t streamId, size_t bsize, h2_priority_t *pri, uint8_t flags)
+{
+    uint8_t *ptr = dst;
+    const uint8_t *end = dst + len;
+    
+    if (pri) {
+        flags |= H2_FRAME_FLAG_PRIORITY;
+    }
+    flags |= H2_FRAME_FLAG_END_HEADERS;
+    FrameHeader hdr;
+    hdr.setType(type());
+    hdr.setFlags(flags);
+    hdr.setStreamId(streamId);
+    hdr.setLength((pri?H2_PRIORITY_PAYLOAD_SIZE:0) + (uint32_t)bsize);
+    int ret = encodeHeader(ptr, end - ptr, hdr);
+    if (ret < 0) {
+        return ret;
+    }
+    ptr += ret;
+    if (pri) {
+        ret = encodePriority(ptr, end - ptr, *pri);
+        if (ret < 0) {
+            return ret;
+        }
+        ptr += ret;
+    }
+    return int(ptr - dst);
 }
 
 H2Error PriorityFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
@@ -117,15 +198,8 @@ H2Error PriorityFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
         return H2Error::PROTOCOL_ERROR;
     }
     const uint8_t *ptr = payload;
-    uint32_t len = hdr.getLength();
-    if (len != 5) {
-        return H2Error::FRAME_SIZE_ERROR;
-    }
-    depStreamId_ = decode_u32(ptr);
-    exclusive_ = depStreamId_ & 0x80000000;
-    depStreamId_ &= 0x7FFFFFFF;
-    weight_ = (uint16_t)(*(ptr + 4)) + 1;
-    return H2Error::NO_ERROR;
+    size_t len = hdr.getLength();
+    return decodePriority(ptr, len, pri_);
 }
 
 H2Error RSTStreamFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
@@ -139,6 +213,35 @@ H2Error RSTStreamFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
     }
     errCode_ = decode_u32(payload);
     return H2Error::NO_ERROR;
+}
+
+int SettingsFrame::encode(uint8_t *dst, size_t len, ParamVector &params, bool ack)
+{
+    uint8_t *ptr = dst;
+    const uint8_t *end = dst + len;
+    
+    int ret = encodePayload(ptr, end - ptr, params);
+    if (ret < 0) {
+        return ret;
+    }
+    ptr += ret;
+    return int(ptr - dst);
+}
+
+int SettingsFrame::encodePayload(uint8_t *dst, size_t len, ParamVector &params)
+{
+    uint8_t *ptr = dst;
+    const uint8_t *end = dst + len;
+    for (auto &p : params) {
+        if (ptr + 6 > end) {
+            return -1;
+        }
+        encode_u16(ptr, p.first);
+        ptr += 2;
+        encode_u32(ptr, p.second);
+        ptr += 4;
+    }
+    return int(ptr - dst);
 }
 
 H2Error SettingsFrame::decode(const FrameHeader &hdr, const uint8_t *payload)

@@ -4,6 +4,7 @@
 #include "HttpClient.h"
 #include "WsClient.h"
 #include "UdpClient.h"
+#include "H2ConnTest.h"
 
 #include <string.h>
 #include <string>
@@ -100,9 +101,15 @@ void TestLoop::startTest(std::string& addr_url, std::string& bind_addr)
         udp_client->startSend(host, port);
     } else if(strcmp(proto, "http") == 0 || strcmp(proto, "https") == 0) {
         long conn_id = server_->getConnId();
+#if 1
         HttpClient* http_client = new HttpClient(loop_, conn_id, this);
         addObject(conn_id, http_client);
         http_client->startRequest(addr_url);
+#else
+        H2ConnTest *h2conn = new H2ConnTest(loop_, conn_id, this);
+        addObject(conn_id, h2conn);
+        h2conn->connect(host, port);
+#endif
     } else if(strcmp(proto, "ws") == 0 || strcmp(proto, "wss") == 0) {
         long conn_id = server_->getConnId();
         WsClient* ws_client = new WsClient(loop_, conn_id, this);

@@ -14,7 +14,7 @@ int WsTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
 {
     ws_.setWriteCallback([this] (int err) { onSend(err); });
     ws_.setErrorCallback([this] (int err) { onClose(err); });
-    ws_.setDataCallback([this] (uint8_t* data, uint32_t len) { onData(data, len); });
+    ws_.setDataCallback([this] (uint8_t* data, size_t len) { onData(data, len); });
     ws_.setSslFlags(ssl_flags);
     return ws_.attachFd(fd);
 }
@@ -23,7 +23,7 @@ int WsTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
 {
     ws_.setWriteCallback([this] (int err) { onSend(err); });
     ws_.setErrorCallback([this] (int err) { onClose(err); });
-    ws_.setDataCallback([this] (uint8_t* data, uint32_t len) { onData(data, len); });
+    ws_.setDataCallback([this] (uint8_t* data, size_t len) { onData(data, len); });
     
     return ws_.attachSocket(std::move(tcp), std::move(parser));
 }
@@ -44,7 +44,7 @@ void WsTest::onClose(int err)
     server_->removeObject(conn_id_);
 }
 
-void WsTest::onData(uint8_t* data, uint32_t len)
+void WsTest::onData(uint8_t* data, size_t len)
 {
     //printf("WsTest::onData, len=%u\n", len);
     int ret = ws_.send(data, len);

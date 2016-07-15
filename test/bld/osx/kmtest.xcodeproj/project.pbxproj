@@ -16,6 +16,7 @@
 		6F2D40411B1875DB00E24928 /* UdpServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2D403F1B1875DB00E24928 /* UdpServer.cpp */; };
 		6F2D40441B1877A600E24928 /* UdpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2D40421B1877A500E24928 /* UdpClient.cpp */; };
 		6F522B3F1B5274DA006EA7E0 /* AutoHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F522B3D1B5274DA006EA7E0 /* AutoHelper.cpp */; };
+		6F9E75251D2F7A78005E04B2 /* H2ConnTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F9E75231D2F7A78005E04B2 /* H2ConnTest.cpp */; };
 		6FF211C31B1553C6006603BB /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF211C21B1553C6006603BB /* main.cpp */; };
 		6FF211C51B1553D3006603BB /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF211C41B1553D3006603BB /* main.cpp */; };
 		6FF2123F1B15A18D006603BB /* Client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF2123D1B15A18D006603BB /* Client.cpp */; };
@@ -89,6 +90,8 @@
 		6F522B3D1B5274DA006EA7E0 /* AutoHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AutoHelper.cpp; path = ../../../server/AutoHelper.cpp; sourceTree = "<group>"; };
 		6F522B3E1B5274DA006EA7E0 /* AutoHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AutoHelper.h; path = ../../../server/AutoHelper.h; sourceTree = "<group>"; };
 		6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = kuma.xcodeproj; path = ../../../bld/osx/kuma.xcodeproj; sourceTree = "<group>"; };
+		6F9E75231D2F7A78005E04B2 /* H2ConnTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H2ConnTest.cpp; sourceTree = "<group>"; };
+		6F9E75241D2F7A78005E04B2 /* H2ConnTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H2ConnTest.h; sourceTree = "<group>"; };
 		6FF211AF1B155298006603BB /* client */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = client; sourceTree = BUILT_PRODUCTS_DIR; };
 		6FF211BB1B1552AA006603BB /* server */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = server; sourceTree = BUILT_PRODUCTS_DIR; };
 		6FF211C21B1553C6006603BB /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../../../client/main.cpp; sourceTree = "<group>"; };
@@ -173,6 +176,8 @@
 				6FF2123D1B15A18D006603BB /* Client.cpp */,
 				6FF2123E1B15A18D006603BB /* Client.h */,
 				6FF211C21B1553C6006603BB /* main.cpp */,
+				6F9E75231D2F7A78005E04B2 /* H2ConnTest.cpp */,
+				6F9E75241D2F7A78005E04B2 /* H2ConnTest.h */,
 			);
 			path = client;
 			sourceTree = "<group>";
@@ -302,6 +307,7 @@
 				6F2975E81B301A6100EB467D /* LoopPool.cpp in Sources */,
 				6FF211C31B1553C6006603BB /* main.cpp in Sources */,
 				6FF747941B2981D50007F34D /* WsClient.cpp in Sources */,
+				6F9E75251D2F7A78005E04B2 /* H2ConnTest.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

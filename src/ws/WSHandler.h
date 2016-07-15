@@ -43,7 +43,7 @@ public:
         WS_ERROR_CLOSED,
         WS_ERROR_DESTROY
     }WSError;
-    typedef std::function<void(uint8_t*, uint32_t)> DataCallback;
+    typedef std::function<void(uint8_t*, size_t)> DataCallback;
     typedef std::function<void(int)> HandshakeCallback;
     
     WSHandler();
@@ -54,8 +54,8 @@ public:
                              const std::string& proto, const std::string& origin);
     std::string buildResponse();
     
-    WSError handleData(uint8_t* data, uint32_t len);
-    int encodeFrameHeader(WSOpcode opcode, uint32_t frame_len, uint8_t frame_hdr[10]);
+    WSError handleData(uint8_t* data, size_t len);
+    int encodeFrameHeader(WSOpcode opcode, size_t frame_len, uint8_t frame_hdr[10]);
     uint8_t getOpcode() { return opcode_; }
     
     const std::string getProtocol();
@@ -114,10 +114,10 @@ private:
     }DecodeContext;
     void cleanup();
     
-    static WSError handleDataMask(FrameHeader& hdr, uint8_t* data, uint32_t len);
-    WSError decodeFrame(uint8_t* data, uint32_t len);
+    static WSError handleDataMask(FrameHeader& hdr, uint8_t* data, size_t len);
+    WSError decodeFrame(uint8_t* data, size_t len);
     
-    void onHttpData(const char* data, uint32_t len);
+    void onHttpData(const char* data, size_t len);
     void onHttpEvent(HttpEvent ev);
     
     void handleRequest();

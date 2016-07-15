@@ -26,7 +26,7 @@ KUMA_NS_BEGIN
 class WebSocketImpl
 {
 public:
-    typedef std::function<void(uint8_t*, uint32_t)> DataCallback;
+    typedef std::function<void(uint8_t*, size_t)> DataCallback;
     typedef std::function<void(int)> EventCallback;
     
     WebSocketImpl(EventLoopImpl* loop);
@@ -37,19 +37,15 @@ public:
     const std::string& getProtocol() const { return proto_; }
     void setOrigin(const std::string& origin);
     const std::string& getOrigin() const { return origin_; }
-    int connect(const std::string& ws_url, const EventCallback& cb);
-    int connect(const std::string& ws_url, EventCallback&& cb);
-    int attachFd(SOCKET_FD fd, const uint8_t* init_data = nullptr, uint32_t init_len = 0);
+    int connect(const std::string& ws_url, EventCallback cb);
+    int attachFd(SOCKET_FD fd, const uint8_t* init_data = nullptr, size_t init_len = 0);
     int attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
-    int send(const uint8_t* data, uint32_t len);
+    int send(const uint8_t* data, size_t len);
     int close();
     
-    void setDataCallback(const DataCallback& cb) { cb_data_ = cb; }
-    void setWriteCallback(const EventCallback& cb) { cb_write_ = cb; }
-    void setErrorCallback(const EventCallback& cb) { cb_error_ = cb; }
-    void setDataCallback(DataCallback&& cb) { cb_data_ = std::move(cb); }
-    void setWriteCallback(EventCallback&& cb) { cb_write_ = std::move(cb); }
-    void setErrorCallback(EventCallback&& cb) { cb_error_ = std::move(cb); }
+    void setDataCallback(DataCallback cb) { cb_data_ = std::move(cb); }
+    void setWriteCallback(EventCallback cb) { cb_write_ = std::move(cb); }
+    void setErrorCallback(EventCallback cb) { cb_error_ = std::move(cb); }
     
 protected: // callbacks of tcp_socket
     void onConnect(int err);
@@ -75,7 +71,7 @@ private:
     void cleanup();
     
     void sendWsResponse();
-    void onWsData(uint8_t* data, uint32_t len);
+    void onWsData(uint8_t* data, size_t len);
     void onWsHandshake(int err);
     void onStateOpen();
     
@@ -85,14 +81,14 @@ private:
     Uri                     uri_;
     
     uint8_t*                init_data_;
-    uint32_t                init_len_;
+    size_t                  init_len_;
     
     std::vector<uint8_t>    send_buffer_;
-    uint32_t                send_offset_;
+    size_t                  send_offset_;
     TcpSocketImpl           tcp_socket_;
     bool                    is_server_;
     
-    uint32_t                body_bytes_sent_;
+    size_t                  body_bytes_sent_;
     
     std::string             proto_;
     std::string             origin_;

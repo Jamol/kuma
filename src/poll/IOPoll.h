@@ -85,8 +85,7 @@ public:
     virtual ~IOPoll() {}
     
     virtual bool init() = 0;
-    virtual int registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb) = 0;
-    virtual int registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb) = 0;
+    virtual int registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb) = 0;
     virtual int unregisterFd(SOCKET_FD fd) = 0;
     virtual int updateFd(SOCKET_FD fd, uint32_t events) = 0;
     virtual int wait(uint32_t wait_time_ms) = 0;

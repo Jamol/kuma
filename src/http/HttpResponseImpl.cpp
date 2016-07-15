@@ -72,7 +72,7 @@ int HttpResponseImpl::setSslFlags(uint32_t ssl_flags)
     return tcp_socket_.setSslFlags(ssl_flags);
 }
 
-int HttpResponseImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_len)
+int HttpResponseImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, size_t init_len)
 {
     if(init_data && init_len > 0) {
         init_data = new uint8_t(init_len);
@@ -81,7 +81,7 @@ int HttpResponseImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, uint32_t init_l
     }
     setState(STATE_RECVING_REQUEST);
     http_parser_.reset();
-    http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });
+    http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
     tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
@@ -94,7 +94,7 @@ int HttpResponseImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
     setState(STATE_RECVING_REQUEST);
     http_parser_.reset();
     http_parser_ = std::move(parser);
-    http_parser_.setDataCallback([this] (const char* data, uint32_t len) { onHttpData(data, len); });
+    http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
     tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
@@ -134,7 +134,7 @@ void HttpResponseImpl::addHeader(const std::string& name, uint32_t value)
 void HttpResponseImpl::buildResponse(int status_code, const std::string& desc, const std::string& ver)
 {
     std::stringstream ss;
-    ss << (!ver.empty()?ver:"HTTP/1.1") << " " << status_code << " " << desc << "\r\n";
+    ss << (!ver.empty()?ver:strVersionHTTP1_1) << " " << status_code << " " << desc << "\r\n";
     if(header_map_.find(str_content_type) == header_map_.end()) {
         ss << "Content-Type: application/octet-stream\r\n";
     }
@@ -189,7 +189,7 @@ int HttpResponseImpl::sendResponse(int status_code, const std::string& desc, con
     return KUMA_ERROR_NOERR;
 }
 
-int HttpResponseImpl::sendData(const uint8_t* data, uint32_t len)
+int HttpResponseImpl::sendData(const uint8_t* data, size_t len)
 {
     if(!send_buffer_.empty() || getState() != STATE_SENDING_BODY) {
         return 0;
@@ -213,7 +213,7 @@ int HttpResponseImpl::sendData(const uint8_t* data, uint32_t len)
     return ret;
 }
 
-int HttpResponseImpl::sendChunk(const uint8_t* data, uint32_t len)
+int HttpResponseImpl::sendChunk(const uint8_t* data, size_t len)
 {
     if(nullptr == data && 0 == len) { // chunk end
         static const std::string _chunk_end_token_ = "0\r\n\r\n";
@@ -260,7 +260,7 @@ int HttpResponseImpl::sendChunk(const uint8_t* data, uint32_t len)
                 }
             }
         }
-        return len;
+        return (int)len;
     }
 }
 
@@ -387,7 +387,7 @@ void HttpResponseImpl::onClose(int err)
     }
 }
 
-void HttpResponseImpl::onHttpData(const char* data, uint32_t len)
+void HttpResponseImpl::onHttpData(const char* data, size_t len)
 {
     if(cb_data_) cb_data_((uint8_t*)data, len);
 }

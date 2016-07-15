@@ -1,8 +1,14 @@
 /* Copyright (c) 2016, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -31,16 +37,16 @@ FrameParser::~FrameParser()
     }
 }
 
-FrameParserState FrameParser::parseInputData(const uint8_t *data, uint32_t size)
+FrameParser::ParseState FrameParser::parseInputData(const uint8_t *data, size_t size)
 {
     const uint8_t *ptr = data;
-    uint32_t sz = size;
+    size_t sz = size;
     while (sz > 0) {
         if (ReadState::READ_HEADER == read_state_) {
             if (hdr_used_ + sz < H2_FRAME_HEADER_SIZE) {
                 memcpy(hdr_buf_ + hdr_used_, ptr, sz);
                 hdr_used_ += sz;
-                return FrameParserState::INCOMPLETE;
+                return ParseState::INCOMPLETE;
             }
             const uint8_t *p = ptr;
             if (hdr_used_ > 0) {
@@ -60,7 +66,7 @@ FrameParserState FrameParser::parseInputData(const uint8_t *data, uint32_t size)
             if (payload_.empty()) {
                 if (sz >= hdr_.getLength()) {
                     if (!handleFrame(hdr_, ptr)) {
-                        return FrameParserState::FAILURE;
+                        return ParseState::FAILURE;
                     }
                     sz -= hdr_.getLength();
                     ptr += hdr_.getLength();
@@ -69,27 +75,27 @@ FrameParserState FrameParser::parseInputData(const uint8_t *data, uint32_t size)
                     payload_.resize(hdr_.getLength());
                     memcpy(&payload_[0], ptr, sz);
                     payload_used_ = sz;
-                    return FrameParserState::INCOMPLETE;
+                    return ParseState::INCOMPLETE;
                 }
             } else {
-                uint32_t copy_len = std::min(sz, hdr_.getLength() - payload_used_);
+                size_t copy_len = std::min(sz, hdr_.getLength() - payload_used_);
                 memcpy(&payload_[payload_used_], ptr, copy_len);
                 payload_used_ += copy_len;
                 if (payload_used_ < hdr_.getLength()) {
-                    return FrameParserState::INCOMPLETE;
+                    return ParseState::INCOMPLETE;
                 }
                 sz -= copy_len;
                 ptr += copy_len;
                 read_state_ = ReadState::READ_HEADER;
                 if (!handleFrame(hdr_, &payload_[0])) {
-                    return FrameParserState::FAILURE;
+                    return ParseState::FAILURE;
                 }
                 payload_.clear();
                 payload_used_ = 0;
             }
         }
     }
-    return FrameParserState::SUCCESS;
+    return ParseState::SUCCESS;
 }
 
 bool FrameParser::handleFrame(const FrameHeader &hdr, const uint8_t *payload)

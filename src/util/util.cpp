@@ -88,9 +88,9 @@ typedef void (WSAAPI *pf_freeaddrinfo)(
 static HMODULE s_hmod_ws2_32 = NULL;
 static bool s_ipv6_support = false;
 static bool s_ipv6_inilized = false;
-pf_getaddrinfo km_getaddrinfo = NULL;
-pf_getnameinfo km_getnameinfo = NULL;
-pf_freeaddrinfo km_freeaddrinfo = NULL;
+pf_getaddrinfo km_getaddrinfo = nullptr;
+pf_getnameinfo km_getnameinfo = nullptr;
+pf_freeaddrinfo km_freeaddrinfo = nullptr;
 #else
 # define km_getaddrinfo getaddrinfo
 # define km_getnameinfo getnameinfo
@@ -135,12 +135,9 @@ int km_resolve_2_ip_v4(const char* host_name, char *ip_buf, int ip_buf_len)
 {
     const char* ptr = host_name;
     bool is_digit = true;
-    while(*ptr)
-    {
-        if(*ptr != ' ' &&  *ptr != '\t')
-        {
-            if(*ptr != '.' && !(*ptr >= '0' && *ptr <= '9'))
-            {
+    while(*ptr) {
+        if(*ptr != ' ' &&  *ptr != '\t') {
+            if(*ptr != '.' && !(*ptr >= '0' && *ptr <= '9')) {
                 is_digit = false;
                 break;
             }
@@ -148,13 +145,12 @@ int km_resolve_2_ip_v4(const char* host_name, char *ip_buf, int ip_buf_len)
         ++ptr;
     }
     
-    if (is_digit)
-    {
+    if (is_digit) {
         STRNCPY_S(ip_buf, ip_buf_len, host_name, strlen(host_name));
         return 0;
     }
     
-    struct hostent* he = NULL;
+    struct hostent* he = nullptr;
 #ifdef KUMA_OS_LINUX
     int nError = 0;
     char szBuffer[1024] = {0};
@@ -181,8 +177,7 @@ int km_resolve_2_ip_v4(const char* host_name, char *ip_buf, int ip_buf_len)
         return 0;
 #else
         char* tmp = (char*)inet_ntoa((in_addr&)(*he->h_addr_list[0]));
-        if(tmp)
-        {
+        if(tmp) {
             STRNCPY_S(ip_buf, ip_buf_len, tmp, strlen(tmp));
             return 0;
         }
@@ -196,24 +191,30 @@ int km_resolve_2_ip_v4(const char* host_name, char *ip_buf, int ip_buf_len)
 
 extern "C" int km_resolve_2_ip(const char* host_name, char *ip_buf, int ip_buf_len, int ipv)
 {
-    if(NULL == host_name || NULL == ip_buf)
-    {
+    if(!host_name || !ip_buf) {
         return -1;
     }
     
     ip_buf[0] = '\0';
 #ifdef KUMA_OS_WIN
-    if(!ipv6_api_init())
-    {
+    if(!ipv6_api_init()) {
         //if(KM_RESOLVE_IPV6 == ipv)
             return -1;
         //return km_resolve_2_ip_v4(host_name, ip_buf, ip_buf_len);
     }
 #endif
     
-    addrinfo* ai = NULL;
-    if(km_getaddrinfo(host_name, NULL, NULL, &ai) != 0 || NULL == ai)
-    {
+    addrinfo* ai = nullptr;
+    struct addrinfo hints = {0};
+    if (KM_RESOLVE_IPV6 == ipv) {
+        hints.ai_family = AF_INET6;
+    } else if (KM_RESOLVE_IPV4 == ipv) {
+        hints.ai_family = AF_INET;
+    } else {
+        hints.ai_family = AF_UNSPEC;
+    }
+    hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
+    if(km_getaddrinfo(host_name, nullptr, &hints, &ai) != 0 || nullptr == ai) {
         return -1;
     }
     
@@ -254,31 +255,25 @@ extern "C" int km_set_sock_addr(const char* addr, unsigned short port,
                                 unsigned int sk_addr_len)
 {
 #ifdef KUMA_OS_WIN
-    if(!ipv6_api_init())
-    {
+    if(!ipv6_api_init()) {
         struct sockaddr_in *sa = (struct sockaddr_in*)sk_addr;
         sa->sin_family = AF_INET;
         sa->sin_port = htons(port);
-        if(NULL == addr || addr[0] == '\0')
-        {
+        if(!addr || addr[0] == '\0') {
             sa->sin_addr.s_addr = INADDR_ANY;
-        }
-        else
-        {
+        } else {
             inet_pton(sa->sin_family, addr, &sa->sin_addr);
         }
         return 0;
     }
 #endif
     char service[128] = {0};
-    struct addrinfo* ai = NULL;
-    if(NULL == addr && hints)
-    {
+    struct addrinfo* ai = nullptr;
+    if(!addr && hints) {
         hints->ai_flags |= AI_PASSIVE;
     }
     SNPRINTF(service, sizeof(service)-1, "%d", port);
-    if(km_getaddrinfo(addr, service, hints, &ai) != 0 || NULL == ai || ai->ai_addrlen > sk_addr_len)
-    {
+    if(km_getaddrinfo(addr, service, hints, &ai) != 0 || !ai || ai->ai_addrlen > sk_addr_len) {
         if(ai) km_freeaddrinfo(ai);
         return -1;
     }
@@ -292,8 +287,7 @@ extern "C" int km_get_sock_addr(struct sockaddr * sk_addr, unsigned int sk_addr_
                                 char* addr, unsigned int addr_len, unsigned short* port)
 {
 #ifdef KUMA_OS_WIN
-    if(!ipv6_api_init())
-    {
+    if(!ipv6_api_init()) {
         struct sockaddr_in *sa = (struct sockaddr_in*)sk_addr;
         inet_ntop(sa->sin_family, &sa->sin_addr, addr, addr_len);
         if(port)
@@ -316,8 +310,7 @@ extern "C" bool km_is_ipv6_address(const char* addr)
     struct addrinfo hints = {0};
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_NUMERICHOST;
-    if(km_set_sock_addr(addr, 0, &hints, (struct sockaddr *)&ss_addr, sizeof(ss_addr)) != 0)
-    {
+    if(km_set_sock_addr(addr, 0, &hints, (struct sockaddr *)&ss_addr, sizeof(ss_addr)) != 0) {
         return false;
     }
     return AF_INET6==ss_addr.ss_family;
@@ -340,15 +333,12 @@ extern "C" bool km_is_mcast_address(const char* addr)
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_NUMERICHOST|AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
     km_set_sock_addr(addr, 0, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr));
-    switch(ss_addr.ss_family)
-    {
-        case AF_INET:
-        {
+    switch(ss_addr.ss_family) {
+        case AF_INET: {
             struct sockaddr_in *sa_in4=(struct sockaddr_in *)&ss_addr;
             return IN_MULTICAST(ntohl(sa_in4->sin_addr.s_addr));
         }
-        case AF_INET6:
-        {
+        case AF_INET6: {
             struct sockaddr_in6 *sa_in6=(struct sockaddr_in6 *)&ss_addr;
             return IN6_IS_ADDR_MULTICAST(&sa_in6->sin6_addr)?true:false;
         }
@@ -360,10 +350,10 @@ extern "C" int km_parse_address(const char* addr,
                                 char* proto, int proto_len,
                                 char* host, int  host_len, unsigned short* port)
 {
-    if(NULL==addr || NULL==host)
+    if(!addr || !host)
         return KUMA_ERROR_INVALID_PARAM;
     
-    const char* tmp1 = NULL;
+    const char* tmp1 = nullptr;
     int tmp_len = 0;
     const char* tmp = strstr(addr, "://");
     if(tmp) {
@@ -380,7 +370,7 @@ extern "C" int km_parse_address(const char* addr,
         tmp = addr;
     }
     const char* end = strchr(tmp, '/');
-    if(NULL == end)
+    if(!end)
         end = addr + strlen(addr);
     
     tmp1 = strchr(tmp, '[');
@@ -398,7 +388,7 @@ extern "C" int km_parse_address(const char* addr,
         if(tmp1 && tmp1 <= end)
             tmp = tmp1 + 1;
         else
-            tmp = NULL;
+            tmp = nullptr;
     } else {// ipv4 address
         tmp1 = strchr(tmp, ':');
         if(tmp1 && tmp1 <= end) {
@@ -412,15 +402,12 @@ extern "C" int km_parse_address(const char* addr,
                 end-tmp:host_len-1);
             memcpy(host, tmp, tmp_len);
             host[tmp_len] = '\0';
-            tmp = NULL;
+            tmp = nullptr;
         }
     }
     
     if(port) {
-        if(tmp)
-            *port = atoi(tmp);
-        else
-            *port = 0;
+        *port = tmp ? atoi(tmp) : 0;
     }
     
     return KUMA_ERROR_NOERR;

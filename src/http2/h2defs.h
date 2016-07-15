@@ -2,10 +2,15 @@
 #ifndef __h2defs_H__
 #define __h2defs_H__
 
+#include "httpdefs.h"
+#include <string>
+#include <vector>
+
 KUMA_NS_BEGIN
 
 const uint32_t H2_MAX_STREAM_ID = 0x7FFFFFFF;
-const uint32_t H2_FRAME_HEADER_SIZE = 9;
+const size_t H2_FRAME_HEADER_SIZE = 9;
+const size_t H2_PRIORITY_PAYLOAD_SIZE = 5;
 
 const uint8_t H2_FRAME_FLAG_END_STREAM = 0x1;
 const uint8_t H2_FRAME_FLAG_ACK = 0x1;
@@ -28,7 +33,7 @@ enum H2FrameType : uint8_t {
     CONTINUATION    = 9
 };
 
-enum class H2SettingsId : uint16_t {
+enum H2SettingsId : uint16_t {
     HEADER_TABLE_SIZE       = 1,
     ENABLE_PUSH             = 2,
     MAX_CONCURRENT_STREAMS  = 3,
@@ -37,7 +42,7 @@ enum class H2SettingsId : uint16_t {
     MAX_HEADER_LIST_SIZE    = 6
 };
 
-enum class H2Error : int32_t {
+enum H2Error : int32_t {
     NO_ERROR                = 0x0,
     PROTOCOL_ERROR          = 0x1,
     INTERNAL_ERROR          = 0x2,
@@ -53,6 +58,16 @@ enum class H2Error : int32_t {
     INADEQUATE_SECURITY     = 0xc,
     HTTP_1_1_REQUIRED       = 0xd
 };
+
+using KeyValuePair = std::pair<std::string, std::string>;
+using HeaderVector = std::vector<KeyValuePair>;
+using ParamVector = std::vector<std::pair<uint16_t, uint32_t>>;
+
+const std::string strHeaderMethod = ":method";
+const std::string strHeaderScheme = ":scheme";
+const std::string strHeaderAuthority = ":authority";
+const std::string strHeaderPath = ":path";
+const std::string strHeaderStatus = ":status";
 
 KUMA_NS_END
 

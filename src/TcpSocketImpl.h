@@ -47,8 +47,7 @@ public:
     uint32_t getSslFlags() const { return ssl_flags_; }
     bool SslEnabled();
     int bind(const char* bind_host, uint16_t bind_port);
-    int connect(const char* host, uint16_t port, const EventCallback& cb, uint32_t timeout_ms = 0);
-    int connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t timeout_ms = 0);
+    int connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
     int attachFd(SOCKET_FD fd);
     int detachFd(SOCKET_FD &fd);
 #ifdef KUMA_HAS_OPENSSL
@@ -57,20 +56,17 @@ public:
     int detachFd(SOCKET_FD &fd, SSL* &ssl);
     int startSslHandshake(SslRole ssl_role);
 #endif
-    int send(const uint8_t* data, uint32_t length);
-    int send(iovec* iovs, uint32_t count);
-    int receive(uint8_t* data, uint32_t length);
+    int send(const uint8_t* data, size_t length);
+    int send(iovec* iovs, int count);
+    int receive(uint8_t* data, size_t length);
     int close();
     
     int pause();
     int resume();
     
-    void setReadCallback(const EventCallback& cb) { cb_read_ = cb; }
-    void setWriteCallback(const EventCallback& cb) { cb_write_ = cb; }
-    void setErrorCallback(const EventCallback& cb) { cb_error_ = cb; }
-    void setReadCallback(EventCallback&& cb) { cb_read_ = std::move(cb); }
-    void setWriteCallback(EventCallback&& cb) { cb_write_ = std::move(cb); }
-    void setErrorCallback(EventCallback&& cb) { cb_error_ = std::move(cb); }
+    void setReadCallback(EventCallback cb) { cb_read_ = std::move(cb); }
+    void setWriteCallback(EventCallback cb) { cb_write_ = std::move(cb); }
+    void setErrorCallback(EventCallback cb) { cb_error_ = std::move(cb); }
     
     SOCKET_FD getFd() const { return fd_; }
     

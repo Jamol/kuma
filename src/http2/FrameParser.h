@@ -1,8 +1,14 @@
 /* Copyright (c) 2016, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -24,12 +30,6 @@
 
 KUMA_NS_BEGIN
 
-enum class FrameParserState {
-    SUCCESS,
-    INCOMPLETE,
-    FAILURE
-};
-
 class FrameCallback
 {
 public:
@@ -43,7 +43,12 @@ public:
 	FrameParser(FrameCallback *cb);
 	~FrameParser();
     
-    FrameParserState parseInputData(const uint8_t *buf, uint32_t len);
+    enum class ParseState {
+        SUCCESS,
+        INCOMPLETE,
+        FAILURE
+    };
+    ParseState parseInputData(const uint8_t *buf, size_t len);
     
 private:
     bool handleFrame(const FrameHeader &hdr, const uint8_t *payload);
@@ -61,7 +66,7 @@ private:
     FrameHeader hdr_;
     
     std::vector<uint8_t> payload_;
-    uint32_t payload_used_ = 0;
+    size_t payload_used_ = 0;
     
     DataFrame dataFrame_;
     HeadersFrame hdrFrame_;

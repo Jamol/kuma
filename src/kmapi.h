@@ -34,9 +34,10 @@ class UdpSocketImpl;
 class TcpListenerImpl;
 class TimerImpl;
 class HttpParserImpl;
-class HttpRequestImpl;
+class IHttpRequest;
 class HttpResponseImpl;
 class WebSocketImpl;
+class H2ConnectionImpl;
 
 class KUMA_API EventLoop
 {
@@ -46,8 +47,7 @@ public:
     
 public:
     bool init();
-    int registerFd(SOCKET_FD fd, uint32_t events, const IOCallback& cb);
-    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback&& cb);
+    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
     int updateFd(SOCKET_FD fd, uint32_t events);
     int unregisterFd(SOCKET_FD fd, bool close_fd);
     
@@ -56,12 +56,9 @@ public:
     
 public:
     bool isInEventLoopThread() const;
-    int runInEventLoop(const LoopCallback& cb);
-    int runInEventLoopSync(const LoopCallback& cb);
-    int queueInEventLoop(const LoopCallback& cb);
-    int runInEventLoop(LoopCallback&& cb);
-    int runInEventLoopSync(LoopCallback&& cb);
-    int queueInEventLoop(LoopCallback&& cb);
+    int runInEventLoop(LoopCallback cb);
+    int runInEventLoopSync(LoopCallback cb);
+    int queueInEventLoop(LoopCallback cb);
     void loopOnce(uint32_t max_wait_ms);
     void loop(uint32_t max_wait_ms = -1);
     void stop();
@@ -82,25 +79,21 @@ public:
     int setSslFlags(uint32_t ssl_flags);
     uint32_t getSslFlags() const ;
     int bind(const char* bind_host, uint16_t bind_port);
-    int connect(const char* host, uint16_t port, const EventCallback& cb, uint32_t timeout_ms = 0);
-    int connect(const char* host, uint16_t port, EventCallback&& cb, uint32_t timeout_ms = 0);
+    int connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
     int attachFd(SOCKET_FD fd);
     int detachFd(SOCKET_FD &fd);
     int startSslHandshake(SslRole ssl_role);
-    int send(const uint8_t* data, uint32_t length);
-    int send(iovec* iovs, uint32_t count);
-    int receive(uint8_t* data, uint32_t length);
+    int send(const uint8_t* data, size_t length);
+    int send(iovec* iovs, int count);
+    int receive(uint8_t* data, size_t length);
     int close();
     
     int pause();
     int resume();
     
-    void setReadCallback(const EventCallback& cb);
-    void setWriteCallback(const EventCallback& cb);
-    void setErrorCallback(const EventCallback& cb);
-    void setReadCallback(EventCallback&& cb);
-    void setWriteCallback(EventCallback&& cb);
-    void setErrorCallback(EventCallback&& cb);
+    void setReadCallback(EventCallback cb);
+    void setWriteCallback(EventCallback cb);
+    void setErrorCallback(EventCallback cb);
     
     SOCKET_FD getFd() const;
     TcpSocketImpl* getPimpl();
@@ -122,10 +115,8 @@ public:
     int stopListen(const char* host, uint16_t port);
     int close();
     
-    void setListenCallback(const ListenCallback& cb);
-    void setErrorCallback(const ErrorCallback& cb);
-    void setListenCallback(ListenCallback&& cb);
-    void setErrorCallback(ErrorCallback&& cb);
+    void setListenCallback(ListenCallback cb);
+    void setErrorCallback(ErrorCallback cb);
     TcpListenerImpl* getPimpl();
     
 private:
@@ -141,18 +132,16 @@ public:
     ~UdpSocket();
     
     int bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags=0);
-    int send(const uint8_t* data, uint32_t length, const char* host, uint16_t port);
-    int send(iovec* iovs, uint32_t count, const char* host, uint16_t port);
-    int receive(uint8_t* data, uint32_t length, char* ip, uint32_t ip_len, uint16_t& port);
+    int send(const uint8_t* data, size_t length, const char* host, uint16_t port);
+    int send(iovec* iovs, int count, const char* host, uint16_t port);
+    int receive(uint8_t* data, size_t length, char* ip, size_t ip_len, uint16_t& port);
     int close();
     
     int mcastJoin(const char* mcast_addr, uint16_t mcast_port);
     int mcastLeave(const char* mcast_addr, uint16_t mcast_port);
     
-    void setReadCallback(const EventCallback& cb);
-    void setErrorCallback(const EventCallback& cb);
-    void setReadCallback(EventCallback&& cb);
-    void setErrorCallback(EventCallback&& cb);
+    void setReadCallback(EventCallback cb);
+    void setErrorCallback(EventCallback cb);
     UdpSocketImpl* getPimpl();
     
 private:
@@ -167,8 +156,7 @@ public:
     Timer(EventLoop* loop);
     ~Timer();
     
-    bool schedule(uint32_t delay_ms, const TimerCallback& cb, TimerMode mode=ONE_SHOT);
-    bool schedule(uint32_t delay_ms, TimerCallback&& cb, TimerMode mode=ONE_SHOT);
+    bool schedule(uint32_t delay_ms, TimerCallback cb, TimerMode mode=ONE_SHOT);
     void cancel();
     TimerImpl* getPimpl();
     
@@ -179,7 +167,7 @@ private:
 class KUMA_API HttpParser
 {
 public:
-    typedef std::function<void(const char*, uint32_t)> DataCallback;
+    typedef std::function<void(const char*, size_t)> DataCallback;
     typedef std::function<void(HttpEvent)> EventCallback;
     typedef std::function<void(const char*, const char*)> EnumrateCallback;
     
@@ -187,7 +175,7 @@ public:
     ~HttpParser();
     
     // return bytes parsed
-    int parse(const char* data, uint32_t len);
+    int parse(const char* data, size_t len);
     void pause();
     void resume();
     
@@ -209,15 +197,11 @@ public:
     const char* getParamValue(const char* name) const;
     const char* getHeaderValue(const char* name) const;
     
-    void forEachParam(const EnumrateCallback& cb);
-    void forEachHeader(const EnumrateCallback& cb);
-    void forEachParam(EnumrateCallback&& cb);
-    void forEachHeader(EnumrateCallback&& cb);
+    void forEachParam(EnumrateCallback cb);
+    void forEachHeader(EnumrateCallback cb);
     
-    void setDataCallback(const DataCallback& cb);
-    void setEventCallback(const EventCallback& cb);
-    void setDataCallback(DataCallback&& cb);
-    void setEventCallback(EventCallback&& cb);
+    void setDataCallback(DataCallback cb);
+    void setEventCallback(EventCallback cb);
     
     HttpParserImpl* getPimpl();
     
@@ -228,48 +212,43 @@ private:
 class KUMA_API HttpRequest
 {
 public:
-    typedef std::function<void(uint8_t*, uint32_t)> DataCallback;
+    typedef std::function<void(uint8_t*, size_t)> DataCallback;
     typedef std::function<void(int)> EventCallback;
     typedef std::function<void(void)> HttpEventCallback;
     
-    HttpRequest(EventLoop* loop);
+    HttpRequest(EventLoop* loop, const char* ver = "HTTP/1.1");
     ~HttpRequest();
     
     int setSslFlags(uint32_t ssl_flags);
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
-    int sendRequest(const char* method, const char* url, const char* ver = "HTTP/1.1");
-    int sendData(const uint8_t* data, uint32_t len);
+    int sendRequest(const char* method, const char* url);
+    int sendData(const uint8_t* data, size_t len);
     void reset(); // reset for connection reuse
     int close();
     
     int getStatusCode() const;
     const char* getVersion() const;
     const char* getHeaderValue(const char* name) const;
-    void forEachHeader(const HttpParser::EnumrateCallback& cb);
-    void forEachHeader(HttpParser::EnumrateCallback&& cb);
+    void forEachHeader(HttpParser::EnumrateCallback cb);
     
-    void setDataCallback(const DataCallback& cb);
-    void setWriteCallback(const EventCallback& cb);
-    void setErrorCallback(const EventCallback& cb);
-    void setHeaderCompleteCallback(const HttpEventCallback& cb);
-    void setResponseCompleteCallback(const HttpEventCallback& cb);
-    void setDataCallback(DataCallback&& cb);
-    void setWriteCallback(EventCallback&& cb);
-    void setErrorCallback(EventCallback&& cb);
-    void setHeaderCompleteCallback(HttpEventCallback&& cb);
-    void setResponseCompleteCallback(HttpEventCallback&& cb);
+    void setDataCallback(DataCallback cb);
+    void setWriteCallback(EventCallback cb);
+    void setErrorCallback(EventCallback cb);
+    void setHeaderCompleteCallback(HttpEventCallback cb);
+    void setResponseCompleteCallback(HttpEventCallback cb);
     
-    HttpRequestImpl* getPimpl();
+    IHttpRequest* getPimpl();
     
 private:
-    HttpRequestImpl* pimpl_;
+    IHttpRequest* pimpl_;
+    char ver_[9] = {0};
 };
 
 class KUMA_API HttpResponse
 {
 public:
-    typedef std::function<void(uint8_t*, uint32_t)> DataCallback;
+    typedef std::function<void(uint8_t*, size_t)> DataCallback;
     typedef std::function<void(int)> EventCallback;
     typedef std::function<void(void)> HttpEventCallback;
     
@@ -277,12 +256,12 @@ public:
     ~HttpResponse();
     
     int setSslFlags(uint32_t ssl_flags);
-    int attachFd(SOCKET_FD fd, uint8_t* init_data=nullptr, uint32_t init_len=0);
+    int attachFd(SOCKET_FD fd, uint8_t* init_data=nullptr, size_t init_len=0);
     int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
     int sendResponse(int status_code, const char* desc = nullptr, const char* ver = "HTTP/1.1");
-    int sendData(const uint8_t* data, uint32_t len);
+    int sendData(const uint8_t* data, size_t len);
     void reset(); // reset for connection reuse
     int close();
     
@@ -291,21 +270,14 @@ public:
     const char* getVersion() const;
     const char* getParamValue(const char* name) const;
     const char* getHeaderValue(const char* name) const;
-    void forEachHeader(const HttpParser::EnumrateCallback& cb);
-    void forEachHeader(HttpParser::EnumrateCallback&& cb);
+    void forEachHeader(HttpParser::EnumrateCallback cb);
     
-    void setDataCallback(const DataCallback& cb);
-    void setWriteCallback(const EventCallback& cb);
-    void setErrorCallback(const EventCallback& cb);
-    void setHeaderCompleteCallback(const HttpEventCallback& cb);
-    void setRequestCompleteCallback(const HttpEventCallback& cb);
-    void setResponseCompleteCallback(const HttpEventCallback& cb);
-    void setDataCallback(DataCallback&& cb);
-    void setWriteCallback(EventCallback&& cb);
-    void setErrorCallback(EventCallback&& cb);
-    void setHeaderCompleteCallback(HttpEventCallback&& cb);
-    void setRequestCompleteCallback(HttpEventCallback&& cb);
-    void setResponseCompleteCallback(HttpEventCallback&& cb);
+    void setDataCallback(DataCallback cb);
+    void setWriteCallback(EventCallback cb);
+    void setErrorCallback(EventCallback cb);
+    void setHeaderCompleteCallback(HttpEventCallback cb);
+    void setRequestCompleteCallback(HttpEventCallback cb);
+    void setResponseCompleteCallback(HttpEventCallback cb);
     
     HttpResponseImpl* getPimpl();
     
@@ -316,7 +288,7 @@ private:
 class KUMA_API WebSocket
 {
 public:
-    typedef std::function<void(uint8_t*, uint32_t)> DataCallback;
+    typedef std::function<void(uint8_t*, size_t)> DataCallback;
     typedef std::function<void(int)> EventCallback;
     
     WebSocket(EventLoop* loop);
@@ -327,24 +299,37 @@ public:
     const char* getProtocol() const;
     void setOrigin(const char* origin);
     const char* getOrigin() const;
-    int connect(const char* ws_url, const EventCallback& cb);
-    int connect(const char* ws_url, EventCallback&& cb);
-    int attachFd(SOCKET_FD fd, const uint8_t* init_data=nullptr, uint32_t init_len=0);
+    int connect(const char* ws_url, EventCallback cb);
+    int attachFd(SOCKET_FD fd, const uint8_t* init_data=nullptr, size_t init_len=0);
     int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
-    int send(const uint8_t* data, uint32_t len);
+    int send(const uint8_t* data, size_t len);
     int close();
     
-    void setDataCallback(const DataCallback& cb);
-    void setWriteCallback(const EventCallback& cb);
-    void setErrorCallback(const EventCallback& cb);
-    void setDataCallback(DataCallback&& cb);
-    void setWriteCallback(EventCallback&& cb);
-    void setErrorCallback(EventCallback&& cb);
+    void setDataCallback(DataCallback cb);
+    void setWriteCallback(EventCallback cb);
+    void setErrorCallback(EventCallback cb);
     
     WebSocketImpl* getPimpl();
     
 private:
     WebSocketImpl* pimpl_;
+};
+
+class KUMA_API H2Connection
+{
+public:
+    using ConnectCallback = std::function<void(int)>;
+    H2Connection(EventLoop* loop);
+    ~H2Connection();
+    
+    int setSslFlags(uint32_t ssl_flags);
+    int connect(const char* host, uint16_t port, ConnectCallback cb);
+    int attachFd(SOCKET_FD fd, const uint8_t* data=nullptr, size_t size=0);
+    int attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
+    int close();
+    
+private:
+    H2ConnectionImpl* pimpl_;
 };
 
 KUMA_API void init(const char* path = nullptr);

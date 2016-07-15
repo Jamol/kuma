@@ -19,36 +19,39 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __H2Stream_H__
-#define __H2Stream_H__
+#ifndef __H2ConnectionMgr_H__
+#define __H2ConnectionMgr_H__
 
 #include "kmdefs.h"
 #include <memory>
+#include <mutex>
 
 #include "h2defs.h"
+#include "H2ConnectionImpl.h"
 
 KUMA_NS_BEGIN
 
-class H2Stream
+class H2ConnectionMgr
 {
 public:
-    class Callback {
-    public:
-        virtual void onHeaders(const HeaderVector &headers) = 0;
-        virtual void onData() = 0;
-    };
+	H2ConnectionMgr();
+	~H2ConnectionMgr();
+    
+    void addConnection(const std::string &key, H2ConnectionPtr &conn);
+    void addConnection(const std::string &key, H2ConnectionPtr &&conn);
+    H2ConnectionPtr getConnection(const std::string &key);
+    void removeConnection(const std::string key);
     
 public:
-	H2Stream(uint32_t streamId);
-	virtual ~H2Stream();
-    
-    uint32_t getStreamId() { return streamId_; }
+    static H2ConnectionMgr& getRequestConnMgr(bool secure) { return secure ? reqSecureConnMgr_ : reqConnMgr_;}
+    static H2ConnectionMgr reqConnMgr_;
+    static H2ConnectionMgr reqSecureConnMgr_;
 
 private:
-    uint32_t streamId_;
+    using H2ConnectionMap = std::map<std::string, H2ConnectionPtr>;
+    H2ConnectionMap connMap_;
+    std::mutex connMutex_;
 };
-
-using H2StreamPtr = std::shared_ptr<H2Stream>;
 
 KUMA_NS_END
 
