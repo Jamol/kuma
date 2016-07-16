@@ -154,7 +154,7 @@ int HttpRequestImpl::sendData(const uint8_t* data, size_t len)
     }
     int ret = tcp_socket_.send(data, len);
     if(ret < 0) {
-        setState(State::ERROR);
+        setState(State::IN_ERROR);
     } else if(ret > 0) {
         body_bytes_sent_ += ret;
         if (body_bytes_sent_ >= content_length_) {
@@ -170,7 +170,7 @@ int HttpRequestImpl::sendChunk(const uint8_t* data, size_t len)
         static const std::string _chunk_end_token_ = "0\r\n\r\n";
         int ret = tcp_socket_.send((uint8_t*)_chunk_end_token_.c_str(), (uint32_t)_chunk_end_token_.length());
         if(ret < 0) {
-            setState(State::ERROR);
+            setState(State::IN_ERROR);
             return ret;
         } else if(ret < 5) {
             std::copy(_chunk_end_token_.begin() + ret, _chunk_end_token_.end(), back_inserter(send_buffer_));
@@ -246,7 +246,7 @@ void HttpRequestImpl::sendRequestHeader()
     int ret = tcp_socket_.send(&send_buffer_[0] + send_offset_, send_buffer_.size() - send_offset_);
     if(ret < 0) {
         cleanup();
-        setState(State::ERROR);
+        setState(State::IN_ERROR);
         if(cb_error_) cb_error_(KUMA_ERROR_SOCKERR);
         return;
     } else {
@@ -281,7 +281,7 @@ void HttpRequestImpl::onSend(int err)
         int ret = tcp_socket_.send(&send_buffer_[0] + send_offset_, (uint32_t)send_buffer_.size() - send_offset_);
         if(ret < 0) {
             cleanup();
-            setState(State::ERROR);
+            setState(State::IN_ERROR);
             if(cb_error_) cb_error_(KUMA_ERROR_SOCKERR);
             return;
         } else {
@@ -329,7 +329,7 @@ void HttpRequestImpl::onReceive(int err)
                 cleanup();
             } else {
                 cleanup();
-                setState(State::ERROR);
+                setState(State::IN_ERROR);
                 if(cb_error_) cb_error_(KUMA_ERROR_SOCKERR);
             }
         } else if(0 == ret) {
@@ -343,7 +343,7 @@ void HttpRequestImpl::onReceive(int err)
                 return;
             }
             destroy_flag_ptr_ = nullptr;
-            if(getState() == State::ERROR || getState() == State::CLOSED) {
+            if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
                 break;
             }
             if(bytes_used != ret) {
@@ -358,7 +358,7 @@ void HttpRequestImpl::onClose(int err)
     KUMA_INFOXTRACE("onClose, err="<<err);
     cleanup();
     if(getState() < State::COMPLETE) {
-        setState(State::ERROR);
+        setState(State::IN_ERROR);
         if(cb_error_) cb_error_(KUMA_ERROR_SOCKERR);
     } else {
         setState(State::CLOSED);
@@ -385,7 +385,7 @@ void HttpRequestImpl::onHttpEvent(HttpEvent ev)
             
         case HTTP_ERROR:
             cleanup();
-            setState(State::ERROR);
+            setState(State::IN_ERROR);
             if(cb_error_) cb_error_(KUMA_ERROR_FAILED);
             break;
             

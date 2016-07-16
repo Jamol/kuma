@@ -153,7 +153,11 @@ int TcpSocket::detachFd(SOCKET_FD &fd)
 
 int TcpSocket::startSslHandshake(SslRole ssl_role)
 {
+#ifdef KUMA_HAS_OPENSSL
     return pimpl_->startSslHandshake(ssl_role);
+#else
+    return KUMA_ERROR_UNSUPPORT;
+#endif
 }
 
 int TcpSocket::send(const uint8_t* data, size_t length)

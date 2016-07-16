@@ -33,6 +33,11 @@ H2Request::H2Request(EventLoopImpl* loop)
     
 }
 
+const char* H2Request::getObjKey() const
+{
+    return "H2Request";
+}
+
 int H2Request::setSslFlags(uint32_t ssl_flags)
 {
     return KUMA_ERROR_NOERR;

@@ -148,7 +148,7 @@ bool FrameParser::handleFrame(const FrameHeader &hdr, const uint8_t *payload)
         destroy_flag_ptr_ = &destroyed;
         
         H2Error err = frame->decode(hdr, payload);
-        if (err == H2Error::NO_ERROR) {
+        if (err == H2Error::H2_NO_ERROR) {
             cb_->onFrame(frame);
         } else {
             cb_->onFrameError(hdr, err);

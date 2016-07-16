@@ -71,13 +71,13 @@ protected:
         RECVING_RESPONSE,
         COMPLETE,
         WAIT_FOR_REUSE,
-        ERROR,
+        IN_ERROR,
         CLOSED
     };
     void setState(State state) { state_ = state; }
     State getState() const { return state_; }
     
-    virtual const char* getObjKey() const;
+    virtual const char* getObjKey() const = 0;
     
 protected:
     State                   state_ = State::IDLE;

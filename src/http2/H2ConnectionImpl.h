@@ -27,7 +27,7 @@
 #include "HPacker.h"
 #include "H2Stream.h"
 #include "TcpSocketImpl.h"
-#include "HttpParserImpl.h"
+#include "http/HttpParserImpl.h"
 
 #include <map>
 
@@ -110,7 +110,7 @@ private:
         HANDSHAKE,
         SENDING_PREFACE,
         OPEN,
-        ERROR,
+        IN_ERROR,
         CLOSED
     };
     void setState(State state) { state_ = state; }

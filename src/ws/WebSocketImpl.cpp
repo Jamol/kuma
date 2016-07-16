@@ -298,7 +298,7 @@ int WebSocketImpl::handleInputData(uint8_t *src, size_t len)
             return KUMA_ERROR_DESTROYED;
         }
         destroy_flag_ptr_ = nullptr;
-        if(getState() == State::ERROR || getState() == State::CLOSED) {
+        if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
             return KUMA_ERROR_INVALID_STATE;
         }
         if(err != WSHandler::WSError::WS_ERROR_NOERR &&
@@ -361,7 +361,7 @@ void WebSocketImpl::onWsHandshake(int err)
             onStateOpen();
         }
     } else {
-        setState(State::ERROR);
+        setState(State::IN_ERROR);
         if(cb_error_) cb_error_(KUMA_ERROR_FAILED);
     }
 }

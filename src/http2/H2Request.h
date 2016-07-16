@@ -24,7 +24,7 @@
 
 #include "kmdefs.h"
 #include "H2ConnectionImpl.h"
-#include "IHttpRequest.h"
+#include "http/IHttpRequest.h"
 
 KUMA_NS_BEGIN
 
@@ -41,6 +41,9 @@ public:
     const std::string& getVersion() const { return VersionHTTP2_0; }
     const std::string& getHeaderValue(const char* name) const;
     void forEachHeader(EnumrateCallback cb);
+
+protected:
+    const char* getObjKey() const;
     
 private:
     void onConnect(int err);

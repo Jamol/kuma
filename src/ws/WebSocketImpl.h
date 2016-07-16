@@ -62,7 +62,7 @@ private:
         CONNECTING,
         HANDSHAKE,
         OPEN,
-        ERROR,
+        IN_ERROR,
         CLOSED
     };
     void setState(State state) { state_ = state; }

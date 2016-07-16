@@ -302,7 +302,7 @@ int H2ConnectionImpl::handleInputData(const uint8_t *buf, size_t len)
             return KUMA_ERROR_DESTROYED;
         }
         destroy_flag_ptr_ = nullptr;
-        if(getState() == State::ERROR || getState() == State::CLOSED) {
+        if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
             return KUMA_ERROR_INVALID_STATE;
         }
         if(parseState == FrameParser::ParseState::FAILURE) {
@@ -487,7 +487,7 @@ void H2ConnectionImpl::onConnect(int err)
 {
     if(err != KUMA_ERROR_NOERR) {
         cleanup();
-        setState(State::ERROR);
+        setState(State::IN_ERROR);
         if (cb_connect_) cb_connect_(err);
         return ;
     }
@@ -584,7 +584,7 @@ void H2ConnectionImpl::onHttpEvent(HttpEvent ev)
             break;
             
         case HTTP_ERROR:
-            setState(State::ERROR);
+            setState(State::IN_ERROR);
             break;
     }
 }
@@ -605,7 +605,7 @@ int H2ConnectionImpl::handleUpgradeRequest()
     }
     if(!is_equal(httpParser_.getHeaderValue("Connection"), "Upgrade") ||
        !hasHTTP2) {
-        setState(State::ERROR);
+        setState(State::IN_ERROR);
         KUMA_ERRXTRACE("handleRequest, not HTTP2 request");
         return KUMA_ERROR_INVALID_PROTO;
     }
@@ -621,7 +621,7 @@ int H2ConnectionImpl::handleUpgradeResponse()
         sendPreface();
         return KUMA_ERROR_NOERR;
     } else {
-        setState(State::ERROR);
+        setState(State::IN_ERROR);
         KUMA_INFOXTRACE("handleResponse, invalid status code: "<<httpParser_.getStatusCode());
         return KUMA_ERROR_INVALID_PROTO;
     }

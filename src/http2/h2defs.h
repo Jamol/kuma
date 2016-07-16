@@ -2,7 +2,7 @@
 #ifndef __h2defs_H__
 #define __h2defs_H__
 
-#include "httpdefs.h"
+#include "http/httpdefs.h"
 #include <string>
 #include <vector>
 
@@ -46,7 +46,7 @@ enum H2SettingsId : uint16_t {
 };
 
 enum H2Error : int32_t {
-    NO_ERROR                = 0x0,
+    H2_NO_ERROR             = 0x0,
     PROTOCOL_ERROR          = 0x1,
     INTERNAL_ERROR          = 0x2,
     FLOW_CONTROL_ERROR      = 0x3,
