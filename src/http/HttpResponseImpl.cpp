@@ -134,7 +134,7 @@ void HttpResponseImpl::addHeader(const std::string& name, uint32_t value)
 void HttpResponseImpl::buildResponse(int status_code, const std::string& desc, const std::string& ver)
 {
     std::stringstream ss;
-    ss << (!ver.empty()?ver:strVersionHTTP1_1) << " " << status_code << " " << desc << "\r\n";
+    ss << (!ver.empty()?ver:VersionHTTP1_1) << " " << status_code << " " << desc << "\r\n";
     if(header_map_.find(str_content_type) == header_map_.end()) {
         ss << "Content-Type: application/octet-stream\r\n";
     }

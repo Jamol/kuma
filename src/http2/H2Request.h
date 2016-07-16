@@ -38,7 +38,7 @@ public:
     int close();
     
     int getStatusCode() const { return 200; }
-    const std::string& getVersion() const { return strVersionHTTP2_0; }
+    const std::string& getVersion() const { return VersionHTTP2_0; }
     const std::string& getHeaderValue(const char* name) const;
     void forEachHeader(EnumrateCallback cb);
     

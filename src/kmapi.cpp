@@ -469,7 +469,7 @@ HttpParserImpl* HttpParser::getPimpl()
 HttpRequest::HttpRequest(EventLoop* loop, const char* ver)
 {
     strlcpy(ver_, ver, sizeof(ver_));
-    if (is_equal(ver, strVersionHTTP2_0)) {
+    if (is_equal(ver, VersionHTTP2_0)) {
         pimpl_ = new H2Request(loop->getPimpl());
     } else {
         pimpl_ = new HttpRequestImpl(loop->getPimpl());

@@ -64,6 +64,13 @@ int H2Frame::encodeHeader(uint8_t *dst, size_t len, FrameHeader &hdr)
     return hdr.encode(dst, len);
 }
 
+int H2Frame::encodeHeader(uint8_t *dst, size_t len)
+{
+    hdr_.setType(type());
+    hdr_.setLength((uint32_t)calcPayloadSize());
+    return hdr_.encode(dst, len);
+}
+
 H2Error H2Frame::decodePriority(const uint8_t *src, size_t len, h2_priority_t &pri)
 {
     if (len < H2_PRIORITY_PAYLOAD_SIZE) {
@@ -92,6 +99,25 @@ int H2Frame::encodePriority(uint8_t *dst, size_t len, h2_priority_t pri)
 }
 
 //////////////////////////////////////////////////////////////////////////
+int DataFrame::encode(uint8_t *dst, size_t len)
+{
+    uint8_t *ptr = dst;
+    const uint8_t *end = dst + len;
+    
+    int ret = H2Frame::encodeHeader(ptr, end - ptr);
+    if (ret < 0) {
+        return ret;
+    }
+    ptr += ret;
+    
+    if (end - ptr < size_) {
+        return -1;
+    }
+    memcpy(ptr, data_, size_);
+    ptr += size_;
+    return int(ptr - dst);
+}
+
 H2Error DataFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
 {
     setFrameHeader(hdr);
@@ -140,54 +166,56 @@ H2Error HeadersFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
         len -= H2_PRIORITY_PAYLOAD_SIZE;
     }
     block_ = ptr;
-    size_ = len;
+    bsize_ = len;
     return H2Error::NO_ERROR;
 }
 
-int HeadersFrame::encode(uint8_t *dst, size_t len, uint32_t streamId, const uint8_t *block, size_t bsize, h2_priority_t *pri, uint8_t flags)
+int HeadersFrame::encode(uint8_t *dst, size_t len, size_t bsize)
 {
     uint8_t *ptr = dst;
     const uint8_t *end = dst + len;
     
-    int ret = encode(ptr, end - ptr, streamId, bsize, pri, flags);
+    bsize_ = bsize;
+    int ret = H2Frame::encodeHeader(ptr, end - ptr);
     if (ret < 0) {
         return ret;
     }
     ptr += ret;
-    if (end - ptr < bsize) {
-        return -1;
-    }
-    memcpy(ptr, block, bsize);
-    ptr += bsize;
-    return int(ptr - dst);
-}
-
-int HeadersFrame::encode(uint8_t *dst, size_t len, uint32_t streamId, size_t bsize, h2_priority_t *pri, uint8_t flags)
-{
-    uint8_t *ptr = dst;
-    const uint8_t *end = dst + len;
     
-    if (pri) {
-        flags |= H2_FRAME_FLAG_PRIORITY;
-    }
-    flags |= H2_FRAME_FLAG_END_HEADERS;
-    FrameHeader hdr;
-    hdr.setType(type());
-    hdr.setFlags(flags);
-    hdr.setStreamId(streamId);
-    hdr.setLength((pri?H2_PRIORITY_PAYLOAD_SIZE:0) + (uint32_t)bsize);
-    int ret = encodeHeader(ptr, end - ptr, hdr);
-    if (ret < 0) {
-        return ret;
-    }
-    ptr += ret;
-    if (pri) {
-        ret = encodePriority(ptr, end - ptr, *pri);
+    if (hasPriority()) {
+        ret = encodePriority(ptr, end - ptr, pri_);
         if (ret < 0) {
             return ret;
         }
         ptr += ret;
     }
+    return int(ptr - dst);
+}
+
+int HeadersFrame::encode(uint8_t *dst, size_t len)
+{
+    uint8_t *ptr = dst;
+    const uint8_t *end = dst + len;
+    
+    int ret = H2Frame::encodeHeader(ptr, end - ptr);
+    if (ret < 0) {
+        return ret;
+    }
+    ptr += ret;
+    
+    if (hasPriority()) {
+        ret = encodePriority(ptr, end - ptr, pri_);
+        if (ret < 0) {
+            return ret;
+        }
+        ptr += ret;
+    }
+    
+    if (end - ptr < bsize_) {
+        return -1;
+    }
+    memcpy(ptr, block_, bsize_);
+    ptr += bsize_;
     return int(ptr - dst);
 }
 
@@ -200,6 +228,25 @@ H2Error PriorityFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
     const uint8_t *ptr = payload;
     size_t len = hdr.getLength();
     return decodePriority(ptr, len, pri_);
+}
+
+int PriorityFrame::encode(uint8_t *dst, size_t len)
+{
+    uint8_t *ptr = dst;
+    const uint8_t *end = dst + len;
+    
+    int ret = H2Frame::encodeHeader(ptr, end - ptr);
+    if (ret < 0) {
+        return ret;
+    }
+    ptr += ret;
+    
+    ret = encodePriority(ptr, end - ptr, pri_);
+    if (ret < 0) {
+        return ret;
+    }
+    ptr += ret;
+    return int(ptr - dst);
 }
 
 H2Error RSTStreamFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
@@ -215,16 +262,19 @@ H2Error RSTStreamFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
     return H2Error::NO_ERROR;
 }
 
-int SettingsFrame::encode(uint8_t *dst, size_t len, ParamVector &params, bool ack)
+int RSTStreamFrame::encode(uint8_t *dst, size_t len)
 {
     uint8_t *ptr = dst;
     const uint8_t *end = dst + len;
     
-    int ret = encodePayload(ptr, end - ptr, params);
+    int ret = H2Frame::encodeHeader(ptr, end - ptr);
     if (ret < 0) {
         return ret;
     }
     ptr += ret;
+    
+    encode_u32(ptr, errCode_);
+    ptr += 4;
     return int(ptr - dst);
 }
 
@@ -241,6 +291,25 @@ int SettingsFrame::encodePayload(uint8_t *dst, size_t len, ParamVector &params)
         encode_u32(ptr, p.second);
         ptr += 4;
     }
+    return int(ptr - dst);
+}
+
+int SettingsFrame::encode(uint8_t *dst, size_t len)
+{
+    uint8_t *ptr = dst;
+    const uint8_t *end = dst + len;
+    
+    int ret = H2Frame::encodeHeader(ptr, end - ptr);
+    if (ret < 0) {
+        return ret;
+    }
+    ptr += ret;
+    
+    ret = encodePayload(ptr, end - ptr, params_);
+    if (ret < 0) {
+        return ret;
+    }
+    ptr += ret;
     return int(ptr - dst);
 }
 
@@ -269,6 +338,31 @@ H2Error SettingsFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
     return H2Error::NO_ERROR;
 }
 
+int PushPromiseFrame::encode(uint8_t *dst, size_t len)
+{
+    uint8_t *ptr = dst;
+    const uint8_t *end = dst + len;
+    
+    int ret = H2Frame::encodeHeader(ptr, end - ptr);
+    if (ret < 0) {
+        return ret;
+    }
+    ptr += ret;
+    
+    if (len < calcPayloadSize()) {
+        return -1;
+    }
+    
+    encode_u32(ptr, promStreamId_);
+    ptr += 4;
+    
+    if (block_ && bsize_ > 0) {
+        memcpy(ptr, block_, bsize_);
+        ptr += bsize_;
+    }
+    return int(ptr - dst);
+}
+
 H2Error PushPromiseFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
 {
     setFrameHeader(hdr);
@@ -292,7 +386,31 @@ H2Error PushPromiseFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
     promStreamId_ = decode_u32(ptr) & 0x7FFFFFFF;
     ptr += 4;
     len -= 4;
+    if (len > 0) {
+        block_ = ptr;
+        bsize_ = len;
+    }
     return H2Error::NO_ERROR;
+}
+
+int PingFrame::encode(uint8_t *dst, size_t len)
+{
+    uint8_t *ptr = dst;
+    const uint8_t *end = dst + len;
+    
+    int ret = H2Frame::encodeHeader(ptr, end - ptr);
+    if (ret < 0) {
+        return ret;
+    }
+    ptr += ret;
+    
+    if (len < H2_PING_PAYLOAD_SIZE) {
+        return -1;
+    }
+    
+    memcpy(ptr, data_, H2_PING_PAYLOAD_SIZE);
+    ptr += H2_PING_PAYLOAD_SIZE;
+    return int(ptr - dst);
 }
 
 H2Error PingFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
@@ -301,11 +419,37 @@ H2Error PingFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
     if (hdr.getStreamId() != 0) {
         return H2Error::PROTOCOL_ERROR;
     }
-    if (hdr.getLength() != H2_PING_FRAME_DATA_LENGTH) {
+    if (hdr.getLength() != H2_PING_PAYLOAD_SIZE) {
         return H2Error::FRAME_SIZE_ERROR;
     }
     memcpy(data_, payload, hdr.getLength());
     return H2Error::NO_ERROR;
+}
+
+int GoawayFrame::encode(uint8_t *dst, size_t len)
+{
+    uint8_t *ptr = dst;
+    const uint8_t *end = dst + len;
+    
+    int ret = H2Frame::encodeHeader(ptr, end - ptr);
+    if (ret < 0) {
+        return ret;
+    }
+    ptr += ret;
+    
+    if (len < calcPayloadSize()) {
+        return -1;
+    }
+    
+    encode_u32(ptr, lastStreamId_);
+    ptr += 4;
+    encode_u32(ptr, errCode_);
+    ptr += 4;
+    if (size_ > 0) {
+        memcpy(ptr, data_, size_);
+        ptr += size_;
+    }
+    return int(ptr - dst);
 }
 
 H2Error GoawayFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
@@ -325,7 +469,31 @@ H2Error GoawayFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
     errCode_ = decode_u32(ptr);
     ptr += 4;
     len -= 4;
+    if (len > 0) {
+        data_ = ptr;
+        size_ = len;
+    }
     return H2Error::NO_ERROR;
+}
+
+int WindowUpdateFrame::encode(uint8_t *dst, size_t len)
+{
+    uint8_t *ptr = dst;
+    const uint8_t *end = dst + len;
+    
+    int ret = H2Frame::encodeHeader(ptr, end - ptr);
+    if (ret < 0) {
+        return ret;
+    }
+    ptr += ret;
+    
+    if (len < calcPayloadSize()) {
+        return -1;
+    }
+    
+    encode_u32(ptr, windowSizeIncrement_);
+    ptr += 4;
+    return int(ptr - dst);
 }
 
 H2Error WindowUpdateFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
@@ -338,6 +506,28 @@ H2Error WindowUpdateFrame::decode(const FrameHeader &hdr, const uint8_t *payload
     return H2Error::NO_ERROR;
 }
 
+int ContinuationFrame::encode(uint8_t *dst, size_t len)
+{
+    uint8_t *ptr = dst;
+    const uint8_t *end = dst + len;
+    
+    int ret = H2Frame::encodeHeader(ptr, end - ptr);
+    if (ret < 0) {
+        return ret;
+    }
+    ptr += ret;
+    
+    if (len < calcPayloadSize()) {
+        return -1;
+    }
+    
+    if (block_ && bsize_ > 0) {
+        memcpy(ptr, block_, bsize_);
+        ptr += bsize_;
+    }
+    return int(ptr - dst);
+}
+
 H2Error ContinuationFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
 {
     setFrameHeader(hdr);
@@ -347,6 +537,6 @@ H2Error ContinuationFrame::decode(const FrameHeader &hdr, const uint8_t *payload
     const uint8_t *ptr = payload;
     uint32_t len = hdr.getLength();
     block_ = ptr;
-    size_ = len;
+    bsize_ = len;
     return H2Error::NO_ERROR;
 }

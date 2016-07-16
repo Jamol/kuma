@@ -21,10 +21,10 @@
 
 KUMA_NS_BEGIN
 
-const std::string strVersionHTTP2_0 = "HTTP/2.0";
-const std::string strVersionHTTP1_1 = "HTTP/1.1";
-const std::string strEmpty = "";
-const std::string strUserAgent = "kuma 1.0";
+const std::string VersionHTTP2_0 = "HTTP/2.0";
+const std::string VersionHTTP1_1 = "HTTP/1.1";
+const std::string EmptyString = "";
+const std::string UserAgent = "kuma 1.0";
 
 KUMA_NS_END
 

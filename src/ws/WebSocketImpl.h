@@ -58,37 +58,39 @@ protected:
 
 private:
     enum State {
-        STATE_IDLE,
-        STATE_CONNECTING,
-        STATE_HANDSHAKE,
-        STATE_OPEN,
-        STATE_ERROR,
-        STATE_CLOSED
+        IDLE,
+        CONNECTING,
+        HANDSHAKE,
+        OPEN,
+        ERROR,
+        CLOSED
     };
     void setState(State state) { state_ = state; }
     State getState() { return state_; }
     int connect_i(const std::string& ws_url);
     void cleanup();
     
-    void sendWsResponse();
+    void sendUpgradeRequest();
+    void sendUpgradeResponse();
     void onWsData(uint8_t* data, size_t len);
     void onWsHandshake(int err);
     void onStateOpen();
+    int handleInputData(uint8_t *src, size_t len);
     
 private:
-    State                   state_;
+    State                   state_ = State::IDLE;
     WSHandler               ws_handler_;
     Uri                     uri_;
     
-    uint8_t*                init_data_;
-    size_t                  init_len_;
+    uint8_t*                init_data_ = nullptr;
+    size_t                  init_len_ = 0;
     
     std::vector<uint8_t>    send_buffer_;
-    size_t                  send_offset_;
+    size_t                  send_offset_ = 0;
     TcpSocketImpl           tcp_socket_;
-    bool                    is_server_;
+    bool                    is_server_ = false;
     
-    size_t                  body_bytes_sent_;
+    size_t                  body_bytes_sent_ = 0;
     
     std::string             proto_;
     std::string             origin_;
@@ -97,7 +99,7 @@ private:
     EventCallback           cb_write_;
     EventCallback           cb_error_;
     
-    bool*                   destroy_flag_ptr_;
+    bool*                   destroy_flag_ptr_ = nullptr;
 };
 
 KUMA_NS_END

@@ -49,10 +49,10 @@ public:
     int attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
     int close();
     
-    int sendSetting(H2StreamPtr &stream, ParamVector &params);
+    int sendH2Frame(H2StreamPtr &stream, H2Frame *frame);
+    
     int sendWindowUpdate(uint32_t increment);
-    int sendHeaders(H2StreamPtr &stream, const HeaderVector &headers, size_t hdrSize);
-    int sendData(H2StreamPtr &stream, const uint8_t *data, size_t size);
+    int sendHeadersFrame(H2StreamPtr &stream, HeadersFrame *frame);
     
     bool isReady() { return getState() == State::OPEN; }
     
@@ -82,6 +82,8 @@ private:
     void handlePriorityFrame(PriorityFrame *frame);
     void handleRSTStreamFrame(RSTStreamFrame *frame);
     void handleSettingsFrame(SettingsFrame *frame);
+    void handlePushFrame(PushPromiseFrame *frame);
+    void handlePingFrame(PingFrame *frame);
     void handleGoawayFrame(GoawayFrame *frame);
     void handleWindowUpdateFrame(WindowUpdateFrame *frame);
     void handleContinuationFrame(ContinuationFrame *frame);
@@ -93,15 +95,20 @@ private:
     void remove();
 
     const char* getObjKey() const;
-    std::string buildRequest();
-    std::string buildResponse();
-    int handleRequest();
-    int handleResponse();
+    
+    std::string buildUpgradeRequest();
+    std::string buildUpgradeResponse();
+    void sendUpgradeRequest();
+    void sendUpgradeResponse();
+    void sendPreface();
+    int handleUpgradeRequest();
+    int handleUpgradeResponse();
     
     enum State {
         IDLE,
         CONNECTING,
         HANDSHAKE,
+        SENDING_PREFACE,
         OPEN,
         ERROR,
         CLOSED
@@ -116,7 +123,7 @@ private:
     TcpSocketImpl tcp_;
     
     State state_ = State::IDLE;
-    ConnectCallback cb_;
+    ConnectCallback cb_connect_;
     
     std::string key_;
     std::string host_;
@@ -126,15 +133,16 @@ private:
     size_t initSize_ = 0;
     
     HttpParserImpl httpParser_;
-    FrameParser parser_;
+    FrameParser frameParser_;
     HPacker hpEncoder_;
     HPacker hpDecoder_;
     
     std::map<uint32_t, H2StreamPtr> streams_;
     
     bool isServer_ = false;
+    bool sendSettingAck = false;
     std::vector<uint8_t>    send_buffer_;
-    uint32_t                send_offset_ = 0;
+    size_t                  send_offset_ = 0;
     
     uint32_t nextStreamId_ = 0;
     

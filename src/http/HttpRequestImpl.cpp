@@ -71,7 +71,7 @@ void HttpRequestImpl::checkHeaders()
         addHeader("Content-Type", "application/octet-stream");
     }
     if(header_map_.find("User-Agent") == header_map_.end()) {
-        addHeader("User-Agent", strUserAgent);
+        addHeader("User-Agent", UserAgent);
     }
     addHeader("Host", uri_.getHost());
     if(header_map_.find("Cache-Control") == header_map_.end()) {

@@ -50,9 +50,9 @@ public:
     ~WSHandler();
     
     void setHttpParser(HttpParserImpl&& parser);
-    std::string buildRequest(const std::string& path, const std::string& host,
+    std::string buildUpgradeRequest(const std::string& path, const std::string& host,
                              const std::string& proto, const std::string& origin);
-    std::string buildResponse();
+    std::string buildUpgradeResponse();
     
     WSError handleData(uint8_t* data, size_t len);
     int encodeFrameHeader(WSOpcode opcode, size_t frame_len, uint8_t frame_hdr[10]);

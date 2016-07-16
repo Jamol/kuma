@@ -72,7 +72,7 @@ int H2Request::sendRequest()
 
 const std::string& H2Request::getHeaderValue(const char* name) const
 {
-    return strEmpty;
+    return EmptyString;
 }
 
 void H2Request::forEachHeader(EnumrateCallback cb)
@@ -89,7 +89,7 @@ void H2Request::checkHeaders()
         addHeader("content-type", "application/octet-stream");
     }
     if(header_map_.find("User-Agent") == header_map_.end()) {
-        addHeader("user-agent", strUserAgent);
+        addHeader("user-agent", UserAgent);
     }
     if(header_map_.find("cache-control") == header_map_.end()) {
         addHeader("cache-control", "no-cache");
@@ -102,10 +102,10 @@ void H2Request::checkHeaders()
 size_t H2Request::buildHeaders(HeaderVector &headers)
 {
     size_t headers_size = 0;
-    headers.emplace_back(std::make_pair(strHeaderMethod, method_));
-    headers_size += strHeaderMethod.size() + method_.size();
-    headers.emplace_back(std::make_pair(strHeaderScheme, uri_.getScheme()));
-    headers_size += strHeaderScheme.size() + uri_.getScheme().size();
+    headers.emplace_back(std::make_pair(H2HeaderMethod, method_));
+    headers_size += H2HeaderMethod.size() + method_.size();
+    headers.emplace_back(std::make_pair(H2HeaderScheme, uri_.getScheme()));
+    headers_size += H2HeaderScheme.size() + uri_.getScheme().size();
     std::string path = uri_.getPath();
     if(!uri_.getQuery().empty()) {
         path = "?" + uri_.getQuery();
@@ -113,9 +113,10 @@ size_t H2Request::buildHeaders(HeaderVector &headers)
     if(!uri_.getFragment().empty()) {
         path = "#" + uri_.getFragment();
     }
-    headers_size += strHeaderPath.size() + path.size();
-    headers.emplace_back(std::make_pair(strHeaderPath, path));
-    headers.emplace_back(std::make_pair(strHeaderAuthority, uri_.getHost()));
+    headers.emplace_back(std::make_pair(H2HeaderPath, path));
+    headers_size += H2HeaderPath.size() + path.size();
+    headers.emplace_back(std::make_pair(H2HeaderAuthority, uri_.getHost()));
+    headers_size += H2HeaderAuthority.size() + uri_.getHost().size();
     for (auto it : header_map_) {
         headers.emplace_back(std::make_pair(it.first, it.second));
         headers_size += it.first.size() + it.second.size();
@@ -136,11 +137,18 @@ void H2Request::sendHeaders()
     
     ParamVector params;
     params.push_back(std::make_pair(HEADER_TABLE_SIZE, 4096));
-    conn_->sendSetting(stream_, params);
+    SettingsFrame setting;
+    setting.setStreamId(stream_->getStreamId());
+    setting.setParams(std::move(params));
+    conn_->sendH2Frame(stream_, &setting);
     
     HeaderVector headers;
-    size_t headers_size = buildHeaders(headers);
-    conn_->sendHeaders(stream_, headers, headers_size);
+    size_t headersSize = buildHeaders(headers);
+    HeadersFrame hdrFrame;
+    hdrFrame.setStreamId(stream_->getStreamId());
+    hdrFrame.addFlags(H2_FRAME_FLAG_END_HEADERS | H2_FRAME_FLAG_END_STREAM);
+    hdrFrame.setHeaders(std::move(headers), headersSize);
+    conn_->sendH2Frame(stream_, &hdrFrame);
 }
 
 void H2Request::onConnect(int err)
