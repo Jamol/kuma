@@ -1,5 +1,5 @@
 //
-//  trace.h
+//  kmtrace.h
 //  kuma
 //
 //  Created by Fengping Bao <jamol@live.com> on 11/12/14.

@@ -110,6 +110,7 @@
 		6F9E76751D365C43005E04B2 /* IHttpRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IHttpRequest.h; sourceTree = "<group>"; };
 		6F9E76771D3665DA005E04B2 /* IHttpRequest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IHttpRequest.cpp; sourceTree = "<group>"; };
 		6F9E76791D36758B005E04B2 /* httpdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httpdefs.h; sourceTree = "<group>"; };
+		6F9E76E71D3BB34E005E04B2 /* kmobject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = kmobject.h; sourceTree = "<group>"; };
 		6FA951411A3808450033C9CF /* kmdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmdefs.h; sourceTree = "<group>"; };
 		6FBB2C8C1D139C430024550F /* IOPoll.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IOPoll.h; sourceTree = "<group>"; };
 		6FBB2C8D1D139C430024550F /* Notifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Notifier.h; sourceTree = "<group>"; };
@@ -241,6 +242,7 @@
 				6F2963481A18AB0D00C3C79B /* kmtrace.h */,
 				6F29634A1A18AB0D00C3C79B /* util.cpp */,
 				6F29634B1A18AB0D00C3C79B /* util.h */,
+				6F9E76E71D3BB34E005E04B2 /* kmobject.h */,
 			);
 			path = util;
 			sourceTree = "<group>";

@@ -35,7 +35,7 @@ using namespace hpack;
 
 KUMA_NS_BEGIN
 
-class H2ConnectionImpl : public FrameCallback
+class H2ConnectionImpl : public KMObject, public FrameCallback
 {
 public:
     typedef std::function<void(int)> ConnectCallback;
@@ -49,16 +49,17 @@ public:
     int attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
     int close();
     
-    int sendH2Frame(H2StreamPtr &stream, H2Frame *frame);
+    int sendH2Frame(H2Frame *frame);
     
     int sendWindowUpdate(uint32_t increment);
-    int sendHeadersFrame(H2StreamPtr &stream, HeadersFrame *frame);
+    int sendHeadersFrame(HeadersFrame *frame);
     
     bool isReady() { return getState() == State::OPEN; }
     
     void setConnectionKey(const std::string &key) { key_ = key; }
     
     H2StreamPtr createStream();
+    void removeStream(uint32_t streamId);
     
 public:
     void onFrame(H2Frame *frame);
@@ -90,11 +91,8 @@ private:
     
     void addStream(H2StreamPtr stream);
     H2StreamPtr getStream(uint32_t streamId);
-    void removeStream(uint32_t streamId);
     
     void remove();
-
-    const char* getObjKey() const;
     
     std::string buildUpgradeRequest();
     std::string buildUpgradeResponse();
@@ -138,6 +136,7 @@ private:
     HPacker hpDecoder_;
     
     std::map<uint32_t, H2StreamPtr> streams_;
+    std::map<uint32_t, H2StreamPtr> pushStreams_;
     
     bool isServer_ = false;
     bool sendSettingAck = false;

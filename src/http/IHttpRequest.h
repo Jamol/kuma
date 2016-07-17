@@ -41,9 +41,9 @@ public:
     virtual ~IHttpRequest() {}
     
     virtual int setSslFlags(uint32_t ssl_flags) = 0;
-    void addHeader(const std::string& name, const std::string& value);
-    void addHeader(const std::string& name, uint32_t value);
-    int sendRequest(const std::string& method, const std::string& url, const std::string& ver);
+    void addHeader(std::string name, std::string value);
+    void addHeader(std::string name, uint32_t value);
+    int sendRequest(std::string method, std::string url, std::string ver);
     virtual int sendData(const uint8_t* data, size_t len) = 0;
     virtual void reset();
     virtual int close() = 0;
@@ -62,6 +62,7 @@ public:
 protected:
     virtual int sendRequest() = 0;
     virtual void checkHeaders() = 0;
+    virtual bool isVersion1_1() { return false; }
     
     enum class State {
         IDLE,
@@ -77,8 +78,6 @@ protected:
     void setState(State state) { state_ = state; }
     State getState() const { return state_; }
     
-    virtual const char* getObjKey() const = 0;
-    
 protected:
     State                   state_ = State::IDLE;
     
@@ -88,7 +87,10 @@ protected:
     std::string             version_;
     Uri                     uri_;
     
-    uint32_t                body_bytes_sent_ = 0;
+    bool                    has_content_length_ = false;
+    size_t                  content_length_ = 0;
+    bool                    is_chunked_ = false;
+    size_t                  body_bytes_sent_ = 0;
     
     DataCallback            cb_data_;
     EventCallback           cb_write_;

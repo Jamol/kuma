@@ -23,35 +23,37 @@
 using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
-
-const char* IHttpRequest::getObjKey() const
-{
-    return "HttpRequest";
-}
-
-void IHttpRequest::addHeader(const std::string& name, const std::string& value)
+//
+void IHttpRequest::addHeader(std::string name, std::string value)
 {
     if(!name.empty()) {
-        header_map_[name] = value;
+        if (is_equal("Content-Length", name)) {
+            has_content_length_ = true;
+            content_length_ = atol(value.c_str());
+        } else if (is_equal("Transfer-Encoding", name) && is_equal("chunked", value)) {
+            is_chunked_ = true;
+            if (!isVersion1_1()) {
+                return; // omit chunked
+            }
+        }
+        header_map_[std::move(name)] = std::move(value);
     }
 }
 
-void IHttpRequest::addHeader(const std::string& name, uint32_t value)
+void IHttpRequest::addHeader(std::string name, uint32_t value)
 {
-    std::stringstream ss;
-    ss << value;
-    addHeader(name, ss.str());
+    addHeader(std::move(name), std::to_string(value));
 }
 
-int IHttpRequest::sendRequest(const std::string& method, const std::string& url, const std::string& ver)
+int IHttpRequest::sendRequest(std::string method, std::string url, std::string ver)
 {
     if (getState() != State::IDLE && getState() != State::WAIT_FOR_REUSE) {
         return KUMA_ERROR_INVALID_STATE;
     }
-    method_ = method;
-    url_ = url;
-    version_ = ver;
-    if(!uri_.parse(url)) {
+    method_ = std::move(method);
+    url_ = std::move(url);
+    version_ = std::move(ver);
+    if(!uri_.parse(url_)) {
         return KUMA_ERROR_INVALID_PARAM;
     }
     checkHeaders();
@@ -61,5 +63,8 @@ int IHttpRequest::sendRequest(const std::string& method, const std::string& url,
 void IHttpRequest::reset()
 {
     header_map_.clear();
+    has_content_length_ = false;
+    content_length_ = 0;
+    is_chunked_ = false;
     body_bytes_sent_ = 0;
 }

@@ -25,13 +25,15 @@
 #include "kmdefs.h"
 #include "H2ConnectionImpl.h"
 #include "http/IHttpRequest.h"
+#include "util/kmobject.h"
 
 KUMA_NS_BEGIN
 
-class H2Request : public IHttpRequest
+class H2Request : public KMObject, public IHttpRequest
 {
 public:
     H2Request(EventLoopImpl* loop);
+    ~H2Request();
     
     int setSslFlags(uint32_t ssl_flags);
     int sendData(const uint8_t* data, size_t len);
@@ -41,9 +43,11 @@ public:
     const std::string& getVersion() const { return VersionHTTP2_0; }
     const std::string& getHeaderValue(const char* name) const;
     void forEachHeader(EnumrateCallback cb);
-
-protected:
-    const char* getObjKey() const;
+    
+public:
+    void onHeaders(const HeaderVector &headers, bool endSteam);
+    void onData(uint8_t *data, size_t len, bool endSteam);
+    void onRSTStream(int err);
     
 private:
     void onConnect(int err);
@@ -51,7 +55,6 @@ private:
     int sendRequest();
     void checkHeaders();
     size_t buildHeaders(HeaderVector &headers);
-    void sendSettings();
     void sendHeaders();
     
 private:
@@ -59,7 +62,9 @@ private:
     H2ConnectionPtr conn_ = nullptr;
     H2StreamPtr stream_ = nullptr;
     
-    std::string             connKey_;
+    std::string connKey_;
+    
+    bool* destroy_flag_ptr_ = nullptr;
 };
 
 KUMA_NS_END

@@ -62,23 +62,14 @@
 using namespace kuma;
 
 TcpListenerImpl::TcpListenerImpl(EventLoopImpl* loop)
-: fd_(INVALID_FD)
-, loop_(loop)
-, registered_(false)
-, flags_(0)
-, stopped_(false)
+: loop_(loop)
 {
-    
+    KM_SetObjKey("TcpListener");
 }
 
 TcpListenerImpl::~TcpListenerImpl()
 {
 
-}
-
-const char* TcpListenerImpl::getObjKey() const
-{
-    return "TcpListener";
 }
 
 void TcpListenerImpl::cleanup()

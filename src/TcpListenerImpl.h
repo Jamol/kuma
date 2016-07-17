@@ -18,12 +18,12 @@
 
 #include "kmdefs.h"
 #include "evdefs.h"
-
+#include "util/kmobject.h"
 KUMA_NS_BEGIN
 
 class EventLoopImpl;
 
-class TcpListenerImpl
+class TcpListenerImpl : public KMObject
 {
 public:
     typedef std::function<void(SOCKET_FD, const char*, uint16_t)> ListenCallback;
@@ -41,9 +41,6 @@ public:
     
     SOCKET_FD getFd() const { return fd_; }
     
-protected:
-    const char* getObjKey() const;
-    
 private:
     void setSocketOption();
     void ioReady(uint32_t events);
@@ -54,11 +51,11 @@ private:
     void cleanup();
     
 private:
-    SOCKET_FD       fd_;
+    SOCKET_FD       fd_ = INVALID_FD;
     EventLoopImpl*  loop_;
-    bool            registered_;
-    uint32_t        flags_;
-    bool            stopped_;
+    bool            registered_ = false;
+    uint32_t        flags_ = 0;
+    bool            stopped_ = false;
     
     ListenCallback  cb_accept_;
     ErrorCallback   cb_error_;

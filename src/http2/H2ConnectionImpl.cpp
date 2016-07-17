@@ -37,7 +37,7 @@ KUMA_NS_END
 H2ConnectionImpl::H2ConnectionImpl(EventLoopImpl* loop)
 : loop_(loop), frameParser_(this), tcp_(loop)
 {
-    
+    KM_SetObjKey("H2Connection");
 }
 
 H2ConnectionImpl::~H2ConnectionImpl()
@@ -50,11 +50,6 @@ H2ConnectionImpl::~H2ConnectionImpl()
         initData_ = nullptr;
         initSize_ = 0;
     }
-}
-
-const char* H2ConnectionImpl::getObjKey() const
-{
-    return "H2Connection";
 }
 
 void H2ConnectionImpl::cleanup()
@@ -172,7 +167,7 @@ int H2ConnectionImpl::close()
     return KUMA_ERROR_NOERR;
 }
 
-int H2ConnectionImpl::sendH2Frame(H2StreamPtr &stream, H2Frame *frame)
+int H2ConnectionImpl::sendH2Frame(H2Frame *frame)
 {
     if (!send_buffer_.empty()) {
         return KUMA_ERROR_AGAIN;
@@ -180,7 +175,7 @@ int H2ConnectionImpl::sendH2Frame(H2StreamPtr &stream, H2Frame *frame)
     
     if (frame->type() == H2FrameType::HEADERS) {
         HeadersFrame *headers = dynamic_cast<HeadersFrame*>(frame);
-        return sendHeadersFrame(stream, headers);
+        return sendHeadersFrame(headers);
     }
     
     size_t payloadSize = frame->calcPayloadSize();
@@ -195,7 +190,7 @@ int H2ConnectionImpl::sendH2Frame(H2StreamPtr &stream, H2Frame *frame)
     return KUMA_ERROR_NOERR;
 }
 
-int H2ConnectionImpl::sendHeadersFrame(H2StreamPtr &stream, HeadersFrame *frame)
+int H2ConnectionImpl::sendHeadersFrame(HeadersFrame *frame)
 {
     h2_priority_t pri;
     frame->setPriority(pri);
@@ -228,18 +223,26 @@ void H2ConnectionImpl::handleDataFrame(DataFrame *frame)
 {
     KUMA_INFOXTRACE("handleDataFrame, streamId="<<frame->getStreamId()<<", size="<<frame->size()<<", flags="<<int(frame->getFlags()));
     H2StreamPtr stream = getStream(frame->getStreamId());
+    if (stream) {
+        stream->handleDataFrame(frame);
+    }
 }
 
 void H2ConnectionImpl::handleHeadersFrame(HeadersFrame *frame)
 {
     KUMA_INFOXTRACE("handleHeadersFrame, streamId="<<frame->getStreamId()<<", flags="<<int(frame->getFlags()));
     H2StreamPtr stream = getStream(frame->getStreamId());
+    if (!stream) {
+        return;
+    }
     
     HeaderVector headers;
     if (hpDecoder_.decode(frame->getBlock(), frame->getBlockSize(), headers) < 0) {
         KUMA_ERRXTRACE("handleHeadersFrame, hpack decode failed");
         return;
     }
+    frame->setHeaders(std::move(headers), 0);
+    stream->handleHeadersFrame(frame);
 }
 
 void H2ConnectionImpl::handlePriorityFrame(PriorityFrame *frame)
@@ -250,6 +253,10 @@ void H2ConnectionImpl::handlePriorityFrame(PriorityFrame *frame)
 void H2ConnectionImpl::handleRSTStreamFrame(RSTStreamFrame *frame)
 {
     KUMA_INFOXTRACE("handleRSTStreamFrame, streamId="<<frame->getStreamId());
+    H2StreamPtr stream = getStream(frame->getStreamId());
+    if (stream) {
+        stream->handleRSTStreamFrame(frame);
+    }
 }
 
 void H2ConnectionImpl::handleSettingsFrame(SettingsFrame *frame)
@@ -260,6 +267,11 @@ void H2ConnectionImpl::handleSettingsFrame(SettingsFrame *frame)
             sendSettingAck = true;
         } else {
             SettingsFrame settings;
+        }
+    } else {
+        H2StreamPtr stream = getStream(frame->getStreamId());
+        if (stream) {
+            handleSettingsFrame(frame);
         }
     }
 }
@@ -282,11 +294,23 @@ void H2ConnectionImpl::handleGoawayFrame(GoawayFrame *frame)
 void H2ConnectionImpl::handleWindowUpdateFrame(WindowUpdateFrame *frame)
 {
     KUMA_INFOXTRACE("handleWindowUpdateFrame, size=" << frame->getWindowSizeIncrement());
+    if (frame->getStreamId() == 0) {
+        
+    } else {
+        H2StreamPtr stream = getStream(frame->getStreamId());
+        if (stream) {
+            stream->handleWindowUpdateFrame(frame);
+        }
+    }
 }
 
 void H2ConnectionImpl::handleContinuationFrame(ContinuationFrame *frame)
 {
     KUMA_INFOXTRACE("handleContinuationFrame, streamId="<<frame->getStreamId()<<", flags="<<int(frame->getFlags()));
+    H2StreamPtr stream = getStream(frame->getStreamId());
+    if (stream) {
+        stream->handleContinuationFrame(frame);
+    }
 }
 
 int H2ConnectionImpl::handleInputData(const uint8_t *buf, size_t len)
@@ -385,6 +409,7 @@ H2StreamPtr H2ConnectionImpl::getStream(uint32_t streamId)
 
 void H2ConnectionImpl::removeStream(uint32_t streamId)
 {
+    KUMA_INFOXTRACE("removeStream, streamId="<<streamId);
     streams_.erase(streamId);
 }
 

@@ -18,7 +18,7 @@
 
 #include "kmdefs.h"
 #include "evdefs.h"
-
+#include "util/kmobject.h"
 #ifdef KUMA_OS_WIN
 # include <Ws2tcpip.h>
 #else
@@ -35,7 +35,7 @@ KUMA_NS_BEGIN
 
 class EventLoopImpl;
 
-class TcpSocketImpl
+class TcpSocketImpl : public KMObject
 {
 public:
     typedef std::function<void(int)> EventCallback;
@@ -70,9 +70,6 @@ public:
     
     SOCKET_FD getFd() const { return fd_; }
     
-protected:
-    const char* getObjKey() const;
-    
 private:
     int connect_i(const char* addr, uint16_t port, uint32_t timeout_ms);
     void setSocketOption();
@@ -84,10 +81,10 @@ private:
     
 private:
     enum State {
-        ST_IDLE,
-        ST_CONNECTING,
-        ST_OPEN,
-        ST_CLOSED
+        IDLE,
+        CONNECTING,
+        OPEN,
+        CLOSED
     };
     
     State getState() const { return state_; }
@@ -96,15 +93,14 @@ private:
     bool isReady();
     
 private:
-    SOCKET_FD       fd_;
+    SOCKET_FD       fd_ = INVALID_FD;
     EventLoopImpl*  loop_;
-    State           state_;
-    bool            registered_;
-    bool*           destroy_flag_ptr_;
-    uint32_t        ssl_flags_;
+    State           state_ = State::IDLE;
+    bool            registered_ = false;
+    uint32_t        ssl_flags_ = SSL_NONE;
     
 #ifdef KUMA_HAS_OPENSSL
-    SslHandler*     ssl_handler_;
+    SslHandler*     ssl_handler_ = nullptr;
     AlpnProtos      alpn_protos_;
 #endif
     
@@ -112,6 +108,8 @@ private:
     EventCallback   cb_read_;
     EventCallback   cb_write_;
     EventCallback   cb_error_;
+    
+    bool*           destroy_flag_ptr_ = nullptr;
 };
 
 KUMA_NS_END

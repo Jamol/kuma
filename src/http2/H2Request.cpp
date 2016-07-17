@@ -22,6 +22,7 @@
 #include "H2Request.h"
 #include "Uri.h"
 #include "H2ConnectionMgr.h"
+#include "kmtrace.h"
 
 #include <sstream>
 
@@ -30,12 +31,14 @@ using namespace kuma;
 H2Request::H2Request(EventLoopImpl* loop)
 : loop_(loop)
 {
-    
+    KM_SetObjKey("H2Request");
 }
 
-const char* H2Request::getObjKey() const
+H2Request::~H2Request()
 {
-    return "H2Request";
+    if(destroy_flag_ptr_) {
+        *destroy_flag_ptr_ = true;
+    }
 }
 
 int H2Request::setSslFlags(uint32_t ssl_flags)
@@ -54,11 +57,15 @@ int H2Request::sendRequest()
         port = 443;
         ssl_flags = SSL_ENABLE;
     }
+    std::string key;
     char ip_buf[128];
-    km_resolve_2_ip(uri_.getHost().c_str(), ip_buf, sizeof(ip_buf));
-    std::stringstream ss;
-    ss << ip_buf << ":" << port;
-    std::string key = ss.str();
+    if (km_resolve_2_ip(uri_.getHost().c_str(), ip_buf, sizeof(ip_buf)) == 0) {
+        std::stringstream ss;
+        ss << ip_buf << ":" << port;
+        key = ss.str();
+    } else {
+        key = uri_.getHost() + ":" + std::to_string(port);
+    }
     auto &connMgr = H2ConnectionMgr::getRequestConnMgr(ssl_flags != SSL_NONE);
     conn_ = connMgr.getConnection(key);
     if (!conn_) {
@@ -129,31 +136,27 @@ size_t H2Request::buildHeaders(HeaderVector &headers)
     return headers_size;
 }
 
-void H2Request::sendSettings()
-{
-    ParamVector params;
-    params.push_back(std::make_pair(HEADER_TABLE_SIZE, 4096));
-}
-
 void H2Request::sendHeaders()
 {
     stream_ = conn_->createStream();
+    stream_->setHeadersCallback([this] (const HeaderVector &headers, bool endSteam) {
+        onHeaders(headers, endSteam);
+    });
+    stream_->setDataCallback([this] (uint8_t *data, size_t len, bool endSteam) {
+        onData(data, len, endSteam);
+    });
+    stream_->setRSTStreamCallback([this] (int err) {
+        onRSTStream(err);
+    });
     setState(State::SENDING_HEADER);
-    
-    ParamVector params;
-    params.push_back(std::make_pair(HEADER_TABLE_SIZE, 4096));
-    SettingsFrame setting;
-    setting.setStreamId(stream_->getStreamId());
-    setting.setParams(std::move(params));
-    conn_->sendH2Frame(stream_, &setting);
     
     HeaderVector headers;
     size_t headersSize = buildHeaders(headers);
-    HeadersFrame hdrFrame;
-    hdrFrame.setStreamId(stream_->getStreamId());
-    hdrFrame.addFlags(H2_FRAME_FLAG_END_HEADERS | H2_FRAME_FLAG_END_STREAM);
-    hdrFrame.setHeaders(std::move(headers), headersSize);
-    conn_->sendH2Frame(stream_, &hdrFrame);
+    bool endStream = !has_content_length_ && !is_chunked_;
+    stream_->sendHeaders(conn_, headers, headersSize, endStream);
+    if (endStream) {
+        setState(State::RECVING_RESPONSE);
+    }
 }
 
 void H2Request::onConnect(int err)
@@ -167,10 +170,59 @@ void H2Request::onConnect(int err)
 
 int H2Request::sendData(const uint8_t* data, size_t len)
 {
-    return 0;
+    body_bytes_sent_ += len;
+    bool endStream = is_chunked_ ? !data : body_bytes_sent_ >= content_length_;
+    int ret = stream_->sendData(conn_, data, len, endStream);
+    if (endStream) {
+        setState(State::RECVING_RESPONSE);
+    }
+    return ret;
+}
+
+void H2Request::onHeaders(const HeaderVector &headers, bool endSteam)
+{
+    bool destroyed = false;
+    KUMA_ASSERT(nullptr == destroy_flag_ptr_);
+    destroy_flag_ptr_ = &destroyed;
+    if (cb_header_) cb_header_();
+    if(destroyed) {
+        return ;
+    }
+    destroy_flag_ptr_ = nullptr;
+    if (endSteam) {
+        setState(State::COMPLETE);
+        if (cb_response_) cb_response_();
+    }
+}
+
+void H2Request::onData(uint8_t *data, size_t len, bool endSteam)
+{
+    bool destroyed = false;
+    KUMA_ASSERT(nullptr == destroy_flag_ptr_);
+    destroy_flag_ptr_ = &destroyed;
+    if (cb_data_) cb_data_(data, len);
+    if(destroyed) {
+        return ;
+    }
+    destroy_flag_ptr_ = nullptr;
+    
+    if (endSteam && cb_response_) {
+        setState(State::COMPLETE);
+        cb_response_();
+    }
+}
+
+void H2Request::onRSTStream(int err)
+{
+    
 }
 
 int H2Request::close()
 {
+    if (stream_) {
+        stream_->close(conn_);
+        stream_.reset();
+    }
+    conn_.reset();
     return KUMA_ERROR_NOERR;
 }

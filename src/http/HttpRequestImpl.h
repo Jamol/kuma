@@ -21,10 +21,11 @@
 #include "TcpSocketImpl.h"
 #include "Uri.h"
 #include "IHttpRequest.h"
+#include "util/kmobject.h"
 
 KUMA_NS_BEGIN
 
-class HttpRequestImpl : public IHttpRequest
+class HttpRequestImpl : public KMObject, public IHttpRequest
 {
 public:
     HttpRequestImpl(EventLoopImpl* loop);
@@ -45,9 +46,6 @@ protected: // callbacks of tcp_socket
     void onSend(int err);
     void onReceive(int err);
     void onClose(int err);
-    
-protected:
-    const char* getObjKey() const;
 
 private:
     int sendRequest();
@@ -56,6 +54,7 @@ private:
     int sendChunk(const uint8_t* data, size_t len);
     void cleanup();
     void sendRequestHeader();
+    bool isVersion1_1() { return true; }
     
     void onHttpData(const char* data, size_t len);
     void onHttpEvent(HttpEvent ev);
@@ -64,16 +63,10 @@ private:
     HttpParserImpl          http_parser_;
     
     std::vector<uint8_t>    send_buffer_;
-    uint32_t                send_offset_;
+    uint32_t                send_offset_ = 0;
     TcpSocketImpl           tcp_socket_;
     
-    Uri                     uri_;
-    
-    bool                    is_chunked_;
-    bool                    has_content_length_;
-    uint32_t                content_length_;
-    
-    bool*                   destroy_flag_ptr_;
+    bool*                   destroy_flag_ptr_ = nullptr;
 };
 
 KUMA_NS_END

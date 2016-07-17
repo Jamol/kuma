@@ -25,14 +25,9 @@ using namespace kuma;
 //////////////////////////////////////////////////////////////////////////
 HttpRequestImpl::HttpRequestImpl(EventLoopImpl* loop)
 : http_parser_()
-, send_offset_(0)
 , tcp_socket_(loop)
-, is_chunked_(false)
-, has_content_length_(false)
-, content_length_(0)
-, destroy_flag_ptr_(nullptr)
 {
-    
+    KM_SetObjKey("HttpRequest");
 }
 
 HttpRequestImpl::~HttpRequestImpl()
@@ -40,11 +35,6 @@ HttpRequestImpl::~HttpRequestImpl()
     if(destroy_flag_ptr_) {
         *destroy_flag_ptr_ = true;
     }
-}
-
-const char* HttpRequestImpl::getObjKey() const
-{
-    return "HttpRequest";
 }
 
 void HttpRequestImpl::cleanup()
@@ -108,16 +98,6 @@ void HttpRequestImpl::buildRequest()
 
 int HttpRequestImpl::sendRequest()
 {
-    auto it = header_map_.find("Content-Length");
-    if(it != header_map_.end()) {
-        has_content_length_ = true;
-        content_length_ = atoi(it->second.c_str());
-    }
-    it = header_map_.find("Transfer-Encoding");
-    if(it != header_map_.end() && is_equal("chunked", it->second)) {
-        is_chunked_ = true;
-    }
-    
     if (getState() == State::IDLE) {
         tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
         tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
@@ -220,9 +200,6 @@ void HttpRequestImpl::reset()
     http_parser_.reset();
     send_buffer_.clear();
     send_offset_ = 0;
-    has_content_length_ = false;
-    content_length_ = 0;
-    is_chunked_ = false;
     if (getState() == State::COMPLETE) {
         setState(State::WAIT_FOR_REUSE);
     }

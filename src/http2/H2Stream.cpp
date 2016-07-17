@@ -20,6 +20,8 @@
  */
 
 #include "H2Stream.h"
+#include "H2ConnectionImpl.h"
+#include "kmtrace.h"
 
 using namespace kuma;
 
@@ -27,10 +29,122 @@ using namespace kuma;
 H2Stream::H2Stream(uint32_t streamId)
 : streamId_(streamId)
 {
+    KM_SetObjKey("H2Stream_"<<streamId);
+}
+
+int H2Stream::sendHeaders(const H2ConnectionPtr &conn, const HeaderVector &headers, size_t headersSize, bool endStream)
+{
+    HeadersFrame frame;
+    frame.setStreamId(getStreamId());
+    frame.addFlags(H2_FRAME_FLAG_END_HEADERS);
+    if (endStream) {
+        frame.addFlags(H2_FRAME_FLAG_END_STREAM);
+    }
+    frame.setHeaders(std::move(headers), headersSize);
+    int ret = conn->sendH2Frame(&frame);
+    setState(State::OPEN);
+    if (endStream) {
+        localStreamEnd();
+    }
+    return ret;
+}
+
+int H2Stream::sendData(const H2ConnectionPtr &conn, const uint8_t *data, size_t len, bool endStream)
+{
+    DataFrame frame;
+    frame.setStreamId(getStreamId());
+    if (endStream) {
+        frame.addFlags(H2_FRAME_FLAG_END_STREAM);
+    }
+    frame.setData(data, len);
+    int ret = conn->sendH2Frame(&frame);
+    if (endStream) {
+        localStreamEnd();
+    }
+    return (int)len;
+}
+
+void H2Stream::close(const H2ConnectionPtr &conn)
+{
+    conn->removeStream(getStreamId());
+}
+
+void H2Stream::localStreamEnd()
+{
+    if (getState() == State::HALF_CLOSED_R) {
+        setState(State::CLOSED);
+    } else {
+        setState(State::HALF_CLOSED_L);
+    }
+}
+
+void H2Stream::remoteStreamEnd()
+{
+    if (getState() == State::HALF_CLOSED_L) {
+        setState(State::CLOSED);
+    } else {
+        setState(State::HALF_CLOSED_R);
+    }
+}
+
+void H2Stream::handleDataFrame(DataFrame *frame)
+{
+    bool endStream = frame->getFlags() & H2_FRAME_FLAG_END_STREAM;
+    if (endStream) {
+        KUMA_INFOXTRACE("handleDataFrame, END_STREAM received");
+        remoteStreamEnd();
+    }
+    if (cb_data_) {
+        cb_data_((uint8_t*)frame->data(), frame->size(), endStream);
+    }
+}
+
+void H2Stream::handleHeadersFrame(HeadersFrame *frame)
+{
+    bool endStream = frame->getFlags() & H2_FRAME_FLAG_END_STREAM;
+    if (endStream) {
+        KUMA_INFOXTRACE("handleHeadersFrame, END_STREAM received");
+        remoteStreamEnd();
+    }
+    if (cb_headers_) {
+        cb_headers_(frame->getHeaders(), endStream);
+    }
+}
+
+void H2Stream::handlePriorityFrame(PriorityFrame *frame)
+{
     
 }
 
-H2Stream::~H2Stream()
+void H2Stream::handleRSTStreamFrame(RSTStreamFrame *frame)
+{
+    KUMA_INFOXTRACE("handleRSTStreamFrame, err="<<frame->getErrorCode());
+    if (cb_reset_) {
+        cb_reset_(frame->getErrorCode());
+    }
+}
+
+void H2Stream::handleSettingsFrame(SettingsFrame *frame)
+{
+    
+}
+
+void H2Stream::handlePushFrame(PushPromiseFrame *frame)
+{
+    
+}
+
+void H2Stream::handlePingFrame(PingFrame *frame)
+{
+    
+}
+
+void H2Stream::handleWindowUpdateFrame(WindowUpdateFrame *frame)
+{
+    
+}
+
+void H2Stream::handleContinuationFrame(ContinuationFrame *frame)
 {
     
 }

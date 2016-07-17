@@ -21,10 +21,11 @@
 #include "HttpParserImpl.h"
 #include "TcpSocketImpl.h"
 #include "Uri.h"
+#include "util/kmobject.h"
 
 KUMA_NS_BEGIN
 
-class HttpResponseImpl
+class HttpResponseImpl : public KMObject
 {
 public:
     typedef std::function<void(uint8_t*, size_t)> DataCallback;
@@ -63,19 +64,16 @@ protected: // callbacks of tcp_socket
     void onReceive(int err);
     void onClose(int err);
     
-protected:
-    const char* getObjKey() const;
-    
 private:
     enum State {
-        STATE_IDLE,
-        STATE_RECVING_REQUEST,
-        STATE_WAIT_FOR_RESPONSE,
-        STATE_SENDING_HEADER,
-        STATE_SENDING_BODY,
-        STATE_COMPLETE,
-        STATE_ERROR,
-        STATE_CLOSED
+        IDLE,
+        RECVING_REQUEST,
+        WAIT_FOR_RESPONSE,
+        SENDING_HEADER,
+        SENDING_BODY,
+        COMPLETE,
+        IN_ERROR,
+        CLOSED
     };
     void setState(State state) { state_ = state; }
     State getState() const { return state_; }
@@ -89,22 +87,22 @@ private:
     
 private:
     HttpParserImpl          http_parser_;
-    State                   state_;
+    State                   state_ = State::IDLE;
     EventLoopImpl*          loop_;
     
-    uint8_t*                init_data_;
-    size_t                  init_len_;
+    uint8_t*                init_data_ = nullptr;
+    size_t                  init_len_ = 0;
     
     std::vector<uint8_t>    send_buffer_;
-    uint32_t                send_offset_;
+    uint32_t                send_offset_ = 0;
     TcpSocketImpl           tcp_socket_;
     
     HttpParserImpl::STRING_MAP  header_map_;
     
-    bool                    is_chunked_;
-    bool                    has_content_length_;
-    uint32_t                content_length_;
-    uint32_t                body_bytes_sent_;
+    bool                    is_chunked_ = false;
+    bool                    has_content_length_ = false;
+    uint32_t                content_length_ = 0;
+    uint32_t                body_bytes_sent_ = 0;
     
     DataCallback            cb_data_;
     EventCallback           cb_write_;
@@ -113,7 +111,7 @@ private:
     HttpEventCallback       cb_request_;
     HttpEventCallback       cb_response_;
     
-    bool*                   destroy_flag_ptr_;
+    bool*                   destroy_flag_ptr_ = nullptr;
 };
 
 KUMA_NS_END

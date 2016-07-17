@@ -67,13 +67,9 @@
 using namespace kuma;
 
 UdpSocketImpl::UdpSocketImpl(EventLoopImpl* loop)
-: fd_(INVALID_FD)
-, loop_(loop)
-, registered_(false)
-, destroy_flag_ptr_(nullptr)
-, flags_(0)
+: loop_(loop)
 {
-    
+    KM_SetObjKey("UdpSocket");
 }
 
 UdpSocketImpl::~UdpSocketImpl()
@@ -82,11 +78,6 @@ UdpSocketImpl::~UdpSocketImpl()
         *destroy_flag_ptr_ = true;
     }
     cleanup();
-}
-
-const char* UdpSocketImpl::getObjKey() const
-{
-    return "UdpSocket";
 }
 
 void UdpSocketImpl::cleanup()
@@ -106,7 +97,7 @@ void UdpSocketImpl::cleanup()
 
 int UdpSocketImpl::bind(const char *bind_host, uint16_t bind_port, uint32_t udp_flags)
 {
-    KUMA_INFOTRACE("bind, bind_host="<<bind_host<<", bind_port="<<bind_port);
+    KUMA_INFOXTRACE("bind, bind_host="<<bind_host<<", bind_port="<<bind_port);
     if(fd_ != INVALID_FD) {
         cleanup();
     }

@@ -99,11 +99,12 @@ public:
     size_t calcPayloadSize() { return size_; }
     
     const uint8_t* data() { return data_; }
-    uint32_t size() { return size_; }
+    size_t size() { return size_; }
+    void setData(const uint8_t *data, size_t len) { data_ = data; size_ = len;}
     
 private:
     const uint8_t *data_ = nullptr;
-    uint32_t size_ = 0;
+    size_t size_ = 0;
 };
 
 class HeadersFrame : public H2Frame
@@ -270,13 +271,12 @@ public:
     
     bool hasEndHeaders() { return hdr_.getFlags() & H2_FRAME_FLAG_END_HEADERS; }
     const uint8_t* getBlock() { return block_; }
-    uint32_t getBlockSize() { return bsize_; }
-    void setBlock(const uint8_t *block) { block_ = block; }
-    void setBlockSize(uint32_t sz) { bsize_ = sz; }
+    size_t getBlockSize() { return bsize_; }
+    void setBlock(const uint8_t *block, uint32_t bsize) { block_ = block; bsize_ = bsize; }
     
 private:
     const uint8_t *block_ = nullptr;
-    uint32_t bsize_ = 0;
+    size_t bsize_ = 0;
 };
 
 KUMA_NS_END

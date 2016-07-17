@@ -69,17 +69,9 @@
 using namespace kuma;
 
 TcpSocketImpl::TcpSocketImpl(EventLoopImpl* loop)
-: fd_(INVALID_FD)
-, loop_(loop)
-, state_(ST_IDLE)
-, registered_(false)
-, destroy_flag_ptr_(nullptr)
-, ssl_flags_(SSL_NONE)
-#ifdef KUMA_HAS_OPENSSL
-, ssl_handler_(nullptr)
-#endif
+: loop_(loop)
 {
-    
+    KM_SetObjKey("TcpSocket");
 }
 
 TcpSocketImpl::~TcpSocketImpl()
@@ -88,11 +80,6 @@ TcpSocketImpl::~TcpSocketImpl()
         *destroy_flag_ptr_ = true;
     }
     cleanup();
-}
-
-const char* TcpSocketImpl::getObjKey() const
-{
-    return "TcpSocket";
 }
 
 void TcpSocketImpl::cleanup()
@@ -130,7 +117,7 @@ int TcpSocketImpl::setSslFlags(uint32_t ssl_flags)
 int TcpSocketImpl::bind(const char *bind_host, uint16_t bind_port)
 {
     KUMA_INFOTRACE("bind, bind_host="<<bind_host<<", bind_port="<<bind_port);
-    if(getState() != ST_IDLE) {
+    if(getState() != State::IDLE) {
         KUMA_ERRXTRACE("bind, invalid state, state="<<getState());
         return KUMA_ERROR_INVALID_STATE;
     }
@@ -166,7 +153,7 @@ int TcpSocketImpl::bind(const char *bind_host, uint16_t bind_port)
 
 int TcpSocketImpl::connect(const char *host, uint16_t port, EventCallback cb, uint32_t timeout_ms)
 {
-    if(getState() != ST_IDLE) {
+    if(getState() != State::IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
         return KUMA_ERROR_INVALID_STATE;
     }
@@ -188,6 +175,7 @@ int TcpSocketImpl::connect_i(const char* host, uint16_t port, uint32_t timeout_m
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
     if(km_set_sock_addr(host, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
+        KUMA_ERRXTRACE("connect_i, failed to resolve host: "<<host);
         return KUMA_ERROR_INVALID_PARAM;
     }
     if(INVALID_FD == fd_) {
@@ -208,7 +196,7 @@ int TcpSocketImpl::connect_i(const char* host, uint16_t port, uint32_t timeout_m
 #endif
     int ret = ::connect(fd_, (struct sockaddr *)&ss_addr, addr_len);
     if(0 == ret) {
-        setState(ST_CONNECTING); // wait for writable event
+        setState(State::CONNECTING); // wait for writable event
     } else if(ret < 0 &&
 #ifdef KUMA_OS_WIN
               WSAEWOULDBLOCK
@@ -216,11 +204,11 @@ int TcpSocketImpl::connect_i(const char* host, uint16_t port, uint32_t timeout_m
               EINPROGRESS
 #endif
               == getLastError()) {
-        setState(ST_CONNECTING);
+        setState(State::CONNECTING);
     } else {
         KUMA_ERRXTRACE("connect_i, error, fd="<<fd_<<", err="<<getLastError());
         cleanup();
-        setState(ST_CLOSED);
+        setState(State::CLOSED);
         return KUMA_ERROR_FAILED;
     }
 #if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
@@ -246,7 +234,7 @@ int TcpSocketImpl::connect_i(const char* host, uint16_t port, uint32_t timeout_m
 int TcpSocketImpl::attachFd(SOCKET_FD fd)
 {
     KUMA_INFOXTRACE("attachFd, fd="<<fd<<", flags="<<ssl_flags_<<", state="<<getState());
-    if(getState() != ST_IDLE) {
+    if(getState() != State::IDLE) {
         KUMA_ERRXTRACE("attachFd, invalid state, state="<<getState());
         return KUMA_ERROR_INVALID_STATE;
     }
@@ -259,7 +247,7 @@ int TcpSocketImpl::attachFd(SOCKET_FD fd)
     
     fd_ = fd;
     setSocketOption();
-    setState(ST_OPEN);
+    setState(State::OPEN);
 #ifdef KUMA_HAS_OPENSSL
     if(SslEnabled()) {
         int ret = startSslHandshake(AS_SERVER);
@@ -283,7 +271,7 @@ int TcpSocketImpl::detachFd(SOCKET_FD &fd)
         loop_->unregisterFd(fd, false);
     }
     cleanup();
-    setState(ST_CLOSED);
+    setState(State::CLOSED);
     return KUMA_ERROR_NOERR;
 }
 
@@ -297,14 +285,14 @@ int TcpSocketImpl::setAlpnProtocols(const AlpnProtos &protocols)
 int TcpSocketImpl::attachFd(SOCKET_FD fd, SSL* ssl)
 {
     KUMA_INFOXTRACE("attachFd, with ssl, fd="<<fd<<", flags="<<ssl_flags_<<", state="<<getState());
-    if(getState() != ST_IDLE) {
+    if(getState() != State::IDLE) {
         KUMA_ERRXTRACE("attachFd, invalid state, state="<<getState());
         return KUMA_ERROR_INVALID_STATE;
     }
     
     fd_ = fd;
     setSocketOption();
-    setState(ST_OPEN);
+    setState(State::OPEN);
     
     if(SslEnabled()) {
         if (ssl) {
@@ -336,7 +324,7 @@ int TcpSocketImpl::detachFd(SOCKET_FD &fd, SSL* &ssl)
         ssl_handler_->detachSsl(ssl);
     }
     cleanup();
-    setState(ST_CLOSED);
+    setState(State::CLOSED);
     return KUMA_ERROR_NOERR;
 }
 
@@ -410,7 +398,7 @@ bool TcpSocketImpl::SslEnabled()
 
 bool TcpSocketImpl::isReady()
 {
-    return getState() == ST_OPEN
+    return getState() == State::OPEN
 #ifdef KUMA_HAS_OPENSSL
         && (!SslEnabled() ||
         (ssl_handler_ && ssl_handler_->getState() == SslHandler::SslState::SSL_SUCCESS))
@@ -457,7 +445,7 @@ int TcpSocketImpl::send(const uint8_t* data, size_t length)
     
     if(ret < 0) {
         cleanup();
-        setState(ST_CLOSED);
+        setState(State::CLOSED);
     } else if(ret < length) {
         if(loop_->isPollLT()) {
             loop_->updateFd(fd_, KUMA_EV_NETWORK);
@@ -526,7 +514,7 @@ int TcpSocketImpl::send(iovec* iovs, int count)
     
     if(ret < 0) {
         cleanup();
-        setState(ST_CLOSED);
+        setState(State::CLOSED);
     } else if(ret < total_len) {
         if(loop_->isPollLT()) {
             loop_->updateFd(fd_, KUMA_EV_NETWORK);
@@ -574,7 +562,7 @@ int TcpSocketImpl::receive(uint8_t* data, size_t length)
     
     if(ret < 0) {
         cleanup();
-        setState(ST_CLOSED);
+        setState(State::CLOSED);
     }
     
     //KUMA_INFOXTRACE("receive, ret="<<ret);
@@ -586,7 +574,7 @@ int TcpSocketImpl::close()
     KUMA_INFOXTRACE("close, state="<<getState());
     loop_->runInEventLoopSync([this] {
         cleanup();
-        setState(ST_CLOSED);
+        setState(State::CLOSED);
     });
     return KUMA_ERROR_NOERR;
 }
@@ -605,7 +593,7 @@ void TcpSocketImpl::onConnect(int err)
 {
     KUMA_INFOXTRACE("onConnect, err="<<err<<", state="<<getState());
     if(0 == err) {
-        setState(ST_OPEN);
+        setState(State::OPEN);
 #ifdef KUMA_HAS_OPENSSL
         if(SslEnabled()) {
             err = startSslHandshake(AS_CLIENT);
@@ -617,7 +605,7 @@ void TcpSocketImpl::onConnect(int err)
     }
     if(err != KUMA_ERROR_NOERR) {
         cleanup();
-        setState(ST_CLOSED);
+        setState(State::CLOSED);
     }
     EventCallback cb_connect = std::move(cb_connect_);
     if(cb_connect) cb_connect(err);
@@ -641,7 +629,7 @@ void TcpSocketImpl::onClose(int err)
 {
     KUMA_INFOXTRACE("onClose, err="<<err<<", state="<<getState());
     cleanup();
-    setState(ST_CLOSED);
+    setState(State::CLOSED);
     if(cb_error_) cb_error_(err);
 }
 
@@ -649,7 +637,7 @@ void TcpSocketImpl::ioReady(uint32_t events)
 {
     switch(getState())
     {
-        case ST_CONNECTING:
+        case State::CONNECTING:
         {
             if(events & KUMA_EV_ERROR) {
                 KUMA_ERRXTRACE("ioReady, KUMA_EV_ERROR, events="<<events
@@ -670,7 +658,7 @@ void TcpSocketImpl::ioReady(uint32_t events)
             break;
         }
             
-        case ST_OPEN:
+        case State::OPEN:
         {
 #ifdef KUMA_HAS_OPENSSL
             if(ssl_handler_ && ssl_handler_->getState() == SslHandler::SslState::SSL_HANDSHAKE) {
@@ -707,13 +695,13 @@ void TcpSocketImpl::ioReady(uint32_t events)
                 return;
             }
             destroy_flag_ptr_ = nullptr;
-            if((events & KUMA_EV_ERROR) && getState() == ST_OPEN) {
+            if((events & KUMA_EV_ERROR) && getState() == State::OPEN) {
                 KUMA_ERRXTRACE("ioReady, KUMA_EV_ERROR, events="<<events
                               <<", err="<<getLastError()<<", state="<<getState());
                 onClose(KUMA_ERROR_POLLERR);
                 break;
             }
-            if((events & KUMA_EV_WRITE) && getState() == ST_OPEN) {
+            if((events & KUMA_EV_WRITE) && getState() == State::OPEN) {
                 onSend(0);
             }
             break;

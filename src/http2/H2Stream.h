@@ -23,29 +23,71 @@
 #define __H2Stream_H__
 
 #include "kmdefs.h"
+#include "util/kmobject.h"
 #include <memory>
 
 #include "h2defs.h"
+#include "H2Frame.h"
 
 KUMA_NS_BEGIN
 
-class H2Stream
+class H2ConnectionImpl;
+using H2ConnectionPtr = std::shared_ptr<H2ConnectionImpl>;
+
+class H2Stream : public KMObject
 {
 public:
-    class Callback {
-    public:
-        virtual void onHeaders(const HeaderVector &headers) = 0;
-        virtual void onData() = 0;
-    };
+    using HeadersCallback = std::function<void(const HeaderVector &, bool)>;
+    using DataCallback = std::function<void(uint8_t *, size_t, bool)>;
+    using RSTStreamCallback = std::function<void(int)>;
     
 public:
 	H2Stream(uint32_t streamId);
-	virtual ~H2Stream();
     
     uint32_t getStreamId() { return streamId_; }
+    
+    int sendHeaders(const H2ConnectionPtr &conn, const HeaderVector &headers, size_t headersSize,bool endStream);
+    int sendData(const H2ConnectionPtr &conn, const uint8_t *data, size_t len, bool endStream = false);
+    
+    void close(const H2ConnectionPtr &conn);
+    
+    void setHeadersCallback(HeadersCallback cb) { cb_headers_ = std::move(cb); }
+    void setDataCallback(DataCallback cb) { cb_data_ = std::move(cb); }
+    void setRSTStreamCallback(RSTStreamCallback cb) { cb_reset_ = std::move(cb); }
+    
+public:
+    void handleDataFrame(DataFrame *frame);
+    void handleHeadersFrame(HeadersFrame *frame);
+    void handlePriorityFrame(PriorityFrame *frame);
+    void handleRSTStreamFrame(RSTStreamFrame *frame);
+    void handleSettingsFrame(SettingsFrame *frame);
+    void handlePushFrame(PushPromiseFrame *frame);
+    void handlePingFrame(PingFrame *frame);
+    void handleWindowUpdateFrame(WindowUpdateFrame *frame);
+    void handleContinuationFrame(ContinuationFrame *frame);
+    
+private:
+    enum State {
+        IDLE,
+        RESERVED_L,
+        RESERVED_R,
+        OPEN,
+        HALF_CLOSED_L,
+        HALF_CLOSED_R,
+        CLOSED
+    };
+    void setState(State state) { state_ = state; }
+    State getState() { return state_; }
+    
+    void localStreamEnd();
+    void remoteStreamEnd();
 
 private:
     uint32_t streamId_;
+    State state_ = State::IDLE;
+    HeadersCallback cb_headers_;
+    DataCallback cb_data_;
+    RSTStreamCallback cb_reset_;
 };
 
 using H2StreamPtr = std::shared_ptr<H2Stream>;
