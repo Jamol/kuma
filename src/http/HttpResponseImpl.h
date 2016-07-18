@@ -97,7 +97,7 @@ private:
     uint32_t                send_offset_ = 0;
     TcpSocketImpl           tcp_socket_;
     
-    HttpParserImpl::STRING_MAP  header_map_;
+    HeaderMap               header_map_;
     
     bool                    is_chunked_ = false;
     bool                    has_content_length_ = false;

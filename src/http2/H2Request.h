@@ -39,7 +39,7 @@ public:
     int sendData(const uint8_t* data, size_t len);
     int close();
     
-    int getStatusCode() const { return 200; }
+    int getStatusCode() const { return status_code_; }
     const std::string& getVersion() const { return VersionHTTP2_0; }
     const std::string& getHeaderValue(const char* name) const;
     void forEachHeader(EnumrateCallback cb);
@@ -61,6 +61,9 @@ private:
     EventLoopImpl* loop_;
     H2ConnectionPtr conn_ = nullptr;
     H2StreamPtr stream_ = nullptr;
+    
+    int status_code_ = 0;
+    HeaderMap rsp_headers_;
     
     std::string connKey_;
     

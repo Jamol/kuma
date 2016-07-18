@@ -435,7 +435,7 @@ bool HttpParserImpl::parseStartLine(const char* line, const char* line_end)
         version_.swap(str);
         p = std::find(p_line, p_end, ' ');
         str.assign(p_line, p);
-        status_code_ = atoi(str.c_str());
+        status_code_ = std::stoi(str);
     }
     clearBuffer();
     return true;
@@ -583,7 +583,7 @@ void HttpParserImpl::onHeaderComplete()
     header_complete_ = true;
     auto it = header_map_.find("Content-Length");
     if(it != header_map_.end()) {
-        content_length_ = atoi(it->second.c_str());
+        content_length_ = std::stoi(it->second);
         has_content_length_ = true;
         KUMA_INFOTRACE("HttpParser::onHeaderComplete, Content-Length="<<content_length_);
     }

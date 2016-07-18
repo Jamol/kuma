@@ -17,12 +17,12 @@
 #define __HttpParserImpl_H__
 
 #include "kmdefs.h"
+#include "httpdefs.h"
 #include "util/util.h"
 #include <string>
 #include <map>
 #include <vector>
 #include <functional>
-#include <string.h>
 
 KUMA_NS_BEGIN
 
@@ -32,13 +32,6 @@ public:
     typedef std::function<void(const char*, size_t)> DataCallback;
     typedef std::function<void(HttpEvent)> EventCallback;
     typedef std::function<void(const std::string&, const std::string&)> EnumrateCallback;
-    
-    struct CaseIgnoreLess : public std::binary_function<std::string, std::string, bool> {
-        bool operator()(const std::string &lhs, const std::string &rhs) const {
-            return strcasecmp(lhs.c_str(), rhs.c_str()) < 0;
-        }
-    };
-    typedef std::map<std::string, std::string, CaseIgnoreLess> STRING_MAP;
     
     HttpParserImpl();
     HttpParserImpl(const HttpParserImpl& other);
@@ -133,8 +126,8 @@ private:
     std::string         url_;
     std::string         version_;
     std::string         url_path_;
-    STRING_MAP          param_map_;
-    STRING_MAP          header_map_;
+    HeaderMap           param_map_;
+    HeaderMap           header_map_;
     
     // response
     int                 status_code_;

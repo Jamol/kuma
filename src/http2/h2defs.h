@@ -62,8 +62,6 @@ enum H2Error : int32_t {
     HTTP_1_1_REQUIRED       = 0xd
 };
 
-using KeyValuePair = std::pair<std::string, std::string>;
-using HeaderVector = std::vector<KeyValuePair>;
 using ParamVector = std::vector<std::pair<uint16_t, uint32_t>>;
 
 const std::string H2HeaderMethod(":method");

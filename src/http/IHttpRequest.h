@@ -23,13 +23,6 @@
 
 KUMA_NS_BEGIN
 
-struct CaseIgnoreLess : public std::binary_function<std::string, std::string, bool> {
-    bool operator()(const std::string &lhs, const std::string &rhs) const {
-        return strcasecmp(lhs.c_str(), rhs.c_str()) < 0;
-    }
-};
-using KeyValueMap = std::map<std::string, std::string, CaseIgnoreLess>;
-
 class IHttpRequest
 {
 public:
@@ -81,7 +74,7 @@ protected:
 protected:
     State                   state_ = State::IDLE;
     
-    KeyValueMap             header_map_;
+    HeaderMap               header_map_;
     std::string             method_;
     std::string             url_;
     std::string             version_;

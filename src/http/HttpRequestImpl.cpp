@@ -111,7 +111,7 @@ int HttpRequestImpl::sendRequest()
             ssl_flags = SSL_ENABLE | tcp_socket_.getSslFlags();
         }
         if(!str_port.empty()) {
-            port = atoi(str_port.c_str());
+            port = std::stoi(str_port);
         }
         tcp_socket_.setSslFlags(ssl_flags);
         return tcp_socket_.connect(uri_.getHost().c_str(), port, [this] (int err) { onConnect(err); });

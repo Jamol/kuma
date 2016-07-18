@@ -52,7 +52,7 @@ int H2Request::sendRequest()
     uint16_t port = 80;
     uint32_t ssl_flags = SSL_NONE;
     if(!str_port.empty()) {
-        port = atoi(str_port.c_str());
+        port = std::stoi(str_port);
     } else if(is_equal("https", uri_.getScheme())) {
         port = 443;
         ssl_flags = SSL_ENABLE;
@@ -181,6 +181,16 @@ int H2Request::sendData(const uint8_t* data, size_t len)
 
 void H2Request::onHeaders(const HeaderVector &headers, bool endSteam)
 {
+    if (headers.empty()) {
+        return;
+    }
+    if (!is_equal(headers[0].first, H2HeaderStatus)) {
+        return;
+    }
+    status_code_ = std::stoi(headers[0].second);
+    for (size_t i = 1; i < headers.size(); ++i) {
+        rsp_headers_.emplace(headers[i].first, headers[i].second);
+    }
     bool destroyed = false;
     KUMA_ASSERT(nullptr == destroy_flag_ptr_);
     destroy_flag_ptr_ = &destroyed;

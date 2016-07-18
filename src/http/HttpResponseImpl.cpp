@@ -144,7 +144,7 @@ int HttpResponseImpl::sendResponse(int status_code, const std::string& desc, con
     auto it = header_map_.find(str_content_length);
     if(it != header_map_.end()) {
         has_content_length_ = true;
-        content_length_ = atoi(it->second.c_str());
+        content_length_ = std::stoi(it->second);
     }
     it = header_map_.find(str_transfer_encoding);
     if(it != header_map_.end() && is_equal(str_chunked, it->second)) {

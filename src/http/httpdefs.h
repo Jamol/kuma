@@ -18,6 +18,9 @@
 
 #include "kmdefs.h"
 #include <string>
+#include <vector>
+#include <map>
+#include <functional>
 
 KUMA_NS_BEGIN
 
@@ -25,6 +28,16 @@ const std::string VersionHTTP2_0 = "HTTP/2.0";
 const std::string VersionHTTP1_1 = "HTTP/1.1";
 const std::string EmptyString = "";
 const std::string UserAgent = "kuma 1.0";
+
+using KeyValuePair = std::pair<std::string, std::string>;
+using HeaderVector = std::vector<KeyValuePair>;
+
+struct CaseIgnoreLess : public std::binary_function<std::string, std::string, bool> {
+    bool operator()(const std::string &lhs, const std::string &rhs) const {
+        return strcasecmp(lhs.c_str(), rhs.c_str()) < 0;
+    }
+};
+typedef std::map<std::string, std::string, CaseIgnoreLess> HeaderMap;
 
 KUMA_NS_END
 
