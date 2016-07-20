@@ -5,10 +5,9 @@
 #define strcasecmp _stricmp
 #endif
 
-HttpTest::HttpTest(EventLoop* loop, long conn_id, TestLoop* server)
+HttpTest::HttpTest(TestLoop* loop, long conn_id)
 : loop_(loop)
-, http_(loop_)
-, server_(server)
+, http_(loop->getEventLoop())
 , conn_id_(conn_id)
 , is_options_(false)
 {
@@ -54,12 +53,12 @@ void HttpTest::onSend(int err)
 void HttpTest::onClose(int err)
 {
     printf("HttpTest::onClose, err=%d\n", err);
-    server_->removeObject(conn_id_);
+    loop_->removeObject(conn_id_);
 }
 
 void HttpTest::onHttpData(uint8_t* data, size_t len)
 {
-    printf("HttpTest::onHttpData, len=%u\n", len);
+    printf("HttpTest::onHttpData, len=%zu\n", len);
 }
 
 void HttpTest::onHeaderComplete()

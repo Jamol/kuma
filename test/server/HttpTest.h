@@ -8,11 +8,10 @@
 
 using namespace kuma;
 
-class TestLoop;
 class HttpTest : public LoopObject
 {
 public:
-    HttpTest(EventLoop* loop, long conn_id, TestLoop* server);
+    HttpTest(TestLoop* loop, long conn_id);
 
     int attachFd(SOCKET_FD fd, uint32_t ssl_flags);
     int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
@@ -31,9 +30,8 @@ private:
     void sendTestData();
     
 private:
-    EventLoop*      loop_;
+    TestLoop*      loop_;
     HttpResponse    http_;
-    TestLoop*       server_;
     long            conn_id_;
     bool            is_options_;
 };

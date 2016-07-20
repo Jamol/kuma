@@ -8,12 +8,11 @@
 
 using namespace kuma;
 
-class TestLoop;
-class AutoHelper : public LoopObject
+class ProtoDemuxer : public LoopObject
 {
 public:
-    AutoHelper(EventLoop* loop, long conn_id, TestLoop* server);
-    ~AutoHelper();
+    ProtoDemuxer(TestLoop* loop, long conn_id);
+    ~ProtoDemuxer();
 
     int attachFd(SOCKET_FD fd, uint32_t ssl_flags);
     int close();
@@ -27,10 +26,11 @@ public:
     
 private:
     void cleanup();
+    bool checkHttp2();
+    void demuxHttp();
     
 private:
-    EventLoop*      loop_;
-    TestLoop*       server_;
+    TestLoop*       loop_;
     long            conn_id_;
     
     TcpSocket       tcp_;

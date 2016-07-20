@@ -1,6 +1,6 @@
 #include "TestLoop.h"
 #include "LoopPool.h"
-#include "Client.h"
+#include "TcpClient.h"
 #include "HttpClient.h"
 #include "WsClient.h"
 #include "UdpClient.h"
@@ -77,7 +77,7 @@ void TestLoop::startTest(std::string& addr_url, std::string& bind_addr)
     
     if(strcmp(proto, "tcp") == 0) {
         long conn_id = server_->getConnId();
-        Client* client = new Client(loop_, conn_id, this);
+        TcpClient* client = new TcpClient(loop_, conn_id, this);
         addObject(conn_id, client);
         if(!bind_addr.empty()) {
             char bind_host[64] = {0};

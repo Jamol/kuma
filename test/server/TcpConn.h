@@ -1,5 +1,5 @@
-#ifndef __Connection_H__
-#define __Connection_H__
+#ifndef __TcpConn_H__
+#define __TcpConn_H__
 
 #include "kmapi.h"
 #include "util/util.h"
@@ -7,11 +7,10 @@
 
 using namespace kuma;
 
-class TestLoop;
-class Connection : public LoopObject
+class TcpConn : public LoopObject
 {
 public:
-    Connection(EventLoop* loop, long conn_id, TestLoop* server);
+    TcpConn(TestLoop* loop, long conn_id);
     
     int attachFd(SOCKET_FD fd);
     int close();
@@ -21,9 +20,8 @@ public:
     void onClose(int err);
     
 private:
-    EventLoop*  loop_;
+    TestLoop*  loop_;
     TcpSocket   tcp_;
-    TestLoop*   server_;
     long        conn_id_;
 };
 

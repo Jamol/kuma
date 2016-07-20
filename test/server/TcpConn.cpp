@@ -1,16 +1,15 @@
-#include "Connection.h"
+#include "TcpConn.h"
 #include "TcpServer.h"
 
-Connection::Connection(EventLoop* loop, long conn_id, TestLoop* server)
+TcpConn::TcpConn(TestLoop* loop, long conn_id)
 : loop_(loop)
-, tcp_(loop_)
-, server_(server)
+, tcp_(loop->getEventLoop())
 , conn_id_(conn_id)
 {
     
 }
 
-int Connection::attachFd(SOCKET_FD fd)
+int TcpConn::attachFd(SOCKET_FD fd)
 {
     tcp_.setReadCallback([this] (int err) { onReceive(err); });
     tcp_.setWriteCallback([this] (int err) { onSend(err); });
@@ -19,17 +18,17 @@ int Connection::attachFd(SOCKET_FD fd)
     return tcp_.attachFd(fd);
 }
 
-int Connection::close()
+int TcpConn::close()
 {
     return tcp_.close();
 }
 
-void Connection::onSend(int err)
+void TcpConn::onSend(int err)
 {
     
 }
 
-void Connection::onReceive(int err)
+void TcpConn::onReceive(int err)
 {
     char buf[4096] = {0};
     do
@@ -37,7 +36,7 @@ void Connection::onReceive(int err)
         int bytes_read = tcp_.receive((uint8_t*)buf, sizeof(buf));
         if(bytes_read < 0) {
             tcp_.close();
-            server_->removeObject(conn_id_);
+            loop_->removeObject(conn_id_);
             return ;
         } else if (0 == bytes_read){
             break;
@@ -45,13 +44,13 @@ void Connection::onReceive(int err)
         int ret = tcp_.send((uint8_t*)buf, bytes_read);
         if(ret < 0) {
             tcp_.close();
-            server_->removeObject(conn_id_);
+            loop_->removeObject(conn_id_);
         }
     } while(true);
 }
 
-void Connection::onClose(int err)
+void TcpConn::onClose(int err)
 {
-    printf("Connection::onClose, err=%d\n", err);
-    server_->removeObject(conn_id_);
+    printf("TcpConn::onClose, err=%d\n", err);
+    loop_->removeObject(conn_id_);
 }

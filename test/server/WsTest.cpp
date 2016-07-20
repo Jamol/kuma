@@ -1,10 +1,9 @@
 #include "WsTest.h"
 #include "TestLoop.h"
 
-WsTest::WsTest(EventLoop* loop, long conn_id, TestLoop* server)
+WsTest::WsTest(TestLoop* loop, long conn_id)
 : loop_(loop)
-, ws_(loop_)
-, server_(server)
+, ws_(loop->getEventLoop())
 , conn_id_(conn_id)
 {
     
@@ -41,7 +40,7 @@ void WsTest::onSend(int err)
 void WsTest::onClose(int err)
 {
     printf("WsTest::onClose, err=%d\n", err);
-    server_->removeObject(conn_id_);
+    loop_->removeObject(conn_id_);
 }
 
 void WsTest::onData(uint8_t* data, size_t len)
@@ -50,7 +49,7 @@ void WsTest::onData(uint8_t* data, size_t len)
     int ret = ws_.send(data, len);
     if(ret < 0) {
         ws_.close();
-        server_->removeObject(conn_id_);
+        loop_->removeObject(conn_id_);
     }
 }
 

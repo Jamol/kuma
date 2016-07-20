@@ -51,4 +51,5 @@ void HttpClient::onHeaderComplete()
 void HttpClient::onRequestComplete()
 {
     printf("HttpClient::onRequestComplete\n");
+    http_request_.close();
 }

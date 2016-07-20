@@ -8,11 +8,10 @@
 
 using namespace kuma;
 
-class TestLoop;
 class WsTest : public LoopObject
 {
 public:
-    WsTest(EventLoop* loop, long conn_id, TestLoop* server);
+    WsTest(TestLoop* loop, long conn_id);
 
     int attachFd(SOCKET_FD fd, uint32_t ssl_flags);
     int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
@@ -28,9 +27,8 @@ private:
     void sendTestData();
     
 private:
-    EventLoop*      loop_;
+    TestLoop*       loop_;
     WebSocket       ws_;
-    TestLoop*       server_;
     long            conn_id_;
 };
 

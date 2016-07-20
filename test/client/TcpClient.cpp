@@ -1,4 +1,4 @@
-#include "Client.h"
+#include "TcpClient.h"
 
 #if defined(KUMA_OS_WIN)
 # include <Ws2tcpip.h>
@@ -6,7 +6,7 @@
 # include <arpa/inet.h>
 #endif
 
-Client::Client(EventLoop* loop, long conn_id, TestLoop* server)
+TcpClient::TcpClient(EventLoop* loop, long conn_id, TestLoop* server)
 : loop_(loop)
 , tcp_(loop_)
 , timer_(loop_)
@@ -18,12 +18,12 @@ Client::Client(EventLoop* loop, long conn_id, TestLoop* server)
     
 }
 
-int Client::bind(const char* bind_host, uint16_t bind_port)
+int TcpClient::bind(const char* bind_host, uint16_t bind_port)
 {
     return tcp_.bind(bind_host, bind_port);
 }
 
-int Client::connect(const char* host, uint16_t port)
+int TcpClient::connect(const char* host, uint16_t port)
 {
     tcp_.setReadCallback([this] (int err) { onReceive(err); });
     tcp_.setWriteCallback([this] (int err) { onSend(err); });
@@ -32,32 +32,32 @@ int Client::connect(const char* host, uint16_t port)
     return tcp_.connect(host, port, [this] (int err) { onConnect(err); });
 }
 
-int Client::close()
+int TcpClient::close()
 {
     timer_.cancel();
     return tcp_.close();
 }
 
-void Client::sendData()
+void TcpClient::sendData()
 {
     uint8_t buf[1024];
     *(uint32_t*)buf = htonl(++index_);
     tcp_.send(buf, sizeof(buf));
 }
 
-void Client::onConnect(int err)
+void TcpClient::onConnect(int err)
 {
-    printf("Client::onConnect, err=%d\n", err);
+    printf("TcpClient::onConnect, err=%d\n", err);
     start_point_ = std::chrono::steady_clock::now();
     sendData();
 }
 
-void Client::onSend(int err)
+void TcpClient::onSend(int err)
 {
-    //printf("Client::onSend\n");
+    //printf("TcpClient::onSend\n");
 }
 
-void Client::onReceive(int err)
+void TcpClient::onReceive(int err)
 {
     char buf[4096] = {0};
     do {
@@ -68,7 +68,7 @@ void Client::onReceive(int err)
                 index = ntohl(*(uint32_t*)buf);
             }
             if(index % 10000 == 0) {
-                printf("Client::onReceive, bytes_read=%d, index=%d\n", bytes_read, index);
+                printf("TcpClient::onReceive, bytes_read=%d, index=%d\n", bytes_read, index);
             }
             if(index < max_send_count_) {
                 sendData();
@@ -81,19 +81,19 @@ void Client::onReceive(int err)
         } else if (0 == bytes_read) {
             break;
         } else {
-            printf("Client::onReceive, err=%d\n", getLastError());
+            printf("TcpClient::onReceive, err=%d\n", getLastError());
             break;
         }
     } while (true);
 }
 
-void Client::onClose(int err)
+void TcpClient::onClose(int err)
 {
-    printf("Client::onClose, err=%d\n", err);
+    printf("TcpClient::onClose, err=%d\n", err);
     server_->removeObject(conn_id_);
 }
 
-void Client::onTimer()
+void TcpClient::onTimer()
 {
-    printf("Client::onTimer\n");
+    printf("TcpClient::onTimer\n");
 }

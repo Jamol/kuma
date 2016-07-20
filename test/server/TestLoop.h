@@ -32,16 +32,21 @@ class LoopPool;
 class TestLoop
 {
 public:
-    TestLoop(LoopPool* server, PollType poll_type = POLL_TYPE_NONE);
+    TestLoop(LoopPool* loopPool, PollType poll_type = POLL_TYPE_NONE);
 
     bool init();
     void stop();
     
     void addFd(SOCKET_FD fd, Proto proto);
-    void addTcp(TcpSocket&& tcp, HttpParser&& parser);
+    
+    void addHttp(TcpSocket&& tcp, HttpParser&& parser);
+    void addHttp2(TcpSocket&& tcp, HttpParser&& parser);
+    void addWebSocket(TcpSocket&& tcp, HttpParser&& parser);
     
     void addObject(long conn_id, LoopObject* obj);
     void removeObject(long conn_id);
+    
+    EventLoop* getEventLoop() { return loop_; }
     
 private:
     void cleanup();
@@ -51,7 +56,7 @@ private:
     typedef std::map<long, LoopObject*> ObjectMap;
     
     EventLoop*      loop_;
-    LoopPool*       server_;
+    LoopPool*       loopPool_;
     
     std::mutex      obj_mutex_;
     ObjectMap       obj_map_;

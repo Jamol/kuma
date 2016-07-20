@@ -1,15 +1,15 @@
 #include "TestLoop.h"
 #include "LoopPool.h"
-#include "Connection.h"
+#include "TcpConn.h"
 #include "HttpTest.h"
 #include "WsTest.h"
-#include "AutoHelper.h"
+#include "ProtoDemuxer.h"
 
 #include <string.h>
 
-TestLoop::TestLoop(LoopPool* server, PollType poll_type)
+TestLoop::TestLoop(LoopPool* loopPool, PollType poll_type)
 : loop_(new EventLoop(poll_type))
-, server_(server)
+, loopPool_(loopPool)
 , thread_()
 {
     
@@ -70,8 +70,8 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
         switch (proto) {
             case PROTO_TCP:
             {
-                long conn_id = server_->getConnId();
-                Connection* conn = new Connection(loop_, conn_id, this);
+                long conn_id = loopPool_->getConnId();
+                TcpConn* conn = new TcpConn(this, conn_id);
                 addObject(conn_id, conn);
                 conn->attachFd(fd);
                 break;
@@ -79,8 +79,8 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
             case PROTO_HTTP:
             case PROTO_HTTPS:
             {
-                long conn_id = server_->getConnId();
-                HttpTest* http = new HttpTest(loop_, conn_id, this);
+                long conn_id = loopPool_->getConnId();
+                HttpTest* http = new HttpTest(this, conn_id);
                 addObject(conn_id, http);
                 http->attachFd(fd, proto==PROTO_HTTPS?SSL_ENABLE:0);
                 break;
@@ -88,8 +88,8 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
             case PROTO_WS:
             case PROTO_WSS:
             {
-                long conn_id = server_->getConnId();
-                WsTest* ws = new WsTest(loop_, conn_id, this);
+                long conn_id = loopPool_->getConnId();
+                WsTest* ws = new WsTest(this, conn_id);
                 addObject(conn_id, ws);
                 ws->attachFd(fd, proto==PROTO_WSS?SSL_ENABLE:0);
                 break;
@@ -97,10 +97,10 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
             case PROTO_AUTO:
             case PROTO_AUTOS:
             {
-                long conn_id = server_->getConnId();
-                AutoHelper* helper = new AutoHelper(loop_, conn_id, this);
-                addObject(conn_id, helper);
-                helper->attachFd(fd, proto==PROTO_AUTOS?SSL_ENABLE:0);
+                long conn_id = loopPool_->getConnId();
+                ProtoDemuxer* demuxer = new ProtoDemuxer(this, conn_id);
+                addObject(conn_id, demuxer);
+                demuxer->attachFd(fd, proto==PROTO_AUTOS?SSL_ENABLE:0);
                 break;
             }
                 
@@ -114,21 +114,26 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
 # define strcasecmp _stricmp
 #endif
 
-void TestLoop::addTcp(TcpSocket&& tcp, HttpParser&& parser)
+void TestLoop::addHttp(TcpSocket&& tcp, HttpParser&& parser)
 {
-    if (strcasecmp(parser.getHeaderValue("Upgrade"), "WebSocket") == 0 &&
-        strcasecmp(parser.getHeaderValue("Connection"), "Upgrade") == 0) {
-        long conn_id = server_->getConnId();
-        WsTest* ws = new WsTest(loop_, conn_id, this);
-        addObject(conn_id, ws);
-        ws->attachSocket(std::move(tcp), std::move(parser));
-        return;
-    } else {
-        long conn_id = server_->getConnId();
-        HttpTest* http = new HttpTest(loop_, conn_id, this);
-        addObject(conn_id, http);
-        http->attachSocket(std::move(tcp), std::move(parser));
-    }
+    long conn_id = loopPool_->getConnId();
+    HttpTest* http = new HttpTest(this, conn_id);
+    addObject(conn_id, http);
+    http->attachSocket(std::move(tcp), std::move(parser));
+}
+
+void TestLoop::addHttp2(TcpSocket&& tcp, HttpParser&& parser)
+{
+    H2Connection *h2conn = new H2Connection(loop_);
+    h2conn->attachSocket(std::move(tcp), std::move(parser));
+}
+
+void TestLoop::addWebSocket(TcpSocket&& tcp, HttpParser&& parser)
+{
+    long conn_id = loopPool_->getConnId();
+    WsTest* ws = new WsTest(this, conn_id);
+    addObject(conn_id, ws);
+    ws->attachSocket(std::move(tcp), std::move(parser));
 }
 
 void TestLoop::addObject(long conn_id, LoopObject* obj)

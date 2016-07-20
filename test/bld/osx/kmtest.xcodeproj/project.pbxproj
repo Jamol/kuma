@@ -7,25 +7,25 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6F2975631B2ECE8A00EB467D /* TestLoop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2975611B2ECE8A00EB467D /* TestLoop.cpp */; };
-		6F2975B21B30101B00EB467D /* LoopPool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2975B01B30101B00EB467D /* LoopPool.cpp */; };
-		6F2975E81B301A6100EB467D /* LoopPool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2975E41B301A6100EB467D /* LoopPool.cpp */; };
-		6F2975E91B301A6100EB467D /* TestLoop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2975E61B301A6100EB467D /* TestLoop.cpp */; };
 		6F29765E1B311D5900EB467D /* kuma.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F29765D1B311D5900EB467D /* kuma.dylib */; };
 		6F29765F1B311D5900EB467D /* kuma.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F29765D1B311D5900EB467D /* kuma.dylib */; };
-		6F2D40411B1875DB00E24928 /* UdpServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2D403F1B1875DB00E24928 /* UdpServer.cpp */; };
-		6F2D40441B1877A600E24928 /* UdpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2D40421B1877A500E24928 /* UdpClient.cpp */; };
-		6F522B3F1B5274DA006EA7E0 /* AutoHelper.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F522B3D1B5274DA006EA7E0 /* AutoHelper.cpp */; };
-		6F9E75251D2F7A78005E04B2 /* H2ConnTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F9E75231D2F7A78005E04B2 /* H2ConnTest.cpp */; };
-		6FF211C31B1553C6006603BB /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF211C21B1553C6006603BB /* main.cpp */; };
-		6FF211C51B1553D3006603BB /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF211C41B1553D3006603BB /* main.cpp */; };
-		6FF2123F1B15A18D006603BB /* Client.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF2123D1B15A18D006603BB /* Client.cpp */; };
-		6FF2127A1B15B691006603BB /* TcpServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF212781B15B691006603BB /* TcpServer.cpp */; };
-		6FF212821B15C03D006603BB /* Connection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF212801B15C03D006603BB /* Connection.cpp */; };
-		6FF746F31B21BB870007F34D /* HttpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF746F11B21BB870007F34D /* HttpClient.cpp */; };
-		6FF7476B1B26E5590007F34D /* HttpTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF747691B26E5590007F34D /* HttpTest.cpp */; };
-		6FF747911B297F760007F34D /* WsTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF7478F1B297F760007F34D /* WsTest.cpp */; };
-		6FF747941B2981D50007F34D /* WsClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF747921B2981D50007F34D /* WsClient.cpp */; };
+		6FDC9EC61D3F38CF00097089 /* H2ConnTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EB71D3F38CF00097089 /* H2ConnTest.cpp */; };
+		6FDC9EC71D3F38CF00097089 /* HttpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EB91D3F38CF00097089 /* HttpClient.cpp */; };
+		6FDC9EC81D3F38CF00097089 /* LoopPool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EBB1D3F38CF00097089 /* LoopPool.cpp */; };
+		6FDC9EC91D3F38CF00097089 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EBD1D3F38CF00097089 /* main.cpp */; };
+		6FDC9ECA1D3F38CF00097089 /* TcpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EBE1D3F38CF00097089 /* TcpClient.cpp */; };
+		6FDC9ECB1D3F38CF00097089 /* TestLoop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EC01D3F38CF00097089 /* TestLoop.cpp */; };
+		6FDC9ECC1D3F38CF00097089 /* UdpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EC21D3F38CF00097089 /* UdpClient.cpp */; };
+		6FDC9ECD1D3F38CF00097089 /* WsClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EC41D3F38CF00097089 /* WsClient.cpp */; };
+		6FE0EE7A1D3F40D6006136B7 /* HttpTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9ED01D3F390F00097089 /* HttpTest.cpp */; };
+		6FE0EE7B1D3F40D6006136B7 /* LoopPool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9ED21D3F390F00097089 /* LoopPool.cpp */; };
+		6FE0EE7C1D3F40D6006136B7 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9ED41D3F390F00097089 /* main.cpp */; };
+		6FE0EE7D1D3F40D6006136B7 /* ProtoDemuxer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9ED51D3F390F00097089 /* ProtoDemuxer.cpp */; };
+		6FE0EE7E1D3F40D6006136B7 /* TcpConn.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9ED71D3F390F00097089 /* TcpConn.cpp */; };
+		6FE0EE7F1D3F40D6006136B7 /* TcpServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9ED91D3F390F00097089 /* TcpServer.cpp */; };
+		6FE0EE801D3F40D6006136B7 /* TestLoop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EDB1D3F390F00097089 /* TestLoop.cpp */; };
+		6FE0EE811D3F40D6006136B7 /* UdpServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EDD1D3F390F00097089 /* UdpServer.cpp */; };
+		6FE0EE821D3F40D6006136B7 /* WsTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EDF1D3F390F00097089 /* WsTest.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -74,42 +74,42 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		6F2975611B2ECE8A00EB467D /* TestLoop.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TestLoop.cpp; path = ../../../server/TestLoop.cpp; sourceTree = "<group>"; };
-		6F2975621B2ECE8A00EB467D /* TestLoop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TestLoop.h; path = ../../../server/TestLoop.h; sourceTree = "<group>"; };
-		6F2975B01B30101B00EB467D /* LoopPool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LoopPool.cpp; path = ../../../server/LoopPool.cpp; sourceTree = "<group>"; };
-		6F2975B11B30101B00EB467D /* LoopPool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LoopPool.h; path = ../../../server/LoopPool.h; sourceTree = "<group>"; };
-		6F2975E41B301A6100EB467D /* LoopPool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = LoopPool.cpp; path = ../../../client/LoopPool.cpp; sourceTree = "<group>"; };
-		6F2975E51B301A6100EB467D /* LoopPool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = LoopPool.h; path = ../../../client/LoopPool.h; sourceTree = "<group>"; };
-		6F2975E61B301A6100EB467D /* TestLoop.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TestLoop.cpp; path = ../../../client/TestLoop.cpp; sourceTree = "<group>"; };
-		6F2975E71B301A6100EB467D /* TestLoop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TestLoop.h; path = ../../../client/TestLoop.h; sourceTree = "<group>"; };
 		6F29765D1B311D5900EB467D /* kuma.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = kuma.dylib; path = ../../../bin/osx/Debug/kuma.dylib; sourceTree = "<group>"; };
-		6F2D403F1B1875DB00E24928 /* UdpServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UdpServer.cpp; path = ../../../server/UdpServer.cpp; sourceTree = "<group>"; };
-		6F2D40401B1875DB00E24928 /* UdpServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UdpServer.h; path = ../../../server/UdpServer.h; sourceTree = "<group>"; };
-		6F2D40421B1877A500E24928 /* UdpClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UdpClient.cpp; path = ../../../client/UdpClient.cpp; sourceTree = "<group>"; };
-		6F2D40431B1877A600E24928 /* UdpClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UdpClient.h; path = ../../../client/UdpClient.h; sourceTree = "<group>"; };
-		6F522B3D1B5274DA006EA7E0 /* AutoHelper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AutoHelper.cpp; path = ../../../server/AutoHelper.cpp; sourceTree = "<group>"; };
-		6F522B3E1B5274DA006EA7E0 /* AutoHelper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AutoHelper.h; path = ../../../server/AutoHelper.h; sourceTree = "<group>"; };
 		6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = kuma.xcodeproj; path = ../../../bld/osx/kuma.xcodeproj; sourceTree = "<group>"; };
-		6F9E75231D2F7A78005E04B2 /* H2ConnTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H2ConnTest.cpp; sourceTree = "<group>"; };
-		6F9E75241D2F7A78005E04B2 /* H2ConnTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H2ConnTest.h; sourceTree = "<group>"; };
+		6FDC9EB71D3F38CF00097089 /* H2ConnTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H2ConnTest.cpp; sourceTree = "<group>"; };
+		6FDC9EB81D3F38CF00097089 /* H2ConnTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H2ConnTest.h; sourceTree = "<group>"; };
+		6FDC9EB91D3F38CF00097089 /* HttpClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpClient.cpp; sourceTree = "<group>"; };
+		6FDC9EBA1D3F38CF00097089 /* HttpClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpClient.h; sourceTree = "<group>"; };
+		6FDC9EBB1D3F38CF00097089 /* LoopPool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LoopPool.cpp; sourceTree = "<group>"; };
+		6FDC9EBC1D3F38CF00097089 /* LoopPool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoopPool.h; sourceTree = "<group>"; };
+		6FDC9EBD1D3F38CF00097089 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		6FDC9EBE1D3F38CF00097089 /* TcpClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TcpClient.cpp; sourceTree = "<group>"; };
+		6FDC9EBF1D3F38CF00097089 /* TcpClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpClient.h; sourceTree = "<group>"; };
+		6FDC9EC01D3F38CF00097089 /* TestLoop.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TestLoop.cpp; sourceTree = "<group>"; };
+		6FDC9EC11D3F38CF00097089 /* TestLoop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestLoop.h; sourceTree = "<group>"; };
+		6FDC9EC21D3F38CF00097089 /* UdpClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UdpClient.cpp; sourceTree = "<group>"; };
+		6FDC9EC31D3F38CF00097089 /* UdpClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UdpClient.h; sourceTree = "<group>"; };
+		6FDC9EC41D3F38CF00097089 /* WsClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WsClient.cpp; sourceTree = "<group>"; };
+		6FDC9EC51D3F38CF00097089 /* WsClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WsClient.h; sourceTree = "<group>"; };
+		6FDC9ED01D3F390F00097089 /* HttpTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpTest.cpp; sourceTree = "<group>"; };
+		6FDC9ED11D3F390F00097089 /* HttpTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpTest.h; sourceTree = "<group>"; };
+		6FDC9ED21D3F390F00097089 /* LoopPool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LoopPool.cpp; sourceTree = "<group>"; };
+		6FDC9ED31D3F390F00097089 /* LoopPool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoopPool.h; sourceTree = "<group>"; };
+		6FDC9ED41D3F390F00097089 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		6FDC9ED51D3F390F00097089 /* ProtoDemuxer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProtoDemuxer.cpp; sourceTree = "<group>"; };
+		6FDC9ED61D3F390F00097089 /* ProtoDemuxer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProtoDemuxer.h; sourceTree = "<group>"; };
+		6FDC9ED71D3F390F00097089 /* TcpConn.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TcpConn.cpp; sourceTree = "<group>"; };
+		6FDC9ED81D3F390F00097089 /* TcpConn.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpConn.h; sourceTree = "<group>"; };
+		6FDC9ED91D3F390F00097089 /* TcpServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TcpServer.cpp; sourceTree = "<group>"; };
+		6FDC9EDA1D3F390F00097089 /* TcpServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpServer.h; sourceTree = "<group>"; };
+		6FDC9EDB1D3F390F00097089 /* TestLoop.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TestLoop.cpp; sourceTree = "<group>"; };
+		6FDC9EDC1D3F390F00097089 /* TestLoop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestLoop.h; sourceTree = "<group>"; };
+		6FDC9EDD1D3F390F00097089 /* UdpServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UdpServer.cpp; sourceTree = "<group>"; };
+		6FDC9EDE1D3F390F00097089 /* UdpServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UdpServer.h; sourceTree = "<group>"; };
+		6FDC9EDF1D3F390F00097089 /* WsTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WsTest.cpp; sourceTree = "<group>"; };
+		6FDC9EE01D3F390F00097089 /* WsTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WsTest.h; sourceTree = "<group>"; };
 		6FF211AF1B155298006603BB /* client */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = client; sourceTree = BUILT_PRODUCTS_DIR; };
 		6FF211BB1B1552AA006603BB /* server */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = server; sourceTree = BUILT_PRODUCTS_DIR; };
-		6FF211C21B1553C6006603BB /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../../../client/main.cpp; sourceTree = "<group>"; };
-		6FF211C41B1553D3006603BB /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../../../server/main.cpp; sourceTree = "<group>"; };
-		6FF2123D1B15A18D006603BB /* Client.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Client.cpp; path = ../../../client/Client.cpp; sourceTree = "<group>"; };
-		6FF2123E1B15A18D006603BB /* Client.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Client.h; path = ../../../client/Client.h; sourceTree = "<group>"; };
-		6FF212781B15B691006603BB /* TcpServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TcpServer.cpp; path = ../../../server/TcpServer.cpp; sourceTree = "<group>"; };
-		6FF212791B15B691006603BB /* TcpServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TcpServer.h; path = ../../../server/TcpServer.h; sourceTree = "<group>"; };
-		6FF212801B15C03D006603BB /* Connection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Connection.cpp; path = ../../../server/Connection.cpp; sourceTree = "<group>"; };
-		6FF212811B15C03D006603BB /* Connection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Connection.h; path = ../../../server/Connection.h; sourceTree = "<group>"; };
-		6FF746F11B21BB870007F34D /* HttpClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HttpClient.cpp; path = ../../../client/HttpClient.cpp; sourceTree = "<group>"; };
-		6FF746F21B21BB870007F34D /* HttpClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HttpClient.h; path = ../../../client/HttpClient.h; sourceTree = "<group>"; };
-		6FF747691B26E5590007F34D /* HttpTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HttpTest.cpp; path = ../../../server/HttpTest.cpp; sourceTree = "<group>"; };
-		6FF7476A1B26E5590007F34D /* HttpTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HttpTest.h; path = ../../../server/HttpTest.h; sourceTree = "<group>"; };
-		6FF7478F1B297F760007F34D /* WsTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WsTest.cpp; path = ../../../server/WsTest.cpp; sourceTree = "<group>"; };
-		6FF747901B297F760007F34D /* WsTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WsTest.h; path = ../../../server/WsTest.h; sourceTree = "<group>"; };
-		6FF747921B2981D50007F34D /* WsClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WsClient.cpp; path = ../../../client/WsClient.cpp; sourceTree = "<group>"; };
-		6FF747931B2981D50007F34D /* WsClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WsClient.h; path = ../../../client/WsClient.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -163,47 +163,49 @@
 		6FF211B11B155298006603BB /* client */ = {
 			isa = PBXGroup;
 			children = (
-				6F2975E41B301A6100EB467D /* LoopPool.cpp */,
-				6F2975E51B301A6100EB467D /* LoopPool.h */,
-				6F2975E61B301A6100EB467D /* TestLoop.cpp */,
-				6F2975E71B301A6100EB467D /* TestLoop.h */,
-				6FF747921B2981D50007F34D /* WsClient.cpp */,
-				6FF747931B2981D50007F34D /* WsClient.h */,
-				6FF746F11B21BB870007F34D /* HttpClient.cpp */,
-				6FF746F21B21BB870007F34D /* HttpClient.h */,
-				6F2D40421B1877A500E24928 /* UdpClient.cpp */,
-				6F2D40431B1877A600E24928 /* UdpClient.h */,
-				6FF2123D1B15A18D006603BB /* Client.cpp */,
-				6FF2123E1B15A18D006603BB /* Client.h */,
-				6FF211C21B1553C6006603BB /* main.cpp */,
-				6F9E75231D2F7A78005E04B2 /* H2ConnTest.cpp */,
-				6F9E75241D2F7A78005E04B2 /* H2ConnTest.h */,
+				6FDC9EB71D3F38CF00097089 /* H2ConnTest.cpp */,
+				6FDC9EB81D3F38CF00097089 /* H2ConnTest.h */,
+				6FDC9EB91D3F38CF00097089 /* HttpClient.cpp */,
+				6FDC9EBA1D3F38CF00097089 /* HttpClient.h */,
+				6FDC9EBB1D3F38CF00097089 /* LoopPool.cpp */,
+				6FDC9EBC1D3F38CF00097089 /* LoopPool.h */,
+				6FDC9EBD1D3F38CF00097089 /* main.cpp */,
+				6FDC9EBE1D3F38CF00097089 /* TcpClient.cpp */,
+				6FDC9EBF1D3F38CF00097089 /* TcpClient.h */,
+				6FDC9EC01D3F38CF00097089 /* TestLoop.cpp */,
+				6FDC9EC11D3F38CF00097089 /* TestLoop.h */,
+				6FDC9EC21D3F38CF00097089 /* UdpClient.cpp */,
+				6FDC9EC31D3F38CF00097089 /* UdpClient.h */,
+				6FDC9EC41D3F38CF00097089 /* WsClient.cpp */,
+				6FDC9EC51D3F38CF00097089 /* WsClient.h */,
 			);
-			path = client;
+			name = client;
+			path = ../../client;
 			sourceTree = "<group>";
 		};
 		6FF211BC1B1552AA006603BB /* server */ = {
 			isa = PBXGroup;
 			children = (
-				6F522B3D1B5274DA006EA7E0 /* AutoHelper.cpp */,
-				6F522B3E1B5274DA006EA7E0 /* AutoHelper.h */,
-				6F2975B01B30101B00EB467D /* LoopPool.cpp */,
-				6F2975B11B30101B00EB467D /* LoopPool.h */,
-				6F2975611B2ECE8A00EB467D /* TestLoop.cpp */,
-				6F2975621B2ECE8A00EB467D /* TestLoop.h */,
-				6FF7478F1B297F760007F34D /* WsTest.cpp */,
-				6FF747901B297F760007F34D /* WsTest.h */,
-				6FF747691B26E5590007F34D /* HttpTest.cpp */,
-				6FF7476A1B26E5590007F34D /* HttpTest.h */,
-				6F2D403F1B1875DB00E24928 /* UdpServer.cpp */,
-				6F2D40401B1875DB00E24928 /* UdpServer.h */,
-				6FF212801B15C03D006603BB /* Connection.cpp */,
-				6FF212811B15C03D006603BB /* Connection.h */,
-				6FF212781B15B691006603BB /* TcpServer.cpp */,
-				6FF212791B15B691006603BB /* TcpServer.h */,
-				6FF211C41B1553D3006603BB /* main.cpp */,
+				6FDC9ED01D3F390F00097089 /* HttpTest.cpp */,
+				6FDC9ED11D3F390F00097089 /* HttpTest.h */,
+				6FDC9ED21D3F390F00097089 /* LoopPool.cpp */,
+				6FDC9ED31D3F390F00097089 /* LoopPool.h */,
+				6FDC9ED41D3F390F00097089 /* main.cpp */,
+				6FDC9ED51D3F390F00097089 /* ProtoDemuxer.cpp */,
+				6FDC9ED61D3F390F00097089 /* ProtoDemuxer.h */,
+				6FDC9ED71D3F390F00097089 /* TcpConn.cpp */,
+				6FDC9ED81D3F390F00097089 /* TcpConn.h */,
+				6FDC9ED91D3F390F00097089 /* TcpServer.cpp */,
+				6FDC9EDA1D3F390F00097089 /* TcpServer.h */,
+				6FDC9EDB1D3F390F00097089 /* TestLoop.cpp */,
+				6FDC9EDC1D3F390F00097089 /* TestLoop.h */,
+				6FDC9EDD1D3F390F00097089 /* UdpServer.cpp */,
+				6FDC9EDE1D3F390F00097089 /* UdpServer.h */,
+				6FDC9EDF1D3F390F00097089 /* WsTest.cpp */,
+				6FDC9EE01D3F390F00097089 /* WsTest.h */,
 			);
-			path = server;
+			name = server;
+			path = ../../server;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -300,14 +302,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6F2D40441B1877A600E24928 /* UdpClient.cpp in Sources */,
-				6FF2123F1B15A18D006603BB /* Client.cpp in Sources */,
-				6F2975E91B301A6100EB467D /* TestLoop.cpp in Sources */,
-				6FF746F31B21BB870007F34D /* HttpClient.cpp in Sources */,
-				6F2975E81B301A6100EB467D /* LoopPool.cpp in Sources */,
-				6FF211C31B1553C6006603BB /* main.cpp in Sources */,
-				6FF747941B2981D50007F34D /* WsClient.cpp in Sources */,
-				6F9E75251D2F7A78005E04B2 /* H2ConnTest.cpp in Sources */,
+				6FDC9ECA1D3F38CF00097089 /* TcpClient.cpp in Sources */,
+				6FDC9EC91D3F38CF00097089 /* main.cpp in Sources */,
+				6FDC9ECC1D3F38CF00097089 /* UdpClient.cpp in Sources */,
+				6FDC9EC71D3F38CF00097089 /* HttpClient.cpp in Sources */,
+				6FDC9ECD1D3F38CF00097089 /* WsClient.cpp in Sources */,
+				6FDC9EC81D3F38CF00097089 /* LoopPool.cpp in Sources */,
+				6FDC9ECB1D3F38CF00097089 /* TestLoop.cpp in Sources */,
+				6FDC9EC61D3F38CF00097089 /* H2ConnTest.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -315,15 +317,15 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6FF2127A1B15B691006603BB /* TcpServer.cpp in Sources */,
-				6F522B3F1B5274DA006EA7E0 /* AutoHelper.cpp in Sources */,
-				6F2975B21B30101B00EB467D /* LoopPool.cpp in Sources */,
-				6FF7476B1B26E5590007F34D /* HttpTest.cpp in Sources */,
-				6F2975631B2ECE8A00EB467D /* TestLoop.cpp in Sources */,
-				6FF211C51B1553D3006603BB /* main.cpp in Sources */,
-				6FF212821B15C03D006603BB /* Connection.cpp in Sources */,
-				6F2D40411B1875DB00E24928 /* UdpServer.cpp in Sources */,
-				6FF747911B297F760007F34D /* WsTest.cpp in Sources */,
+				6FE0EE7A1D3F40D6006136B7 /* HttpTest.cpp in Sources */,
+				6FE0EE7B1D3F40D6006136B7 /* LoopPool.cpp in Sources */,
+				6FE0EE7C1D3F40D6006136B7 /* main.cpp in Sources */,
+				6FE0EE7D1D3F40D6006136B7 /* ProtoDemuxer.cpp in Sources */,
+				6FE0EE7E1D3F40D6006136B7 /* TcpConn.cpp in Sources */,
+				6FE0EE7F1D3F40D6006136B7 /* TcpServer.cpp in Sources */,
+				6FE0EE801D3F40D6006136B7 /* TestLoop.cpp in Sources */,
+				6FE0EE811D3F40D6006136B7 /* UdpServer.cpp in Sources */,
+				6FE0EE821D3F40D6006136B7 /* WsTest.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -393,8 +395,6 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					../../../bin/osx/Debug,
-					/Users/folkib/work/mygit/kmtest/bin/client/osx/Debug,
-					/Users/folkib/work/mygit/kuma/bin/osx/Debug,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = YES;
@@ -439,8 +439,6 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					../../../bin/osx/Debug,
-					/Users/folkib/work/mygit/kmtest/bin/client/osx/Debug,
-					/Users/folkib/work/mygit/kuma/bin/osx/Debug,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -490,7 +488,6 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					../../../bin/osx/Debug,
-					/Users/folkib/work/mygit/kuma/bin/osx/Debug,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = YES;
@@ -535,7 +532,6 @@
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					../../../bin/osx/Debug,
-					/Users/folkib/work/mygit/kuma/bin/osx/Debug,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = NO;

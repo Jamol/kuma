@@ -1,5 +1,5 @@
-#ifndef __Client_H__
-#define __Client_H__
+#ifndef __TcpClient_H__
+#define __TcpClient_H__
 
 #include "kmapi.h"
 #include "util/util.h"
@@ -9,10 +9,10 @@
 
 using namespace kuma;
 
-class Client : public LoopObject
+class TcpClient : public LoopObject
 {
 public:
-    Client(EventLoop* loop, long conn_id, TestLoop* server);
+    TcpClient(EventLoop* loop, long conn_id, TestLoop* server);
     
     int bind(const char* bind_host, uint16_t bind_port);
     int connect(const char* host, uint16_t port);
