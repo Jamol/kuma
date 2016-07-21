@@ -48,16 +48,16 @@ public:
     const std::string& getMethod() const { return http_parser_.getMethod(); }
     const std::string& getUrl() const { return http_parser_.getUrl(); }
     const std::string& getVersion() const { return http_parser_.getVersion(); }
-    const std::string& getParamValue(const char* name) const { return http_parser_.getParamValue(name); }
-    const std::string& getHeaderValue(const char* name) const { return http_parser_.getHeaderValue(name); }
+    const std::string& getParamValue(std::string name) const { return http_parser_.getParamValue(std::move(name)); }
+    const std::string& getHeaderValue(std::string name) const { return http_parser_.getHeaderValue(std::move(name)); }
     void forEachHeader(HttpParserImpl::EnumrateCallback&& cb) { return http_parser_.forEachHeader(std::move(cb)); }
     
-    void setDataCallback(DataCallback cb) { cb_data_ = std::move(cb); }
-    void setWriteCallback(EventCallback cb) { cb_write_ = std::move(cb); }
-    void setErrorCallback(EventCallback cb) { cb_error_ = std::move(cb); }
-    void setHeaderCompleteCallback(HttpEventCallback cb) { cb_header_ = std::move(cb); }
-    void setRequestCompleteCallback(HttpEventCallback cb) { cb_request_ = std::move(cb); }
-    void setResponseCompleteCallback(HttpEventCallback cb) { cb_response_ = std::move(cb); }
+    void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
+    void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
+    void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
+    void setHeaderCompleteCallback(HttpEventCallback cb) { header_cb_ = std::move(cb); }
+    void setRequestCompleteCallback(HttpEventCallback cb) { request_cb_ = std::move(cb); }
+    void setResponseCompleteCallback(HttpEventCallback cb) { response_cb_ = std::move(cb); }
 
 protected: // callbacks of tcp_socket
     void onSend(int err);
@@ -104,12 +104,12 @@ private:
     uint32_t                content_length_ = 0;
     uint32_t                body_bytes_sent_ = 0;
     
-    DataCallback            cb_data_;
-    EventCallback           cb_write_;
-    EventCallback           cb_error_;
-    HttpEventCallback       cb_header_;
-    HttpEventCallback       cb_request_;
-    HttpEventCallback       cb_response_;
+    DataCallback            data_cb_;
+    EventCallback           write_cb_;
+    EventCallback           error_cb_;
+    HttpEventCallback       header_cb_;
+    HttpEventCallback       request_cb_;
+    HttpEventCallback       response_cb_;
     
     bool*                   destroy_flag_ptr_ = nullptr;
 };

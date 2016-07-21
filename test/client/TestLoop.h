@@ -39,6 +39,7 @@ public:
     
     void addObject(long conn_id, LoopObject* obj);
     void removeObject(long conn_id);
+    EventLoop* getEventLoop() { return loop_; }
     
 private:
     void cleanup();

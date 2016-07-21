@@ -70,6 +70,10 @@ const std::string H2HeaderAuthority(":authority");
 const std::string H2HeaderPath(":path");
 const std::string H2HeaderStatus(":status");
 
+inline bool isPromisedStream(uint32_t streamId) {
+    return !(streamId & 1);
+}
+
 KUMA_NS_END
 
 #endif

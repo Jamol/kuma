@@ -12,7 +12,7 @@ using namespace kuma;
 class TcpClient : public LoopObject
 {
 public:
-    TcpClient(EventLoop* loop, long conn_id, TestLoop* server);
+    TcpClient(TestLoop* loop, long conn_id);
     
     int bind(const char* bind_host, uint16_t bind_port);
     int connect(const char* host, uint16_t port);
@@ -28,12 +28,11 @@ private:
     void sendData();
     
 private:
-    EventLoop*  loop_;
+    TestLoop*   loop_;
     TcpSocket   tcp_;
     
     Timer       timer_;
     
-    TestLoop*   server_;
     long        conn_id_;
     
     uint32_t    index_;

@@ -13,7 +13,7 @@ using namespace kuma;
 class UdpClient : public LoopObject
 {
 public:
-    UdpClient(EventLoop* loop, long conn_id, TestLoop* server);
+    UdpClient(TestLoop* loop, long conn_id);
     
     int bind(const char* bind_host, uint16_t bind_port);
     int close();
@@ -27,13 +27,12 @@ private:
     void sendData();
     
 private:
-    EventLoop*  loop_;
+    TestLoop*   loop_;
     UdpSocket   udp_;
     
     std::string host_;
     uint16_t    port_;
     
-    TestLoop*   server_;
     long        conn_id_;
     
     uint32_t    index_;

@@ -16,7 +16,7 @@ class H2ConnTest : public LoopObject
 public:
     H2ConnTest(TestLoop* loop, long conn_id);
     
-    void connect(const std::string& host, uint16_t port);
+    int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
     int close();
     
 private:

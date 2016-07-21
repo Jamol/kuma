@@ -465,14 +465,14 @@ void UdpSocketImpl::onSend(int err)
 
 void UdpSocketImpl::onReceive(int err)
 {
-    if(cb_read_ && fd_ != INVALID_FD) cb_read_(err);
+    if(read_cb_ && fd_ != INVALID_FD) read_cb_(err);
 }
 
 void UdpSocketImpl::onClose(int err)
 {
     KUMA_INFOXTRACE("onClose, err="<<err);
     cleanup();
-    if(cb_error_) cb_error_(err);
+    if(error_cb_) error_cb_(err);
 }
 
 void UdpSocketImpl::ioReady(uint32_t events)

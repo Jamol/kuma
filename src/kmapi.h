@@ -62,7 +62,7 @@ public:
     void loopOnce(uint32_t max_wait_ms);
     void loop(uint32_t max_wait_ms = -1);
     void stop();
-    EventLoopImpl* getPimpl();
+    EventLoopImpl* pimpl();
     
 private:
     EventLoopImpl*  pimpl_;
@@ -78,11 +78,13 @@ public:
     
     int setSslFlags(uint32_t ssl_flags);
     uint32_t getSslFlags() const ;
+    bool sslEnabled() const;
     int bind(const char* bind_host, uint16_t bind_port);
     int connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
     int attachFd(SOCKET_FD fd);
     int detachFd(SOCKET_FD &fd);
     int startSslHandshake(SslRole ssl_role);
+    int getAlpnSelected(char *buf, size_t len);
     int send(const uint8_t* data, size_t length);
     int send(iovec* iovs, int count);
     int receive(uint8_t* data, size_t length);
@@ -96,7 +98,7 @@ public:
     void setErrorCallback(EventCallback cb);
     
     SOCKET_FD getFd() const;
-    TcpSocketImpl* getPimpl();
+    TcpSocketImpl* pimpl();
     
 private:
     TcpSocketImpl* pimpl_;
@@ -117,7 +119,7 @@ public:
     
     void setListenCallback(ListenCallback cb);
     void setErrorCallback(ErrorCallback cb);
-    TcpListenerImpl* getPimpl();
+    TcpListenerImpl* pimpl();
     
 private:
     TcpListenerImpl* pimpl_;
@@ -142,7 +144,7 @@ public:
     
     void setReadCallback(EventCallback cb);
     void setErrorCallback(EventCallback cb);
-    UdpSocketImpl* getPimpl();
+    UdpSocketImpl* pimpl();
     
 private:
     UdpSocketImpl* pimpl_;
@@ -158,7 +160,7 @@ public:
     
     bool schedule(uint32_t delay_ms, TimerCallback cb, TimerMode mode=ONE_SHOT);
     void cancel();
-    TimerImpl* getPimpl();
+    TimerImpl* pimpl();
     
 private:
     TimerImpl* pimpl_;
@@ -203,7 +205,7 @@ public:
     void setDataCallback(DataCallback cb);
     void setEventCallback(EventCallback cb);
     
-    HttpParserImpl* getPimpl();
+    HttpParserImpl* pimpl();
     
 private:
     HttpParserImpl* pimpl_;
@@ -238,7 +240,7 @@ public:
     void setHeaderCompleteCallback(HttpEventCallback cb);
     void setResponseCompleteCallback(HttpEventCallback cb);
     
-    IHttpRequest* getPimpl();
+    IHttpRequest* pimpl();
     
 private:
     IHttpRequest* pimpl_;
@@ -279,7 +281,7 @@ public:
     void setRequestCompleteCallback(HttpEventCallback cb);
     void setResponseCompleteCallback(HttpEventCallback cb);
     
-    HttpResponseImpl* getPimpl();
+    HttpResponseImpl* pimpl();
     
 private:
     HttpResponseImpl* pimpl_;
@@ -309,7 +311,7 @@ public:
     void setWriteCallback(EventCallback cb);
     void setErrorCallback(EventCallback cb);
     
-    WebSocketImpl* getPimpl();
+    WebSocketImpl* pimpl();
     
 private:
     WebSocketImpl* pimpl_;
@@ -325,8 +327,10 @@ public:
     int setSslFlags(uint32_t ssl_flags);
     int connect(const char* host, uint16_t port, ConnectCallback cb);
     int attachFd(SOCKET_FD fd, const uint8_t* data=nullptr, size_t size=0);
-    int attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
+    int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
     int close();
+    
+    H2ConnectionImpl* pimpl();
     
 private:
     H2ConnectionImpl* pimpl_;

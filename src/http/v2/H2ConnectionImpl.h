@@ -78,6 +78,7 @@ private:
 private:
     int connect_i(const std::string &host, uint16_t port);
     int handleInputData(const uint8_t *buf, size_t len);
+    int parseInputData(const uint8_t *buf, size_t len);
     void handleDataFrame(DataFrame *frame);
     void handleHeadersFrame(HeadersFrame *frame);
     void handlePriorityFrame(PriorityFrame *frame);
@@ -92,8 +93,6 @@ private:
     void addStream(H2StreamPtr stream);
     H2StreamPtr getStream(uint32_t streamId);
     
-    void remove();
-    
     std::string buildUpgradeRequest();
     std::string buildUpgradeResponse();
     void sendUpgradeRequest();
@@ -105,8 +104,8 @@ private:
     enum State {
         IDLE,
         CONNECTING,
+        UPGRADING,
         HANDSHAKE,
-        SENDING_PREFACE,
         OPEN,
         IN_ERROR,
         CLOSED
@@ -121,7 +120,7 @@ private:
     TcpSocketImpl tcp_;
     
     State state_ = State::IDLE;
-    ConnectCallback cb_connect_;
+    ConnectCallback connect_cb_; // client only
     
     std::string key_;
     std::string host_;
@@ -136,12 +135,15 @@ private:
     HPacker hpDecoder_;
     
     std::map<uint32_t, H2StreamPtr> streams_;
-    std::map<uint32_t, H2StreamPtr> pushStreams_;
+    std::map<uint32_t, H2StreamPtr> promisedStreams_;
     
     bool isServer_ = false;
-    bool sendSettingAck = false;
     std::vector<uint8_t>    send_buffer_;
     size_t                  send_offset_ = 0;
+    
+    std::string             cmpPreface_; // server only
+    
+    size_t remoteWindowSize_ = 65535;
     
     uint32_t nextStreamId_ = 0;
     

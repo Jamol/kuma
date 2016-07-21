@@ -22,8 +22,8 @@
 #include "http/HttpRequestImpl.h"
 #include "http/HttpResponseImpl.h"
 #include "ws/WebSocketImpl.h"
-#include "http2/H2ConnectionImpl.h"
-#include "http2/H2Request.h"
+#include "http/v2/H2ConnectionImpl.h"
+#include "http/v2/H2Request.h"
 
 #ifdef KUMA_HAS_OPENSSL
 #include "OpenSslLib.h"
@@ -89,7 +89,7 @@ void EventLoop::stop()
     pimpl_->stop();
 }
 
-EventLoopImpl* EventLoop::getPimpl()
+EventLoopImpl* EventLoop::pimpl()
 {
     return pimpl_;
 }
@@ -111,7 +111,7 @@ int EventLoop::queueInEventLoop(LoopCallback cb)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 TcpSocket::TcpSocket(EventLoop* loop)
-    : pimpl_(new TcpSocketImpl(loop->getPimpl()))
+    : pimpl_(new TcpSocketImpl(loop->pimpl()))
 {
 
 }
@@ -129,6 +129,11 @@ int TcpSocket::setSslFlags(uint32_t ssl_flags)
 uint32_t TcpSocket::getSslFlags() const
 {
     return pimpl_->getSslFlags();
+}
+
+bool TcpSocket::sslEnabled() const
+{
+    return pimpl_->SslEnabled();
 }
 
 int TcpSocket::bind(const char* bind_host, uint16_t bind_port)
@@ -155,6 +160,24 @@ int TcpSocket::startSslHandshake(SslRole ssl_role)
 {
 #ifdef KUMA_HAS_OPENSSL
     return pimpl_->startSslHandshake(ssl_role);
+#else
+    return KUMA_ERROR_UNSUPPORT;
+#endif
+}
+
+int TcpSocket::getAlpnSelected(char *buf, size_t len)
+{
+#ifdef KUMA_HAS_OPENSSL
+    std::string proto;
+    int ret = pimpl_->getAlpnSelected(proto);
+    if (ret == KUMA_ERROR_NOERR) {
+        if (proto.size() >= len) {
+            return KUMA_ERROR_BUFFER_TOO_SMALL;
+        }
+        memcpy(buf, proto.c_str(), proto.size());
+        buf[proto.size()] = '\0';
+    }
+    return ret;
 #else
     return KUMA_ERROR_UNSUPPORT;
 #endif
@@ -210,14 +233,14 @@ SOCKET_FD TcpSocket::getFd() const
     return pimpl_->getFd();
 }
 
-TcpSocketImpl* TcpSocket::getPimpl()
+TcpSocketImpl* TcpSocket::pimpl()
 {
     return pimpl_;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 TcpListener::TcpListener(EventLoop* loop)
-: pimpl_(new TcpListenerImpl(loop->getPimpl()))
+: pimpl_(new TcpListenerImpl(loop->pimpl()))
 {
 
 }
@@ -251,14 +274,14 @@ void TcpListener::setErrorCallback(ErrorCallback cb)
     pimpl_->setErrorCallback(std::move(cb));
 }
 
-TcpListenerImpl* TcpListener::getPimpl()
+TcpListenerImpl* TcpListener::pimpl()
 {
     return pimpl_;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 UdpSocket::UdpSocket(EventLoop* loop)
-: pimpl_(new UdpSocketImpl(loop->getPimpl()))
+: pimpl_(new UdpSocketImpl(loop->pimpl()))
 {
     
 }
@@ -313,7 +336,7 @@ void UdpSocket::setErrorCallback(EventCallback cb)
     pimpl_->setErrorCallback(std::move(cb));
 }
 
-UdpSocketImpl* UdpSocket::getPimpl()
+UdpSocketImpl* UdpSocket::pimpl()
 {
     return pimpl_;
 }
@@ -321,7 +344,7 @@ UdpSocketImpl* UdpSocket::getPimpl()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Timer::Timer(EventLoop* loop)
-: pimpl_(new TimerImpl(loop->getPimpl()->getTimerMgr()))
+: pimpl_(new TimerImpl(loop->pimpl()->getTimerMgr()))
 {
     
 }
@@ -341,7 +364,7 @@ void Timer::cancel()
     pimpl_->cancel();
 }
 
-TimerImpl* Timer::getPimpl()
+TimerImpl* Timer::pimpl()
 {
     return pimpl_;
 }
@@ -464,7 +487,7 @@ void HttpParser::setEventCallback(EventCallback cb)
     pimpl_->setEventCallback(std::move(cb));
 }
 
-HttpParserImpl* HttpParser::getPimpl()
+HttpParserImpl* HttpParser::pimpl()
 {
     return pimpl_;
 }
@@ -474,9 +497,9 @@ HttpRequest::HttpRequest(EventLoop* loop, const char* ver)
 {
     strlcpy(ver_, ver, sizeof(ver_));
     if (is_equal(ver, VersionHTTP2_0)) {
-        pimpl_ = new H2Request(loop->getPimpl());
+        pimpl_ = new H2Request(loop->pimpl());
     } else {
-        pimpl_ = new HttpRequestImpl(loop->getPimpl());
+        pimpl_ = new HttpRequestImpl(loop->pimpl());
     }
 }
 
@@ -567,7 +590,7 @@ void HttpRequest::setResponseCompleteCallback(HttpEventCallback cb)
     pimpl_->setResponseCompleteCallback(std::move(cb));
 }
 
-IHttpRequest* HttpRequest::getPimpl()
+IHttpRequest* HttpRequest::pimpl()
 {
     return pimpl_;
 }
@@ -575,7 +598,7 @@ IHttpRequest* HttpRequest::getPimpl()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 HttpResponse::HttpResponse(EventLoop* loop)
-: pimpl_(new HttpResponseImpl(loop->getPimpl()))
+: pimpl_(new HttpResponseImpl(loop->pimpl()))
 {
     
 }
@@ -596,7 +619,7 @@ int HttpResponse::attachFd(SOCKET_FD fd, uint8_t* init_data, size_t init_len)
 
 int HttpResponse::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
 {
-    return pimpl_->attachSocket(std::move(*tcp.getPimpl()), std::move(*parser.getPimpl()));
+    return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move(*parser.pimpl()));
 }
 
 void HttpResponse::addHeader(const char* name, const char* value)
@@ -691,7 +714,7 @@ void HttpResponse::setResponseCompleteCallback(HttpEventCallback cb)
     pimpl_->setResponseCompleteCallback(std::move(cb));
 }
 
-HttpResponseImpl* HttpResponse::getPimpl()
+HttpResponseImpl* HttpResponse::pimpl()
 {
     return pimpl_;
 }
@@ -699,7 +722,7 @@ HttpResponseImpl* HttpResponse::getPimpl()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 WebSocket::WebSocket(EventLoop* loop)
-: pimpl_(new WebSocketImpl(loop->getPimpl()))
+: pimpl_(new WebSocketImpl(loop->pimpl()))
 {
     
 }
@@ -746,7 +769,7 @@ int WebSocket::attachFd(SOCKET_FD fd, const uint8_t* init_data, size_t init_len)
 
 int WebSocket::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
 {
-    return pimpl_->attachSocket(std::move(*tcp.getPimpl()), std::move((*parser.getPimpl())));
+    return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move((*parser.pimpl())));
 }
 
 int WebSocket::send(const uint8_t* data, size_t len)
@@ -774,14 +797,14 @@ void WebSocket::setErrorCallback(EventCallback cb)
     pimpl_->setErrorCallback(std::move(cb));
 }
 
-WebSocketImpl* WebSocket::getPimpl()
+WebSocketImpl* WebSocket::pimpl()
 {
     return pimpl_;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 H2Connection::H2Connection(EventLoop* loop)
-: pimpl_(new H2ConnectionImpl(loop->getPimpl()))
+: pimpl_(new H2ConnectionImpl(loop->pimpl()))
 {
     
 }
@@ -806,14 +829,19 @@ int H2Connection::attachFd(SOCKET_FD fd, const uint8_t* data, size_t size)
     return pimpl_->attachFd(fd, data, size);
 }
 
-int H2Connection::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
+int H2Connection::attachSocket(TcpSocket &&tcp, HttpParser &&parser)
 {
-    return pimpl_->attachSocket(std::move(tcp), std::move(parser));
+    return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move(*parser.pimpl()));
 }
 
 int H2Connection::close()
 {
     return pimpl_->close();
+}
+
+H2ConnectionImpl* H2Connection::pimpl()
+{
+    return pimpl_;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////

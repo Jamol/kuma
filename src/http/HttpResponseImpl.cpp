@@ -168,7 +168,7 @@ int HttpResponseImpl::sendResponse(int status_code, const std::string& desc, con
                 loop_->queueInEventLoop([this] { notifyComplete(); });
             } else {
                 setState(State::SENDING_BODY);
-                loop_->queueInEventLoop([this] { if (cb_write_) cb_write_(0); });
+                loop_->queueInEventLoop([this] { if (write_cb_) write_cb_(0); });
             }
         }
     }
@@ -278,7 +278,7 @@ void HttpResponseImpl::onSend(int err)
         if(ret < 0) {
             cleanup();
             setState(State::IN_ERROR);
-            if(cb_error_) cb_error_(KUMA_ERROR_SOCKERR);
+            if(error_cb_) error_cb_(KUMA_ERROR_SOCKERR);
             return;
         } else {
             send_offset_ += ret;
@@ -304,8 +304,8 @@ void HttpResponseImpl::onSend(int err)
             }
         }
     }
-    if(send_buffer_.empty() && cb_write_) {
-        cb_write_(0);
+    if(send_buffer_.empty() && write_cb_) {
+        write_cb_(0);
     }
 }
 
@@ -339,7 +339,7 @@ void HttpResponseImpl::onReceive(int err)
         if(ret < 0) {
             cleanup();
             setState(State::IN_ERROR);
-            if(cb_error_) cb_error_(KUMA_ERROR_SOCKERR);
+            if(error_cb_) error_cb_(KUMA_ERROR_SOCKERR);
         } else if(0 == ret) {
             break;
         } else {
@@ -367,7 +367,7 @@ void HttpResponseImpl::onClose(int err)
     cleanup();
     if(getState() < State::COMPLETE) {
         setState(State::IN_ERROR);
-        if(cb_error_) cb_error_(KUMA_ERROR_SOCKERR);
+        if(error_cb_) error_cb_(KUMA_ERROR_SOCKERR);
     } else {
         setState(State::CLOSED);
     }
@@ -375,7 +375,7 @@ void HttpResponseImpl::onClose(int err)
 
 void HttpResponseImpl::onHttpData(const char* data, size_t len)
 {
-    if(cb_data_) cb_data_((uint8_t*)data, len);
+    if(data_cb_) data_cb_((uint8_t*)data, len);
 }
 
 void HttpResponseImpl::onHttpEvent(HttpEvent ev)
@@ -383,18 +383,18 @@ void HttpResponseImpl::onHttpEvent(HttpEvent ev)
     KUMA_INFOXTRACE("onHttpEvent, ev="<<ev);
     switch (ev) {
         case HTTP_HEADER_COMPLETE:
-            if(cb_header_) cb_header_();
+            if(header_cb_) header_cb_();
             break;
             
         case HTTP_COMPLETE:
             setState(State::WAIT_FOR_RESPONSE);
-            if(cb_request_) cb_request_();
+            if(request_cb_) request_cb_();
             break;
             
         case HTTP_ERROR:
             cleanup();
             setState(State::IN_ERROR);
-            if(cb_error_) cb_error_(KUMA_ERROR_FAILED);
+            if(error_cb_) error_cb_(KUMA_ERROR_FAILED);
             break;
             
         default:
@@ -404,5 +404,5 @@ void HttpResponseImpl::onHttpEvent(HttpEvent ev)
 
 void HttpResponseImpl::notifyComplete()
 {
-    if(cb_response_) cb_response_();
+    if(response_cb_) response_cb_();
 }

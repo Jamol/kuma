@@ -161,18 +161,18 @@ void WSHandler::handleRequest()
        !is_equal(http_parser_.getHeaderValue("Connection"), "Upgrade")) {
         state_ = STATE_ERROR;
         KUMA_INFOTRACE("WSHandler::handleRequest, not WebSocket request");
-        if(cb_handshake_) cb_handshake_(KUMA_ERROR_INVALID_PROTO);
+        if(handshake_cb_) handshake_cb_(KUMA_ERROR_INVALID_PROTO);
         return;
     }
     std::string sec_ws_key = http_parser_.getHeaderValue("Sec-WebSocket-Key");
     if(sec_ws_key.empty()) {
         state_ = STATE_ERROR;
         KUMA_INFOTRACE("WSHandler::handleRequest, no Sec-WebSocket-Key");
-        if(cb_handshake_) cb_handshake_(KUMA_ERROR_INVALID_PROTO);
+        if(handshake_cb_) handshake_cb_(KUMA_ERROR_INVALID_PROTO);
         return;
     }
     state_ = STATE_OPEN;
-    if(cb_handshake_) cb_handshake_(0);
+    if(handshake_cb_) handshake_cb_(0);
 }
 
 void WSHandler::handleResponse()
@@ -181,11 +181,11 @@ void WSHandler::handleResponse()
        is_equal(http_parser_.getHeaderValue("Upgrade"), "WebSocket") &&
        is_equal(http_parser_.getHeaderValue("Connection"), "Upgrade")) {
         state_ = STATE_OPEN;
-        if(cb_handshake_) cb_handshake_(0);
+        if(handshake_cb_) handshake_cb_(0);
     } else {
         state_ = STATE_ERROR;
         KUMA_INFOTRACE("WSHandler::handleResponse, invalid status code: "<<http_parser_.getStatusCode());
-        if(cb_handshake_) cb_handshake_(-1);
+        if(handshake_cb_) handshake_cb_(-1);
     }
 }
 
@@ -374,7 +374,7 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                     KUMA_ASSERT(!destroy_flag_ptr_);
                     bool destroyed = false;
                     destroy_flag_ptr_ = &destroyed;
-                    if(cb_data_) cb_data_(notify_data, notify_len);
+                    if(data_cb_) data_cb_(notify_data, notify_len);
                     if(destroyed) {
                         return WS_ERROR_DESTROY;
                     }
@@ -392,7 +392,7 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                     KUMA_ASSERT(!destroy_flag_ptr_);
                     bool destroyed = false;
                     destroy_flag_ptr_ = &destroyed;
-                    if(cb_data_) cb_data_(notify_data, notify_len);
+                    if(data_cb_) data_cb_(notify_data, notify_len);
                     if(destroyed) {
                         return WS_ERROR_DESTROY;
                     }

@@ -12,7 +12,7 @@ using namespace kuma;
 class WsClient : public LoopObject
 {
 public:
-    WsClient(EventLoop* loop, long conn_id, TestLoop* server);
+    WsClient(TestLoop* loop, long conn_id);
     
     void startRequest(std::string& url);
     int close();
@@ -26,12 +26,11 @@ private:
     void sendData();
     
 private:
-    EventLoop*  loop_;
+    TestLoop*   loop_;
     WebSocket   ws_;
     
     bool        timed_sending_;
     Timer       timer_;
-    TestLoop*   server_;
     long        conn_id_;
     uint32_t    index_;
     uint32_t    max_send_count_;

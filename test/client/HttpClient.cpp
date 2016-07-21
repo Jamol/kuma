@@ -1,10 +1,9 @@
 #include "HttpClient.h"
 
-HttpClient::HttpClient(EventLoop* loop, long conn_id, TestLoop* server)
+HttpClient::HttpClient(TestLoop* loop, long conn_id)
 : loop_(loop)
-, http_request_(loop_, "HTTP/2.0")
+, http_request_(loop->getEventLoop(), "HTTP/2.0")
 , total_bytes_read_(0)
-, server_(server)
 , conn_id_(conn_id)
 {
     
@@ -40,7 +39,7 @@ void HttpClient::onSend(int err)
 void HttpClient::onClose(int err)
 {
     printf("HttpClient::onClose, err=%d\n", err);
-    server_->removeObject(conn_id_);
+    loop_->removeObject(conn_id_);
 }
 
 void HttpClient::onHeaderComplete()

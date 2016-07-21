@@ -6,11 +6,10 @@
 # include <arpa/inet.h>
 #endif
 
-TcpClient::TcpClient(EventLoop* loop, long conn_id, TestLoop* server)
+TcpClient::TcpClient(TestLoop* loop, long conn_id)
 : loop_(loop)
-, tcp_(loop_)
-, timer_(loop_)
-, server_(server)
+, tcp_(loop->getEventLoop())
+, timer_(loop->getEventLoop())
 , conn_id_(conn_id)
 , index_(0)
 , max_send_count_(200000)
@@ -90,7 +89,7 @@ void TcpClient::onReceive(int err)
 void TcpClient::onClose(int err)
 {
     printf("TcpClient::onClose, err=%d\n", err);
-    server_->removeObject(conn_id_);
+    loop_->removeObject(conn_id_);
 }
 
 void TcpClient::onTimer()

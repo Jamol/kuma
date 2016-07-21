@@ -270,7 +270,7 @@ int HttpParserImpl::parse(const char* data, size_t len)
     if(HTTP_READ_BODY == read_state_ && !is_chunked_ && !has_content_length_)
     {// return directly, read untill EOF
         total_bytes_read_ += len;
-        if(cb_data_) cb_data_(data, len);
+        if(data_cb_) data_cb_(data, len);
         return (int)len;
     }
     const char* pos = data;
@@ -280,8 +280,8 @@ int HttpParserImpl::parse(const char* data, size_t len)
     if(PARSE_STATE_DESTROY == parse_state) {
         return parsed_len;
     }
-    if(PARSE_STATE_ERROR == parse_state && cb_event_) {
-        cb_event_(HTTP_ERROR);
+    if(PARSE_STATE_ERROR == parse_state && event_cb_) {
+        event_cb_(HTTP_ERROR);
     }
     return parsed_len;
 }
@@ -380,7 +380,7 @@ HttpParserImpl::ParseState HttpParserImpl::parseHttp(const char*& cur_pos, const
                 KUMA_ASSERT(!destroy_flag_ptr_);
                 bool destroyed = false;
                 destroy_flag_ptr_ = &destroyed;
-                if(cb_data_) cb_data_(notify_data, notify_len);
+                if(data_cb_) data_cb_(notify_data, notify_len);
                 if(destroyed) {
                     return PARSE_STATE_DESTROY;
                 }
@@ -393,7 +393,7 @@ HttpParserImpl::ParseState HttpParserImpl::parseHttp(const char*& cur_pos, const
                 const char* notify_data = cur_pos;
                 total_bytes_read_ += cur_len;
                 cur_pos = end;
-                if(cb_data_) cb_data_(notify_data, cur_len);
+                if(data_cb_) data_cb_(notify_data, cur_len);
                 return PARSE_STATE_CONTINUE;
             }
         }
@@ -516,7 +516,7 @@ HttpParserImpl::ParseState HttpParserImpl::parseChunk(const char*& cur_pos, cons
                     cur_pos += notify_len;
                     bool destroyed = false;
                     destroy_flag_ptr_ = &destroyed;
-                    if(cb_data_) cb_data_(notify_data, notify_len);
+                    if(data_cb_) data_cb_(notify_data, notify_len);
                     if(destroyed) {
                         return PARSE_STATE_DESTROY;
                     }
@@ -526,7 +526,7 @@ HttpParserImpl::ParseState HttpParserImpl::parseChunk(const char*& cur_pos, cons
                     total_bytes_read_ += cur_len;
                     chunk_bytes_read_ += cur_len;
                     cur_pos += cur_len;
-                    if(cb_data_) cb_data_(notify_data, cur_len);
+                    if(data_cb_) data_cb_(notify_data, cur_len);
                     return PARSE_STATE_CONTINUE;
                 }
                 break;
@@ -597,13 +597,13 @@ void HttpParserImpl::onHeaderComplete()
         upgrade_ = true;
         KUMA_INFOTRACE("HttpParser::onHeaderComplete, Upgrade="<<it->second);
     }
-    if(cb_event_) cb_event_(HTTP_HEADER_COMPLETE);
+    if(event_cb_) event_cb_(HTTP_HEADER_COMPLETE);
 }
 
 void HttpParserImpl::onComplete()
 {
     KUMA_INFOTRACE("HttpParser::onComplete");
-    if(cb_event_) cb_event_(HTTP_COMPLETE);
+    if(event_cb_) event_cb_(HTTP_COMPLETE);
 }
 
 bool HttpParserImpl::decodeUrl()

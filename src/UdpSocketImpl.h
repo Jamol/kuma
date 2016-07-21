@@ -47,8 +47,8 @@ public:
     int mcastJoin(const char* mcast_addr, uint16_t mcast_port);
     int mcastLeave(const char* mcast_addr, uint16_t mcast_port);
 
-    void setReadCallback(EventCallback cb) { cb_read_ = std::move(cb); }
-    void setErrorCallback(EventCallback cb) { cb_error_ = std::move(cb); }
+    void setReadCallback(EventCallback cb) { read_cb_ = std::move(cb); }
+    void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
     
 private:
     void setSocketOption();
@@ -64,8 +64,8 @@ private:
     bool            registered_ = false;
     uint32_t        flags_ = 0;
     
-    EventCallback   cb_read_;
-    EventCallback   cb_error_;
+    EventCallback   read_cb_;
+    EventCallback   error_cb_;
     
     sockaddr_storage    bind_addr_;
     sockaddr_storage    mcast_addr_;

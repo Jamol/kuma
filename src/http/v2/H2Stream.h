@@ -79,8 +79,8 @@ private:
     void setState(State state) { state_ = state; }
     State getState() { return state_; }
     
-    void localStreamEnd();
-    void remoteStreamEnd();
+    void endStreamSent();
+    void endStreamReceived();
 
 private:
     uint32_t streamId_;
@@ -88,6 +88,8 @@ private:
     HeadersCallback cb_headers_;
     DataCallback cb_data_;
     RSTStreamCallback cb_reset_;
+    
+    size_t remoteWindowSize_ = 65535;
 };
 
 using H2StreamPtr = std::shared_ptr<H2Stream>;

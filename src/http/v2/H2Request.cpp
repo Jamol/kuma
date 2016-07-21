@@ -82,14 +82,17 @@ int H2Request::sendRequest()
     return KUMA_ERROR_NOERR;
 }
 
-const std::string& H2Request::getHeaderValue(const char* name) const
+const std::string& H2Request::getHeaderValue(std::string name) const
 {
-    return EmptyString;
+    auto it = rsp_headers_.find(name);
+    return it != rsp_headers_.end() ? it->second : EmptyString;
 }
 
 void H2Request::forEachHeader(EnumrateCallback cb)
 {
-    
+    for (auto &kv : rsp_headers_) {
+        cb(kv.first, kv.second);
+    }
 }
 
 void H2Request::checkHeaders()
@@ -162,7 +165,7 @@ void H2Request::sendHeaders()
 void H2Request::onConnect(int err)
 {
     if(err != KUMA_ERROR_NOERR) {
-        if(cb_error_) cb_error_(err);
+        if(error_cb_) error_cb_(err);
         return ;
     }
     sendHeaders();
@@ -194,14 +197,14 @@ void H2Request::onHeaders(const HeaderVector &headers, bool endSteam)
     bool destroyed = false;
     KUMA_ASSERT(nullptr == destroy_flag_ptr_);
     destroy_flag_ptr_ = &destroyed;
-    if (cb_header_) cb_header_();
+    if (header_cb_) header_cb_();
     if(destroyed) {
         return ;
     }
     destroy_flag_ptr_ = nullptr;
     if (endSteam) {
         setState(State::COMPLETE);
-        if (cb_response_) cb_response_();
+        if (response_cb_) response_cb_();
     }
 }
 
@@ -210,15 +213,15 @@ void H2Request::onData(uint8_t *data, size_t len, bool endSteam)
     bool destroyed = false;
     KUMA_ASSERT(nullptr == destroy_flag_ptr_);
     destroy_flag_ptr_ = &destroyed;
-    if (cb_data_) cb_data_(data, len);
+    if (data_cb_ && len > 0) data_cb_(data, len);
     if(destroyed) {
         return ;
     }
     destroy_flag_ptr_ = nullptr;
     
-    if (endSteam && cb_response_) {
+    if (endSteam && response_cb_) {
         setState(State::COMPLETE);
-        cb_response_();
+        response_cb_();
     }
 }
 

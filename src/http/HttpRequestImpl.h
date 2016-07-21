@@ -31,15 +31,15 @@ public:
     HttpRequestImpl(EventLoopImpl* loop);
     ~HttpRequestImpl();
     
-    int setSslFlags(uint32_t ssl_flags);
-    int sendData(const uint8_t* data, size_t len);
-    void reset(); // reset for connection reuse
-    int close();
+    int setSslFlags(uint32_t ssl_flags) override;
+    int sendData(const uint8_t* data, size_t len) override;
+    void reset() override; // reset for connection reuse
+    int close() override;
     
-    int getStatusCode() const { return http_parser_.getStatusCode(); }
-    const std::string& getVersion() const { return http_parser_.getVersion(); }
-    const std::string& getHeaderValue(const char* name) const { return http_parser_.getHeaderValue(name); }
-    void forEachHeader(HttpParserImpl::EnumrateCallback cb) { return http_parser_.forEachHeader(std::move(cb)); }
+    int getStatusCode() const override { return http_parser_.getStatusCode(); }
+    const std::string& getVersion() const override { return http_parser_.getVersion(); }
+    const std::string& getHeaderValue(std::string name) const override { return http_parser_.getHeaderValue(std::move(name)); }
+    void forEachHeader(HttpParserImpl::EnumrateCallback cb) override { return http_parser_.forEachHeader(std::move(cb)); }
     
 protected: // callbacks of tcp_socket
     void onConnect(int err);
@@ -48,13 +48,13 @@ protected: // callbacks of tcp_socket
     void onClose(int err);
 
 private:
-    int sendRequest();
-    void checkHeaders();
+    int sendRequest() override;
+    void checkHeaders() override;
     void buildRequest();
     int sendChunk(const uint8_t* data, size_t len);
     void cleanup();
     void sendRequestHeader();
-    bool isVersion1_1() { return true; }
+    bool isVersion1_1() override { return true; }
     
     void onHttpData(const char* data, size_t len);
     void onHttpEvent(HttpEvent ev);

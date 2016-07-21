@@ -31,7 +31,7 @@ public:
     using HttpEventCallback = std::function<void(void)>;
     using EnumrateCallback = std::function<void(const std::string&, const std::string&)>;
     
-    virtual ~IHttpRequest() {}
+    virtual ~IHttpRequest() = default;
     
     virtual int setSslFlags(uint32_t ssl_flags) = 0;
     void addHeader(std::string name, std::string value);
@@ -43,14 +43,14 @@ public:
     
     virtual int getStatusCode() const = 0;
     virtual const std::string& getVersion() const = 0;
-    virtual const std::string& getHeaderValue(const char* name) const = 0;
+    virtual const std::string& getHeaderValue(std::string name) const = 0;
     virtual void forEachHeader(EnumrateCallback cb) = 0;
     
-    void setDataCallback(DataCallback cb) { cb_data_ = std::move(cb); }
-    void setWriteCallback(EventCallback cb) { cb_write_ = std::move(cb); }
-    void setErrorCallback(EventCallback cb) { cb_error_ = std::move(cb); }
-    void setHeaderCompleteCallback(HttpEventCallback cb) { cb_header_ = std::move(cb); }
-    void setResponseCompleteCallback(HttpEventCallback cb) { cb_response_ = std::move(cb); }
+    void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
+    void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
+    void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
+    void setHeaderCompleteCallback(HttpEventCallback cb) { header_cb_ = std::move(cb); }
+    void setResponseCompleteCallback(HttpEventCallback cb) { response_cb_ = std::move(cb); }
     
 protected:
     virtual int sendRequest() = 0;
@@ -85,11 +85,11 @@ protected:
     bool                    is_chunked_ = false;
     size_t                  body_bytes_sent_ = 0;
     
-    DataCallback            cb_data_;
-    EventCallback           cb_write_;
-    EventCallback           cb_error_;
-    HttpEventCallback       cb_header_;
-    HttpEventCallback       cb_response_;
+    DataCallback            data_cb_;
+    EventCallback           write_cb_;
+    EventCallback           error_cb_;
+    HttpEventCallback       header_cb_;
+    HttpEventCallback       response_cb_;
 };
 
 KUMA_NS_END

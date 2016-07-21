@@ -61,10 +61,8 @@ public:
     const std::string getProtocol();
     const std::string getOrigin();
     
-    void setDataCallback(DataCallback& cb) { cb_data_ = cb; }
-    void setHandshakeCallback(HandshakeCallback& cb) { cb_handshake_ = cb; }
-    void setDataCallback(DataCallback&& cb) { cb_data_ = std::move(cb); }
-    void setHandshakeCallback(HandshakeCallback&& cb) { cb_handshake_ = std::move(cb); }
+    void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
+    void setHandshakeCallback(HandshakeCallback cb) { handshake_cb_ = std::move(cb); }
     
 private:
     typedef enum {
@@ -136,8 +134,8 @@ private:
     
     HttpParserImpl          http_parser_;
     
-    DataCallback            cb_data_;
-    HandshakeCallback       cb_handshake_;
+    DataCallback            data_cb_;
+    HandshakeCallback       handshake_cb_;
     
     bool*                   destroy_flag_ptr_;
 };

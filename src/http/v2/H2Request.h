@@ -35,14 +35,14 @@ public:
     H2Request(EventLoopImpl* loop);
     ~H2Request();
     
-    int setSslFlags(uint32_t ssl_flags);
-    int sendData(const uint8_t* data, size_t len);
-    int close();
+    int setSslFlags(uint32_t ssl_flags) override;
+    int sendData(const uint8_t* data, size_t len) override;
+    int close() override;
     
-    int getStatusCode() const { return status_code_; }
-    const std::string& getVersion() const { return VersionHTTP2_0; }
-    const std::string& getHeaderValue(const char* name) const;
-    void forEachHeader(EnumrateCallback cb);
+    int getStatusCode() const override { return status_code_; }
+    const std::string& getVersion() const override { return VersionHTTP2_0; }
+    const std::string& getHeaderValue(std::string name) const override;
+    void forEachHeader(EnumrateCallback cb) override;
     
 public:
     void onHeaders(const HeaderVector &headers, bool endSteam);
@@ -52,8 +52,8 @@ public:
 private:
     void onConnect(int err);
     
-    int sendRequest();
-    void checkHeaders();
+    int sendRequest() override;
+    void checkHeaders() override;
     size_t buildHeaders(HeaderVector &headers);
     void sendHeaders();
     

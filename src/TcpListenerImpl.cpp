@@ -195,8 +195,8 @@ void TcpListenerImpl::onAccept()
         }
         
         KUMA_INFOXTRACE("onAccept, fd="<<fd<<", peer_ip="<<peer_ip<<", peer_port="<<peer_port);
-        if(cb_accept_) {
-            cb_accept_(fd, peer_ip, peer_port);
+        if(accept_cb_) {
+            accept_cb_(fd, peer_ip, peer_port);
         } else {
             closeFd(fd);
         }
@@ -207,7 +207,7 @@ void TcpListenerImpl::onClose(int err)
 {
     KUMA_INFOXTRACE("onClose, err="<<err);
     cleanup();
-    if(cb_error_) cb_error_(err);
+    if(error_cb_) error_cb_(err);
 }
 
 void TcpListenerImpl::ioReady(uint32_t events)

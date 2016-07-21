@@ -13,7 +13,7 @@ using std_time_point = std::chrono::steady_clock::time_point;
 class HttpClient : public LoopObject
 {
 public:
-    HttpClient(EventLoop* loop, long conn_id, TestLoop* server);
+    HttpClient(TestLoop* loop, long conn_id);
     
     void startRequest(std::string& url);
     int close();
@@ -28,10 +28,9 @@ private:
     void sendData();
     
 private:
-    EventLoop*  loop_;
+    TestLoop*   loop_;
     HttpRequest http_request_;
     uint32_t    total_bytes_read_;
-    TestLoop*   server_;
     long        conn_id_;
 };
 

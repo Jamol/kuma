@@ -1,10 +1,9 @@
 
 #include "H2ConnTest.h"
 
-H2ConnTest::H2ConnTest(EventLoop* loop, long conn_id, TestLoop* server)
+H2ConnTest::H2ConnTest(TestLoop* loop, long conn_id)
 : loop_(loop)
-, conn_(loop)
-, server_(server)
+, conn_(loop->getEventLoop())
 , conn_id_(conn_id)
 {
     

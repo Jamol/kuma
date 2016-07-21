@@ -66,8 +66,8 @@ public:
     void forEachParam(EnumrateCallback cb);
     void forEachHeader(EnumrateCallback cb);
     
-    void setDataCallback(DataCallback cb) { cb_data_ = std::move(cb); }
-    void setEventCallback(EventCallback cb) { cb_event_ = std::move(cb); }
+    void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
+    void setEventCallback(EventCallback cb) { event_cb_ = std::move(cb); }
     
 private:
     typedef enum{
@@ -100,8 +100,8 @@ private:
     void clearBuffer() { str_buf_.clear(); }
     
 private:
-    DataCallback        cb_data_;
-    EventCallback       cb_event_;
+    DataCallback        data_cb_;
+    EventCallback       event_cb_;
     bool                is_request_;
     
     std::string         str_buf_;

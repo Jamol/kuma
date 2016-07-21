@@ -36,8 +36,8 @@ public:
     int stopListen(const char* host, uint16_t port);
     int close();
     
-    void setListenCallback(ListenCallback cb) { cb_accept_ = std::move(cb); }
-    void setErrorCallback(ErrorCallback cb) { cb_error_ = std::move(cb); }
+    void setListenCallback(ListenCallback cb) { accept_cb_ = std::move(cb); }
+    void setErrorCallback(ErrorCallback cb) { error_cb_ = std::move(cb); }
     
     SOCKET_FD getFd() const { return fd_; }
     
@@ -57,8 +57,8 @@ private:
     uint32_t        flags_ = 0;
     bool            stopped_ = false;
     
-    ListenCallback  cb_accept_;
-    ErrorCallback   cb_error_;
+    ListenCallback  accept_cb_;
+    ErrorCallback   error_cb_;
 };
 
 KUMA_NS_END

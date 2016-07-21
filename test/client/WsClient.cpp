@@ -8,12 +8,11 @@
 
 uint32_t getSendInterval();
 
-WsClient::WsClient(EventLoop* loop, long conn_id, TestLoop* server)
+WsClient::WsClient(TestLoop* loop, long conn_id)
 : loop_(loop)
-, ws_(loop_)
+, ws_(loop->getEventLoop())
 , timed_sending_(false)
-, timer_(loop_)
-, server_(server)
+, timer_(loop->getEventLoop())
 , conn_id_(conn_id)
 , index_(0)
 , max_send_count_(200000)
@@ -79,12 +78,12 @@ void WsClient::onData(uint8_t* data, size_t len)
         std::chrono::steady_clock::time_point end_point = std::chrono::steady_clock::now();
         std::chrono::milliseconds diff_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_point - start_point_);
         printf("spent %lld ms to echo %u packets\n", diff_ms.count(), max_send_count_);
-        server_->removeObject(conn_id_);
+        loop_->removeObject(conn_id_);
     }
 }
 
 void WsClient::onClose(int err)
 {
     printf("WsClient::onClose, err=%d\n", err);
-    server_->removeObject(conn_id_);
+    loop_->removeObject(conn_id_);
 }

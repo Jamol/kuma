@@ -43,9 +43,9 @@ public:
     int send(const uint8_t* data, size_t len);
     int close();
     
-    void setDataCallback(DataCallback cb) { cb_data_ = std::move(cb); }
-    void setWriteCallback(EventCallback cb) { cb_write_ = std::move(cb); }
-    void setErrorCallback(EventCallback cb) { cb_error_ = std::move(cb); }
+    void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
+    void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
+    void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
     
 protected: // callbacks of tcp_socket
     void onConnect(int err);
@@ -60,7 +60,7 @@ private:
     enum State {
         IDLE,
         CONNECTING,
-        HANDSHAKE,
+        UPGRADING,
         OPEN,
         IN_ERROR,
         CLOSED
@@ -94,10 +94,10 @@ private:
     
     std::string             proto_;
     std::string             origin_;
-    DataCallback            cb_data_;
-    EventCallback           cb_connect_;
-    EventCallback           cb_write_;
-    EventCallback           cb_error_;
+    DataCallback            data_cb_;
+    EventCallback           connect_cb_;
+    EventCallback           write_cb_;
+    EventCallback           error_cb_;
     
     bool*                   destroy_flag_ptr_ = nullptr;
 };

@@ -1,8 +1,9 @@
 #include "TestLoop.h"
 #include "LoopPool.h"
-#include "TcpConn.h"
+#include "TcpTest.h"
 #include "HttpTest.h"
 #include "WsTest.h"
+#include "H2ConnTest.h"
 #include "ProtoDemuxer.h"
 
 #include <string.h>
@@ -71,9 +72,9 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
             case PROTO_TCP:
             {
                 long conn_id = loopPool_->getConnId();
-                TcpConn* conn = new TcpConn(this, conn_id);
-                addObject(conn_id, conn);
-                conn->attachFd(fd);
+                TcpTest* tcp = new TcpTest(this, conn_id);
+                addObject(conn_id, tcp);
+                tcp->attachFd(fd);
                 break;
             }
             case PROTO_HTTP:
@@ -124,7 +125,8 @@ void TestLoop::addHttp(TcpSocket&& tcp, HttpParser&& parser)
 
 void TestLoop::addHttp2(TcpSocket&& tcp, HttpParser&& parser)
 {
-    H2Connection *h2conn = new H2Connection(loop_);
+    long conn_id = loopPool_->getConnId();
+    H2ConnTest *h2conn = new H2ConnTest(this, conn_id);
     h2conn->attachSocket(std::move(tcp), std::move(parser));
 }
 

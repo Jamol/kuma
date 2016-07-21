@@ -6,10 +6,9 @@
 # include <arpa/inet.h>
 #endif
 
-UdpClient::UdpClient(EventLoop* loop, long conn_id, TestLoop* server)
+UdpClient::UdpClient(TestLoop* loop, long conn_id)
 : loop_(loop)
-, udp_(loop_)
-, server_(server)
+, udp_(loop->getEventLoop())
 , conn_id_(conn_id)
 , index_(0)
 , max_send_count_(200000)
@@ -78,5 +77,5 @@ void UdpClient::onReceive(int err)
 void UdpClient::onClose(int err)
 {
     printf("UdpClient::onClose, err=%d\n", err);
-    server_->removeObject(conn_id_);
+    loop_->removeObject(conn_id_);
 }

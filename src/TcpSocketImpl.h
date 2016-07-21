@@ -52,6 +52,7 @@ public:
     int detachFd(SOCKET_FD &fd);
 #ifdef KUMA_HAS_OPENSSL
     int setAlpnProtocols(const AlpnProtos &protocols);
+    int getAlpnSelected(std::string &proto);
     int attachFd(SOCKET_FD fd, SSL* ssl);
     int detachFd(SOCKET_FD &fd, SSL* &ssl);
     int startSslHandshake(SslRole ssl_role);
@@ -64,9 +65,9 @@ public:
     int pause();
     int resume();
     
-    void setReadCallback(EventCallback cb) { cb_read_ = std::move(cb); }
-    void setWriteCallback(EventCallback cb) { cb_write_ = std::move(cb); }
-    void setErrorCallback(EventCallback cb) { cb_error_ = std::move(cb); }
+    void setReadCallback(EventCallback cb) { read_cb_ = std::move(cb); }
+    void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
+    void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
     
     SOCKET_FD getFd() const { return fd_; }
     
@@ -104,10 +105,10 @@ private:
     AlpnProtos      alpn_protos_;
 #endif
     
-    EventCallback   cb_connect_;
-    EventCallback   cb_read_;
-    EventCallback   cb_write_;
-    EventCallback   cb_error_;
+    EventCallback   connect_cb_;
+    EventCallback   read_cb_;
+    EventCallback   write_cb_;
+    EventCallback   error_cb_;
     
     bool*           destroy_flag_ptr_ = nullptr;
 };

@@ -157,7 +157,7 @@ int TcpSocketImpl::connect(const char *host, uint16_t port, EventCallback cb, ui
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
         return KUMA_ERROR_INVALID_STATE;
     }
-    cb_connect_ = std::move(cb);
+    connect_cb_ = std::move(cb);
     return connect_i(host, port, timeout_ms);
 }
 
@@ -280,6 +280,18 @@ int TcpSocketImpl::setAlpnProtocols(const AlpnProtos &protocols)
 {
     alpn_protos_ = protocols;
     return KUMA_ERROR_NOERR;
+}
+
+int TcpSocketImpl::getAlpnSelected(std::string &proto)
+{
+    if (!SslEnabled()) {
+        return KUMA_ERROR_INVALID_PROTO;
+    }
+    if (ssl_handler_) {
+        return ssl_handler_->getAlpnSelected(proto);
+    } else {
+        return KUMA_ERROR_INVALID_STATE;
+    }
 }
 
 int TcpSocketImpl::attachFd(SOCKET_FD fd, SSL* ssl)
@@ -607,8 +619,8 @@ void TcpSocketImpl::onConnect(int err)
         cleanup();
         setState(State::CLOSED);
     }
-    EventCallback cb_connect = std::move(cb_connect_);
-    if(cb_connect) cb_connect(err);
+    auto connect_cb(std::move(connect_cb_));
+    if(connect_cb) connect_cb(err);
 }
 
 void TcpSocketImpl::onSend(int err)
@@ -617,12 +629,12 @@ void TcpSocketImpl::onSend(int err)
     if (loop_->isPollLT() && fd != INVALID_FD) {
         loop_->updateFd(fd, KUMA_EV_READ | KUMA_EV_ERROR);
     }
-    if(cb_write_ && isReady()) cb_write_(err);
+    if(write_cb_ && isReady()) write_cb_(err);
 }
 
 void TcpSocketImpl::onReceive(int err)
 {
-    if(cb_read_ && isReady()) cb_read_(err);
+    if(read_cb_ && isReady()) read_cb_(err);
 }
 
 void TcpSocketImpl::onClose(int err)
@@ -630,7 +642,7 @@ void TcpSocketImpl::onClose(int err)
     KUMA_INFOXTRACE("onClose, err="<<err<<", state="<<getState());
     cleanup();
     setState(State::CLOSED);
-    if(cb_error_) cb_error_(err);
+    if(error_cb_) error_cb_(err);
 }
 
 void TcpSocketImpl::ioReady(uint32_t events)
@@ -673,9 +685,9 @@ void TcpSocketImpl::ioReady(uint32_t events)
                         return;
                     }
                 }
-                if(cb_connect_) {
-                    EventCallback cb_connect = std::move(cb_connect_);
-                    cb_connect(err);
+                if(connect_cb_) {
+                    auto connect_cb(std::move(connect_cb_));
+                    connect_cb(err);
                 } else if(err != KUMA_ERROR_NOERR) {
                     onClose(err);
                 } else {

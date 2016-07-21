@@ -95,6 +95,22 @@ int SslHandler::setAlpnProtocols(const AlpnProtos &protocols)
     return KUMA_ERROR_SSL_FAILED;
 }
 
+int SslHandler::getAlpnSelected(std::string &proto)
+{
+    if (!ssl_) {
+        return KUMA_ERROR_INVALID_STATE;
+    }
+    const uint8_t *buf = nullptr;
+    uint32_t len = 0;
+    SSL_get0_alpn_selected(ssl_, &buf, &len);
+    if (buf && len > 0) {
+        proto.assign((const char*)buf, len);
+    } else {
+        proto.clear();
+    }
+    return KUMA_ERROR_NOERR;
+}
+
 int SslHandler::attachFd(SOCKET_FD fd, SslRole ssl_role)
 {
     cleanup();

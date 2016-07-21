@@ -77,7 +77,7 @@ void TestLoop::startTest(std::string& addr_url, std::string& bind_addr)
     
     if(strcmp(proto, "tcp") == 0) {
         long conn_id = server_->getConnId();
-        TcpClient* client = new TcpClient(loop_, conn_id, this);
+        TcpClient* client = new TcpClient(this, conn_id);
         addObject(conn_id, client);
         if(!bind_addr.empty()) {
             char bind_host[64] = {0};
@@ -89,7 +89,7 @@ void TestLoop::startTest(std::string& addr_url, std::string& bind_addr)
         client->connect(host, port);
     } else if(strcmp(proto, "udp") == 0) {
         long conn_id = server_->getConnId();
-        UdpClient* udp_client = new UdpClient(loop_, conn_id, this);
+        UdpClient* udp_client = new UdpClient(this, conn_id);
         addObject(conn_id, udp_client);
         if(!bind_addr.empty()) {
             char bind_host[64] = {0};
@@ -102,7 +102,7 @@ void TestLoop::startTest(std::string& addr_url, std::string& bind_addr)
     } else if(strcmp(proto, "http") == 0 || strcmp(proto, "https") == 0) {
         long conn_id = server_->getConnId();
 #if 1
-        HttpClient* http_client = new HttpClient(loop_, conn_id, this);
+        HttpClient* http_client = new HttpClient(this, conn_id);
         addObject(conn_id, http_client);
         http_client->startRequest(addr_url);
 #else
@@ -112,7 +112,7 @@ void TestLoop::startTest(std::string& addr_url, std::string& bind_addr)
 #endif
     } else if(strcmp(proto, "ws") == 0 || strcmp(proto, "wss") == 0) {
         long conn_id = server_->getConnId();
-        WsClient* ws_client = new WsClient(loop_, conn_id, this);
+        WsClient* ws_client = new WsClient(this, conn_id);
         addObject(conn_id, ws_client);
         ws_client->startRequest(addr_url);
     }
