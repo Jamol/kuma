@@ -261,6 +261,23 @@ int TcpSocketImpl::attachFd(SOCKET_FD fd)
     return KUMA_ERROR_NOERR;
 }
 
+int TcpSocketImpl::attach(TcpSocketImpl &&other)
+{
+#ifdef KUMA_HAS_OPENSSL
+    SOCKET_FD fd;
+    SSL* ssl = nullptr;
+    uint32_t sslFlags = other.getSslFlags();
+    int ret = other.detachFd(fd, ssl);
+    setSslFlags(sslFlags);
+    ret = attachFd(fd, ssl);
+#else
+    SOCKET_FD fd;
+    int ret = tcp.detachFd(fd);
+    ret = tcp_.attachFd(fd);
+#endif
+    return ret;
+}
+
 int TcpSocketImpl::detachFd(SOCKET_FD &fd)
 {
     KUMA_INFOXTRACE("detachFd, fd="<<fd_<<", state="<<getState());

@@ -222,6 +222,9 @@ public:
     size_t calcPayloadSize() { return H2_PING_PAYLOAD_SIZE; }
     
     bool isAck() { return hdr_.getFlags() & H2_FRAME_FLAG_ACK; }
+    void setAck(bool ack) { ack?addFlags(H2_FRAME_FLAG_ACK):clearFlags(H2_FRAME_FLAG_ACK); }
+    void setData(const uint8_t *data, size_t len);
+    uint8_t* getData() { return data_; }
     
 private:
     uint8_t data_[H2_PING_PAYLOAD_SIZE];

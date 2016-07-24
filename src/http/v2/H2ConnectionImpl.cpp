@@ -39,10 +39,12 @@ H2ConnectionImpl::H2ConnectionImpl(EventLoopImpl* loop)
 {
     cmpPreface_ = ClientConnectionPreface;
     KM_SetObjKey("H2Connection");
+    KUMA_INFOXTRACE("H2Connection");
 }
 
 H2ConnectionImpl::~H2ConnectionImpl()
 {
+    KUMA_INFOXTRACE("~H2Connection");
     if(destroy_flag_ptr_) {
         *destroy_flag_ptr_ = true;
     }
@@ -61,6 +63,14 @@ void H2ConnectionImpl::cleanup()
         key_.clear();
     }
     tcp_.close();
+}
+
+void H2ConnectionImpl::setConnectionKey(const std::string &key)
+{
+    key_ = key;
+    if (!key.empty()) {
+        KUMA_INFOXTRACE("setConnectionKey, key="<<key);
+    }
 }
 
 int H2ConnectionImpl::setSslFlags(uint32_t ssl_flags)
@@ -145,18 +155,7 @@ int H2ConnectionImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
         setState(State::UPGRADING);
     }
     
-#ifdef KUMA_HAS_OPENSSL
-    SOCKET_FD fd;
-    SSL* ssl = nullptr;
-    uint32_t ssl_flags = tcp.getSslFlags();
-    int ret = tcp.detachFd(fd, ssl);
-    tcp_.setSslFlags(ssl_flags);
-    ret = tcp_.attachFd(fd, ssl);
-#else
-    SOCKET_FD fd;
-    int ret = tcp.detachFd(fd);
-    ret = tcp_.attachFd(fd);
-#endif
+    int ret = tcp_.attach(std::move(tcp));
     if (ret != KUMA_ERROR_NOERR) {
         return ret;
     }
@@ -166,6 +165,7 @@ int H2ConnectionImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
 
 int H2ConnectionImpl::close()
 {
+    KUMA_INFOXTRACE("close");
     cleanup();
     return KUMA_ERROR_NOERR;
 }
@@ -314,6 +314,13 @@ void H2ConnectionImpl::handlePushFrame(PushPromiseFrame *frame)
 void H2ConnectionImpl::handlePingFrame(PingFrame *frame)
 {
     KUMA_INFOXTRACE("handlePingFrame, streamId="<<frame->getStreamId());
+    if (!frame->isAck()) {
+        PingFrame pingFrame;
+        pingFrame.setStreamId(0);
+        pingFrame.setAck(true);
+        pingFrame.setData(frame->getData(), H2_PING_PAYLOAD_SIZE);
+        sendH2Frame(&pingFrame);
+    }
 }
 
 void H2ConnectionImpl::handleGoawayFrame(GoawayFrame *frame)

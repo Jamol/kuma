@@ -40,14 +40,12 @@ H2ConnectionMgr::~H2ConnectionMgr()
 
 void H2ConnectionMgr::addConnection(const std::string &key, H2ConnectionPtr &conn)
 {
-    KUMA_INFOTRACE("H2ConnectionMgr::addConnection, key="<<key);
     std::lock_guard<std::mutex> g(connMutex_);
     connMap_[key] = conn;
 }
 
 void H2ConnectionMgr::addConnection(const std::string &key, H2ConnectionPtr &&conn)
 {
-    KUMA_INFOTRACE("H2ConnectionMgr::addConnection, key="<<key);
     std::lock_guard<std::mutex> g(connMutex_);
     connMap_[key] = std::move(conn);
 }
@@ -61,7 +59,6 @@ H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &key)
 
 void H2ConnectionMgr::removeConnection(const std::string key)
 {
-    KUMA_INFOTRACE("H2ConnectionMgr::removeConnection, key="<<key);
     std::lock_guard<std::mutex> g(connMutex_);
     connMap_.erase(key);
 }

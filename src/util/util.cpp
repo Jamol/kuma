@@ -41,7 +41,11 @@
 #include <chrono>
 #include <random>
 
+#include "kmobject.h"
+
 KUMA_NS_BEGIN
+
+std::atomic<long> KMObject::objIdSeed_{0};
 
 #ifdef KUMA_OS_WIN
 #define STRNCPY_S   strncpy_s

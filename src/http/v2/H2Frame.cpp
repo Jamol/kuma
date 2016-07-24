@@ -426,6 +426,14 @@ H2Error PingFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
     return H2Error::H2_NO_ERROR;
 }
 
+void PingFrame::setData(const uint8_t *data, size_t len)
+{
+    if (len != H2_PING_PAYLOAD_SIZE) {
+        return;
+    }
+    memcpy(data_, data, H2_PING_PAYLOAD_SIZE);
+}
+
 int GoawayFrame::encode(uint8_t *dst, size_t len)
 {
     uint8_t *ptr = dst;

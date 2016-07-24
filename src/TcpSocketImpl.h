@@ -41,6 +41,8 @@ public:
     typedef std::function<void(int)> EventCallback;
     
     TcpSocketImpl(EventLoopImpl* loop);
+    TcpSocketImpl(const TcpSocketImpl &other) = delete;
+    TcpSocketImpl& operator= (const TcpSocketImpl &other) = delete;
     ~TcpSocketImpl();
     
     int setSslFlags(uint32_t ssl_flags);
@@ -49,6 +51,7 @@ public:
     int bind(const char* bind_host, uint16_t bind_port);
     int connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
     int attachFd(SOCKET_FD fd);
+    int attach(TcpSocketImpl &&other);
     int detachFd(SOCKET_FD &fd);
 #ifdef KUMA_HAS_OPENSSL
     int setAlpnProtocols(const AlpnProtos &protocols);

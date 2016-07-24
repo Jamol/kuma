@@ -156,11 +156,6 @@ void H2Stream::handlePushFrame(PushPromiseFrame *frame)
     setState(State::RESERVED_R);
 }
 
-void H2Stream::handlePingFrame(PingFrame *frame)
-{
-    
-}
-
 void H2Stream::handleWindowUpdateFrame(WindowUpdateFrame *frame)
 {
     remoteWindowSize_ += frame->getWindowSizeIncrement();

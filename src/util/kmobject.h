@@ -11,24 +11,33 @@
 
 #include "kmdefs.h"
 #include <string>
+#include <atomic>
 
 KUMA_NS_BEGIN
 
 class KMObject
 {
 public:
+    KMObject() {
+        objId_ = ++objIdSeed_;
+    }
+    
     const std::string& getObjKey() const {
         return objKey_;
     }
     
+private:
+    static std::atomic<long> objIdSeed_;
+    
 protected:
     std::string objKey_;
+    long objId_ = 0;
 };
 
 #define KM_SetObjKey(x) \
 do{ \
     std::stringstream ss; \
-    ss<<x; \
+    ss<<x<<"_"<<objId_; \
     objKey_ = ss.str();\
 }while(0)
 

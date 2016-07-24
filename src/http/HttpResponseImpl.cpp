@@ -85,18 +85,8 @@ int HttpResponseImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
     tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
     tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
     tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
-#ifdef KUMA_HAS_OPENSSL
-    SOCKET_FD fd;
-    SSL* ssl = nullptr;
-    uint32_t ssl_flags = tcp.getSslFlags();
-    int ret = tcp.detachFd(fd, ssl);
-    tcp_socket_.setSslFlags(ssl_flags);
-    ret = tcp_socket_.attachFd(fd, ssl);
-#else
-    SOCKET_FD fd;
-    int ret = tcp.detachFd(fd);
-    ret = tcp_socket_.attachFd(fd);
-#endif
+
+    int ret = tcp_socket_.attach(std::move(tcp));
     if(http_parser_.paused()) {
         http_parser_.resume();
     }

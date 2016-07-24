@@ -42,7 +42,7 @@ public:
     using RSTStreamCallback = std::function<void(int)>;
     
 public:
-	H2Stream(uint32_t streamId);
+    H2Stream(uint32_t streamId);
     
     uint32_t getStreamId() { return streamId_; }
     
@@ -62,7 +62,6 @@ public:
     void handleRSTStreamFrame(RSTStreamFrame *frame);
     void handleSettingsFrame(SettingsFrame *frame);
     void handlePushFrame(PushPromiseFrame *frame);
-    void handlePingFrame(PingFrame *frame);
     void handleWindowUpdateFrame(WindowUpdateFrame *frame);
     void handleContinuationFrame(ContinuationFrame *frame);
     

@@ -19,6 +19,8 @@
 		6F2D403E1B1834D300E24928 /* UdpSocketImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2D403D1B1834D300E24928 /* UdpSocketImpl.cpp */; };
 		6F2D40471B194AE200E24928 /* TimerManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2D40451B194AE200E24928 /* TimerManager.cpp */; };
 		6F2D40481B194AE200E24928 /* TimerManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2D40461B194AE200E24928 /* TimerManager.h */; };
+		6F472B311D43B53500D01201 /* TcpConnection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F472B2F1D43B53500D01201 /* TcpConnection.cpp */; };
+		6F472B321D43B53500D01201 /* TcpConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F472B301D43B53500D01201 /* TcpConnection.h */; };
 		6F4D603D1B9FCA61009132AF /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F4D603C1B9FCA61009132AF /* CoreFoundation.framework */; };
 		6F6208FB1A26BDB1000DAF4B /* kmconf.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208F81A26BDB1000DAF4B /* kmconf.h */; };
 		6F6208FD1A26BDB1000DAF4B /* kmapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208FA1A26BDB1000DAF4B /* kmapi.h */; };
@@ -90,6 +92,8 @@
 		6F2D403D1B1834D300E24928 /* UdpSocketImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UdpSocketImpl.cpp; sourceTree = "<group>"; };
 		6F2D40451B194AE200E24928 /* TimerManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TimerManager.cpp; sourceTree = "<group>"; };
 		6F2D40461B194AE200E24928 /* TimerManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimerManager.h; sourceTree = "<group>"; };
+		6F472B2F1D43B53500D01201 /* TcpConnection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TcpConnection.cpp; sourceTree = "<group>"; };
+		6F472B301D43B53500D01201 /* TcpConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpConnection.h; sourceTree = "<group>"; };
 		6F4D603C1B9FCA61009132AF /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		6F6208F81A26BDB1000DAF4B /* kmconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmconf.h; sourceTree = "<group>"; };
 		6F6208FA1A26BDB1000DAF4B /* kmapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmapi.h; sourceTree = "<group>"; };
@@ -209,6 +213,8 @@
 				6FA951411A3808450033C9CF /* kmdefs.h */,
 				6FF212921B181103006603BB /* kmapi.cpp */,
 				6F6208FA1A26BDB1000DAF4B /* kmapi.h */,
+				6F472B2F1D43B53500D01201 /* TcpConnection.cpp */,
+				6F472B301D43B53500D01201 /* TcpConnection.h */,
 				6FF211011B130A2F006603BB /* TcpListenerImpl.cpp */,
 				6FF211021B130A2F006603BB /* TcpListenerImpl.h */,
 				6F0098B21B03124400122C15 /* TcpSocketImpl.cpp */,
@@ -360,6 +366,7 @@
 				6FE0EF0A1D409863006136B7 /* H2Request.h in Headers */,
 				6FE0EF0E1D409863006136B7 /* H2Stream.h in Headers */,
 				6F29634F1A18AB0D00C3C79B /* kmqueue.h in Headers */,
+				6F472B321D43B53500D01201 /* TcpConnection.h in Headers */,
 				6FE0EF0C1D409863006136B7 /* H2Response.h in Headers */,
 				6FF7478E1B29587D0007F34D /* base64.h in Headers */,
 				6FBB2CB71D139C700024550F /* SslHandler.h in Headers */,
@@ -427,6 +434,7 @@
 				6FE0EF141D40986D006136B7 /* HPacker.cpp in Sources */,
 				6FE0EF161D40986D006136B7 /* HPackTable.cpp in Sources */,
 				6FE0EF0D1D409863006136B7 /* H2Stream.cpp in Sources */,
+				6F472B311D43B53500D01201 /* TcpConnection.cpp in Sources */,
 				6FBB2CAC1D139C560024550F /* HttpResponseImpl.cpp in Sources */,
 				6F9E76781D3665DA005E04B2 /* IHttpRequest.cpp in Sources */,
 				6FE0EF041D409863006136B7 /* H2ConnectionMgr.cpp in Sources */,
