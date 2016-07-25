@@ -19,13 +19,13 @@
 #include "kmdefs.h"
 #include "httpdefs.h"
 #include "HttpParserImpl.h"
-#include "TcpSocketImpl.h"
+#include "TcpConnection.h"
 #include "Uri.h"
 #include "util/kmobject.h"
 
 KUMA_NS_BEGIN
 
-class HttpResponseImpl : public KMObject
+class HttpResponseImpl : public KMObject, public TcpConnection
 {
 public:
     typedef std::function<void(uint8_t*, size_t)> DataCallback;
@@ -35,7 +35,6 @@ public:
     HttpResponseImpl(EventLoopImpl* loop);
     ~HttpResponseImpl();
     
-    int setSslFlags(uint32_t ssl_flags);
     int attachFd(SOCKET_FD fd, uint8_t* init_data = nullptr, size_t init_len = 0);
     int attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
     void addHeader(const std::string& name, const std::string& value);
@@ -59,10 +58,10 @@ public:
     void setRequestCompleteCallback(HttpEventCallback cb) { request_cb_ = std::move(cb); }
     void setResponseCompleteCallback(HttpEventCallback cb) { response_cb_ = std::move(cb); }
 
-protected: // callbacks of tcp_socket
-    void onSend(int err);
-    void onReceive(int err);
-    void onClose(int err);
+protected:
+    KMError handleInputData(uint8_t *src, size_t len) override;
+    void onWrite() override;
+    void onError(int err) override;
     
 private:
     enum State {
@@ -88,14 +87,6 @@ private:
 private:
     HttpParserImpl          http_parser_;
     State                   state_ = State::IDLE;
-    EventLoopImpl*          loop_;
-    
-    uint8_t*                init_data_ = nullptr;
-    size_t                  init_len_ = 0;
-    
-    std::vector<uint8_t>    send_buffer_;
-    uint32_t                send_offset_ = 0;
-    TcpSocketImpl           tcp_socket_;
     
     HeaderMap               header_map_;
     

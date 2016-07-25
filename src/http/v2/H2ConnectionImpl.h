@@ -27,7 +27,9 @@
 #include "HPacker.h"
 #include "H2Stream.h"
 #include "TcpSocketImpl.h"
+#include "TcpConnection.h"
 #include "http/HttpParserImpl.h"
+#include "EventLoopImpl.h"
 
 #include <map>
 
@@ -35,7 +37,7 @@ using namespace hpack;
 
 KUMA_NS_BEGIN
 
-class H2ConnectionImpl : public KMObject, public FrameCallback
+class H2ConnectionImpl : public KMObject, public FrameCallback, public TcpConnection, public ILoopObject
 {
 public:
     typedef std::function<void(int)> ConnectCallback;
@@ -43,16 +45,14 @@ public:
     H2ConnectionImpl(EventLoopImpl* loop);
 	~H2ConnectionImpl();
     
-    int setSslFlags(uint32_t ssl_flags);
     int connect(const std::string &host, uint16_t port, ConnectCallback cb);
     int attachFd(SOCKET_FD fd, const uint8_t* data=nullptr, size_t size=0);
     int attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
     int close();
     
-    int sendH2Frame(H2Frame *frame);
+    KMError sendH2Frame(H2Frame *frame);
     
-    int sendWindowUpdate(uint32_t increment);
-    int sendHeadersFrame(HeadersFrame *frame);
+    KMError sendHeadersFrame(HeadersFrame *frame);
     
     bool isReady() { return getState() == State::OPEN; }
     
@@ -61,15 +61,17 @@ public:
     H2StreamPtr createStream();
     void removeStream(uint32_t streamId);
     
+    void notifyLoopStopped() override;
+    
 public:
-    void onFrame(H2Frame *frame);
-    void onFrameError(const FrameHeader &hdr, H2Error err);
+    void onFrame(H2Frame *frame) override;
+    void onFrameError(const FrameHeader &hdr, H2Error err) override;
     
 private:
-    void onConnect(int err);
-    void onSend(int err);
-    void onReceive(int err);
-    void onClose(int err);
+    void onConnect(int err) override;
+    KMError handleInputData(uint8_t *src, size_t len) override;
+    void onWrite() override;
+    void onError(int err) override;
     
 private:
     void onHttpData(const char* data, size_t len);
@@ -77,8 +79,7 @@ private:
     
 private:
     int connect_i(const std::string &host, uint16_t port);
-    int handleInputData(const uint8_t *buf, size_t len);
-    int parseInputData(const uint8_t *buf, size_t len);
+    KMError parseInputData(const uint8_t *buf, size_t len);
     void handleDataFrame(DataFrame *frame);
     void handleHeadersFrame(HeadersFrame *frame);
     void handlePriorityFrame(PriorityFrame *frame);
@@ -116,18 +117,10 @@ private:
     void cleanup();
     
 private:
-    EventLoopImpl* loop_;
-    TcpSocketImpl tcp_;
-    
     State state_ = State::IDLE;
     ConnectCallback connect_cb_; // client only
     
     std::string key_;
-    std::string host_;
-    uint16_t port_ = 0;
-    
-    uint8_t* initData_ = nullptr;
-    size_t initSize_ = 0;
     
     HttpParserImpl httpParser_;
     FrameParser frameParser_;
@@ -137,20 +130,19 @@ private:
     std::map<uint32_t, H2StreamPtr> streams_;
     std::map<uint32_t, H2StreamPtr> promisedStreams_;
     
-    bool isServer_ = false;
-    std::vector<uint8_t>    send_buffer_;
-    size_t                  send_offset_ = 0;
-    
     std::string             cmpPreface_; // server only
     
     size_t remoteWindowSize_ = 65535;
     
     uint32_t nextStreamId_ = 0;
     
+    bool registeredToLoop = false;
+    
     bool* destroy_flag_ptr_ = nullptr;
 };
 
 using H2ConnectionPtr = std::shared_ptr<H2ConnectionImpl>;
+using H2ConnectionWeakPtr = std::weak_ptr<H2ConnectionImpl>;
 
 KUMA_NS_END
 

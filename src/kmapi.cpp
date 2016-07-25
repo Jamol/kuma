@@ -133,7 +133,7 @@ uint32_t TcpSocket::getSslFlags() const
 
 bool TcpSocket::sslEnabled() const
 {
-    return pimpl_->SslEnabled();
+    return pimpl_->sslEnabled();
 }
 
 int TcpSocket::bind(const char* bind_host, uint16_t bind_port)

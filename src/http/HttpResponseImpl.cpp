@@ -27,9 +27,7 @@ static const std::string str_transfer_encoding = "Transfer-Encoding";
 static const std::string str_chunked = "chunked";
 //////////////////////////////////////////////////////////////////////////
 HttpResponseImpl::HttpResponseImpl(EventLoopImpl* loop)
-: http_parser_()
-, loop_(loop)
-, tcp_socket_(loop)
+: TcpConnection(loop), http_parser_()
 {
     KM_SetObjKey("HttpResponse");
 }
@@ -39,40 +37,20 @@ HttpResponseImpl::~HttpResponseImpl()
     if(destroy_flag_ptr_) {
         *destroy_flag_ptr_ = true;
     }
-    if(init_data_) {
-        delete [] init_data_;
-        init_data_ = nullptr;
-        init_len_ = 0;
-    }
 }
 
 void HttpResponseImpl::cleanup()
 {
-    tcp_socket_.close();
-    send_buffer_.clear();
-    send_offset_ = 0;
-}
-
-int HttpResponseImpl::setSslFlags(uint32_t ssl_flags)
-{
-    return tcp_socket_.setSslFlags(ssl_flags);
+    TcpConnection::close();
 }
 
 int HttpResponseImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, size_t init_len)
 {
-    if(init_data && init_len > 0) {
-        init_data = new uint8_t(init_len);
-        memcpy(init_data_, init_data, init_len);
-        init_len_ = init_len;
-    }
     setState(State::RECVING_REQUEST);
     http_parser_.reset();
     http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
-    tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
-    tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
-    tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
-    return tcp_socket_.attachFd(fd);
+    return TcpConnection::attachFd(fd);
 }
 
 int HttpResponseImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
@@ -82,12 +60,9 @@ int HttpResponseImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
     http_parser_ = std::move(parser);
     http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
-    tcp_socket_.setReadCallback([this] (int err) { onReceive(err); });
-    tcp_socket_.setWriteCallback([this] (int err) { onSend(err); });
-    tcp_socket_.setErrorCallback([this] (int err) { onClose(err); });
 
-    int ret = tcp_socket_.attach(std::move(tcp));
-    if(http_parser_.paused()) {
+    int ret = TcpConnection::attachSocket(std::move(tcp));
+    if(ret == KUMA_ERROR_NOERR && http_parser_.paused()) {
         http_parser_.resume();
     }
     return ret;
@@ -119,10 +94,8 @@ void HttpResponseImpl::buildResponse(int status_code, const std::string& desc, c
     }
     ss << "\r\n";
     std::string str(ss.str());
-    send_buffer_.clear();
     send_offset_ = 0;
-    send_buffer_.reserve(str.length());
-    send_buffer_.insert(send_buffer_.end(), str.begin(), str.end());
+    send_buffer_.assign(str.begin(), str.end());
 }
 
 int HttpResponseImpl::sendResponse(int status_code, const std::string& desc, const std::string& ver)
@@ -143,23 +116,18 @@ int HttpResponseImpl::sendResponse(int status_code, const std::string& desc, con
     body_bytes_sent_ = 0;
     buildResponse(status_code, desc, ver);
     setState(State::SENDING_HEADER);
-    int ret = tcp_socket_.send(&send_buffer_[0] + send_offset_, (uint32_t)send_buffer_.size() - send_offset_);
+    int ret = sendBufferedData();
     if(ret < 0) {
         cleanup();
         setState(State::IN_ERROR);
         return KUMA_ERROR_SOCKERR;
-    } else {
-        send_offset_ += ret;
-        if(send_offset_ == send_buffer_.size()) {
-            send_offset_ = 0;
-            send_buffer_.clear();
-            if(has_content_length_ && 0 == content_length_ && !is_chunked_) {
-                setState(State::COMPLETE);
-                loop_->queueInEventLoop([this] { notifyComplete(); });
-            } else {
-                setState(State::SENDING_BODY);
-                loop_->queueInEventLoop([this] { if (write_cb_) write_cb_(0); });
-            }
+    } else if (sendBufferEmpty()) {
+        if(has_content_length_ && 0 == content_length_ && !is_chunked_) {
+            setState(State::COMPLETE);
+            getEventLoop()->queueInEventLoop([this] { notifyComplete(); });
+        } else {
+            setState(State::SENDING_BODY);
+            getEventLoop()->queueInEventLoop([this] { if (write_cb_) write_cb_(0); });
         }
     }
     return KUMA_ERROR_NOERR;
@@ -167,7 +135,7 @@ int HttpResponseImpl::sendResponse(int status_code, const std::string& desc, con
 
 int HttpResponseImpl::sendData(const uint8_t* data, size_t len)
 {
-    if(!send_buffer_.empty() || getState() != State::SENDING_BODY) {
+    if(!sendBufferEmpty() || getState() != State::SENDING_BODY) {
         return 0;
     }
     if(is_chunked_) {
@@ -176,14 +144,14 @@ int HttpResponseImpl::sendData(const uint8_t* data, size_t len)
     if(!data || 0 == len) {
         return 0;
     }
-    int ret = tcp_socket_.send(data, len);
+    int ret = TcpConnection::send(data, len);
     if(ret < 0) {
         setState(State::IN_ERROR);
     } else if(ret > 0) {
         body_bytes_sent_ += ret;
-        if (has_content_length_ && body_bytes_sent_ >= content_length_) {
+        if (has_content_length_ && body_bytes_sent_ >= content_length_ && sendBufferEmpty()) {
             setState(State::COMPLETE);
-            loop_->queueInEventLoop([this] { notifyComplete(); });
+            getEventLoop()->queueInEventLoop([this] { notifyComplete(); });
         }
     }
     return ret;
@@ -193,16 +161,13 @@ int HttpResponseImpl::sendChunk(const uint8_t* data, size_t len)
 {
     if(nullptr == data && 0 == len) { // chunk end
         static const std::string _chunk_end_token_ = "0\r\n\r\n";
-        int ret = tcp_socket_.send((uint8_t*)_chunk_end_token_.c_str(), (uint32_t)_chunk_end_token_.length());
+        int ret = TcpConnection::send((uint8_t*)_chunk_end_token_.c_str(), (uint32_t)_chunk_end_token_.length());
         if(ret < 0) {
             setState(State::IN_ERROR);
             return ret;
-        } else if(ret < 5) {
-            std::copy(_chunk_end_token_.begin() + ret, _chunk_end_token_.end(), back_inserter(send_buffer_));
-            send_offset_ = 0;
-        } else {
+        } else if(sendBufferEmpty()) { // should always empty
             setState(State::COMPLETE);
-            loop_->queueInEventLoop([this] { notifyComplete(); });
+            getEventLoop()->queueInEventLoop([this] { notifyComplete(); });
         }
         return 0;
     } else {
@@ -218,23 +183,9 @@ int HttpResponseImpl::sendChunk(const uint8_t* data, size_t len)
         iovs[1].iov_len = len;
         iovs[2].iov_base = (char*)"\r\n";
         iovs[2].iov_len = 2;
-        auto total_len = iovs[0].iov_len + iovs[1].iov_len + iovs[2].iov_len;
-        int ret = tcp_socket_.send(iovs, 3);
+        int ret = TcpConnection::send(iovs, 3);
         if(ret < 0) {
             return ret;
-        } else if(ret < total_len) {
-            send_buffer_.reserve(total_len - ret);
-            send_offset_ = 0;
-            for (auto &iov : iovs) {
-                uint8_t* first = ((uint8_t*)iov.iov_base) + ret;
-                uint8_t* last = ((uint8_t*)iov.iov_base) + iov.iov_len;
-                if(first < last) {
-                    send_buffer_.insert(send_buffer_.end(), first, last);
-                    ret = 0;
-                } else {
-                    ret -= iov.iov_len;
-                }
-            }
         }
         return (int)len;
     }
@@ -261,99 +212,48 @@ int HttpResponseImpl::close()
     return KUMA_ERROR_NOERR;
 }
 
-void HttpResponseImpl::onSend(int err)
+KMError HttpResponseImpl::handleInputData(uint8_t *src, size_t len)
 {
-    if(!send_buffer_.empty() && send_offset_ < send_buffer_.size()) {
-        int ret = tcp_socket_.send(&send_buffer_[0] + send_offset_, (uint32_t)send_buffer_.size() - send_offset_);
-        if(ret < 0) {
-            cleanup();
-            setState(State::IN_ERROR);
-            if(error_cb_) error_cb_(KUMA_ERROR_SOCKERR);
-            return;
-        } else {
-            send_offset_ += ret;
-            if(send_offset_ == send_buffer_.size()) {
-                send_offset_ = 0;
-                send_buffer_.clear();
-                if (getState() == State::SENDING_HEADER) {
-                    if(has_content_length_ && 0 == content_length_ && !is_chunked_) {
-                        setState(State::COMPLETE);
-                        notifyComplete();
-                        return;
-                    } else {
-                        setState(State::SENDING_BODY);
-                    }
-                } else if (getState() == State::SENDING_BODY) {
-                    body_bytes_sent_ += ret;
-                    if(!is_chunked_ && has_content_length_ && body_bytes_sent_ >= content_length_) {
-                        setState(State::COMPLETE);
-                        notifyComplete();
-                        return ;
-                    }
-                }
-            }
-        }
+    bool destroyed = false;
+    KUMA_ASSERT(nullptr == destroy_flag_ptr_);
+    destroy_flag_ptr_ = &destroyed;
+    int bytes_used = http_parser_.parse((char*)src, len);
+    if(destroyed) {
+        return KUMA_ERROR_DESTROYED;
     }
-    if(send_buffer_.empty() && write_cb_) {
-        write_cb_(0);
+    destroy_flag_ptr_ = nullptr;
+    if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
+        return KUMA_ERROR_FAILED;
     }
+    if(bytes_used != len) {
+        KUMA_WARNXTRACE("handleInputData, bytes_used="<<bytes_used<<", bytes_read="<<len);
+    }
+    return KUMA_ERROR_NOERR;
 }
 
-void HttpResponseImpl::onReceive(int err)
+void HttpResponseImpl::onWrite()
 {
-    if(init_data_ && init_len_ > 0) {
-        bool destroyed = false;
-        KUMA_ASSERT(nullptr == destroy_flag_ptr_);
-        destroy_flag_ptr_ = &destroyed;
-        int bytes_used = http_parser_.parse((char*)init_data_, init_len_);
-        if(destroyed) {
+    if (getState() == State::SENDING_HEADER) {
+        if(has_content_length_ && 0 == content_length_ && !is_chunked_) {
+            setState(State::COMPLETE);
+            notifyComplete();
             return;
-        }
-        destroy_flag_ptr_ = nullptr;
-        if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
-            return;
-        }
-        if(bytes_used != init_len_) {
-            KUMA_WARNXTRACE("onReceive, bytes_used="<<bytes_used<<", init_len="<<init_len_);
-            memmove(init_data_, init_data_ + bytes_used, init_len_ - bytes_used);
-            init_len_ -= bytes_used;
-            return;
-        }
-        delete [] init_data_;
-        init_data_ = nullptr;
-        init_len_ = 0;
-    }
-    char buf[128*1024];
-    do {
-        int ret = tcp_socket_.receive((uint8_t*)buf, sizeof(buf));
-        if(ret < 0) {
-            cleanup();
-            setState(State::IN_ERROR);
-            if(error_cb_) error_cb_(KUMA_ERROR_SOCKERR);
-        } else if(0 == ret) {
-            break;
         } else {
-            bool destroyed = false;
-            KUMA_ASSERT(nullptr == destroy_flag_ptr_);
-            destroy_flag_ptr_ = &destroyed;
-            int bytes_used = http_parser_.parse(buf, ret);
-            if(destroyed) {
-                return;
-            }
-            destroy_flag_ptr_ = nullptr;
-            if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
-                break;
-            }
-            if(bytes_used != ret) {
-                KUMA_WARNXTRACE("onReceive, bytes_used="<<bytes_used<<", bytes_read="<<ret);
-            }
+            setState(State::SENDING_BODY);
         }
-    } while(true);
+    } else if (getState() == State::SENDING_BODY) {
+        if(!is_chunked_ && has_content_length_ && body_bytes_sent_ >= content_length_) {
+            setState(State::COMPLETE);
+            notifyComplete();
+            return ;
+        }
+    }
+    if(write_cb_) write_cb_(0);
 }
 
-void HttpResponseImpl::onClose(int err)
+void HttpResponseImpl::onError(int err)
 {
-    KUMA_INFOXTRACE("onClose, err="<<err);
+    KUMA_INFOXTRACE("onError, err="<<err);
     cleanup();
     if(getState() < State::COMPLETE) {
         setState(State::IN_ERROR);

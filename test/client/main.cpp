@@ -18,6 +18,7 @@ using namespace kuma;
 
 #define THREAD_COUNT    10
 static bool g_exit = false;
+bool g_test_http2 = false;
 EventLoop main_loop(POLL_TYPE_NONE);
 
 #ifdef KUMA_OS_WIN
@@ -50,6 +51,7 @@ static const char* g_usage =
 "   -c number       concurrent clients\n"
 "   -t ms           send interval\n"
 "   -v              print version\n"
+"   --http2         test http2\n"
 ;
 
 std::vector<std::thread> event_threads;
@@ -57,6 +59,11 @@ std::vector<std::thread> event_threads;
 void printUsage()
 {
     printf("%s\n", g_usage);
+}
+
+std::string getHttpVersion()
+{
+    return g_test_http2 ? "HTTP/2.0": "HTTP/1.1";
 }
 
 static uint32_t _send_interval_ = 0;
@@ -83,6 +90,7 @@ int main(int argc, char *argv[])
     std::string addr;
     std::string bind_addr;
     int concurrent = 1;
+    bool test_http2 = false;
     
     for (int i=1; i<argc; ++i) {
         if(argv[i][0] == '-') {
@@ -113,6 +121,9 @@ int main(int argc, char *argv[])
                         printUsage();
                         return -1;
                     }
+                    break;
+                case '-':
+                    g_test_http2 = strcmp(argv[i] + 2, "http2") == 0;
                     break;
                 default:
                     printUsage();

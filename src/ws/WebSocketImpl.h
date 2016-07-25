@@ -19,11 +19,12 @@
 #include "kmdefs.h"
 #include "WSHandler.h"
 #include "TcpSocketImpl.h"
+#include "TcpConnection.h"
 #include "http/Uri.h"
 
 KUMA_NS_BEGIN
 
-class WebSocketImpl
+class WebSocketImpl : public KMObject, public TcpConnection
 {
 public:
     typedef std::function<void(uint8_t*, size_t)> DataCallback;
@@ -32,7 +33,6 @@ public:
     WebSocketImpl(EventLoopImpl* loop);
     ~WebSocketImpl();
     
-    int setSslFlags(uint32_t ssl_flags);
     void setProtocol(const std::string& proto);
     const std::string& getProtocol() const { return proto_; }
     void setOrigin(const std::string& origin);
@@ -47,15 +47,6 @@ public:
     void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
     void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
     
-protected: // callbacks of tcp_socket
-    void onConnect(int err);
-    void onSend(int err);
-    void onReceive(int err);
-    void onClose(int err);
-    
-protected:
-    const char* getObjKey() const;
-
 private:
     enum State {
         IDLE,
@@ -75,20 +66,16 @@ private:
     void onWsData(uint8_t* data, size_t len);
     void onWsHandshake(int err);
     void onStateOpen();
-    int handleInputData(uint8_t *src, size_t len);
+    
+    void onConnect(int err) override;
+    KMError handleInputData(uint8_t *src, size_t len) override;
+    void onWrite() override;
+    void onError(int err) override;
     
 private:
     State                   state_ = State::IDLE;
     WSHandler               ws_handler_;
     Uri                     uri_;
-    
-    uint8_t*                init_data_ = nullptr;
-    size_t                  init_len_ = 0;
-    
-    std::vector<uint8_t>    send_buffer_;
-    size_t                  send_offset_ = 0;
-    TcpSocketImpl           tcp_socket_;
-    bool                    is_server_ = false;
     
     size_t                  body_bytes_sent_ = 0;
     

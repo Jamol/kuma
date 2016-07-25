@@ -47,7 +47,7 @@ public:
     
     int setSslFlags(uint32_t ssl_flags);
     uint32_t getSslFlags() const { return ssl_flags_; }
-    bool SslEnabled();
+    bool sslEnabled() const;
     int bind(const char* bind_host, uint16_t bind_port);
     int connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
     int attachFd(SOCKET_FD fd);
@@ -73,6 +73,7 @@ public:
     void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
     
     SOCKET_FD getFd() const { return fd_; }
+    EventLoopImpl* getEventLoop() { return loop_; }
     
 private:
     int connect_i(const char* addr, uint16_t port, uint32_t timeout_ms);

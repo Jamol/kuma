@@ -45,7 +45,7 @@ void TestLoop::stop()
 {
     //cleanup();
     if(loop_) {
-        loop_->runInEventLoop([this] { cleanup(); });
+        loop_->runInEventLoopSync([this] { cleanup(); });
         loop_->stop();
     }
     if(thread_.joinable()) {

@@ -25,10 +25,18 @@
 #endif
 #include <stdint.h>
 #include <thread>
+#include <list>
 
 KUMA_NS_BEGIN
 
 class IOPoll;
+
+class ILoopObject
+{
+public:
+    virtual ~ILoopObject() {}
+    virtual void notifyLoopStopped() = 0;
+};
 
 class EventLoopImpl
 {
@@ -42,6 +50,9 @@ public:
     int updateFd(SOCKET_FD fd, uint32_t events);
     int unregisterFd(SOCKET_FD fd, bool close_fd);
     TimerManagerPtr getTimerMgr() { return timer_mgr_; }
+    
+    int registerObject(ILoopObject *obj);
+    int unregisterObject(ILoopObject *obj);
     
     PollType getPollType() const;
     bool isPollLT() const; // level trigger
@@ -69,6 +80,8 @@ private:
     CallbackQueue   cb_queue_;
     
     TimerManagerPtr timer_mgr_;
+    
+    std::list<ILoopObject*> objects_;
 };
 
 KUMA_NS_END

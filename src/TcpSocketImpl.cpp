@@ -249,7 +249,7 @@ int TcpSocketImpl::attachFd(SOCKET_FD fd)
     setSocketOption();
     setState(State::OPEN);
 #ifdef KUMA_HAS_OPENSSL
-    if(SslEnabled()) {
+    if(sslEnabled()) {
         int ret = startSslHandshake(AS_SERVER);
         if(ret != KUMA_ERROR_NOERR) {
             return ret;
@@ -301,7 +301,7 @@ int TcpSocketImpl::setAlpnProtocols(const AlpnProtos &protocols)
 
 int TcpSocketImpl::getAlpnSelected(std::string &proto)
 {
-    if (!SslEnabled()) {
+    if (!sslEnabled()) {
         return KUMA_ERROR_INVALID_PROTO;
     }
     if (ssl_handler_) {
@@ -323,7 +323,7 @@ int TcpSocketImpl::attachFd(SOCKET_FD fd, SSL* ssl)
     setSocketOption();
     setState(State::OPEN);
     
-    if(SslEnabled()) {
+    if(sslEnabled()) {
         if (ssl) {
             ssl_handler_ = new SslHandler();
             ssl_handler_->attachSsl(ssl);
@@ -416,7 +416,7 @@ void TcpSocketImpl::setSocketOption()
     }
 }
 
-bool TcpSocketImpl::SslEnabled()
+bool TcpSocketImpl::sslEnabled() const
 {
 #ifdef KUMA_HAS_OPENSSL
     return ssl_flags_ != SSL_NONE;
@@ -429,7 +429,7 @@ bool TcpSocketImpl::isReady()
 {
     return getState() == State::OPEN
 #ifdef KUMA_HAS_OPENSSL
-        && (!SslEnabled() ||
+        && (!sslEnabled() ||
         (ssl_handler_ && ssl_handler_->getState() == SslHandler::SslState::SSL_SUCCESS))
 #endif
         ;
@@ -448,7 +448,7 @@ int TcpSocketImpl::send(const uint8_t* data, size_t length)
     
     int ret = 0;
 #ifdef KUMA_HAS_OPENSSL
-    if(SslEnabled()) {
+    if(sslEnabled()) {
         ret = ssl_handler_->send(data, length);
     } else 
 #endif
@@ -505,7 +505,7 @@ int TcpSocketImpl::send(iovec* iovs, int count)
     int ret = 0;
     uint32_t bytes_sent = 0;
 #ifdef KUMA_HAS_OPENSSL
-    if(SslEnabled()) {
+    if(sslEnabled()) {
         ret = ssl_handler_->send(iovs, count);
         if(ret > 0) {
             bytes_sent = ret;
@@ -565,7 +565,7 @@ int TcpSocketImpl::receive(uint8_t* data, size_t length)
     }
     int ret = 0;
 #ifdef KUMA_HAS_OPENSSL
-    if(SslEnabled()) {
+    if(sslEnabled()) {
         ret = ssl_handler_->receive(data, length);
     } else 
 #endif
@@ -624,7 +624,7 @@ void TcpSocketImpl::onConnect(int err)
     if(0 == err) {
         setState(State::OPEN);
 #ifdef KUMA_HAS_OPENSSL
-        if(SslEnabled()) {
+        if(sslEnabled()) {
             err = startSslHandshake(AS_CLIENT);
             if(KUMA_ERROR_NOERR == err && ssl_handler_->getState() == SslHandler::SslState::SSL_HANDSHAKE) {
                 return; // continue to SSL handshake

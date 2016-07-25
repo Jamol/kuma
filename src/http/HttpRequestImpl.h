@@ -18,20 +18,20 @@
 
 #include "kmdefs.h"
 #include "HttpParserImpl.h"
-#include "TcpSocketImpl.h"
+#include "TcpConnection.h"
 #include "Uri.h"
 #include "IHttpRequest.h"
 #include "util/kmobject.h"
 
 KUMA_NS_BEGIN
 
-class HttpRequestImpl : public KMObject, public IHttpRequest
+class HttpRequestImpl : public KMObject, public IHttpRequest, public TcpConnection
 {
 public:
     HttpRequestImpl(EventLoopImpl* loop);
     ~HttpRequestImpl();
     
-    int setSslFlags(uint32_t ssl_flags) override;
+    int setSslFlags(uint32_t ssl_flags) override { return TcpConnection::setSslFlags(ssl_flags); }
     int sendData(const uint8_t* data, size_t len) override;
     void reset() override; // reset for connection reuse
     int close() override;
@@ -42,10 +42,10 @@ public:
     void forEachHeader(HttpParserImpl::EnumrateCallback cb) override { return http_parser_.forEachHeader(std::move(cb)); }
     
 protected: // callbacks of tcp_socket
-    void onConnect(int err);
-    void onSend(int err);
-    void onReceive(int err);
-    void onClose(int err);
+    void onConnect(int err) override;
+    KMError handleInputData(uint8_t *src, size_t len) override;
+    void onWrite() override;
+    void onError(int err) override;
 
 private:
     int sendRequest() override;
@@ -61,10 +61,6 @@ private:
     
 private:
     HttpParserImpl          http_parser_;
-    
-    std::vector<uint8_t>    send_buffer_;
-    uint32_t                send_offset_ = 0;
-    TcpSocketImpl           tcp_socket_;
     
     bool*                   destroy_flag_ptr_ = nullptr;
 };

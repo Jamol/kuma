@@ -1,8 +1,9 @@
 #include "HttpClient.h"
 
+extern std::string getHttpVersion();
 HttpClient::HttpClient(TestLoop* loop, long conn_id)
 : loop_(loop)
-, http_request_(loop->getEventLoop(), "HTTP/2.0")
+, http_request_(loop->getEventLoop(), getHttpVersion().c_str())
 , total_bytes_read_(0)
 , conn_id_(conn_id)
 {
