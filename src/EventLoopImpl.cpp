@@ -115,21 +115,19 @@ int EventLoopImpl::unregisterFd(SOCKET_FD fd, bool close_fd)
     }
 }
 
-int EventLoopImpl::registerObject(ILoopObject *obj)
+void EventLoopImpl::addListener(Listener *l)
 {
-    objects_.push_back(obj);
-    return KUMA_ERROR_NOERR;
+    listeners_.push_back(l);
 }
 
-int EventLoopImpl::unregisterObject(ILoopObject *obj)
+void EventLoopImpl::removeListener(Listener *l)
 {
-    for (auto it = objects_.begin(); it != objects_.end(); ++it) {
-        if (*it == obj) {
-            objects_.erase(it);
+    for (auto it = listeners_.begin(); it != listeners_.end(); ++it) {
+        if (*it == l) {
+            listeners_.erase(it);
             break;
         }
     }
-    return KUMA_ERROR_NOERR;
 }
 
 void EventLoopImpl::loopOnce(uint32_t max_wait_ms)
@@ -159,10 +157,10 @@ void EventLoopImpl::loop(uint32_t max_wait_ms)
             cb();
         }
     }
-    for (auto obj : objects_) {
-        obj->notifyLoopStopped();
+    for (auto l : listeners_) {
+        l->loopStopped();
     }
-    objects_.clear();
+    listeners_.clear();
     KUMA_INFOTRACE("EventLoop::loop, stopped");
 }
 

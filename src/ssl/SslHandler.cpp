@@ -181,9 +181,9 @@ SslHandler::SslState SslHandler::sslConnect()
         {
             const char* err_str = ERR_reason_error_string(ERR_get_error());
             KUMA_ERRXTRACE("sslConnect, error, fd="<<fd_
-                          <<", ssl_status="<<ret
-                          <<", ssl_err="<<ssl_err
-                          <<", os_err="<<getLastError()
+                           <<", ssl_status="<<ret
+                           <<", ssl_err="<<ssl_err
+                           <<", os_err="<<getLastError()
                            <<", err_msg="<<(err_str?err_str:""));
             SSL_free(ssl_);
             ssl_ = NULL;
@@ -216,9 +216,9 @@ SslHandler::SslState SslHandler::sslAccept()
         {
             const char* err_str = ERR_reason_error_string(ERR_get_error());
             KUMA_ERRXTRACE("sslAccept, error, fd="<<fd_
-                          <<", ssl_status="<<ret
-                          <<", ssl_err="<<ssl_err
-                          <<", os_err="<<getLastError()
+                           <<", ssl_status="<<ret
+                           <<", ssl_err="<<ssl_err
+                           <<", os_err="<<getLastError()
                            <<", err_msg="<<(err_str?err_str:""));
             SSL_free(ssl_);
             ssl_ = NULL;
@@ -246,10 +246,16 @@ int SslHandler::send(const uint8_t* data, size_t size)
         case SSL_ERROR_WANT_WRITE:
             ret = 0;
             break;
+        case SSL_ERROR_SYSCALL:
+            if(errno == EAGAIN || errno == EINTR) {
+                ret = 0;
+                break;
+            }
+            // fallthru to log error
         default:
         {
             const char* err_str = ERR_reason_error_string(ERR_get_error());
-            KUMA_ERRXTRACE( "send, SSL_write failed, fd="<<fd_
+            KUMA_ERRXTRACE("send, SSL_write failed, fd="<<fd_
                            <<", ssl_status="<<ret
                            <<", ssl_err="<<ssl_err
                            <<", errno="<<getLastError()
@@ -300,13 +306,23 @@ int SslHandler::receive(uint8_t* data, size_t size)
         case SSL_ERROR_WANT_WRITE:
             ret = 0;
             break;
+        case SSL_ERROR_ZERO_RETURN:
+            ret = -1;
+            KUMA_INFOXTRACE("receive, SSL_ERROR_ZERO_RETURN");
+            break;
+        case SSL_ERROR_SYSCALL:
+            if(errno == EAGAIN || errno == EINTR) {
+                ret = 0;
+                break;
+            }
+            // fallthru to log error
         default:
         {
             const char* err_str = ERR_reason_error_string(ERR_get_error());
             KUMA_ERRXTRACE("receive, SSL_read failed, fd="<<fd_
-                          <<", ssl_status="<<ret
-                          <<", ssl_err="<<ssl_err
-                          <<", os_err="<<getLastError()
+                           <<", ssl_status="<<ret
+                           <<", ssl_err="<<ssl_err
+                           <<", os_err="<<getLastError()
                            <<", err_msg="<<(err_str?err_str:""));
             ret = -1;
             break;

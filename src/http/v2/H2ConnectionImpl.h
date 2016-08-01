@@ -37,7 +37,7 @@ using namespace hpack;
 
 KUMA_NS_BEGIN
 
-class H2ConnectionImpl : public KMObject, public FrameCallback, public TcpConnection, public ILoopObject
+class H2ConnectionImpl : public KMObject, public FrameCallback, public TcpConnection, public EventLoopImpl::Listener
 {
 public:
     typedef std::function<void(int)> ConnectCallback;
@@ -61,7 +61,7 @@ public:
     H2StreamPtr createStream();
     void removeStream(uint32_t streamId);
     
-    void notifyLoopStopped() override;
+    void loopStopped() override;
     
 public:
     void onFrame(H2Frame *frame) override;

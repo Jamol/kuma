@@ -31,15 +31,16 @@ KUMA_NS_BEGIN
 
 class IOPoll;
 
-class ILoopObject
-{
-public:
-    virtual ~ILoopObject() {}
-    virtual void notifyLoopStopped() = 0;
-};
-
 class EventLoopImpl
 {
+public:
+    class Listener
+    {
+    public:
+        virtual ~Listener() {}
+        virtual void loopStopped() = 0;
+    };
+    
 public:
     EventLoopImpl(PollType poll_type = POLL_TYPE_NONE);
     ~EventLoopImpl();
@@ -51,8 +52,8 @@ public:
     int unregisterFd(SOCKET_FD fd, bool close_fd);
     TimerManagerPtr getTimerMgr() { return timer_mgr_; }
     
-    int registerObject(ILoopObject *obj);
-    int unregisterObject(ILoopObject *obj);
+    void addListener(Listener *l);
+    void removeListener(Listener *l);
     
     PollType getPollType() const;
     bool isPollLT() const; // level trigger
@@ -81,7 +82,7 @@ private:
     
     TimerManagerPtr timer_mgr_;
     
-    std::list<ILoopObject*> objects_;
+    std::list<Listener*> listeners_;
 };
 
 KUMA_NS_END

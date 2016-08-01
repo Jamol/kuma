@@ -374,8 +374,11 @@ int TcpSocketImpl::startSslHandshake(SslRole ssl_role)
     if(ret != KUMA_ERROR_NOERR) {
         return ret;
     }
-    if (ssl_role == SslRole::AS_CLIENT && !alpn_protos_.empty()) {
-        ssl_handler_->setAlpnProtocols(alpn_protos_);
+    if (ssl_role == SslRole::AS_CLIENT) {
+        if (!alpn_protos_.empty()) {
+            ssl_handler_->setAlpnProtocols(alpn_protos_);
+        }
+        //SSL_set_tlsext_host_name(ssl_handler_->getSsl(), host_);
     }
     ssl_flags_ |= SSL_ENABLE;
     SslHandler::SslState ssl_state = ssl_handler_->doSslHandshake();

@@ -27,6 +27,7 @@
 using namespace kuma;
 
 bool OpenSslLib::initialized_ = false;
+std::once_flag OpenSslLib::once_flag_init_;
 std::string OpenSslLib::certs_path_;
 SSL_CTX* OpenSslLib::ssl_ctx_client_ = nullptr;
 std::once_flag OpenSslLib::once_flag_client_;
@@ -43,7 +44,17 @@ bool OpenSslLib::init(const char* path)
     if (initialized_) {
         return true;
     }
-    if(!path) {
+    std::string str(path);
+    bool ret = true; //
+    std::call_once(once_flag_init_, [=, &ret]{
+        ret = init(str);
+    });
+    return ret;
+}
+
+bool OpenSslLib::init(const std::string &path)
+{
+    if(path.empty()) {
         certs_path_ = getCurrentModulePath();
     } else {
         certs_path_ = path;
@@ -54,13 +65,15 @@ bool OpenSslLib::init(const char* path)
         }
     }
     
-    SSL_library_init();
-    //OpenSSL_add_all_algorithms();
-    SSL_load_error_strings();
-    
     ssl_locks_ = new std::mutex[CRYPTO_num_locks()];
     CRYPTO_set_id_callback(threadIdCallback);
     CRYPTO_set_locking_callback(lockingCallback);
+    
+    if (SSL_library_init() != 1) {
+        return false;
+    }
+    //OpenSSL_add_all_algorithms();
+    SSL_load_error_strings();
     
     // PRNG
     RAND_poll();
@@ -89,7 +102,8 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
         }
 #endif
         
-        long flags = SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_COMPRESSION;
+        long flags = SSL_OP_ALL | SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1;
+        flags |= SSL_OP_NO_COMPRESSION;
         // SSL_OP_SAFARI_ECDHE_ECDSA_BUG
         SSL_CTX_set_options(ssl_ctx, flags);
         SSL_CTX_set_mode(ssl_ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
@@ -119,6 +133,7 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
                 KUMA_WARNTRACE("SSL_CTX_use_certificate_chain_file failed, file="<<certFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
                 break;
             }
+            SSL_CTX_set_default_passwd_cb(ssl_ctx, passwdCallback);
             if(SSL_CTX_use_PrivateKey_file(ssl_ctx, keyFile.c_str(), SSL_FILETYPE_PEM) != 1) {
                 KUMA_WARNTRACE("SSL_CTX_use_PrivateKey_file failed, file="<<keyFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
                 break;
@@ -291,6 +306,12 @@ int OpenSslLib::alpnCallback(SSL *ssl, const unsigned char **out, unsigned char 
         return SSL_TLSEXT_ERR_NOACK;
     }
     return SSL_TLSEXT_ERR_OK;
+}
+
+int OpenSslLib::passwdCallback(char *buf, int size, int rwflag, void *userdata)
+{
+    //if(size < (int)strlen(pass)+1) return 0;
+    return 0;
 }
 
 #endif // KUMA_HAS_OPENSSL

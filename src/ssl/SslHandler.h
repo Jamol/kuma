@@ -52,6 +52,7 @@ public:
     int close();
     
     bool isServer() { return is_server_; }
+    SSL* getSsl() { return ssl_; }
     
     SslState getState() { return state_; }
     

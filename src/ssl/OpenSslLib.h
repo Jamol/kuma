@@ -43,16 +43,19 @@ public:
     static unsigned long threadIdCallback(void);
     static void lockingCallback(int mode, int n, const char *file, int line);
     static int alpnCallback(SSL *ssl, const unsigned char **out, unsigned char *outlen, const unsigned char *_in, unsigned int inlen, void *_protocols);
+    static int passwdCallback(char *buf, int size, int rwflag, void *userdata);
     
     static SSL_CTX* getClientContext();
     static SSL_CTX* getServerContext();
     
 private:
+    static bool init(const std::string &path);
     static SSL_CTX* createSSLContext(const SSL_METHOD *method, const std::string &ca, const std::string &cert, const std::string &key, bool clientMode);
     
 protected:
     using SSL_CTX_ptr = std::unique_ptr<SSL_CTX, decltype(&::SSL_CTX_free)>;
     static bool             initialized_;
+    static std::once_flag   once_flag_init_;
     static std::string      certs_path_;
     static SSL_CTX*         ssl_ctx_client_;
     static std::once_flag   once_flag_client_;

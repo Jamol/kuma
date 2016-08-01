@@ -75,7 +75,7 @@ int H2ConnectionImpl::connect(const std::string &host, uint16_t port, ConnectCal
         return KUMA_ERROR_INVALID_STATE;
     }
     connect_cb_ = std::move(cb);
-    tcp_.getEventLoop()->registerObject(this);
+    tcp_.getEventLoop()->addListener(this);
     registeredToLoop = true;
     return connect_i(host, port);
 }
@@ -141,7 +141,7 @@ int H2ConnectionImpl::close()
     KUMA_INFOXTRACE("close");
     if (registeredToLoop) {
         registeredToLoop = false;
-        tcp_.getEventLoop()->unregisterObject(this);
+        tcp_.getEventLoop()->removeListener(this);
     }
     cleanup();
     return KUMA_ERROR_NOERR;
@@ -333,7 +333,7 @@ KMError H2ConnectionImpl::handleInputData(uint8_t *buf, size_t len)
         httpParser_.parse((char*)buf, (uint32_t)len);
     } else if (getState() == State::HANDSHAKE) {
         if (isServer()) {
-            size_t cmpSize = cmpPreface_.size() >= len ? len : cmpPreface_.size();
+            size_t cmpSize = std::min(cmpPreface_.size(), len);
             if (memcmp(cmpPreface_.c_str(), buf, cmpSize) != 0) {
                 cleanup();
                 setState(State::CLOSED);
@@ -459,7 +459,7 @@ void H2ConnectionImpl::removeStream(uint32_t streamId)
     }
 }
 
-void H2ConnectionImpl::notifyLoopStopped()
+void H2ConnectionImpl::loopStopped()
 {
     cleanup();
     registeredToLoop = false;
@@ -585,7 +585,7 @@ void H2ConnectionImpl::onError(int err)
     KUMA_INFOXTRACE("onError, err="<<err);
     if (registeredToLoop) {
         registeredToLoop = false;
-        tcp_.getEventLoop()->unregisterObject(this);
+        tcp_.getEventLoop()->removeListener(this);
     }
     cleanup();
 }
