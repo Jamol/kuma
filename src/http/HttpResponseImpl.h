@@ -22,10 +22,11 @@
 #include "TcpConnection.h"
 #include "Uri.h"
 #include "util/kmobject.h"
+#include "util/DestroyDetector.h"
 
 KUMA_NS_BEGIN
 
-class HttpResponseImpl : public KMObject, public TcpConnection
+class HttpResponseImpl : public KMObject, public DestroyDetector, public TcpConnection
 {
 public:
     typedef std::function<void(uint8_t*, size_t)> DataCallback;
@@ -101,8 +102,6 @@ private:
     HttpEventCallback       header_cb_;
     HttpEventCallback       request_cb_;
     HttpEventCallback       response_cb_;
-    
-    bool*                   destroy_flag_ptr_ = nullptr;
 };
 
 KUMA_NS_END

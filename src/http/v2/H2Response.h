@@ -27,6 +27,12 @@
 
 KUMA_NS_BEGIN
 
+class H2Response : public KMObject
+{
+public:
+    H2Response();
+};
+
 KUMA_NS_END
 
 #endif /* __H2Response_H__ */

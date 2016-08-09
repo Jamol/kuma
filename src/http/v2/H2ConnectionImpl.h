@@ -30,6 +30,7 @@
 #include "TcpConnection.h"
 #include "http/HttpParserImpl.h"
 #include "EventLoopImpl.h"
+#include "util/DestroyDetector.h"
 
 #include <map>
 
@@ -37,7 +38,7 @@ using namespace hpack;
 
 KUMA_NS_BEGIN
 
-class H2ConnectionImpl : public KMObject, public FrameCallback, public TcpConnection, public EventLoopImpl::Listener
+class H2ConnectionImpl : public KMObject, public DestroyDetector, public FrameCallback, public TcpConnection, public EventLoopImpl::Listener
 {
 public:
     typedef std::function<void(int)> ConnectCallback;
@@ -116,6 +117,8 @@ private:
     void onStateOpen();
     void cleanup();
     
+    void onConnectError(int err);
+    
 private:
     State state_ = State::IDLE;
     ConnectCallback connect_cb_; // client only
@@ -137,8 +140,6 @@ private:
     uint32_t nextStreamId_ = 0;
     
     bool registeredToLoop = false;
-    
-    bool* destroy_flag_ptr_ = nullptr;
 };
 
 using H2ConnectionPtr = std::shared_ptr<H2ConnectionImpl>;

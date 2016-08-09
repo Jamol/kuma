@@ -18,11 +18,12 @@
 
 #include "kmdefs.h"
 #include "http/HttpParserImpl.h"
+#include "util/DestroyDetector.h"
 #include <vector>
 
 KUMA_NS_BEGIN
 
-class WSHandler
+class WSHandler : public DestroyDetector
 {
 public:
     typedef enum{
@@ -41,7 +42,7 @@ public:
         WS_ERROR_INVALID_FRAME,
         WS_ERROR_INVALID_LENGTH,
         WS_ERROR_CLOSED,
-        WS_ERROR_DESTROY
+        WS_ERROR_DESTROYED
     }WSError;
     typedef std::function<void(uint8_t*, size_t)> DataCallback;
     typedef std::function<void(int)> HandshakeCallback;
@@ -128,16 +129,14 @@ private:
         STATE_ERROR,
         STATE_DESTROY
     }State;
-    State                   state_;
+    State                   state_ = STATE_HANDSHAKE;
     DecodeContext           ctx_;
-    uint8_t                 opcode_;
+    uint8_t                 opcode_ = WS_OPCODE_BINARY;
     
     HttpParserImpl          http_parser_;
     
     DataCallback            data_cb_;
     HandshakeCallback       handshake_cb_;
-    
-    bool*                   destroy_flag_ptr_;
 };
 
 KUMA_NS_END

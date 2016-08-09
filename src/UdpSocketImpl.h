@@ -19,6 +19,7 @@
 #include "kmdefs.h"
 #include "evdefs.h"
 #include "util/kmobject.h"
+#include "util/DestroyDetector.h"
 #include <stdint.h>
 #ifdef KUMA_OS_WIN
 # include <Ws2tcpip.h>
@@ -30,7 +31,7 @@ KUMA_NS_BEGIN
 
 class EventLoopImpl;
 
-class UdpSocketImpl : public KMObject
+class UdpSocketImpl : public KMObject, public DestroyDetector
 {
 public:
     typedef std::function<void(int)> EventCallback;
@@ -72,8 +73,6 @@ private:
     uint16_t            mcast_port_;
     struct ip_mreq      mcast_req_v4_;
     struct ipv6_mreq    mcast_req_v6_;
-    
-    bool*           destroy_flag_ptr_ = nullptr;
 };
 
 KUMA_NS_END

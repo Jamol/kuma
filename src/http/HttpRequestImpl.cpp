@@ -31,9 +31,7 @@ HttpRequestImpl::HttpRequestImpl(EventLoopImpl* loop)
 
 HttpRequestImpl::~HttpRequestImpl()
 {
-    if(destroy_flag_ptr_) {
-        *destroy_flag_ptr_ = true;
-    }
+    
 }
 
 void HttpRequestImpl::cleanup()
@@ -214,14 +212,9 @@ void HttpRequestImpl::onConnect(int err)
 
 KMError HttpRequestImpl::handleInputData(uint8_t *src, size_t len)
 {
-    bool destroyed = false;
-    KUMA_ASSERT(nullptr == destroy_flag_ptr_);
-    destroy_flag_ptr_ = &destroyed;
+    DESTROY_DETECTOR_SETUP();
     int bytes_used = http_parser_.parse((char*)src, len);
-    if(destroyed) {
-        return KUMA_ERROR_DESTROYED;
-    }
-    destroy_flag_ptr_ = nullptr;
+    DESTROY_DETECTOR_CHECK(KUMA_ERROR_DESTROYED);
     if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
         return KUMA_ERROR_FAILED;
     }
@@ -254,14 +247,9 @@ void HttpRequestImpl::onError(int err)
 {
     KUMA_INFOXTRACE("onError, err="<<err);
     if (getState() == State::RECVING_RESPONSE) {
-        bool destroyed = false;
-        KUMA_ASSERT(nullptr == destroy_flag_ptr_);
-        destroy_flag_ptr_ = &destroyed;
+        DESTROY_DETECTOR_SETUP();
         bool completed = http_parser_.setEOF();
-        if(destroyed) {
-            return;
-        }
-        destroy_flag_ptr_ = nullptr;
+        DESTROY_DETECTOR_CHECK();
         if(completed) {
             cleanup();
             return;

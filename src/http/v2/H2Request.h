@@ -26,10 +26,11 @@
 #include "H2ConnectionImpl.h"
 #include "http/IHttpRequest.h"
 #include "util/kmobject.h"
+#include "util/DestroyDetector.h"
 
 KUMA_NS_BEGIN
 
-class H2Request : public KMObject, public IHttpRequest
+class H2Request : public KMObject, public DestroyDetector, public IHttpRequest
 {
 public:
     H2Request(EventLoopImpl* loop);
@@ -66,8 +67,6 @@ private:
     HeaderMap rsp_headers_;
     
     std::string connKey_;
-    
-    bool* destroy_flag_ptr_ = nullptr;
 };
 
 KUMA_NS_END

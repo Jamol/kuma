@@ -36,9 +36,7 @@ H2Request::H2Request(EventLoopImpl* loop)
 
 H2Request::~H2Request()
 {
-    if(destroy_flag_ptr_) {
-        *destroy_flag_ptr_ = true;
-    }
+    
 }
 
 int H2Request::setSslFlags(uint32_t ssl_flags)
@@ -194,14 +192,9 @@ void H2Request::onHeaders(const HeaderVector &headers, bool endSteam)
     for (size_t i = 1; i < headers.size(); ++i) {
         rsp_headers_.emplace(headers[i].first, headers[i].second);
     }
-    bool destroyed = false;
-    KUMA_ASSERT(nullptr == destroy_flag_ptr_);
-    destroy_flag_ptr_ = &destroyed;
+    DESTROY_DETECTOR_SETUP();
     if (header_cb_) header_cb_();
-    if(destroyed) {
-        return ;
-    }
-    destroy_flag_ptr_ = nullptr;
+    DESTROY_DETECTOR_CHECK();
     if (endSteam) {
         setState(State::COMPLETE);
         if (response_cb_) response_cb_();
@@ -210,14 +203,9 @@ void H2Request::onHeaders(const HeaderVector &headers, bool endSteam)
 
 void H2Request::onData(uint8_t *data, size_t len, bool endSteam)
 {
-    bool destroyed = false;
-    KUMA_ASSERT(nullptr == destroy_flag_ptr_);
-    destroy_flag_ptr_ = &destroyed;
+    DESTROY_DETECTOR_SETUP();
     if (data_cb_ && len > 0) data_cb_(data, len);
-    if(destroyed) {
-        return ;
-    }
-    destroy_flag_ptr_ = nullptr;
+    DESTROY_DETECTOR_CHECK();
     
     if (endSteam && response_cb_) {
         setState(State::COMPLETE);

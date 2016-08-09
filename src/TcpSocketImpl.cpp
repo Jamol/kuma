@@ -76,9 +76,6 @@ TcpSocketImpl::TcpSocketImpl(EventLoopImpl* loop)
 
 TcpSocketImpl::~TcpSocketImpl()
 {
-    if(destroy_flag_ptr_) {
-        *destroy_flag_ptr_ = true;
-    }
     cleanup();
 }
 
@@ -676,13 +673,9 @@ void TcpSocketImpl::ioReady(uint32_t events)
                               <<", err="<<getLastError()<<", state="<<getState());
                 onConnect(KUMA_ERROR_POLLERR);
             } else {
-                bool destroyed = false;
-                destroy_flag_ptr_ = &destroyed;
+                DESTROY_DETECTOR_SETUP();
                 onConnect(KUMA_ERROR_NOERR);
-                if(destroyed) {
-                    return ;
-                }
-                destroy_flag_ptr_ = nullptr;
+                DESTROY_DETECTOR_CHECK();
                 if((events & KUMA_EV_READ)) {
                     onReceive(0);
                 }
@@ -718,15 +711,11 @@ void TcpSocketImpl::ioReady(uint32_t events)
                 }
             }
 #endif
-            bool destroyed = false;
-            destroy_flag_ptr_ = &destroyed;
+            DESTROY_DETECTOR_SETUP();
             if(events & KUMA_EV_READ) {// handle EPOLLIN firstly
                 onReceive(0);
             }
-            if(destroyed) {
-                return;
-            }
-            destroy_flag_ptr_ = nullptr;
+            DESTROY_DETECTOR_CHECK();
             if((events & KUMA_EV_ERROR) && getState() == State::OPEN) {
                 KUMA_ERRXTRACE("ioReady, KUMA_EV_ERROR, events="<<events
                               <<", err="<<getLastError()<<", state="<<getState());

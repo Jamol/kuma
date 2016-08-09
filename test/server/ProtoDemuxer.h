@@ -35,7 +35,7 @@ private:
     
     TcpSocket       tcp_;
     HttpParser      http_parser_;
-    bool*           destroy_flag_ptr_;
+    bool*           destroy_flag_ptr_ = nullptr;
 };
 
 #endif

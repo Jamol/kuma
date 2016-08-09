@@ -13,7 +13,6 @@ ProtoDemuxer::ProtoDemuxer(TestLoop* loop, long conn_id)
 : loop_(loop)
 , conn_id_(conn_id)
 , tcp_(loop->getEventLoop())
-, destroy_flag_ptr_(nullptr)
 {
     
 }

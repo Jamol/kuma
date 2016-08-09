@@ -64,7 +64,6 @@ HttpParserImpl::HttpParserImpl()
 , chunk_bytes_read_(0)
 , total_bytes_read_(0)
 , status_code_(0)
-, destroy_flag_ptr_(nullptr)
 {
     
 }
@@ -181,9 +180,6 @@ HttpParserImpl::~HttpParserImpl()
 {
     param_map_.clear();
     header_map_.clear();
-    if(destroy_flag_ptr_) {
-        *destroy_flag_ptr_ = true;
-    }
 }
 
 void HttpParserImpl::reset()
@@ -277,7 +273,7 @@ int HttpParserImpl::parse(const char* data, size_t len)
     const char* end = data + len;
     ParseState parse_state = parseHttp(pos, end);
     int parsed_len = (int)(pos - data);
-    if(PARSE_STATE_DESTROY == parse_state) {
+    if(PARSE_STATE_DESTROYED == parse_state) {
         return parsed_len;
     }
     if(PARSE_STATE_ERROR == parse_state && event_cb_) {
@@ -377,14 +373,9 @@ HttpParserImpl::ParseState HttpParserImpl::parseHttp(const char*& cur_pos, const
                 cur_pos += notify_len;
                 total_bytes_read_ = content_length_;
                 read_state_ = HTTP_READ_DONE;
-                KUMA_ASSERT(!destroy_flag_ptr_);
-                bool destroyed = false;
-                destroy_flag_ptr_ = &destroyed;
+                DESTROY_DETECTOR_SETUP();
                 if(data_cb_) data_cb_(notify_data, notify_len);
-                if(destroyed) {
-                    return PARSE_STATE_DESTROY;
-                }
-                destroy_flag_ptr_ = nullptr;
+                DESTROY_DETECTOR_CHECK(PARSE_STATE_DESTROYED);
                 onComplete();
                 return PARSE_STATE_DONE;
             }
@@ -514,13 +505,9 @@ HttpParserImpl::ParseState HttpParserImpl::parseChunk(const char*& cur_pos, cons
                     chunk_bytes_read_ = chunk_size_ = 0; // reset
                     chunk_state_ = CHUNK_READ_DATA_CR;
                     cur_pos += notify_len;
-                    bool destroyed = false;
-                    destroy_flag_ptr_ = &destroyed;
+                    DESTROY_DETECTOR_SETUP();
                     if(data_cb_) data_cb_(notify_data, notify_len);
-                    if(destroyed) {
-                        return PARSE_STATE_DESTROY;
-                    }
-                    destroy_flag_ptr_ = nullptr;
+                    DESTROY_DETECTOR_CHECK(PARSE_STATE_DESTROYED);
                 } else {// need more data
                     const char* notify_data = cur_pos;
                     total_bytes_read_ += cur_len;

@@ -19,6 +19,7 @@
 #include "kmdefs.h"
 #include "httpdefs.h"
 #include "util/util.h"
+#include "util/DestroyDetector.h"
 #include <string>
 #include <map>
 #include <vector>
@@ -26,7 +27,7 @@
 
 KUMA_NS_BEGIN
 
-class HttpParserImpl
+class HttpParserImpl : public DestroyDetector
 {
 public:
     typedef std::function<void(const char*, size_t)> DataCallback;
@@ -74,7 +75,7 @@ private:
         PARSE_STATE_CONTINUE,
         PARSE_STATE_DONE,
         PARSE_STATE_ERROR,
-        PARSE_STATE_DESTROY
+        PARSE_STATE_DESTROYED
     }ParseState;
     
 private:
@@ -131,8 +132,6 @@ private:
     
     // response
     int                 status_code_;
-    
-    bool*               destroy_flag_ptr_;
 };
 
 KUMA_NS_END

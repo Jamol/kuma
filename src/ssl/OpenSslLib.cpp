@@ -44,9 +44,9 @@ bool OpenSslLib::init(const char* path)
     if (initialized_) {
         return true;
     }
-    std::string str(path);
+    std::string str(path?path:"");
     bool ret = true; //
-    std::call_once(once_flag_init_, [=, &ret]{
+    std::call_once(once_flag_init_, [&str, &ret]{
         ret = init(str);
     });
     return ret;

@@ -31,9 +31,6 @@ using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
 WSHandler::WSHandler()
-: state_(STATE_HANDSHAKE)
-, opcode_(WS_OPCODE_BINARY)
-, destroy_flag_ptr_(nullptr)
 {
     http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
@@ -41,9 +38,7 @@ WSHandler::WSHandler()
 
 WSHandler::~WSHandler()
 {
-    if(destroy_flag_ptr_) {
-        *destroy_flag_ptr_ = true;
-    }
+    
 }
 
 void WSHandler::cleanup()
@@ -195,14 +190,9 @@ WSHandler::WSError WSHandler::handleData(uint8_t* data, size_t len)
         return decodeFrame(data, len);
     }
     if(state_ == STATE_HANDSHAKE) {
-        bool destroyed = false;
-        KUMA_ASSERT(nullptr == destroy_flag_ptr_);
-        destroy_flag_ptr_ = &destroyed;
+        DESTROY_DETECTOR_SETUP();
         int bytes_used = http_parser_.parse((char*)data, len);
-        if(destroyed) {
-            return WS_ERROR_DESTROY;
-        }
-        destroy_flag_ptr_ = nullptr;
+        DESTROY_DETECTOR_CHECK(WS_ERROR_DESTROYED);
         if(state_ == STATE_ERROR) {
             return WS_ERROR_HANDSHAKE;
         }
@@ -371,14 +361,9 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                     uint32_t notify_len = ctx_.hdr.length;
                     pos += notify_len;
                     handleDataMask(ctx_.hdr, notify_data, notify_len);
-                    KUMA_ASSERT(!destroy_flag_ptr_);
-                    bool destroyed = false;
-                    destroy_flag_ptr_ = &destroyed;
+                    DESTROY_DETECTOR_SETUP();
                     if(data_cb_) data_cb_(notify_data, notify_len);
-                    if(destroyed) {
-                        return WS_ERROR_DESTROY;
-                    }
-                    destroy_flag_ptr_ = nullptr;
+                    DESTROY_DETECTOR_CHECK(WS_ERROR_DESTROYED);
                     ctx_.reset();
                 } else if(len-pos+ctx_.buf.size() >= ctx_.hdr.length) {
                     auto buf_size = ctx_.buf.size();
@@ -389,14 +374,9 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                     uint32_t notify_len = ctx_.hdr.length;
                     pos += read_len;
                     handleDataMask(ctx_.hdr, notify_data, notify_len);
-                    KUMA_ASSERT(!destroy_flag_ptr_);
-                    bool destroyed = false;
-                    destroy_flag_ptr_ = &destroyed;
+                    DESTROY_DETECTOR_SETUP();
                     if(data_cb_) data_cb_(notify_data, notify_len);
-                    if(destroyed) {
-                        return WS_ERROR_DESTROY;
-                    }
-                    destroy_flag_ptr_ = nullptr;
+                    DESTROY_DETECTOR_CHECK(WS_ERROR_DESTROYED);
                     ctx_.reset();
                 } else {
                     auto buf_size = ctx_.buf.size();

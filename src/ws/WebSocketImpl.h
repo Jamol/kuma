@@ -21,10 +21,11 @@
 #include "TcpSocketImpl.h"
 #include "TcpConnection.h"
 #include "http/Uri.h"
+#include "util/DestroyDetector.h"
 
 KUMA_NS_BEGIN
 
-class WebSocketImpl : public KMObject, public TcpConnection
+class WebSocketImpl : public KMObject, public DestroyDetector, public TcpConnection
 {
 public:
     typedef std::function<void(uint8_t*, size_t)> DataCallback;
@@ -85,8 +86,6 @@ private:
     EventCallback           connect_cb_;
     EventCallback           write_cb_;
     EventCallback           error_cb_;
-    
-    bool*                   destroy_flag_ptr_ = nullptr;
 };
 
 KUMA_NS_END

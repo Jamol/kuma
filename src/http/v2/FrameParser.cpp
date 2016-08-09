@@ -32,9 +32,7 @@ FrameParser::FrameParser(FrameCallback *cb)
 
 FrameParser::~FrameParser()
 {
-    if (destroy_flag_ptr_) {
-        *destroy_flag_ptr_ = true;
-    }
+    
 }
 
 FrameParser::ParseState FrameParser::parseInputData(const uint8_t *data, size_t size)
@@ -144,8 +142,7 @@ bool FrameParser::handleFrame(const FrameHeader &hdr, const uint8_t *payload)
     }
     
     if (frame && cb_) {
-        bool destroyed = false;
-        destroy_flag_ptr_ = &destroyed;
+        DESTROY_DETECTOR_SETUP();
         
         H2Error err = frame->decode(hdr, payload);
         if (err == H2Error::H2_NO_ERROR) {
@@ -154,10 +151,7 @@ bool FrameParser::handleFrame(const FrameHeader &hdr, const uint8_t *payload)
             cb_->onFrameError(hdr, err);
         }
       
-        if (destroyed) {
-            return false;
-        }
-        destroy_flag_ptr_ = nullptr;
+        DESTROY_DETECTOR_CHECK(false);
     }
 
     return true;

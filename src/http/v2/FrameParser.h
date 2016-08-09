@@ -27,6 +27,7 @@
 #include <vector>
 
 #include "H2Frame.h"
+#include "util/DestroyDetector.h"
 
 KUMA_NS_BEGIN
 
@@ -37,7 +38,7 @@ public:
     virtual void onFrameError(const FrameHeader &hdr, H2Error err) = 0;
 };
 
-class FrameParser
+class FrameParser : public DestroyDetector
 {
 public:
 	FrameParser(FrameCallback *cb);
@@ -78,8 +79,6 @@ private:
     GoawayFrame goawayFrame_;
     WindowUpdateFrame windowFrame_;
     ContinuationFrame continuationFrame_;
-    
-    bool *destroy_flag_ptr_ = nullptr;
 };
 
 KUMA_NS_END

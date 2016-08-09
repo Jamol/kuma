@@ -74,9 +74,6 @@ UdpSocketImpl::UdpSocketImpl(EventLoopImpl* loop)
 
 UdpSocketImpl::~UdpSocketImpl()
 {
-    if(destroy_flag_ptr_) {
-        *destroy_flag_ptr_ = true;
-    }
     cleanup();
 }
 
@@ -477,16 +474,11 @@ void UdpSocketImpl::onClose(int err)
 
 void UdpSocketImpl::ioReady(uint32_t events)
 {
-    
-    bool destroyed = false;
-    destroy_flag_ptr_ = &destroyed;
+    DESTROY_DETECTOR_SETUP();
     if(events & KUMA_EV_READ) {// handle EPOLLIN firstly
         onReceive(0);
     }
-    if(destroyed) {
-        return;
-    }
-    destroy_flag_ptr_ = nullptr;
+    DESTROY_DETECTOR_CHECK();
     if((events & KUMA_EV_ERROR) && fd_ != INVALID_FD) {
         KUMA_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events="<<events
                        <<", err="<<getLastError());

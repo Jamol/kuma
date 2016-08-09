@@ -30,9 +30,7 @@ WebSocketImpl::WebSocketImpl(EventLoopImpl* loop)
 
 WebSocketImpl::~WebSocketImpl()
 {
-    if(destroy_flag_ptr_) {
-        *destroy_flag_ptr_ = true;
-    }
+    
 }
 
 void WebSocketImpl::cleanup()
@@ -134,14 +132,9 @@ int WebSocketImpl::close()
 KMError WebSocketImpl::handleInputData(uint8_t *src, size_t len)
 {
     if (getState() == State::OPEN || getState() == State::UPGRADING) {
-        bool destroyed = false;
-        KUMA_ASSERT(nullptr == destroy_flag_ptr_);
-        destroy_flag_ptr_ = &destroyed;
+        DESTROY_DETECTOR_SETUP();
         WSHandler::WSError err = ws_handler_.handleData(src, len);
-        if(destroyed) {
-            return KUMA_ERROR_DESTROYED;
-        }
-        destroy_flag_ptr_ = nullptr;
+        DESTROY_DETECTOR_CHECK(KUMA_ERROR_DESTROYED);
         if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
             return KUMA_ERROR_INVALID_STATE;
         }

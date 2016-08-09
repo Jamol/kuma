@@ -45,9 +45,6 @@ H2ConnectionImpl::H2ConnectionImpl(EventLoopImpl* loop)
 H2ConnectionImpl::~H2ConnectionImpl()
 {
     KUMA_INFOXTRACE("~H2Connection");
-    if(destroy_flag_ptr_) {
-        *destroy_flag_ptr_ = true;
-    }
 }
 
 void H2ConnectionImpl::cleanup()
@@ -357,14 +354,9 @@ KMError H2ConnectionImpl::handleInputData(uint8_t *buf, size_t len)
 
 KMError H2ConnectionImpl::parseInputData(const uint8_t *buf, size_t len)
 {
-    bool destroyed = false;
-    KUMA_ASSERT(nullptr == destroy_flag_ptr_);
-    destroy_flag_ptr_ = &destroyed;
+    DESTROY_DETECTOR_SETUP();
     auto parseState = frameParser_.parseInputData(buf, len);
-    if(destroyed) {
-        return KUMA_ERROR_DESTROYED;
-    }
-    destroy_flag_ptr_ = nullptr;
+    DESTROY_DETECTOR_CHECK(KUMA_ERROR_DESTROYED);
     if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
         return KUMA_ERROR_INVALID_STATE;
     }
@@ -555,10 +547,7 @@ void H2ConnectionImpl::sendPreface()
 void H2ConnectionImpl::onConnect(int err)
 {
     if(err != KUMA_ERROR_NOERR) {
-        cleanup();
-        setState(State::IN_ERROR);
-        auto connect_cb(std::move(connect_cb_));
-        if (connect_cb) connect_cb(err);
+        onConnectError(err);
         return ;
     }
     if (sslEnabled()) {
@@ -590,6 +579,14 @@ void H2ConnectionImpl::onError(int err)
     cleanup();
 }
 
+void H2ConnectionImpl::onConnectError(int err)
+{
+    cleanup();
+    setState(State::IN_ERROR);
+    auto connect_cb(std::move(connect_cb_));
+    if (connect_cb) connect_cb(err);
+}
+
 void H2ConnectionImpl::onHttpData(const char* data, size_t len)
 {
     KUMA_ERRXTRACE("onHttpData, len="<<len);
@@ -616,6 +613,7 @@ void H2ConnectionImpl::onHttpEvent(HttpEvent ev)
             
         case HTTP_ERROR:
             setState(State::IN_ERROR);
+            onConnectError(KUMA_ERROR_FAILED);
             break;
     }
 }
@@ -652,10 +650,14 @@ int H2ConnectionImpl::handleUpgradeResponse()
     if(101 == httpParser_.getStatusCode() &&
        is_equal(httpParser_.getHeaderValue("Connection"), "Upgrade")) {
         sendPreface();
+        if (send_buffer_.empty()) {
+            onStateOpen();
+        }
         return KUMA_ERROR_NOERR;
     } else {
         setState(State::IN_ERROR);
         KUMA_INFOXTRACE("handleResponse, invalid status code: "<<httpParser_.getStatusCode());
+        onConnectError(KUMA_ERROR_INVALID_PROTO);
         return KUMA_ERROR_INVALID_PROTO;
     }
 }
