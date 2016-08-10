@@ -24,6 +24,7 @@
 
 #include <string>
 #include <vector>
+#include <functional>
 
 #include "HPackTable.h"
 
@@ -32,27 +33,31 @@ namespace hpack {
 class HPacker
 {
 public:
+    enum class IndexingType {
+        NONE, // not index
+        NAME, // index name only
+        ALL   // index name and value
+    };
+    
     using KeyValuePair = HPackTable::KeyValuePair;
     using KeyValueVector = std::vector<KeyValuePair>;
+    using IndexingTypeCallback = std::function<IndexingType (const std::string&, const std::string&)>;
     
 public:
     int encode(const KeyValueVector &headers, uint8_t *buf, size_t len);
     int decode(const uint8_t *buf, size_t len, KeyValueVector &headers);
     void setMaxTableSize(size_t maxSize) { table_.setMaxSize(maxSize); }
+    void setIndexingTypeCallback(IndexingTypeCallback cb) { query_cb_ = std::move(cb); }
     
 private:
     int encodeHeader(const std::string &name, const std::string &value, uint8_t *buf, size_t len);
     int encodeSizeUpdate(int sz, uint8_t *buf, size_t len);
 
-    enum class IndexingType {
-        NONE,
-        NAME,
-        ALL
-    };
-    IndexingType getIndexingType(const std::string &name);
+    IndexingType getIndexingType(const std::string &name, const std::string &value);
     
 private:
     HPackTable table_;
+    IndexingTypeCallback query_cb_;
     bool updateTableSize_ = true;
 };
 

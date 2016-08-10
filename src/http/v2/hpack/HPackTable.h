@@ -22,7 +22,6 @@
 #ifndef __HPackTable_H__
 #define __HPackTable_H__
 
-#include "kmdefs.h"
 #include <string>
 #include <deque>
 #include <map>
@@ -37,7 +36,7 @@ public:
 public:
     HPackTable();
     void setMode(bool isEncoder) { isEncoder_ = isEncoder; }
-    void setMaxSize(size_t maxSize) { maxSize_ = maxSize; }
+    void setMaxSize(size_t maxSize);
     void updateLimitSize(size_t limitSize);
     int  getIndex(const std::string &name, const std::string &value, bool &valueIndexed);
     bool getIndexedName(int index, std::string &name);

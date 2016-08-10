@@ -77,6 +77,14 @@ bool HPackTable::addHeader(const std::string &name, const std::string &value)
     return true;
 }
 
+void HPackTable::setMaxSize(size_t maxSize)
+{
+    maxSize_ = maxSize;
+    if (limitSize_ > maxSize_) {
+        updateLimitSize(maxSize_);
+    }
+}
+
 void HPackTable::updateLimitSize(size_t limitSize)
 {
     if (tableSize_ > limitSize) {

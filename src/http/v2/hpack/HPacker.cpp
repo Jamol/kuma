@@ -260,8 +260,11 @@ static int decodePrefix(const uint8_t *buf, size_t len, PrefixType &type, uint64
     return int(ptr - buf);
 }
 
-HPacker::IndexingType HPacker::getIndexingType(const std::string &name)
+HPacker::IndexingType HPacker::getIndexingType(const std::string &name, const std::string &value)
 {
+    if (query_cb_) {
+        return query_cb_(name, value);
+    }
     if (name == "cookie" || name == ":authority" || name == "user-agent" || name == "pragma") {
         return IndexingType::ALL;
     }
@@ -295,7 +298,7 @@ int HPacker::encodeHeader(const std::string &name, const std::string &value, uin
             *ptr = 0x80;
             N = 7;
         } else { // name indexed
-            IndexingType idxType = getIndexingType(name);
+            IndexingType idxType = getIndexingType(name, value);
             if (idxType == IndexingType::ALL) {
                 *ptr = 0x40;
                 N = 6;
@@ -319,7 +322,7 @@ int HPacker::encodeHeader(const std::string &name, const std::string &value, uin
             ptr += ret;
         }
     } else {
-        IndexingType idxType = getIndexingType(name);
+        IndexingType idxType = getIndexingType(name, value);
         if (idxType == IndexingType::ALL) {
             *ptr++ = 0x40;
             addToTable = true;
