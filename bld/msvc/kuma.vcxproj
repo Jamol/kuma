@@ -148,7 +148,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;KUMA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;NOMINMAX;KUMA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\src;..\..\src\loop;..\..\vendor</AdditionalIncludeDirectories>
     </ClCompile>
@@ -165,12 +165,23 @@
     <ClCompile Include="..\..\src\http\HttpParserImpl.cpp" />
     <ClCompile Include="..\..\src\http\HttpRequestImpl.cpp" />
     <ClCompile Include="..\..\src\http\HttpResponseImpl.cpp" />
+    <ClCompile Include="..\..\src\http\IHttpRequest.cpp" />
     <ClCompile Include="..\..\src\http\Uri.cpp" />
+    <ClCompile Include="..\..\src\http\v2\FrameParser.cpp" />
+    <ClCompile Include="..\..\src\http\v2\H2ConnectionImpl.cpp" />
+    <ClCompile Include="..\..\src\http\v2\H2ConnectionMgr.cpp" />
+    <ClCompile Include="..\..\src\http\v2\H2Frame.cpp" />
+    <ClCompile Include="..\..\src\http\v2\H2Request.cpp" />
+    <ClCompile Include="..\..\src\http\v2\H2Response.cpp" />
+    <ClCompile Include="..\..\src\http\v2\H2Stream.cpp" />
+    <ClCompile Include="..\..\src\http\v2\hpack\HPacker.cpp" />
+    <ClCompile Include="..\..\src\http\v2\hpack\HPackTable.cpp" />
     <ClCompile Include="..\..\src\kmapi.cpp" />
     <ClCompile Include="..\..\src\poll\SelectPoll.cpp" />
     <ClCompile Include="..\..\src\poll\VPoll.cpp" />
     <ClCompile Include="..\..\src\ssl\OpenSslLib.cpp" />
     <ClCompile Include="..\..\src\ssl\SslHandler.cpp" />
+    <ClCompile Include="..\..\src\TcpConnection.cpp" />
     <ClCompile Include="..\..\src\TcpListenerImpl.cpp" />
     <ClCompile Include="..\..\src\TcpSocketImpl.cpp" />
     <ClCompile Include="..\..\src\TimerManager.cpp" />
@@ -187,12 +198,26 @@
     <ClInclude Include="..\..\src\http\HttpParserImpl.h" />
     <ClInclude Include="..\..\src\http\HttpRequestImpl.h" />
     <ClInclude Include="..\..\src\http\HttpResponseImpl.h" />
+    <ClInclude Include="..\..\src\http\IHttpRequest.h" />
     <ClInclude Include="..\..\src\http\Uri.h" />
+    <ClInclude Include="..\..\src\http\v2\FrameParser.h" />
+    <ClInclude Include="..\..\src\http\v2\H2ConnectionImpl.h" />
+    <ClInclude Include="..\..\src\http\v2\H2ConnectionMgr.h" />
+    <ClInclude Include="..\..\src\http\v2\h2defs.h" />
+    <ClInclude Include="..\..\src\http\v2\H2Frame.h" />
+    <ClInclude Include="..\..\src\http\v2\H2Request.h" />
+    <ClInclude Include="..\..\src\http\v2\H2Response.h" />
+    <ClInclude Include="..\..\src\http\v2\H2Stream.h" />
+    <ClInclude Include="..\..\src\http\v2\hpack\HPacker.h" />
+    <ClInclude Include="..\..\src\http\v2\hpack\HPackTable.h" />
+    <ClInclude Include="..\..\src\http\v2\hpack\hpack_huffman_table.h" />
+    <ClInclude Include="..\..\src\http\v2\hpack\StaticTable.h" />
     <ClInclude Include="..\..\src\kmapi.h" />
     <ClInclude Include="..\..\src\kmconf.h" />
     <ClInclude Include="..\..\src\kmdefs.h" />
     <ClInclude Include="..\..\src\poll\IOPoll.h" />
     <ClInclude Include="..\..\src\poll\Notifier.h" />
+    <ClInclude Include="..\..\src\TcpConnection.h" />
     <ClInclude Include="..\..\src\TcpListenerImpl.h" />
     <ClInclude Include="..\..\src\TcpSocketImpl.h" />
     <ClInclude Include="..\..\src\TimerManager.h" />

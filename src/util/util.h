@@ -25,10 +25,10 @@ struct sockaddr;
 KUMA_NS_BEGIN
 
 #ifdef KUMA_OS_WIN
-# define snprintf    _snprintf
-# define vsnprintf   _vsnprintf
-# define strcasecmp _stricmp
-# define strncasecmp _strnicmp
+# define snprintf       _snprintf
+# define vsnprintf      _vsnprintf
+# define strcasecmp     _stricmp
+# define strncasecmp    _strnicmp
 # define getCurrentThreadId() GetCurrentThreadId()
 #elif defined(KUMA_OS_MAC)
 # define getCurrentThreadId() pthread_mach_thread_np(pthread_self())
@@ -40,6 +40,7 @@ KUMA_NS_BEGIN
 # define PATH_SEPARATOR '\\'
 #else
 # define PATH_SEPARATOR '/'
+# define strncpy_s(d, dl, s, c) strlcpy(d, s, dl)
 #endif
 
 #ifndef TICK_COUNT_TYPE

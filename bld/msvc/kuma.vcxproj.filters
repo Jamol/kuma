@@ -31,6 +31,18 @@
     <Filter Include="Source Files\util">
       <UniqueIdentifier>{681ba974-a1b3-475b-b186-265aa73590d8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\http\v2">
+      <UniqueIdentifier>{39508951-0bf2-4dc5-b8f8-2615ea6b505c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\http\v2\hpack">
+      <UniqueIdentifier>{04cf6713-0b38-4415-b716-26da06f29cb5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\http\v2">
+      <UniqueIdentifier>{b4a84ebf-8bb4-4462-99d8-5fe2fa66cffb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\http\v2\hpack">
+      <UniqueIdentifier>{1c609ba5-82eb-4ec7-8ea8-30b6baa59af4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\EventLoopImpl.cpp">
@@ -89,6 +101,39 @@
     </ClCompile>
     <ClCompile Include="..\..\src\TcpListenerImpl.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\http\v2\FrameParser.cpp">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\http\v2\H2ConnectionImpl.cpp">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\http\v2\H2ConnectionMgr.cpp">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\http\v2\H2Frame.cpp">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\http\v2\H2Request.cpp">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\http\v2\H2Response.cpp">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\http\v2\H2Stream.cpp">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\TcpConnection.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\http\v2\hpack\HPacker.cpp">
+      <Filter>Source Files\http\v2\hpack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\http\v2\hpack\HPackTable.cpp">
+      <Filter>Source Files\http\v2\hpack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\http\IHttpRequest.cpp">
+      <Filter>Source Files\http</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -157,6 +202,48 @@
     </ClInclude>
     <ClInclude Include="..\..\src\TcpListenerImpl.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\FrameParser.h">
+      <Filter>Header Files\http\v2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\H2ConnectionImpl.h">
+      <Filter>Header Files\http\v2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\H2ConnectionMgr.h">
+      <Filter>Header Files\http\v2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\h2defs.h">
+      <Filter>Header Files\http\v2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\H2Frame.h">
+      <Filter>Header Files\http\v2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\H2Request.h">
+      <Filter>Header Files\http\v2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\H2Response.h">
+      <Filter>Header Files\http\v2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\H2Stream.h">
+      <Filter>Header Files\http\v2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\TcpConnection.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\hpack\hpack_huffman_table.h">
+      <Filter>Header Files\http\v2\hpack</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\hpack\HPacker.h">
+      <Filter>Header Files\http\v2\hpack</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\hpack\HPackTable.h">
+      <Filter>Header Files\http\v2\hpack</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\hpack\StaticTable.h">
+      <Filter>Header Files\http\v2\hpack</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\IHttpRequest.h">
+      <Filter>Header Files\http</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

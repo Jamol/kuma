@@ -118,8 +118,8 @@ public:
     
     size_t calcPayloadSize() { return (hasPriority()?H2_PRIORITY_PAYLOAD_SIZE:0) + bsize_; }
     
-    bool hasPriority() { return hdr_.getFlags() & H2_FRAME_FLAG_PRIORITY; }
-    bool hasEndHeaders() { return hdr_.getFlags() & H2_FRAME_FLAG_END_HEADERS; }
+    bool hasPriority() { return !!(hdr_.getFlags() & H2_FRAME_FLAG_PRIORITY); }
+    bool hasEndHeaders() { return !!(hdr_.getFlags() & H2_FRAME_FLAG_END_HEADERS); }
     const uint8_t* getBlock() { return block_; }
     size_t getBlockSize() { return bsize_; }
     
@@ -276,7 +276,7 @@ public:
     
     size_t calcPayloadSize() { return bsize_;}
     
-    bool hasEndHeaders() { return hdr_.getFlags() & H2_FRAME_FLAG_END_HEADERS; }
+    bool hasEndHeaders() { return !!(hdr_.getFlags() & H2_FRAME_FLAG_END_HEADERS); }
     const uint8_t* getBlock() { return block_; }
     size_t getBlockSize() { return bsize_; }
     void setBlock(const uint8_t *block, uint32_t bsize) { block_ = block; bsize_ = bsize; }

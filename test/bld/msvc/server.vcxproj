@@ -163,22 +163,24 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\server\AutoHelper.cpp" />
-    <ClCompile Include="..\..\server\Connection.cpp" />
+    <ClCompile Include="..\..\server\H2ConnTest.cpp" />
     <ClCompile Include="..\..\server\HttpTest.cpp" />
     <ClCompile Include="..\..\server\LoopPool.cpp" />
     <ClCompile Include="..\..\server\main.cpp" />
+    <ClCompile Include="..\..\server\ProtoDemuxer.cpp" />
     <ClCompile Include="..\..\server\TcpServer.cpp" />
+    <ClCompile Include="..\..\server\TcpTest.cpp" />
     <ClCompile Include="..\..\server\TestLoop.cpp" />
     <ClCompile Include="..\..\server\UdpServer.cpp" />
     <ClCompile Include="..\..\server\WsTest.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\server\AutoHelper.h" />
-    <ClInclude Include="..\..\server\Connection.h" />
+    <ClInclude Include="..\..\server\H2ConnTest.h" />
     <ClInclude Include="..\..\server\HttpTest.h" />
     <ClInclude Include="..\..\server\LoopPool.h" />
+    <ClInclude Include="..\..\server\ProtoDemuxer.h" />
     <ClInclude Include="..\..\server\TcpServer.h" />
+    <ClInclude Include="..\..\server\TcpTest.h" />
     <ClInclude Include="..\..\server\TestLoop.h" />
     <ClInclude Include="..\..\server\UdpServer.h" />
     <ClInclude Include="..\..\server\WsTest.h" />

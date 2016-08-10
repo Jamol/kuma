@@ -21,7 +21,7 @@
 
 #include "H2Stream.h"
 #include "H2ConnectionImpl.h"
-#include "kmtrace.h"
+#include "util/kmtrace.h"
 
 using namespace kuma;
 

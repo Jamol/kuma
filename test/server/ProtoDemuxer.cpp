@@ -3,6 +3,13 @@
 #include <string>
 #include <sstream>
 
+#ifdef KUMA_OS_WIN
+# define snprintf       _snprintf
+# define vsnprintf      _vsnprintf
+# define strcasecmp     _stricmp
+# define strncasecmp    _strnicmp
+#endif
+
 char* trim_left(char* str);
 char* trim_right(char* str);
 char* trim_right(char* str, char* str_end);

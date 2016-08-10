@@ -162,7 +162,7 @@ int TcpSocketImpl::connect_i(const char* host, uint16_t port, uint32_t timeout_m
 {
     KUMA_INFOXTRACE("connect_i, host="<<host<<", port="<<port<<", this="<<this);
 #ifndef KUMA_HAS_OPENSSL
-    if (SslEnabled()) {
+    if (sslEnabled()) {
         KUMA_ERRXTRACE("connect_i, OpenSSL is disabled");
         return KUMA_ERROR_UNSUPPORT;
     }
@@ -236,7 +236,7 @@ int TcpSocketImpl::attachFd(SOCKET_FD fd)
         return KUMA_ERROR_INVALID_STATE;
     }
 #ifndef KUMA_HAS_OPENSSL
-    if (SslEnabled()) {
+    if (sslEnabled()) {
         KUMA_ERRXTRACE("attachFd, OpenSSL is disabled");
         return KUMA_ERROR_UNSUPPORT;
     }
@@ -269,8 +269,8 @@ int TcpSocketImpl::attach(TcpSocketImpl &&other)
     ret = attachFd(fd, ssl);
 #else
     SOCKET_FD fd;
-    int ret = tcp.detachFd(fd);
-    ret = tcp_.attachFd(fd);
+    int ret = other.detachFd(fd);
+    ret = attachFd(fd);
 #endif
     return ret;
 }

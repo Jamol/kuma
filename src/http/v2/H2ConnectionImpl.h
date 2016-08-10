@@ -24,7 +24,7 @@
 
 #include "kmdefs.h"
 #include "FrameParser.h"
-#include "HPacker.h"
+#include "hpack/HPacker.h"
 #include "H2Stream.h"
 #include "TcpSocketImpl.h"
 #include "TcpConnection.h"
@@ -139,7 +139,8 @@ private:
     
     uint32_t nextStreamId_ = 0;
     
-    bool registeredToLoop = false;
+    bool prefaceReceived_ = false;
+    bool registeredToLoop_ = false;
 };
 
 using H2ConnectionPtr = std::shared_ptr<H2ConnectionImpl>;

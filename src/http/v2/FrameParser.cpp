@@ -20,6 +20,7 @@
  */
 
 #include "FrameParser.h"
+#include <algorithm>
 
 using namespace kuma;
 
@@ -43,7 +44,7 @@ FrameParser::ParseState FrameParser::parseInputData(const uint8_t *data, size_t 
         if (ReadState::READ_HEADER == read_state_) {
             if (hdr_used_ + sz < H2_FRAME_HEADER_SIZE) {
                 memcpy(hdr_buf_ + hdr_used_, ptr, sz);
-                hdr_used_ += sz;
+                hdr_used_ += (uint8_t)sz;
                 return ParseState::INCOMPLETE;
             }
             const uint8_t *p = ptr;

@@ -165,18 +165,18 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\client\Client.cpp" />
     <ClCompile Include="..\..\client\HttpClient.cpp" />
     <ClCompile Include="..\..\client\LoopPool.cpp" />
     <ClCompile Include="..\..\client\main.cpp" />
+    <ClCompile Include="..\..\client\TcpClient.cpp" />
     <ClCompile Include="..\..\client\TestLoop.cpp" />
     <ClCompile Include="..\..\client\UdpClient.cpp" />
     <ClCompile Include="..\..\client\WsClient.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\client\Client.h" />
     <ClInclude Include="..\..\client\HttpClient.h" />
     <ClInclude Include="..\..\client\LoopPool.h" />
+    <ClInclude Include="..\..\client\TcpClient.h" />
     <ClInclude Include="..\..\client\TestLoop.h" />
     <ClInclude Include="..\..\client\UdpClient.h" />
     <ClInclude Include="..\..\client\WsClient.h" />

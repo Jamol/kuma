@@ -20,9 +20,9 @@
  */
 
 #include "H2Request.h"
-#include "Uri.h"
+#include "http/Uri.h"
 #include "H2ConnectionMgr.h"
-#include "kmtrace.h"
+#include "util/kmtrace.h"
 
 #include <sstream>
 

@@ -54,7 +54,7 @@ int TcpServer::stopListen()
 
 void TcpServer::onAccept(SOCKET_FD fd, const char* ip, uint16_t port)
 {
-    printf("TcpServer::onAccept, fd=%d, ip=%s, port=%d, proto=%d\n", fd, ip, port, proto_);
+    printf("TcpServer::onAccept, fd=%lld, ip=%s, port=%d, proto=%d\n", fd, ip, port, proto_);
     TestLoop* test_loop = loop_pool_.getNextLoop();
     test_loop->addFd(fd, proto_);
 }

@@ -43,13 +43,24 @@ SRCS =  \
     UdpSocketImpl.cpp \
     TimerManager.cpp \
     TcpListenerImpl.cpp \
+    TcpConnection.cpp \
     poll/EPoll.cpp \
     poll/VPoll.cpp \
     poll/SelectPoll.cpp \
     http/Uri.cpp \
     http/HttpParserImpl.cpp \
+    http/IHttpRequest.cpp \
     http/HttpRequestImpl.cpp \
     http/HttpResponseImpl.cpp \
+    http/v2/H2Frame.cpp \
+    http/v2/FrameParser.cpp \
+    http/v2/H2Stream.cpp \
+    http/v2/H2Request.cpp \
+    http/v2/H2Response.cpp \
+    http/v2/H2ConnectionImpl.cpp \
+    http/v2/H2ConnectionMgr.cpp \
+    http/v2/hpack/HPackTable.cpp \
+    http/v2/hpack/HPacker.cpp \
     ws/WSHandler.cpp \
     ws/WebSocketImpl.cpp \
     util/util.cpp \

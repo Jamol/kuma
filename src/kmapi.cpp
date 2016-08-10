@@ -469,12 +469,16 @@ const char* HttpParser::getHeaderValue(const char* name) const
 
 void HttpParser::forEachParam(EnumrateCallback cb)
 {
-    forEachParam(cb);
+    pimpl_->forEachParam([&cb](const std::string& name, const std::string& value) {
+        cb(name.c_str(), value.c_str());
+    });
 }
 
 void HttpParser::forEachHeader(EnumrateCallback cb)
 {
-    forEachHeader(cb);
+    pimpl_->forEachHeader([&cb](const std::string& name, const std::string& value) {
+        cb(name.c_str(), value.c_str());
+    });
 }
 
 void HttpParser::setDataCallback(DataCallback cb)
@@ -495,7 +499,7 @@ HttpParserImpl* HttpParser::pimpl()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 HttpRequest::HttpRequest(EventLoop* loop, const char* ver)
 {
-    strlcpy(ver_, ver, sizeof(ver_));
+    strncpy_s(ver_, sizeof(ver_), ver, sizeof(ver_)-1);
     if (is_equal(ver, VersionHTTP2_0)) {
         pimpl_ = new H2Request(loop->pimpl());
     } else {

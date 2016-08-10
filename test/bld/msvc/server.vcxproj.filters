@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\server\Connection.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\server\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -39,14 +36,17 @@
     <ClCompile Include="..\..\server\TestLoop.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\server\AutoHelper.cpp">
+    <ClCompile Include="..\..\server\ProtoDemuxer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\server\TcpTest.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\server\H2ConnTest.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\server\Connection.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\server\UdpServer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -65,7 +65,13 @@
     <ClInclude Include="..\..\server\TestLoop.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\server\AutoHelper.h">
+    <ClInclude Include="..\..\server\ProtoDemuxer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\server\TcpTest.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\server\H2ConnTest.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

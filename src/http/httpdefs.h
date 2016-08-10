@@ -17,6 +17,7 @@
 #define __HTTPDEFS_H__
 
 #include "kmdefs.h"
+#include "util/util.h"
 #include <string>
 #include <vector>
 #include <map>

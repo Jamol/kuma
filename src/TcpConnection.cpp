@@ -20,7 +20,7 @@
  */
 
 #include "TcpConnection.h"
-#include "kmtrace.h"
+#include "util/kmtrace.h"
 
 #include <sstream>
 

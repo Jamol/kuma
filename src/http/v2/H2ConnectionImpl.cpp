@@ -20,18 +20,21 @@
  */
 
 #include "H2ConnectionImpl.h"
-#include "kmtrace.h"
+#include "util/kmtrace.h"
 #include "util/base64.h"
 #include "H2ConnectionMgr.h"
 
 #include <sstream>
+#include <algorithm>
 
 using namespace kuma;
 
-KUMA_NS_BEGIN
-static const AlpnProtos alpnProtos {2, 'h', '2'};
-static const std::string ClientConnectionPreface("PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n");
-KUMA_NS_END
+namespace {
+#ifdef KUMA_HAS_OPENSSL
+    static const AlpnProtos alpnProtos{ 2, 'h', '2' };
+#endif
+    static const std::string ClientConnectionPreface("PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n");
+}
 
 //////////////////////////////////////////////////////////////////////////
 H2ConnectionImpl::H2ConnectionImpl(EventLoopImpl* loop)
@@ -49,6 +52,10 @@ H2ConnectionImpl::~H2ConnectionImpl()
 
 void H2ConnectionImpl::cleanup()
 {
+    if (registeredToLoop_) {
+        registeredToLoop_ = false;
+        tcp_.getEventLoop()->removeListener(this);
+    }
     if (!key_.empty()) {
         auto &connMgr = H2ConnectionMgr::getRequestConnMgr(sslEnabled());
         connMgr.removeConnection(key_);
@@ -72,8 +79,10 @@ int H2ConnectionImpl::connect(const std::string &host, uint16_t port, ConnectCal
         return KUMA_ERROR_INVALID_STATE;
     }
     connect_cb_ = std::move(cb);
+    
+    // add to EventLoop to get notification when loop exit
     tcp_.getEventLoop()->addListener(this);
-    registeredToLoop = true;
+    registeredToLoop_ = true;
     return connect_i(host, port);
 }
 
@@ -108,6 +117,7 @@ int H2ConnectionImpl::attachFd(SOCKET_FD fd, const uint8_t* data, size_t size)
             setState(State::HANDSHAKE);
             sendPreface();
         } else {
+            // waiting for http upgrade reuqest
             setState(State::UPGRADING);
         }
     }
@@ -136,10 +146,6 @@ int H2ConnectionImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
 int H2ConnectionImpl::close()
 {
     KUMA_INFOXTRACE("close");
-    if (registeredToLoop) {
-        registeredToLoop = false;
-        tcp_.getEventLoop()->removeListener(this);
-    }
     cleanup();
     return KUMA_ERROR_NOERR;
 }
@@ -178,7 +184,7 @@ KMError H2ConnectionImpl::sendHeadersFrame(HeadersFrame *frame)
     size_t len1 = H2_FRAME_HEADER_SIZE + (frame->hasPriority()?H2_PRIORITY_PAYLOAD_SIZE:0);
     auto &headers = frame->getHeaders();
     size_t hdrSize = frame->getHeadersSize();
-    send_buffer_.resize(len1 + hdrSize * 1.5);
+    send_buffer_.resize(len1 + hdrSize * 3 / 2);
     int ret = hpEncoder_.encode(headers, &send_buffer_[0] + len1, send_buffer_.size() - len1);
     if (ret < 0) {
         return KUMA_ERROR_FAILED;
@@ -254,6 +260,12 @@ void H2ConnectionImpl::handleSettingsFrame(SettingsFrame *frame)
             settings.setStreamId(0);
             settings.setAck(true);
             sendH2Frame(&settings);
+            if (!isServer() && getState() < State::OPEN) { // first frame from server must be settings
+                prefaceReceived_ = true;
+                if (getState() == State::HANDSHAKE && sendBufferEmpty()) {
+                    onStateOpen();
+                }
+            }
         }
     } else {
         H2StreamPtr stream = getStream(frame->getStreamId());
@@ -327,8 +339,16 @@ KMError H2ConnectionImpl::handleInputData(uint8_t *buf, size_t len)
     if (getState() == State::OPEN) {
         return parseInputData(buf, len);
     } else if (getState() == State::UPGRADING) {
-        httpParser_.parse((char*)buf, (uint32_t)len);
-    } else if (getState() == State::HANDSHAKE) {
+        int ret = httpParser_.parse((char*)buf, (uint32_t)len);
+        if (ret >= len) {
+            return KUMA_ERROR_NOERR;
+        }
+        // residual data, should be preface
+        len -= ret;
+        buf += ret;
+    }
+    
+    if (getState() == State::HANDSHAKE) {
         if (isServer()) {
             size_t cmpSize = std::min(cmpPreface_.size(), len);
             if (memcmp(cmpPreface_.c_str(), buf, cmpSize) != 0) {
@@ -341,6 +361,7 @@ KMError H2ConnectionImpl::handleInputData(uint8_t *buf, size_t len)
             if (!cmpPreface_.empty()) {
                 return KUMA_ERROR_NOERR; // need more data
             }
+            prefaceReceived_ = true;
             onStateOpen();
             return parseInputData(buf + cmpSize, len - cmpSize);
         } else {
@@ -452,9 +473,9 @@ void H2ConnectionImpl::removeStream(uint32_t streamId)
 }
 
 void H2ConnectionImpl::loopStopped()
-{
+{ // event loop exited
+    registeredToLoop_ = false;
     cleanup();
-    registeredToLoop = false;
 }
 
 std::string H2ConnectionImpl::buildUpgradeRequest()
@@ -506,6 +527,9 @@ void H2ConnectionImpl::sendUpgradeResponse()
     send_offset_ = 0;
     setState(State::UPGRADING);
     sendBufferedData();
+    if (sendBufferEmpty()) {
+        sendPreface(); // send server preface
+    }
 }
 
 void H2ConnectionImpl::sendPreface()
@@ -542,6 +566,9 @@ void H2ConnectionImpl::sendPreface()
     win_update.encode(&send_buffer_[0] + encoded_len, send_buffer_.size() - encoded_len);
     send_offset_ = 0;
     sendBufferedData();
+    if (sendBufferEmpty() && prefaceReceived_) {
+        onStateOpen();
+    }
 }
 
 void H2ConnectionImpl::onConnect(int err)
@@ -559,12 +586,12 @@ void H2ConnectionImpl::onConnect(int err)
 }
 
 void H2ConnectionImpl::onWrite()
-{
+{// send_buffer_ must be empty
     if(isServer() && getState() == State::UPGRADING) {
         // upgrade response is sent out, waiting for client preface
         setState(State::HANDSHAKE);
         sendPreface();
-    } else if (!isServer() && getState() == State::HANDSHAKE) {
+    } else if (getState() == State::HANDSHAKE && prefaceReceived_) {
         onStateOpen();
     }
 }
@@ -572,10 +599,6 @@ void H2ConnectionImpl::onWrite()
 void H2ConnectionImpl::onError(int err)
 {
     KUMA_INFOXTRACE("onError, err="<<err);
-    if (registeredToLoop) {
-        registeredToLoop = false;
-        tcp_.getEventLoop()->removeListener(this);
-    }
     cleanup();
 }
 
@@ -650,9 +673,6 @@ int H2ConnectionImpl::handleUpgradeResponse()
     if(101 == httpParser_.getStatusCode() &&
        is_equal(httpParser_.getHeaderValue("Connection"), "Upgrade")) {
         sendPreface();
-        if (send_buffer_.empty()) {
-            onStateOpen();
-        }
         return KUMA_ERROR_NOERR;
     } else {
         setState(State::IN_ERROR);

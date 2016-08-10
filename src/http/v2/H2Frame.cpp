@@ -77,7 +77,7 @@ H2Error H2Frame::decodePriority(const uint8_t *src, size_t len, h2_priority_t &p
         return H2Error::FRAME_SIZE_ERROR;
     }
     pri.streamId = decode_u32(src);
-    pri.exclusive = pri.streamId & 0x80000000;
+    pri.exclusive = !!(pri.streamId & 0x80000000);
     pri.streamId &= 0x7FFFFFFF;
     pri.weight = (uint16_t)(src[4]) + 1;
     return H2Error::H2_NO_ERROR;
@@ -93,7 +93,7 @@ int H2Frame::encodePriority(uint8_t *dst, size_t len, h2_priority_t pri)
         pri.streamId |= 0x80000000;
     }
     encode_u32(dst, pri.streamId);
-    dst[4] = pri.weight;
+    dst[4] = (uint8_t)pri.weight;
     
     return H2_PRIORITY_PAYLOAD_SIZE;
 }
