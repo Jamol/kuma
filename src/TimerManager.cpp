@@ -66,11 +66,6 @@ void TimerImpl::cancel()
 // TimerManager
 TimerManager::TimerManager(EventLoopImpl* loop)
 : loop_(loop)
-, running_node_(nullptr)
-, reschedule_node_(nullptr)
-, last_remain_ms_(-1)
-, last_tick_(0)
-, timer_count_(0)
 {
     memset(&tv0_bitmap_, 0, sizeof(tv0_bitmap_));
     for (int i=0; i<TV_COUNT; ++i)

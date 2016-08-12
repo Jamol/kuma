@@ -51,11 +51,11 @@ private:
     void cleanup();
     
 private:
-    SOCKET_FD       fd_ = INVALID_FD;
+    SOCKET_FD       fd_{ INVALID_FD };
     EventLoopImpl*  loop_;
-    bool            registered_ = false;
-    uint32_t        flags_ = 0;
-    bool            stopped_ = false;
+    bool            registered_{ false };
+    uint32_t        flags_{ 0 };
+    bool            stopped_{ false };
     
     ListenCallback  accept_cb_;
     ErrorCallback   error_cb_;

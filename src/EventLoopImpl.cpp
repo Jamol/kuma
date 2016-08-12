@@ -26,8 +26,6 @@ IOPoll* createIOPoll(PollType poll_type);
 
 EventLoopImpl::EventLoopImpl(PollType poll_type)
 : poll_(createIOPoll(poll_type))
-, stop_loop_(false)
-, thread_id_()
 , timer_mgr_(new TimerManager(this))
 {
     

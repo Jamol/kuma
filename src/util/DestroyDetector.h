@@ -1,5 +1,5 @@
 //
-//  kmobject.h
+//  DestroyDetector.h
 //  kuma
 //
 //  Created by Fengping Bao <jamol@live.com> on 8/9/16.
@@ -37,6 +37,8 @@ if(destroyed) { \
 return ret; \
 } \
 destroy_flag_ptr_ = nullptr;
+
+#define DESTROY_DETECTOR_CHECK_VOID() DESTROY_DETECTOR_CHECK((void()))
 
 KUMA_NS_END
 

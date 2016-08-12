@@ -34,8 +34,8 @@ KUMA_NS_BEGIN
 class H2ConnectionMgr
 {
 public:
-	H2ConnectionMgr();
-	~H2ConnectionMgr();
+	H2ConnectionMgr() = default;
+	~H2ConnectionMgr() = default;
     
     void addConnection(const std::string &key, H2ConnectionPtr &conn);
     void addConnection(const std::string &key, H2ConnectionPtr &&conn);

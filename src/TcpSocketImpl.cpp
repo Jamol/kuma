@@ -496,7 +496,7 @@ int TcpSocketImpl::send(iovec* iovs, int count)
     }
     
     uint32_t total_len = 0;
-    for (uint32_t i = 0; i < count; ++i) {
+    for (int i = 0; i < count; ++i) {
         total_len += iovs[i].iov_len;
     }
     if (total_len == 0) {
@@ -675,7 +675,7 @@ void TcpSocketImpl::ioReady(uint32_t events)
             } else {
                 DESTROY_DETECTOR_SETUP();
                 onConnect(KUMA_ERROR_NOERR);
-                DESTROY_DETECTOR_CHECK();
+                DESTROY_DETECTOR_CHECK_VOID();
                 if((events & KUMA_EV_READ)) {
                     onReceive(0);
                 }
@@ -715,7 +715,7 @@ void TcpSocketImpl::ioReady(uint32_t events)
             if(events & KUMA_EV_READ) {// handle EPOLLIN firstly
                 onReceive(0);
             }
-            DESTROY_DETECTOR_CHECK();
+            DESTROY_DETECTOR_CHECK_VOID();
             if((events & KUMA_EV_ERROR) && getState() == State::OPEN) {
                 KUMA_ERRXTRACE("ioReady, KUMA_EV_ERROR, events="<<events
                               <<", err="<<getLastError()<<", state="<<getState());

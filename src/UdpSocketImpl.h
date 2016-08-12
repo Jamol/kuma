@@ -60,10 +60,10 @@ private:
     void cleanup();
     
 private:
-    SOCKET_FD       fd_ = INVALID_FD;
+    SOCKET_FD       fd_{ INVALID_FD };
     EventLoopImpl*  loop_;
-    bool            registered_ = false;
-    uint32_t        flags_ = 0;
+    bool            registered_{ false };
+    uint32_t        flags_{ 0 };
     
     EventCallback   read_cb_;
     EventCallback   error_cb_;

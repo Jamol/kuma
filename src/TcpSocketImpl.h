@@ -99,14 +99,14 @@ private:
     bool isReady();
     
 private:
-    SOCKET_FD       fd_ = INVALID_FD;
+    SOCKET_FD       fd_{ INVALID_FD };
     EventLoopImpl*  loop_;
-    State           state_ = State::IDLE;
-    bool            registered_ = false;
-    uint32_t        ssl_flags_ = SSL_NONE;
+    State           state_{ State::IDLE };
+    bool            registered_{ false };
+    uint32_t        ssl_flags_{ SSL_NONE };
     
 #ifdef KUMA_HAS_OPENSSL
-    SslHandler*     ssl_handler_ = nullptr;
+    SslHandler*     ssl_handler_{ nullptr };
     AlpnProtos      alpn_protos_;
 #endif
     

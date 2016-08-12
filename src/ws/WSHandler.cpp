@@ -36,11 +36,6 @@ WSHandler::WSHandler()
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
 }
 
-WSHandler::~WSHandler()
-{
-    
-}
-
 void WSHandler::cleanup()
 {
     ctx_.reset();

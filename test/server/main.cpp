@@ -120,7 +120,7 @@ int main(int argc, char *argv[])
         main_loop.loop();
         tcp_server.stopListen();
     }
-    kuma::fini();
+    
     printf("main exit...\n");
 #ifdef KUMA_OS_WIN
     SetConsoleCtrlHandler(HandlerRoutine, FALSE);

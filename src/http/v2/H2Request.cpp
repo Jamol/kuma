@@ -194,7 +194,7 @@ void H2Request::onHeaders(const HeaderVector &headers, bool endSteam)
     }
     DESTROY_DETECTOR_SETUP();
     if (header_cb_) header_cb_();
-    DESTROY_DETECTOR_CHECK();
+    DESTROY_DETECTOR_CHECK_VOID();
     if (endSteam) {
         setState(State::COMPLETE);
         if (response_cb_) response_cb_();
@@ -205,7 +205,7 @@ void H2Request::onData(uint8_t *data, size_t len, bool endSteam)
 {
     DESTROY_DETECTOR_SETUP();
     if (data_cb_ && len > 0) data_cb_(data, len);
-    DESTROY_DETECTOR_CHECK();
+    DESTROY_DETECTOR_CHECK_VOID();
     
     if (endSteam && response_cb_) {
         setState(State::COMPLETE);

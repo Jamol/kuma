@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -21,87 +27,81 @@
 
 KUMA_NS_BEGIN
 
-typedef std::vector<iovec>	IOVEC;
+using IOVEC = std::vector<iovec>;
 
 //////////////////////////////////////////////////////////////////////////
 // class DataPacket
 class DataPacket
 {
 public:
-    enum{
+    enum {
+        DP_FLAG_NONE            = 0,
         DP_FLAG_DONT_DELETE     = 0x01,
         DP_FLAG_LIFCYC_STACK    = 0x02,
     };
-    typedef unsigned int DP_FLAG;
+    using DP_FLAG = uint32_t;
 
 private:
     class DataBlock
     {
     public:
-        DataBlock(unsigned char* buf, unsigned int size, unsigned int offset)
+        DataBlock(uint8_t *buf, size_t size, size_t offset)
         : buffer_(buf), size_(size), offset_(offset)
-        { }
-        ~DataBlock()
-        {
-            if(buffer_)
-            {
-                delete[] buffer_;
-                buffer_ = nullptr;
-                size_ = 0;
-                offset_ = 0;
-            }
-        }
-        unsigned char* get_buffer() { return buffer_+offset_; }
-        unsigned int get_length() { return size_-offset_; }
-        void detach_buffer(unsigned char*& buf, unsigned int& size, unsigned int& offset)
-        {
-            buf = buffer_;
+        {}
+        uint8_t* get_buffer() { return buffer_.get() + offset_; }
+        size_t get_length() { return size_ - offset_; }
+        void detach_buffer(uint8_t *&buf, size_t &size, size_t &offset) {
+            buf = buffer_.release();
             size = size_;
             offset = offset_;
             offset_ = 0;
             size_ = 0;
-            buffer_ = nullptr;
         }
+        
+        DataBlock() = delete;
+        DataBlock &operator= (const DataBlock &) = delete;
+        DataBlock (const DataBlock &) = delete;
 
     private:
-        DataBlock();
-        DataBlock &operator= (const DataBlock &);
-        DataBlock (const DataBlock &);
-
-    private:
-        unsigned char* buffer_;
-        unsigned int size_;
-        unsigned int offset_;
+        std::unique_ptr<uint8_t[]> buffer_;
+        size_t size_;
+        size_t offset_;
     };
+    using DataBlockPtr = std::shared_ptr<DataBlock>;
+
 public:
-    DataPacket(DP_FLAG flag=0)
+    DataPacket(DP_FLAG flags = DP_FLAG_NONE) : flags_(flags) {};
+
+    DataPacket(DataPacket &&dp)
     {
-        flag_ = flag;
-        begin_ptr_ = end_ptr_ = nullptr;
-        rd_ptr_ = wr_ptr_ = nullptr;
-        data_block_ = nullptr;
-        next_ = nullptr;
+        if (this != &dp) {
+            flags_ = dp.flags_;
+            begin_ptr_ = dp.begin_ptr_;
+            end_ptr_ = dp.end_ptr_;
+            rd_ptr_ = dp.rd_ptr_;
+            wr_ptr_ = dp.wr_ptr_;
+            next_ = dp.next_;
+            data_block_ = std::move(dp.data_block_);
+            dp.flags_ = DP_FLAG_NONE;
+            dp.begin_ptr_ = nullptr;
+            dp.end_ptr_ = nullptr;
+            dp.rd_ptr_ = nullptr;
+            dp.wr_ptr_ = nullptr;
+            dp.next_ = nullptr;
+        }
     }
     
-    DataPacket(unsigned char* buf, unsigned int len, unsigned int offset=0, DP_FLAG flag=DP_FLAG_LIFCYC_STACK|DP_FLAG_DONT_DELETE)
+    DataPacket(uint8_t *buf, size_t len, size_t offset=0, DP_FLAG flags=DP_FLAG_LIFCYC_STACK|DP_FLAG_DONT_DELETE)
+    : flags_(flags)
     {
-        flag_ = flag;
-        begin_ptr_ = end_ptr_ = nullptr;
-        rd_ptr_ = wr_ptr_ = nullptr;
-        data_block_ = nullptr;
-        next_ = nullptr;
-        if(flag_&DP_FLAG_DONT_DELETE)
-        {
-            if(offset < len)
-            {
+        if(flags_ & DP_FLAG_DONT_DELETE) {
+            if(offset < len) {
                 begin_ptr_ = buf;
                 end_ptr_ = begin_ptr_ + len;
                 rd_ptr_ = begin_ptr_ + offset;
                 wr_ptr_ = begin_ptr_ + offset;
             }
-        }
-        else
-        {// we own the buffer
+        } else {// we own the buffer
             if(offset > len) offset = len;
             data_block_ = std::make_shared<DataBlock>(buf, len, offset);
             begin_ptr_ = buf;
@@ -113,8 +113,7 @@ public:
     
     virtual ~DataPacket()
     {
-        if(next_)
-        {
+        if(next_) {
             next_->release();
             next_ = nullptr;
         }
@@ -123,13 +122,14 @@ public:
         rd_ptr_ = wr_ptr_ = nullptr;
     }
 
-    virtual bool allocBuffer(unsigned int len)
+    virtual bool allocBuffer(size_t len)
     {
         if(0 == len) return false;
-        unsigned char* buf = new unsigned char[len];
-        if(NULL == buf)
+        uint8_t *buf = new uint8_t[len];
+        if(!buf) {
             return false;
-        flag_ &= ~DP_FLAG_DONT_DELETE;
+        }
+        flags_ &= ~DP_FLAG_DONT_DELETE;
         data_block_ = std::make_shared<DataBlock>(buf, len, 0);
         begin_ptr_ = buf;
         end_ptr_ = begin_ptr_ + len;
@@ -138,12 +138,12 @@ public:
         return true;
     }
     
-    virtual bool attachBuffer(unsigned char* buf, unsigned int len, unsigned int offset=0)
+    virtual bool attachBuffer(uint8_t *buf, size_t len, size_t offset=0)
     {
         if(offset >= len) {
             return false;
         }
-        flag_ &= ~DP_FLAG_DONT_DELETE;
+        flags_ &= ~DP_FLAG_DONT_DELETE;
         data_block_ = std::make_shared<DataBlock>(buf, len, offset);
         begin_ptr_ = buf;
         end_ptr_ = begin_ptr_ + len;
@@ -152,13 +152,13 @@ public:
         return true;
     }
 
-    // don't call detach_buffer if DataPacket is duplicated
-    virtual void detachBuffer(unsigned char*& buf, unsigned int& len, unsigned int& offset)
+    // don't call detach_buffer if DataPacket is cloned
+    virtual void detachBuffer(uint8_t *&buf, size_t &len, size_t &offset)
     {
-        buf = NULL;
+        buf = nullptr;
         len = 0;
         offset = 0;
-        if(!(flag_&DP_FLAG_DONT_DELETE) && data_block_) {
+        if(!(flags_ & DP_FLAG_DONT_DELETE) && data_block_) {
             data_block_->detach_buffer(buf, len, offset);
             data_block_ = nullptr;
             offset = (unsigned int)(rd_ptr_ - buf);
@@ -172,32 +172,33 @@ public:
         rd_ptr_ = wr_ptr_ = nullptr;
     }
 
-    unsigned int space()
+    size_t space() const
     {
         if(wr_ptr_ > end_ptr_) return 0;
-        return (unsigned int)(end_ptr_ - wr_ptr_);
+        return end_ptr_ - wr_ptr_;
     }
     
-    unsigned int length()
+    size_t length() const
     {
         if(rd_ptr_ > wr_ptr_) return 0;
-        return (unsigned int)(wr_ptr_ - rd_ptr_);
+        return wr_ptr_ - rd_ptr_;
     }
     
-    unsigned int read(unsigned char* buf, unsigned int len)
+    size_t read(uint8_t *buf, size_t len)
     {
-        unsigned int ret = length();
+        size_t ret = length();
         if(0 == ret) return 0;
         ret = ret>len?len:ret;
-        if(buf)
+        if(buf) {
             memcpy(buf, rd_ptr_, ret);
+        }
         rd_ptr_ += ret;
         return ret;
     }
     
-    unsigned int write(const unsigned char* buf, unsigned int len)
+    size_t write(const uint8_t *buf, size_t len)
     {
-        unsigned int ret = space();
+        size_t ret = space();
         if(0 == ret) return 0;
         ret = ret>len?len:ret;
         memcpy(wr_ptr_, buf, ret);
@@ -205,46 +206,48 @@ public:
         return ret;
     }
     
-    unsigned char* rd_ptr() { return rd_ptr_; }
-    unsigned char* wr_ptr() { return wr_ptr_; }
-    DataPacket* next() { return next_; }
+    uint8_t* readPtr() const { return rd_ptr_; }
+    uint8_t* writePtr() const { return wr_ptr_; }
+    DataPacket* next() const { return next_; }
 
-    void advReadPtr(unsigned int len)
+    bool isChained() const { return next() != nullptr; }
+
+    void advReadPtr(size_t len)
     {
         if(len > length()) {
             if(next_) next_->advReadPtr(len-length());
             rd_ptr_ = wr_ptr_;
-        }
-        else
+        } else {
             rd_ptr_ += len;
+        }
     }
     
-    void advWritePtr(unsigned int len)
+    void advWritePtr(size_t len)
     {
-        if(space() == 0)
+        if(space() == 0) {
             return ;
-        if(len > space())
+        }
+        if(len > space()) {
             wr_ptr_ = end_ptr_;
-        else
+        } else {
             wr_ptr_ += len;
+        }
     }
 
-    unsigned int totalLength()
+    size_t totalLength() const
     {
-        if(next_)
-            return length()+next_->totalLength();
-        else
-            return length();
+        return next_ ? length()+next_->totalLength() : length();
     }
     
-    unsigned int readChain(unsigned char* buf, unsigned int len)
+    size_t readChain(uint8_t *buf, size_t len)
     {
         DataPacket* dp = this;
-        unsigned int total_read = 0;
+        size_t total_read = 0;
         while(dp) {
-            total_read += dp->read(NULL==buf?NULL:(buf+total_read), len-total_read);
-            if(len == total_read)
+            total_read += dp->read(!buf ? nullptr : (buf+total_read), len-total_read);
+            if(len == total_read) {
                 break;
+            }
             dp = dp->next();
         }
         return total_read;
@@ -253,55 +256,58 @@ public:
     void append(DataPacket* dp)
     {
         DataPacket* tail = this;
-        while(tail->next_)
+        while(tail->next_) {
             tail = tail->next_;
+        }
 
         tail->next_ = dp;
     }
 
-    virtual DataPacket* duplicate()
+    virtual DataPacket* clone() const
     {
-        DataPacket* dup = duplicate_self();
-        if(next_)
-            dup->next_ = next_->duplicate();
+        DataPacket* dup = cloneSelf();
+        if(next_) {
+            dup->next_ = next_->clone();
+        }
         return dup;
     }
 
-    virtual DataPacket* subpacket(unsigned int offset, unsigned int len)
+    virtual DataPacket* subpacket(size_t offset, size_t len) const
     {
         if(offset < length()) {
-            unsigned int left_len = 0;
-            DataPacket* dup = NULL;
-            if(flag_&DP_FLAG_DONT_DELETE) {
-                DP_FLAG flag = flag_;
-                flag &= ~DP_FLAG_DONT_DELETE;
-                flag &= ~DP_FLAG_LIFCYC_STACK;
-                dup = new DataPacket(flag);
+            size_t remain_len = 0;
+            DataPacket* dup = nullptr;
+            if(flags_ & DP_FLAG_DONT_DELETE) {
+                DP_FLAG flags = flags_;
+                flags &= ~DP_FLAG_DONT_DELETE;
+                flags &= ~DP_FLAG_LIFCYC_STACK;
+                dup = new DataPacket(flags);
                 if(offset+len <= length()) {
                     dup->allocBuffer(len);
-                    dup->write(rd_ptr(), len);
+                    dup->write(readPtr(), len);
                 } else {
                     dup->allocBuffer(length());
-                    dup->write(rd_ptr(), length());
-                    left_len = offset+len-length();
+                    dup->write(readPtr(), length());
+                    remain_len = offset+len-length();
                 }
             } else {
-                dup = duplicate_self();
+                dup = cloneSelf();
                 dup->rd_ptr_ += offset;
                 if(offset+len <= length()) {
                     dup->wr_ptr_ = dup->rd_ptr_+len;
                 } else {
-                    left_len = offset+len-length();
+                    remain_len = offset+len-length();
                 }
             }
-            if(next_ && left_len>0)
-                dup->next_ = next_->subpacket(0, left_len);
+            if(next_ && remain_len>0) {
+                dup->next_ = next_->subpacket(0, remain_len);
+            }
             return dup;
-        }
-        else if(next_)
+        } else if(next_) {
             return next_->subpacket(offset-length(), len);
-        else
+        } else {
             return nullptr;
+        }
     }
     
     virtual void reclaim(){
@@ -321,13 +327,13 @@ public:
         next_ = dp;
     }
     
-    unsigned int get_iovec(IOVEC& iovs){
-        DataPacket* dp = NULL;
-        unsigned int cnt = 0;
-        for (dp = this; NULL != dp; dp = dp->next()) {
+    int getIovec(IOVEC& iovs) const {
+        const DataPacket* dp = nullptr;
+        int cnt = 0;
+        for (dp = this; dp; dp = dp->next()) {
             if(dp->length() > 0) {
                 iovec v;
-                v.iov_base = (char*)dp->rd_ptr();
+                v.iov_base = (char*)dp->readPtr();
                 v.iov_len = dp->length();
                 iovs.push_back(v);
                 ++cnt;
@@ -341,38 +347,38 @@ public:
     {
         if(next_) {
             next_->release();
-            next_ = NULL;
+            next_ = nullptr;
         }
         data_block_ = nullptr;
-        begin_ptr_ = end_ptr_ = NULL;
-        rd_ptr_ = wr_ptr_ = NULL;
-        if(!(flag_&DP_FLAG_LIFCYC_STACK)) {
+        begin_ptr_ = end_ptr_ = nullptr;
+        rd_ptr_ = wr_ptr_ = nullptr;
+        if(!(flags_ & DP_FLAG_LIFCYC_STACK)) {
             delete this;
         }
     }
 
 private:
-    DataPacket &operator= (const DataPacket &);
-    DataPacket (const DataPacket &);
+    DataPacket &operator= (const DataPacket &) = delete;
+    DataPacket (const DataPacket &) = delete;
 
-    std::shared_ptr<DataBlock>& data_block() { return data_block_; }
-    void data_block(std::shared_ptr<DataBlock>& db) {
+    DataBlockPtr data_block() { return data_block_; }
+    void data_block(const DataBlockPtr &db) {
         data_block_ = db;
     }
-    virtual DataPacket* duplicate_self(){
-        DataPacket* dup = NULL;
-        if(flag_&DP_FLAG_DONT_DELETE) {
-            DP_FLAG flag = flag_;
-            flag &= ~DP_FLAG_DONT_DELETE;
-            flag &= ~DP_FLAG_LIFCYC_STACK;
-            dup = new DataPacket(flag);
+    virtual DataPacket* cloneSelf() const {
+        DataPacket* dup = nullptr;
+        if(flags_ & DP_FLAG_DONT_DELETE) {
+            DP_FLAG flags = flags_;
+            flags &= ~DP_FLAG_DONT_DELETE;
+            flags &= ~DP_FLAG_LIFCYC_STACK;
+            dup = new DataPacket(flags);
             if(dup->allocBuffer(length())) {
-                dup->write(rd_ptr(), length());
+                dup->write(readPtr(), length());
             }
         } else {
-            DP_FLAG flag = flag_;
-            flag &= ~DP_FLAG_LIFCYC_STACK;
-            dup = new DataPacket(flag);
+            DP_FLAG flags = flags_;
+            flags &= ~DP_FLAG_LIFCYC_STACK;
+            dup = new DataPacket(flags);
             dup->data_block_ = data_block_;
             dup->begin_ptr_ = begin_ptr_;
             dup->end_ptr_ = end_ptr_;
@@ -383,14 +389,14 @@ private:
     }
 
 private:
-    DP_FLAG	flag_;
-    unsigned char* begin_ptr_;
-    unsigned char* end_ptr_;
-    unsigned char* rd_ptr_;
-    unsigned char* wr_ptr_;
-    std::shared_ptr<DataBlock> data_block_;
+    DP_FLAG	flags_{ DP_FLAG_NONE };
+    uint8_t* begin_ptr_{ nullptr };
+    uint8_t* end_ptr_{ nullptr };
+    uint8_t* rd_ptr_{ nullptr };
+    uint8_t* wr_ptr_{ nullptr };
+    DataBlockPtr data_block_;
 
-    DataPacket* next_;
+    DataPacket* next_{ nullptr };
 };
 
 KUMA_NS_END

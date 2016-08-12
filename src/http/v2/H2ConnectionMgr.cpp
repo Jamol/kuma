@@ -28,15 +28,6 @@ using namespace kuma;
 H2ConnectionMgr H2ConnectionMgr::reqConnMgr_;
 H2ConnectionMgr H2ConnectionMgr::reqSecureConnMgr_;
 //////////////////////////////////////////////////////////////////////////
-H2ConnectionMgr::H2ConnectionMgr()
-{
-    
-}
-
-H2ConnectionMgr::~H2ConnectionMgr()
-{
-    
-}
 
 void H2ConnectionMgr::addConnection(const std::string &key, H2ConnectionPtr &conn)
 {

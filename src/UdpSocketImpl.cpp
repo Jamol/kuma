@@ -478,7 +478,7 @@ void UdpSocketImpl::ioReady(uint32_t events)
     if(events & KUMA_EV_READ) {// handle EPOLLIN firstly
         onReceive(0);
     }
-    DESTROY_DETECTOR_CHECK();
+    DESTROY_DETECTOR_CHECK_VOID();
     if((events & KUMA_EV_ERROR) && fd_ != INVALID_FD) {
         KUMA_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events="<<events
                        <<", err="<<getLastError());

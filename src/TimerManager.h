@@ -50,17 +50,7 @@ public:
     class TimerNode
     {
     public:
-        TimerNode()
-        : cancelled_(true)
-        , repeating_(false)
-        , delay_ms_(0)
-        , start_tick_(0)
-        , timer_(nullptr)
-        , tv_index_(-1)
-        , tl_index_(-1)
-        , prev_(nullptr)
-        , next_(nullptr)
-        { }
+        TimerNode() = default;
         void reset()
         {
             tv_index_ = -1;
@@ -69,18 +59,18 @@ public:
             next_ = nullptr;
         }
         
-        bool            cancelled_;
-        bool            repeating_;
-        uint32_t        delay_ms_;
-        TICK_COUNT_TYPE start_tick_;
-        TimerImpl*      timer_;
+        bool            cancelled_{ true };
+        bool            repeating_{ false };
+        uint32_t        delay_ms_{ 0 };
+        TICK_COUNT_TYPE start_tick_{ 0 };
+        TimerImpl*      timer_{ nullptr };
         
     protected:
         friend class TimerManager;
-        int tv_index_;
-        int tl_index_;
-        TimerNode* prev_;
-        TimerNode* next_;
+        int tv_index_{ -1 };
+        int tl_index_{ -1 };
+        TimerNode* prev_{ nullptr };
+        TimerNode* next_{ nullptr };
     };
     
 private:
@@ -115,11 +105,11 @@ private:
     EventLoopImpl* loop_;
     KM_Mutex mutex_;
     KM_Mutex running_mutex_;
-    TimerNode*  running_node_;
-    TimerNode*  reschedule_node_;
-    unsigned long last_remain_ms_;
-    TICK_COUNT_TYPE last_tick_;
-    uint32_t timer_count_;
+    TimerNode*  running_node_{ nullptr };
+    TimerNode*  reschedule_node_{ nullptr };
+    unsigned long last_remain_ms_ = -1;
+    TICK_COUNT_TYPE last_tick_{ 0 };
+    uint32_t timer_count_{ 0 };
     uint32_t tv0_bitmap_[8]; // 1 -- have timer in this slot
     TimerNode tv_[TV_COUNT][TIMER_VECTOR_SIZE]; // timer vectors
 };

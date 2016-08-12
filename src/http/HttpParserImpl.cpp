@@ -22,102 +22,26 @@
 
 using namespace kuma;
 
-KUMA_NS_BEGIN
+namespace {
 
 #define CR  '\r'
 #define LF  '\n'
 #define MAX_HTTP_HEADER_SIZE	2*1024*1024 // 2 MB
 
-typedef enum{
-    HTTP_READ_LINE,
-    HTTP_READ_HEAD,
-    HTTP_READ_BODY,
-    HTTP_READ_DONE,
-    HTTP_READ_ERROR,
-}HttpReadState;
-
-typedef enum{
-    CHUNK_READ_SIZE,
-    CHUNK_READ_DATA,
-    CHUNK_READ_DATA_CR,
-    CHUNK_READ_DATA_LF,
-    CHUNK_READ_DATACRLF,
-    CHUNK_READ_TRAILER
-}ChunkReadState;
-
-KUMA_NS_END
+}
 
 static const std::string str_empty = "";
 
 //////////////////////////////////////////////////////////////////////////
-HttpParserImpl::HttpParserImpl()
-: is_request_(true)
-, read_state_(HTTP_READ_LINE)
-, header_complete_(false)
-, upgrade_(false)
-, paused_(false)
-, has_content_length_(false)
-, content_length_(0)
-, is_chunked_(false)
-, chunk_state_(CHUNK_READ_SIZE)
-, chunk_size_(0)
-, chunk_bytes_read_(0)
-, total_bytes_read_(0)
-, status_code_(0)
-{
-    
-}
-
+// HttpParserImpl
 HttpParserImpl::HttpParserImpl(const HttpParserImpl& other)
-: is_request_(other.is_request_)
-, str_buf_(other.str_buf_)
-, read_state_(other.read_state_)
-, header_complete_(other.header_complete_)
-, upgrade_(other.upgrade_)
-, paused_(other.paused_)
-, has_content_length_(other.has_content_length_)
-, content_length_(other.content_length_)
-
-, is_chunked_(other.is_chunked_)
-, chunk_state_(other.chunk_state_)
-, chunk_size_(other.chunk_size_)
-, chunk_bytes_read_(other.chunk_bytes_read_)
-, total_bytes_read_(other.total_bytes_read_)
-
-, method_(other.method_)
-, url_(other.url_)
-, url_path_(other.url_path_)
-, param_map_(other.param_map_)
-, header_map_(other.header_map_)
-, status_code_(other.status_code_)
 {
-    
+    *this = other;
 }
 
 HttpParserImpl::HttpParserImpl(HttpParserImpl&& other)
-: is_request_(other.is_request_)
-, str_buf_(std::move(other.str_buf_))
-, read_state_(other.read_state_)
-, header_complete_(other.header_complete_)
-, upgrade_(other.upgrade_)
-, paused_(other.paused_)
-, has_content_length_(other.has_content_length_)
-, content_length_(other.content_length_)
-
-, is_chunked_(other.is_chunked_)
-, chunk_state_(other.chunk_state_)
-, chunk_size_(other.chunk_size_)
-, chunk_bytes_read_(other.chunk_bytes_read_)
-, total_bytes_read_(other.total_bytes_read_)
-
-, method_(std::move(other.method_))
-, url_(std::move(other.url_))
-, url_path_(std::move(other.url_path_))
-, param_map_(std::move(other.param_map_))
-, header_map_(std::move(other.header_map_))
-, status_code_(other.status_code_)
 {
-    
+    *this = std::move(other);
 }
 
 HttpParserImpl& HttpParserImpl::operator=(const HttpParserImpl& other)
@@ -365,11 +289,11 @@ HttpParserImpl::ParseState HttpParserImpl::parseHttp(const char*& cur_pos, const
         if(is_chunked_) {
             return parseChunk(cur_pos, end);
         } else {
-            uint32_t cur_len = uint32_t(end - cur_pos);
+            size_t cur_len = end - cur_pos;
             if(has_content_length_ && (content_length_ - total_bytes_read_) <= cur_len)
             {// data enough
                 const char* notify_data = cur_pos;
-                uint32_t notify_len = content_length_ - total_bytes_read_;
+                size_t notify_len = content_length_ - total_bytes_read_;
                 cur_pos += notify_len;
                 total_bytes_read_ = content_length_;
                 read_state_ = HTTP_READ_DONE;
@@ -484,7 +408,7 @@ HttpParserImpl::ParseState HttpParserImpl::parseChunk(const char*& cur_pos, cons
                 }
                 str.append(p_line, p_end);
                 // need not parse chunk extension
-                chunk_size_ = (uint32_t)strtol(str.c_str(), NULL, 16);
+                chunk_size_ = strtol(str.c_str(), NULL, 16);
                 KUMA_INFOTRACE("HttpParser::parseChunk, chunk_size="<<chunk_size_);
                 if(0 == chunk_size_)
                 {// chunk completed
@@ -497,10 +421,10 @@ HttpParserImpl::ParseState HttpParserImpl::parseChunk(const char*& cur_pos, cons
             }
             case CHUNK_READ_DATA:
             {
-                uint32_t cur_len = uint32_t(end - cur_pos);
+                size_t cur_len = end - cur_pos;
                 if(chunk_size_ - chunk_bytes_read_ <= cur_len) {// data enough
                     const char* notify_data = cur_pos;
-                    uint32_t notify_len = chunk_size_ - chunk_bytes_read_;
+                    size_t notify_len = chunk_size_ - chunk_bytes_read_;
                     total_bytes_read_ += notify_len;
                     chunk_bytes_read_ = chunk_size_ = 0; // reset
                     chunk_state_ = CHUNK_READ_DATA_CR;

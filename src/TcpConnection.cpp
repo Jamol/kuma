@@ -87,7 +87,13 @@ int TcpConnection::attachSocket(TcpSocketImpl&& tcp)
 int TcpConnection::send(const uint8_t* data, size_t len)
 {
     if(!sendBufferEmpty()) {
-        return 0;
+        // try to send buffered data
+        auto ret = sendBufferedData();
+        if (ret != KUMA_ERROR_NOERR) {
+            return -1;
+        } else if (!sendBufferEmpty()) {
+            return 0;
+        }
     }
     int ret = tcp_.send(data, len);
     if (ret >= 0 && ret < len) {

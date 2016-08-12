@@ -249,7 +249,7 @@ void HttpRequestImpl::onError(int err)
     if (getState() == State::RECVING_RESPONSE) {
         DESTROY_DETECTOR_SETUP();
         bool completed = http_parser_.setEOF();
-        DESTROY_DETECTOR_CHECK();
+        DESTROY_DETECTOR_CHECK_VOID();
         if(completed) {
             cleanup();
             return;

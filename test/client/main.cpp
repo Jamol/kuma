@@ -24,20 +24,20 @@ EventLoop main_loop(POLL_TYPE_NONE);
 #ifdef KUMA_OS_WIN
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 {
-	if(CTRL_C_EVENT == dwCtrlType) {
-		g_exit = TRUE;
+    if(CTRL_C_EVENT == dwCtrlType) {
+        g_exit = TRUE;
         main_loop.stop();
-		return TRUE;
-	}
-	return FALSE;
+        return TRUE;
+    }
+    return FALSE;
 }
 #else
 void HandlerRoutine(int sig)
 {
-	if(sig == SIGTERM || sig == SIGINT || sig == SIGKILL) {
-		g_exit = true;
+    if(sig == SIGTERM || sig == SIGINT || sig == SIGKILL) {
+        g_exit = true;
         main_loop.stop();
-	}
+    }
 }
 #endif
 
@@ -75,22 +75,21 @@ uint32_t getSendInterval()
 int main(int argc, char *argv[])
 {
 #ifdef KUMA_OS_WIN
-	SetConsoleCtrlHandler(HandlerRoutine, TRUE);
+    SetConsoleCtrlHandler(HandlerRoutine, TRUE);
 #else
-	signal(SIGPIPE, HandlerRoutine);
-	signal(SIGINT, HandlerRoutine);
-	signal(SIGTERM, HandlerRoutine);
+    signal(SIGPIPE, HandlerRoutine);
+    signal(SIGINT, HandlerRoutine);
+    signal(SIGTERM, HandlerRoutine);
 #endif
 
-	if(argc < 2) {
-		printUsage();
-		return -1;
-	}
+    if(argc < 2) {
+        printUsage();
+        return -1;
+    }
     
     std::string addr;
     std::string bind_addr;
     int concurrent = 1;
-    bool test_http2 = false;
     
     for (int i=1; i<argc; ++i) {
         if(argv[i][0] == '-') {
@@ -166,9 +165,9 @@ int main(int argc, char *argv[])
     printf("stop loops...\n");
     loop_pool.stop();
     
-	printf("main exit...\n");
+    printf("main exit...\n");
 #ifdef KUMA_OS_WIN
-	SetConsoleCtrlHandler(HandlerRoutine, FALSE);
+    SetConsoleCtrlHandler(HandlerRoutine, FALSE);
 #endif
 	return 0;
 }

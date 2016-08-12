@@ -34,7 +34,7 @@ public:
     typedef std::function<void(HttpEvent)> EventCallback;
     typedef std::function<void(const std::string&, const std::string&)> EnumrateCallback;
     
-    HttpParserImpl();
+    HttpParserImpl() = default;
     HttpParserImpl(const HttpParserImpl& other);
     HttpParserImpl(HttpParserImpl&& other);
     ~HttpParserImpl();
@@ -78,6 +78,23 @@ private:
         PARSE_STATE_DESTROYED
     }ParseState;
     
+    typedef enum{
+        HTTP_READ_LINE,
+        HTTP_READ_HEAD,
+        HTTP_READ_BODY,
+        HTTP_READ_DONE,
+        HTTP_READ_ERROR,
+    }HttpReadState;
+    
+    typedef enum{
+        CHUNK_READ_SIZE,
+        CHUNK_READ_DATA,
+        CHUNK_READ_DATA_CR,
+        CHUNK_READ_DATA_LF,
+        CHUNK_READ_DATACRLF,
+        CHUNK_READ_TRAILER
+    }ChunkReadState;
+    
 private:
     ParseState parseHttp(const char*& cur_pos, const char* end);
     bool parseStartLine(const char* line, const char* line_end);
@@ -103,24 +120,24 @@ private:
 private:
     DataCallback        data_cb_;
     EventCallback       event_cb_;
-    bool                is_request_;
+    bool                is_request_{ true };
     
     std::string         str_buf_;
     
-    int                 read_state_;
-    bool                header_complete_;
-    bool                upgrade_;
-    bool                paused_;
+    int                 read_state_{ HTTP_READ_LINE };
+    bool                header_complete_{ false };
+    bool                upgrade_{ false };
+    bool                paused_{ false };
     
-    bool                has_content_length_;
-    uint32_t            content_length_;
+    bool                has_content_length_{ false };
+    size_t              content_length_{ 0 };
     
-    bool                is_chunked_;
-    uint32_t            chunk_state_;
-    uint32_t            chunk_size_;
-    uint32_t            chunk_bytes_read_;
+    bool                is_chunked_{ false };
+    int                 chunk_state_{ CHUNK_READ_SIZE };
+    size_t              chunk_size_{ 0 };
+    size_t              chunk_bytes_read_{ 0 };
     
-    uint32_t            total_bytes_read_;
+    size_t              total_bytes_read_{ 0 };
     
     // request
     std::string         method_;
@@ -131,7 +148,7 @@ private:
     HeaderMap           header_map_;
     
     // response
-    int                 status_code_;
+    int                 status_code_{ 0 };
 };
 
 KUMA_NS_END

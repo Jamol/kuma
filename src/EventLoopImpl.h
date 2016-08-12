@@ -75,7 +75,7 @@ private:
     typedef KM_QueueMT<LoopCallback, KM_Mutex> CallbackQueue;
     
     IOPoll*         poll_;
-    bool            stop_loop_;
+    bool            stop_loop_{ false };
     std::thread::id thread_id_;
     
     CallbackQueue   cb_queue_;

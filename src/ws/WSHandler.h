@@ -48,7 +48,7 @@ public:
     typedef std::function<void(int)> HandshakeCallback;
     
     WSHandler();
-    ~WSHandler();
+    ~WSHandler() = default;
     
     void setHttpParser(HttpParserImpl&& parser);
     std::string buildUpgradeRequest(const std::string& path, const std::string& host,
@@ -129,9 +129,9 @@ private:
         STATE_ERROR,
         STATE_DESTROY
     }State;
-    State                   state_ = STATE_HANDSHAKE;
+    State                   state_{ STATE_HANDSHAKE };
     DecodeContext           ctx_;
-    uint8_t                 opcode_ = WS_OPCODE_BINARY;
+    uint8_t                 opcode_{ WS_OPCODE_BINARY };
     
     HttpParserImpl          http_parser_;
     

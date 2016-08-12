@@ -26,9 +26,7 @@ ProtoDemuxer::ProtoDemuxer(TestLoop* loop, long conn_id)
 
 ProtoDemuxer::~ProtoDemuxer()
 {
-    if(destroy_flag_ptr_) {
-        *destroy_flag_ptr_ = true;
-    }
+    
 }
 
 int ProtoDemuxer::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
@@ -142,13 +140,9 @@ void ProtoDemuxer::onReceive(int err)
         } else if (0 == bytes_read){
             break;
         }
-        bool destroyed = false;
-        destroy_flag_ptr_ = &destroyed;
+        DESTROY_DETECTOR_SETUP();
         int bytes_used = http_parser_.parse(buf, bytes_read);
-        if(destroyed) {
-            return;
-        }
-        destroy_flag_ptr_ = nullptr;
+        DESTROY_DETECTOR_CHECK_VOID();
         if(bytes_used != bytes_read) {
             printf("ProtoDemuxer::onReceive, bytes_used=%u, bytes_read=%un", bytes_used, bytes_read);
         }

@@ -3,12 +3,13 @@
 
 #include "kmapi.h"
 #include "TestLoop.h"
+#include "util/DestroyDetector.h"
 
 #include <map>
 
 using namespace kuma;
 
-class ProtoDemuxer : public LoopObject
+class ProtoDemuxer : public LoopObject, public DestroyDetector
 {
 public:
     ProtoDemuxer(TestLoop* loop, long conn_id);
@@ -35,7 +36,6 @@ private:
     
     TcpSocket       tcp_;
     HttpParser      http_parser_;
-    bool*           destroy_flag_ptr_ = nullptr;
 };
 
 #endif

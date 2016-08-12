@@ -65,16 +65,16 @@ private:
 protected:
     TcpSocketImpl tcp_;
     std::string host_;
-    uint16_t port_ = 0;
+    uint16_t port_{ 0 };
     std::vector<uint8_t> send_buffer_;
-    size_t send_offset_ = 0;
+    size_t send_offset_{ 0 };
     
 private:
     EventLoopImpl* loop_;
     
     std::vector<uint8_t> initData_;
     
-    bool isServer_ = false;
+    bool isServer_{ false };
 };
 
 KUMA_NS_END
