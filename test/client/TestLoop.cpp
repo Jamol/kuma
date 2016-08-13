@@ -71,7 +71,7 @@ void TestLoop::startTest(std::string& addr_url, std::string& bind_addr)
     char proto[16] = {0};
     char host[64] = {0};
     uint16_t port = 0;
-    if(km_parse_address(addr_url.c_str(), proto, sizeof(proto), host, sizeof(host), &port) != KUMA_ERROR_NOERR) {
+    if(km_parse_address(addr_url.c_str(), proto, sizeof(proto), host, sizeof(host), &port) != 0) {
         return ;
     }
     
@@ -82,7 +82,7 @@ void TestLoop::startTest(std::string& addr_url, std::string& bind_addr)
         if(!bind_addr.empty()) {
             char bind_host[64] = {0};
             uint16_t bind_port = 0;
-            if(km_parse_address(bind_addr.c_str(), NULL, 0, bind_host, sizeof(bind_host), &bind_port) == KUMA_ERROR_NOERR) {
+            if(km_parse_address(bind_addr.c_str(), NULL, 0, bind_host, sizeof(bind_host), &bind_port) == 0) {
                 client->bind(bind_host, bind_port);
             }
         }
@@ -94,7 +94,7 @@ void TestLoop::startTest(std::string& addr_url, std::string& bind_addr)
         if(!bind_addr.empty()) {
             char bind_host[64] = {0};
             uint16_t bind_port = 0;
-            if(km_parse_address(bind_addr.c_str(), NULL, 0, bind_host, sizeof(bind_host), &bind_port) == KUMA_ERROR_NOERR) {
+            if(km_parse_address(bind_addr.c_str(), NULL, 0, bind_host, sizeof(bind_host), &bind_port) == 0) {
                 udp_client->bind(bind_host, bind_port);
             }
         }

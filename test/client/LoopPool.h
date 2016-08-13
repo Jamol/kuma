@@ -16,7 +16,7 @@ class LoopPool
 public:
     LoopPool();
 
-    bool init(int count, PollType poll_type = POLL_TYPE_NONE);
+    bool init(int count, PollType poll_type = PollType::NONE);
     void startTest(std::string& addr_url, std::string& bind_addr, int concurrent);
     void stop();
     

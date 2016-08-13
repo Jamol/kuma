@@ -17,24 +17,25 @@ TcpClient::TcpClient(TestLoop* loop, long conn_id)
     
 }
 
-int TcpClient::bind(const char* bind_host, uint16_t bind_port)
+KMError TcpClient::bind(const char* bind_host, uint16_t bind_port)
 {
     return tcp_.bind(bind_host, bind_port);
 }
 
-int TcpClient::connect(const char* host, uint16_t port)
+KMError TcpClient::connect(const char* host, uint16_t port)
 {
-    tcp_.setReadCallback([this] (int err) { onReceive(err); });
-    tcp_.setWriteCallback([this] (int err) { onSend(err); });
-    tcp_.setErrorCallback([this] (int err) { onClose(err); });
+    tcp_.setReadCallback([this] (KMError err) { onReceive(err); });
+    tcp_.setWriteCallback([this] (KMError err) { onSend(err); });
+    tcp_.setErrorCallback([this] (KMError err) { onClose(err); });
     timer_.schedule(1000, [this] { onTimer(); }, TimerMode::REPEATING);
-    return tcp_.connect(host, port, [this] (int err) { onConnect(err); });
+    return tcp_.connect(host, port, [this] (KMError err) { onConnect(err); });
 }
 
 int TcpClient::close()
 {
     timer_.cancel();
-    return tcp_.close();
+    tcp_.close();
+    return 0;
 }
 
 void TcpClient::sendData()
@@ -44,19 +45,19 @@ void TcpClient::sendData()
     tcp_.send(buf, sizeof(buf));
 }
 
-void TcpClient::onConnect(int err)
+void TcpClient::onConnect(KMError err)
 {
     printf("TcpClient::onConnect, err=%d\n", err);
     start_point_ = std::chrono::steady_clock::now();
     sendData();
 }
 
-void TcpClient::onSend(int err)
+void TcpClient::onSend(KMError err)
 {
     //printf("TcpClient::onSend\n");
 }
 
-void TcpClient::onReceive(int err)
+void TcpClient::onReceive(KMError err)
 {
     char buf[4096] = {0};
     do {
@@ -86,7 +87,7 @@ void TcpClient::onReceive(int err)
     } while (true);
 }
 
-void TcpClient::onClose(int err)
+void TcpClient::onClose(KMError err)
 {
     printf("TcpClient::onClose, err=%d\n", err);
     loop_->removeObject(conn_id_);

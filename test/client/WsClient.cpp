@@ -23,18 +23,19 @@ WsClient::WsClient(TestLoop* loop, long conn_id)
 void WsClient::startRequest(std::string& url)
 {
     ws_.setDataCallback([this] (uint8_t* data, size_t len) { onData(data, len); });
-    ws_.setWriteCallback([this] (int err) { onSend(err); });
-    ws_.setErrorCallback([this] (int err) { onClose(err); });
+    ws_.setWriteCallback([this] (KMError err) { onSend(err); });
+    ws_.setErrorCallback([this] (KMError err) { onClose(err); });
     //timer_.schedule(1000, [this] { onTimer(); }, true);
     ws_.setProtocol("kuma");
     ws_.setOrigin("www.kuma.com");
-    ws_.connect(url.c_str(), [this] (int err) { onConnect(err); });
+    ws_.connect(url.c_str(), [this] (KMError err) { onConnect(err); });
 }
 
 int WsClient::close()
 {
     timer_.cancel();
-    return ws_.close();
+    ws_.close();
+    return 0;
 }
 
 void WsClient::sendData()
@@ -44,7 +45,7 @@ void WsClient::sendData()
     ws_.send(buf, sizeof(buf));
 }
 
-void WsClient::onConnect(int err)
+void WsClient::onConnect(KMError err)
 {
     printf("WsClient::onConnect, err=%d\n", err);
     start_point_ = std::chrono::steady_clock::now();
@@ -55,7 +56,7 @@ void WsClient::onConnect(int err)
     }
 }
 
-void WsClient::onSend(int err)
+void WsClient::onSend(KMError err)
 {
     //printf("Client::onSend\n");
 }
@@ -82,7 +83,7 @@ void WsClient::onData(uint8_t* data, size_t len)
     }
 }
 
-void WsClient::onClose(int err)
+void WsClient::onClose(KMError err)
 {
     printf("WsClient::onClose, err=%d\n", err);
     loop_->removeObject(conn_id_);

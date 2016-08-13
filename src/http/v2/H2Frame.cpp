@@ -80,7 +80,7 @@ H2Error H2Frame::decodePriority(const uint8_t *src, size_t len, h2_priority_t &p
     pri.exclusive = !!(pri.streamId & 0x80000000);
     pri.streamId &= 0x7FFFFFFF;
     pri.weight = (uint16_t)(src[4]) + 1;
-    return H2Error::H2_NO_ERROR;
+    return H2Error::NOERR;
 }
 
 int H2Frame::encodePriority(uint8_t *dst, size_t len, h2_priority_t pri)
@@ -137,7 +137,7 @@ H2Error DataFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
     }
     data_ = ptr;
     size_ = len;
-    return H2Error::H2_NO_ERROR;
+    return H2Error::NOERR;
 }
 
 H2Error HeadersFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
@@ -159,7 +159,7 @@ H2Error HeadersFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
     }
     if (hdr.getFlags() & H2_FRAME_FLAG_PRIORITY) {
         H2Error err = decodePriority(ptr, len, pri_);
-        if (err != H2Error::H2_NO_ERROR) {
+        if (err != H2Error::NOERR) {
             return err;
         }
         ptr += H2_PRIORITY_PAYLOAD_SIZE;
@@ -167,7 +167,7 @@ H2Error HeadersFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
     }
     block_ = ptr;
     bsize_ = len;
-    return H2Error::H2_NO_ERROR;
+    return H2Error::NOERR;
 }
 
 int HeadersFrame::encode(uint8_t *dst, size_t len, size_t bsize)
@@ -259,7 +259,7 @@ H2Error RSTStreamFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
         return H2Error::FRAME_SIZE_ERROR;
     }
     errCode_ = decode_u32(payload);
-    return H2Error::H2_NO_ERROR;
+    return H2Error::NOERR;
 }
 
 int RSTStreamFrame::encode(uint8_t *dst, size_t len)
@@ -335,7 +335,7 @@ H2Error SettingsFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
         ptr += 6;
         len -= 6;
     }
-    return H2Error::H2_NO_ERROR;
+    return H2Error::NOERR;
 }
 
 int PushPromiseFrame::encode(uint8_t *dst, size_t len)
@@ -390,7 +390,7 @@ H2Error PushPromiseFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
         block_ = ptr;
         bsize_ = len;
     }
-    return H2Error::H2_NO_ERROR;
+    return H2Error::NOERR;
 }
 
 int PingFrame::encode(uint8_t *dst, size_t len)
@@ -423,7 +423,7 @@ H2Error PingFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
         return H2Error::FRAME_SIZE_ERROR;
     }
     memcpy(data_, payload, hdr.getLength());
-    return H2Error::H2_NO_ERROR;
+    return H2Error::NOERR;
 }
 
 void PingFrame::setData(const uint8_t *data, size_t len)
@@ -481,7 +481,7 @@ H2Error GoawayFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
         data_ = ptr;
         size_ = len;
     }
-    return H2Error::H2_NO_ERROR;
+    return H2Error::NOERR;
 }
 
 int WindowUpdateFrame::encode(uint8_t *dst, size_t len)
@@ -511,7 +511,7 @@ H2Error WindowUpdateFrame::decode(const FrameHeader &hdr, const uint8_t *payload
         return H2Error::FRAME_SIZE_ERROR;
     }
     windowSizeIncrement_ = decode_u32(payload) & 0x7FFFFFFF;
-    return H2Error::H2_NO_ERROR;
+    return H2Error::NOERR;
 }
 
 int ContinuationFrame::encode(uint8_t *dst, size_t len)
@@ -546,5 +546,5 @@ H2Error ContinuationFrame::decode(const FrameHeader &hdr, const uint8_t *payload
     uint32_t len = hdr.getLength();
     block_ = ptr;
     bsize_ = len;
-    return H2Error::H2_NO_ERROR;
+    return H2Error::NOERR;
 }

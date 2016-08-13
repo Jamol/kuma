@@ -16,7 +16,7 @@ class LoopPool
 public:
     LoopPool();
 
-    bool init(int count, PollType poll_type = POLL_TYPE_NONE);
+    bool init(int count, PollType poll_type = PollType::NONE);
     void stop();
     
     long getConnId() { return ++id_seed_; }

@@ -45,16 +45,16 @@ void IHttpRequest::addHeader(std::string name, uint32_t value)
     addHeader(std::move(name), std::to_string(value));
 }
 
-int IHttpRequest::sendRequest(std::string method, std::string url, std::string ver)
+KMError IHttpRequest::sendRequest(std::string method, std::string url, std::string ver)
 {
     if (getState() != State::IDLE && getState() != State::WAIT_FOR_REUSE) {
-        return KUMA_ERROR_INVALID_STATE;
+        return KMError::INVALID_STATE;
     }
     method_ = std::move(method);
     url_ = std::move(url);
     version_ = std::move(ver);
     if(!uri_.parse(url_)) {
-        return KUMA_ERROR_INVALID_PARAM;
+        return KMError::INVALID_PARAM;
     }
     checkHeaders();
     return sendRequest();

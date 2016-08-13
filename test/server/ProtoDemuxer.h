@@ -15,12 +15,12 @@ public:
     ProtoDemuxer(TestLoop* loop, long conn_id);
     ~ProtoDemuxer();
 
-    int attachFd(SOCKET_FD fd, uint32_t ssl_flags);
+    KMError attachFd(SOCKET_FD fd, uint32_t ssl_flags);
     int close();
     
-    void onSend(int err);
-    void onReceive(int err);
-    void onClose(int err);
+    void onSend(KMError err);
+    void onReceive(KMError err);
+    void onClose(KMError err);
     
     void onHttpData(const char*, size_t);
     void onHttpEvent(HttpEvent ev);

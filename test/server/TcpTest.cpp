@@ -9,26 +9,27 @@ TcpTest::TcpTest(TestLoop* loop, long conn_id)
     
 }
 
-int TcpTest::attachFd(SOCKET_FD fd)
+KMError TcpTest::attachFd(SOCKET_FD fd)
 {
-    tcp_.setReadCallback([this] (int err) { onReceive(err); });
-    tcp_.setWriteCallback([this] (int err) { onSend(err); });
-    tcp_.setErrorCallback([this] (int err) { onClose(err); });
+    tcp_.setReadCallback([this] (KMError err) { onReceive(err); });
+    tcp_.setWriteCallback([this] (KMError err) { onSend(err); });
+    tcp_.setErrorCallback([this] (KMError err) { onClose(err); });
     
     return tcp_.attachFd(fd);
 }
 
 int TcpTest::close()
 {
-    return tcp_.close();
+    tcp_.close();
+    return 0;
 }
 
-void TcpTest::onSend(int err)
+void TcpTest::onSend(KMError err)
 {
     
 }
 
-void TcpTest::onReceive(int err)
+void TcpTest::onReceive(KMError err)
 {
     char buf[4096] = {0};
     do
@@ -49,7 +50,7 @@ void TcpTest::onReceive(int err)
     } while(true);
 }
 
-void TcpTest::onClose(int err)
+void TcpTest::onClose(KMError err)
 {
     printf("TcpTest::onClose, err=%d\n", err);
     loop_->removeObject(conn_id_);

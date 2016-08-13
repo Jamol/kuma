@@ -20,7 +20,7 @@ public:
     int close();
     
 private:
-    void onConnect(int err);
+    void onConnect(KMError err);
     
 private:
     TestLoop*   loop_;

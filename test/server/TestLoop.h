@@ -32,7 +32,7 @@ class LoopPool;
 class TestLoop
 {
 public:
-    TestLoop(LoopPool* loopPool, PollType poll_type = POLL_TYPE_NONE);
+    TestLoop(LoopPool* loopPool, PollType poll_type = PollType::NONE);
 
     bool init();
     void stop();

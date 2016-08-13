@@ -19,7 +19,7 @@ using namespace kuma;
 #define THREAD_COUNT    10
 static bool g_exit = false;
 bool g_test_http2 = false;
-EventLoop main_loop(POLL_TYPE_NONE);
+EventLoop main_loop(PollType::NONE);
 
 #ifdef KUMA_OS_WIN
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
     char proto[16] = {0};
     char host[64] = {0};
     uint16_t port = 0;
-    if(km_parse_address(addr.c_str(), proto, sizeof(proto), host, sizeof(host), &port) != KUMA_ERROR_NOERR) {
+    if(km_parse_address(addr.c_str(), proto, sizeof(proto), host, sizeof(host), &port) != 0) {
         printUsage();
         return -1;
     }

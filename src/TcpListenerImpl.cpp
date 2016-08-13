@@ -87,7 +87,7 @@ void TcpListenerImpl::cleanup()
     }
 }
 
-int TcpListenerImpl::startListen(const char* host, uint16_t port)
+KMError TcpListenerImpl::startListen(const char* host, uint16_t port)
 {
     KUMA_INFOXTRACE("startListen, host="<<host<<", port="<<port);
     sockaddr_storage ss_addr = {0};
@@ -95,12 +95,12 @@ int TcpListenerImpl::startListen(const char* host, uint16_t port)
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
     if(km_set_sock_addr(host, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
-        return KUMA_ERROR_INVALID_PARAM;
+        return KMError::INVALID_PARAM;
     }
     fd_ = ::socket(ss_addr.ss_family, SOCK_STREAM, 0);
     if(INVALID_FD == fd_) {
         KUMA_ERRXTRACE("startListen, socket failed, err="<<getLastError());
-        return KUMA_ERROR_FAILED;
+        return KMError::FAILED;
     }
     setSocketOption();
     int addr_len = sizeof(ss_addr);
@@ -113,28 +113,28 @@ int TcpListenerImpl::startListen(const char* host, uint16_t port)
     int ret = ::bind(fd_, (struct sockaddr*)&ss_addr, addr_len);
     if(ret < 0) {
         KUMA_ERRXTRACE("startListen, bind failed, err="<<getLastError());
-        return KUMA_ERROR_FAILED;
+        return KMError::FAILED;
     }
     if(::listen(fd_, 3000) != 0) {
         closeFd(fd_);
         fd_ = INVALID_FD;
         KUMA_ERRXTRACE("startListen, socket listen fail, err="<<getLastError());
-        return KUMA_ERROR_FAILED;
+        return KMError::FAILED;
     }
     stopped_ = false;
     loop_->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
     registered_ = true;
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int TcpListenerImpl::stopListen(const char* host, uint16_t port)
+KMError TcpListenerImpl::stopListen(const char* host, uint16_t port)
 {
     KUMA_INFOXTRACE("stopListen");
     stopped_ = true;
     loop_->runInEventLoopSync([this] {
         cleanup();
     });
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 void TcpListenerImpl::setSocketOption()
@@ -160,14 +160,14 @@ void TcpListenerImpl::setSocketOption()
     setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt_val, sizeof(int));
 }
 
-int TcpListenerImpl::close()
+KMError TcpListenerImpl::close()
 {
     KUMA_INFOXTRACE("close");
     stopped_ = true;
     loop_->runInEventLoopSync([this] {
         cleanup();
     });
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 void TcpListenerImpl::onAccept()
@@ -203,9 +203,9 @@ void TcpListenerImpl::onAccept()
     }
 }
 
-void TcpListenerImpl::onClose(int err)
+void TcpListenerImpl::onClose(KMError err)
 {
-    KUMA_INFOXTRACE("onClose, err="<<err);
+    KUMA_INFOXTRACE("onClose, err="<<int(err));
     cleanup();
     if(error_cb_) error_cb_(err);
 }
@@ -214,7 +214,7 @@ void TcpListenerImpl::ioReady(uint32_t events)
 {
     if(events & KUMA_EV_ERROR) {
         KUMA_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events="<<events<<", err="<<getLastError());
-        onClose(KUMA_ERROR_POLLERR);
+        onClose(KMError::POLL_ERROR);
     } else {
         onAccept();
     }

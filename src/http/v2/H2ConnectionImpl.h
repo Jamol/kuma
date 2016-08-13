@@ -41,15 +41,15 @@ KUMA_NS_BEGIN
 class H2ConnectionImpl : public KMObject, public DestroyDetector, public FrameCallback, public TcpConnection, public EventLoopImpl::Listener
 {
 public:
-    typedef std::function<void(int)> ConnectCallback;
+    typedef std::function<void(KMError)> ConnectCallback;
     
     H2ConnectionImpl(EventLoopImpl* loop);
 	~H2ConnectionImpl();
     
-    int connect(const std::string &host, uint16_t port, ConnectCallback cb);
-    int attachFd(SOCKET_FD fd, const uint8_t* data=nullptr, size_t size=0);
-    int attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
-    int close();
+    KMError connect(const std::string &host, uint16_t port, ConnectCallback cb);
+    KMError attachFd(SOCKET_FD fd, const uint8_t* data=nullptr, size_t size=0);
+    KMError attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
+    KMError close();
     
     KMError sendH2Frame(H2Frame *frame);
     
@@ -69,17 +69,17 @@ public:
     void onFrameError(const FrameHeader &hdr, H2Error err) override;
     
 private:
-    void onConnect(int err) override;
+    void onConnect(KMError err) override;
     KMError handleInputData(uint8_t *src, size_t len) override;
     void onWrite() override;
-    void onError(int err) override;
+    void onError(KMError err) override;
     
 private:
     void onHttpData(const char* data, size_t len);
     void onHttpEvent(HttpEvent ev);
     
 private:
-    int connect_i(const std::string &host, uint16_t port);
+    KMError connect_i(const std::string &host, uint16_t port);
     KMError parseInputData(const uint8_t *buf, size_t len);
     void handleDataFrame(DataFrame *frame);
     void handleHeadersFrame(HeadersFrame *frame);
@@ -100,8 +100,8 @@ private:
     void sendUpgradeRequest();
     void sendUpgradeResponse();
     void sendPreface();
-    int handleUpgradeRequest();
-    int handleUpgradeResponse();
+    KMError handleUpgradeRequest();
+    KMError handleUpgradeResponse();
     
     enum State {
         IDLE,
@@ -117,7 +117,7 @@ private:
     void onStateOpen();
     void cleanup();
     
-    void onConnectError(int err);
+    void onConnectError(KMError err);
     
 private:
     State state_ = State::IDLE;

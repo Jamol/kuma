@@ -34,19 +34,19 @@ class EventLoopImpl;
 class UdpSocketImpl : public KMObject, public DestroyDetector
 {
 public:
-    typedef std::function<void(int)> EventCallback;
+    typedef std::function<void(KMError)> EventCallback;
     
     UdpSocketImpl(EventLoopImpl* loop);
     ~UdpSocketImpl();
     
-    int bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags);
+    KMError bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags);
     int send(const uint8_t* data, size_t length, const char* host, uint16_t port);
     int send(iovec* iovs, int count, const char* host, uint16_t port);
     int receive(uint8_t* data, size_t length, char* ip, size_t ip_len, uint16_t& port);
-    int close();
+    KMError close();
     
-    int mcastJoin(const char* mcast_addr, uint16_t mcast_port);
-    int mcastLeave(const char* mcast_addr, uint16_t mcast_port);
+    KMError mcastJoin(const char* mcast_addr, uint16_t mcast_port);
+    KMError mcastLeave(const char* mcast_addr, uint16_t mcast_port);
 
     void setReadCallback(EventCallback cb) { read_cb_ = std::move(cb); }
     void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
@@ -54,9 +54,9 @@ public:
 private:
     void setSocketOption();
     void ioReady(uint32_t events);
-    void onSend(int err);
-    void onReceive(int err);
-    void onClose(int err);
+    void onSend(KMError err);
+    void onReceive(KMError err);
+    void onClose(KMError err);
     void cleanup();
     
 private:

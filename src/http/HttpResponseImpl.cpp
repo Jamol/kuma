@@ -42,7 +42,7 @@ void HttpResponseImpl::cleanup()
     TcpConnection::close();
 }
 
-int HttpResponseImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, size_t init_len)
+KMError HttpResponseImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, size_t init_len)
 {
     setState(State::RECVING_REQUEST);
     http_parser_.reset();
@@ -51,7 +51,7 @@ int HttpResponseImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, size_t init_len
     return TcpConnection::attachFd(fd);
 }
 
-int HttpResponseImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
+KMError HttpResponseImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
 {
     setState(State::RECVING_REQUEST);
     http_parser_.reset();
@@ -59,8 +59,8 @@ int HttpResponseImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
     http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
 
-    int ret = TcpConnection::attachSocket(std::move(tcp));
-    if(ret == KUMA_ERROR_NOERR && http_parser_.paused()) {
+    auto ret = TcpConnection::attachSocket(std::move(tcp));
+    if(ret == KMError::NOERR && http_parser_.paused()) {
         http_parser_.resume();
     }
     return ret;
@@ -96,11 +96,11 @@ void HttpResponseImpl::buildResponse(int status_code, const std::string& desc, c
     send_buffer_.assign(str.begin(), str.end());
 }
 
-int HttpResponseImpl::sendResponse(int status_code, const std::string& desc, const std::string& ver)
+KMError HttpResponseImpl::sendResponse(int status_code, const std::string& desc, const std::string& ver)
 {
     KUMA_INFOXTRACE("sendResponse, status_code="<<status_code);
     if (getState() != State::WAIT_FOR_RESPONSE) {
-        return KUMA_ERROR_INVALID_STATE;
+        return KMError::INVALID_STATE;
     }
     auto it = header_map_.find(str_content_length);
     if(it != header_map_.end()) {
@@ -114,21 +114,21 @@ int HttpResponseImpl::sendResponse(int status_code, const std::string& desc, con
     body_bytes_sent_ = 0;
     buildResponse(status_code, desc, ver);
     setState(State::SENDING_HEADER);
-    int ret = sendBufferedData();
-    if(ret < 0) {
+    auto ret = sendBufferedData();
+    if(ret != KMError::NOERR) {
         cleanup();
         setState(State::IN_ERROR);
-        return KUMA_ERROR_SOCKERR;
+        return KMError::SOCK_ERROR;
     } else if (sendBufferEmpty()) {
         if(has_content_length_ && 0 == content_length_ && !is_chunked_) {
             setState(State::COMPLETE);
             getEventLoop()->queueInEventLoop([this] { notifyComplete(); });
         } else {
             setState(State::SENDING_BODY);
-            getEventLoop()->queueInEventLoop([this] { if (write_cb_) write_cb_(0); });
+            getEventLoop()->queueInEventLoop([this] { if (write_cb_) write_cb_(KMError::NOERR); });
         }
     }
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 int HttpResponseImpl::sendData(const uint8_t* data, size_t len)
@@ -202,26 +202,26 @@ void HttpResponseImpl::reset()
     setState(State::RECVING_REQUEST);
 }
 
-int HttpResponseImpl::close()
+KMError HttpResponseImpl::close()
 {
     KUMA_INFOXTRACE("close");
     cleanup();
     setState(State::CLOSED);
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 KMError HttpResponseImpl::handleInputData(uint8_t *src, size_t len)
 {
     DESTROY_DETECTOR_SETUP();
     int bytes_used = http_parser_.parse((char*)src, len);
-    DESTROY_DETECTOR_CHECK(KUMA_ERROR_DESTROYED);
+    DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
     if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
-        return KUMA_ERROR_FAILED;
+        return KMError::FAILED;
     }
     if(bytes_used != len) {
         KUMA_WARNXTRACE("handleInputData, bytes_used="<<bytes_used<<", bytes_read="<<len);
     }
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 void HttpResponseImpl::onWrite()
@@ -241,16 +241,16 @@ void HttpResponseImpl::onWrite()
             return ;
         }
     }
-    if(write_cb_) write_cb_(0);
+    if(write_cb_) write_cb_(KMError::NOERR);
 }
 
-void HttpResponseImpl::onError(int err)
+void HttpResponseImpl::onError(KMError err)
 {
-    KUMA_INFOXTRACE("onError, err="<<err);
+    KUMA_INFOXTRACE("onError, err="<<int(err));
     cleanup();
     if(getState() < State::COMPLETE) {
         setState(State::IN_ERROR);
-        if(error_cb_) error_cb_(KUMA_ERROR_SOCKERR);
+        if(error_cb_) error_cb_(KMError::SOCK_ERROR);
     } else {
         setState(State::CLOSED);
     }
@@ -263,21 +263,21 @@ void HttpResponseImpl::onHttpData(const char* data, size_t len)
 
 void HttpResponseImpl::onHttpEvent(HttpEvent ev)
 {
-    KUMA_INFOXTRACE("onHttpEvent, ev="<<ev);
+    KUMA_INFOXTRACE("onHttpEvent, ev="<<int(ev));
     switch (ev) {
-        case HTTP_HEADER_COMPLETE:
+        case HttpEvent::HEADER_COMPLETE:
             if(header_cb_) header_cb_();
             break;
             
-        case HTTP_COMPLETE:
+        case HttpEvent::COMPLETE:
             setState(State::WAIT_FOR_RESPONSE);
             if(request_cb_) request_cb_();
             break;
             
-        case HTTP_ERROR:
+        case HttpEvent::HTTP_ERROR:
             cleanup();
             setState(State::IN_ERROR);
-            if(error_cb_) error_cb_(KUMA_ERROR_FAILED);
+            if(error_cb_) error_cb_(KMError::FAILED);
             break;
             
         default:

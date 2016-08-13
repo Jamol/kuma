@@ -29,14 +29,14 @@ ProtoDemuxer::~ProtoDemuxer()
     
 }
 
-int ProtoDemuxer::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
+KMError ProtoDemuxer::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
 {
     http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     
-    tcp_.setWriteCallback([this] (int err) { onSend(err); });
-    tcp_.setReadCallback([this] (int err) { onReceive(err); });
-    tcp_.setErrorCallback([this] (int err) { onClose(err); });
+    tcp_.setWriteCallback([this] (KMError err) { onSend(err); });
+    tcp_.setReadCallback([this] (KMError err) { onReceive(err); });
+    tcp_.setErrorCallback([this] (KMError err) { onClose(err); });
     tcp_.setSslFlags(ssl_flags);
     return tcp_.attachFd(fd);
 }
@@ -57,14 +57,14 @@ void ProtoDemuxer::onHttpEvent(HttpEvent ev)
 {
     printf("ProtoDemuxer::onHttpEvent, ev=%u\n", ev);
     switch (ev) {
-        case HTTP_HEADER_COMPLETE:
+        case HttpEvent::HEADER_COMPLETE:
         {
             http_parser_.pause();
             demuxHttp();
             loop_->removeObject(conn_id_);
             break;
         }
-        case HTTP_ERROR:
+        case HttpEvent::HTTP_ERROR:
         {
             loop_->removeObject(conn_id_);
             break;
@@ -79,8 +79,8 @@ bool ProtoDemuxer::checkHttp2()
 {
     if (tcp_.sslEnabled()) {
         char buf[64];
-        int ret = tcp_.getAlpnSelected(buf, sizeof(buf));
-        if (ret == KUMA_ERROR_NOERR && strcmp("h2", buf)) { // HTTP/2.0
+        auto ret = tcp_.getAlpnSelected(buf, sizeof(buf));
+        if (ret == KMError::NOERR && strcmp("h2", buf)) { // HTTP/2.0
             loop_->addHttp2(std::move(tcp_), std::move(http_parser_));
             loop_->removeObject(conn_id_);
             return true;
@@ -119,12 +119,12 @@ void ProtoDemuxer::demuxHttp()
     }
 }
 
-void ProtoDemuxer::onSend(int err)
+void ProtoDemuxer::onSend(KMError err)
 {
     checkHttp2();
 }
 
-void ProtoDemuxer::onReceive(int err)
+void ProtoDemuxer::onReceive(KMError err)
 {
     if (checkHttp2()) {
         return;
@@ -149,7 +149,7 @@ void ProtoDemuxer::onReceive(int err)
     } while(true);
 }
 
-void ProtoDemuxer::onClose(int err)
+void ProtoDemuxer::onClose(KMError err)
 {
     printf("ProtoDemuxer::onClose, err=%d\n", err);
     loop_->removeObject(conn_id_);

@@ -32,10 +32,10 @@ public:
     HttpRequestImpl(EventLoopImpl* loop);
     ~HttpRequestImpl();
     
-    int setSslFlags(uint32_t ssl_flags) override { return TcpConnection::setSslFlags(ssl_flags); }
+    KMError setSslFlags(uint32_t ssl_flags) override { return TcpConnection::setSslFlags(ssl_flags); }
     int sendData(const uint8_t* data, size_t len) override;
     void reset() override; // reset for connection reuse
-    int close() override;
+    KMError close() override;
     
     int getStatusCode() const override { return http_parser_.getStatusCode(); }
     const std::string& getVersion() const override { return http_parser_.getVersion(); }
@@ -43,13 +43,13 @@ public:
     void forEachHeader(HttpParserImpl::EnumrateCallback cb) override { return http_parser_.forEachHeader(std::move(cb)); }
     
 protected: // callbacks of tcp_socket
-    void onConnect(int err) override;
+    void onConnect(KMError err) override;
     KMError handleInputData(uint8_t *src, size_t len) override;
     void onWrite() override;
-    void onError(int err) override;
+    void onError(KMError err) override;
 
 private:
-    int sendRequest() override;
+    KMError sendRequest() override;
     void checkHeaders() override;
     void buildRequest();
     int sendChunk(const uint8_t* data, size_t len);

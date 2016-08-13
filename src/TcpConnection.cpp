@@ -43,29 +43,29 @@ void TcpConnection::cleanup()
     tcp_.close();
 }
 
-int TcpConnection::setSslFlags(uint32_t ssl_flags)
+KMError TcpConnection::setSslFlags(uint32_t ssl_flags)
 {
     return tcp_.setSslFlags(ssl_flags);
 }
 
 void TcpConnection::setupCallbacks()
 {
-    tcp_.setReadCallback([this] (int err) { onReceive(err); });
-    tcp_.setWriteCallback([this] (int err) { onSend(err); });
-    tcp_.setErrorCallback([this] (int err) { onClose(err); });
+    tcp_.setReadCallback([this] (KMError err) { onReceive(err); });
+    tcp_.setWriteCallback([this] (KMError err) { onSend(err); });
+    tcp_.setErrorCallback([this] (KMError err) { onClose(err); });
 }
 
-int TcpConnection::connect(const std::string &host, uint16_t port)
+KMError TcpConnection::connect(const std::string &host, uint16_t port)
 {
     isServer_ = false;
     host_ = host;
     port_ = port;
     setupCallbacks();
     
-    return tcp_.connect(host.c_str(), port, [this] (int err) { onConnect(err); });
+    return tcp_.connect(host.c_str(), port, [this] (KMError err) { onConnect(err); });
 }
 
-int TcpConnection::attachFd(SOCKET_FD fd, const uint8_t* data, size_t size)
+KMError TcpConnection::attachFd(SOCKET_FD fd, const uint8_t* data, size_t size)
 {
     isServer_ = true;
     if(data && size > 0) {
@@ -76,7 +76,7 @@ int TcpConnection::attachFd(SOCKET_FD fd, const uint8_t* data, size_t size)
     return tcp_.attachFd(fd);
 }
 
-int TcpConnection::attachSocket(TcpSocketImpl&& tcp)
+KMError TcpConnection::attachSocket(TcpSocketImpl &&tcp)
 {
     isServer_ = true;
     setupCallbacks();
@@ -89,7 +89,7 @@ int TcpConnection::send(const uint8_t* data, size_t len)
     if(!sendBufferEmpty()) {
         // try to send buffered data
         auto ret = sendBufferedData();
-        if (ret != KUMA_ERROR_NOERR) {
+        if (ret != KMError::NOERR) {
             return -1;
         } else if (!sendBufferEmpty()) {
             return 0;
@@ -128,11 +128,11 @@ int TcpConnection::send(iovec* iovs, int count)
     return ret;
 }
 
-int TcpConnection::close()
+KMError TcpConnection::close()
 {
     //KUMA_INFOXTRACE("close");
     cleanup();
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 KMError TcpConnection::sendBufferedData()
@@ -140,7 +140,7 @@ KMError TcpConnection::sendBufferedData()
     if(!send_buffer_.empty() && send_offset_ < send_buffer_.size()) {
         int ret = tcp_.send(&send_buffer_[0] + send_offset_, send_buffer_.size() - send_offset_);
         if(ret < 0) {
-            return KUMA_ERROR_SOCKERR;
+            return KMError::SOCK_ERROR;
         } else {
             send_offset_ += ret;
             if(send_offset_ == send_buffer_.size()) {
@@ -149,14 +149,14 @@ KMError TcpConnection::sendBufferedData()
             }
         }
     }
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-void TcpConnection::onSend(int err)
+void TcpConnection::onSend(KMError err)
 {
-    if (sendBufferedData() != KUMA_ERROR_NOERR) {
+    if (sendBufferedData() != KMError::NOERR) {
         cleanup();
-        onError(KUMA_ERROR_SOCKERR);
+        onError(KMError::SOCK_ERROR);
         return;
     }
     if (sendBufferEmpty()) {
@@ -164,11 +164,11 @@ void TcpConnection::onSend(int err)
     }
 }
 
-void TcpConnection::onReceive(int err)
+void TcpConnection::onReceive(KMError err)
 {
     if(!initData_.empty()) {
-        int ret = handleInputData(&initData_[0], initData_.size());
-        if (ret != KUMA_ERROR_NOERR) {
+        auto ret = handleInputData(&initData_[0], initData_.size());
+        if (ret != KMError::NOERR) {
             return;
         }
         initData_.clear();
@@ -177,20 +177,20 @@ void TcpConnection::onReceive(int err)
     do {
         int ret = tcp_.receive(buf, sizeof(buf));
         if (ret > 0) {
-            if (handleInputData(buf, ret) != KUMA_ERROR_NOERR) {
+            if (handleInputData(buf, ret) != KMError::NOERR) {
                 break;
             }
         } else if (0 == ret) {
             break;
         } else { // ret < 0
             cleanup();
-            onError(KUMA_ERROR_SOCKERR);
+            onError(KMError::SOCK_ERROR);
             return;
         }
     } while(true);
 }
 
-void TcpConnection::onClose(int err)
+void TcpConnection::onClose(KMError err)
 {
     //KUMA_INFOXTRACE("onClose");
     cleanup();

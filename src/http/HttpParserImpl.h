@@ -113,7 +113,7 @@ private:
     void onHeaderComplete();
     void onComplete();
     
-    int saveData(const char* cur_pos, const char* end);
+    KMError saveData(const char* cur_pos, const char* end);
     bool bufferEmpty() { return str_buf_.empty(); };
     void clearBuffer() { str_buf_.clear(); }
     

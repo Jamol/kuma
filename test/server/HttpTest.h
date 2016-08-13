@@ -13,12 +13,12 @@ class HttpTest : public LoopObject
 public:
     HttpTest(TestLoop* loop, long conn_id);
 
-    int attachFd(SOCKET_FD fd, uint32_t ssl_flags);
-    int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
+    KMError attachFd(SOCKET_FD fd, uint32_t ssl_flags);
+    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser);
     int close();
     
-    void onSend(int err);
-    void onClose(int err);
+    void onSend(KMError err);
+    void onClose(KMError err);
     
     void onHttpData(uint8_t*, size_t);
     void onHeaderComplete();

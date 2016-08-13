@@ -9,19 +9,19 @@ WsTest::WsTest(TestLoop* loop, long conn_id)
     
 }
 
-int WsTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
+KMError WsTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
 {
-    ws_.setWriteCallback([this] (int err) { onSend(err); });
-    ws_.setErrorCallback([this] (int err) { onClose(err); });
+    ws_.setWriteCallback([this] (KMError err) { onSend(err); });
+    ws_.setErrorCallback([this] (KMError err) { onClose(err); });
     ws_.setDataCallback([this] (uint8_t* data, size_t len) { onData(data, len); });
     ws_.setSslFlags(ssl_flags);
     return ws_.attachFd(fd);
 }
 
-int WsTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
+KMError WsTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
 {
-    ws_.setWriteCallback([this] (int err) { onSend(err); });
-    ws_.setErrorCallback([this] (int err) { onClose(err); });
+    ws_.setWriteCallback([this] (KMError err) { onSend(err); });
+    ws_.setErrorCallback([this] (KMError err) { onClose(err); });
     ws_.setDataCallback([this] (uint8_t* data, size_t len) { onData(data, len); });
     
     return ws_.attachSocket(std::move(tcp), std::move(parser));
@@ -29,15 +29,16 @@ int WsTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
 
 int WsTest::close()
 {
-    return ws_.close();
+    ws_.close();
+    return 0;
 }
 
-void WsTest::onSend(int err)
+void WsTest::onSend(KMError err)
 {
     //sendTestData();
 }
 
-void WsTest::onClose(int err)
+void WsTest::onClose(KMError err)
 {
     printf("WsTest::onClose, err=%d\n", err);
     loop_->removeObject(conn_id_);

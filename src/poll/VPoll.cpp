@@ -32,12 +32,12 @@ public:
     ~VPoll();
     
     bool init();
-    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
-    int unregisterFd(SOCKET_FD fd);
-    int updateFd(SOCKET_FD fd, uint32_t events);
-    int wait(uint32_t wait_ms);
+    KMError registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
+    KMError unregisterFd(SOCKET_FD fd);
+    KMError updateFd(SOCKET_FD fd, uint32_t events);
+    KMError wait(uint32_t wait_ms);
     void notify();
-    PollType getType() const { return POLL_TYPE_POLL; }
+    PollType getType() const { return PollType::POLL; }
     bool isLevelTriggered() const { return true; }
     
 private:
@@ -111,7 +111,7 @@ uint32_t VPoll::get_kuma_events(uint32_t events)
     return ev;
 }
 
-int VPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
+KMError VPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
 {
     resizePollItems(fd);
     int idx = -1;
@@ -127,16 +127,16 @@ int VPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
     poll_items_[fd].cb = std::move(cb);
     KUMA_INFOTRACE("VPoll::registerFd, fd="<<fd<<", events="<<events<<", index="<<idx);
     
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int VPoll::unregisterFd(SOCKET_FD fd)
+KMError VPoll::unregisterFd(SOCKET_FD fd)
 {
     KUMA_INFOTRACE("VPoll::unregisterFd, fd="<<fd);
     int max_fd = int(poll_items_.size() - 1);
     if (fd < 0 || -1 == max_fd || fd > max_fd) {
         KUMA_WARNTRACE("VPoll::unregisterFd, failed, max_fd="<<max_fd);
-        return KUMA_ERROR_INVALID_PARAM;
+        return KMError::INVALID_PARAM;
     }
     int idx = poll_items_[fd].idx;
     if (fd == max_fd) {
@@ -149,41 +149,41 @@ int VPoll::unregisterFd(SOCKET_FD fd)
     
     int last_idx = int(poll_fds_.size() - 1);
     if (idx > last_idx || -1 == idx) {
-        return KUMA_ERROR_NOERR;
+        return KMError::NOERR;
     }
     if (idx != last_idx) {
         std::iter_swap(poll_fds_.begin()+idx, poll_fds_.end()-1);
         poll_items_[poll_fds_[idx].fd].idx = idx;
     }
     poll_fds_.pop_back();
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int VPoll::updateFd(SOCKET_FD fd, uint32_t events)
+KMError VPoll::updateFd(SOCKET_FD fd, uint32_t events)
 {
     int max_fd = int(poll_items_.size() - 1);
     if (fd < 0 || -1 == max_fd || fd > max_fd) {
         KUMA_WARNTRACE("VPoll::updateFd, failed, fd="<<fd<<", max_fd="<<max_fd);
-        return KUMA_ERROR_INVALID_PARAM;
+        return KMError::INVALID_PARAM;
     }
     if(poll_items_[fd].fd != fd) {
         KUMA_WARNTRACE("VPoll::updateFd, failed, fd="<<fd<<", item_fd="<<poll_items_[fd].fd);
-        return KUMA_ERROR_INVALID_PARAM;
+        return KMError::INVALID_PARAM;
     }
     int idx = poll_items_[fd].idx;
     if (idx < 0 || idx >= poll_fds_.size()) {
         KUMA_WARNTRACE("VPoll::updateFd, failed, index="<<idx);
-        return KUMA_ERROR_INVALID_STATE;
+        return KMError::INVALID_STATE;
     }
     if(poll_fds_[idx].fd != fd) {
         KUMA_WARNTRACE("VPoll::updateFd, failed, fd="<<fd<<", pfds_fd="<<poll_fds_[idx].fd);
-        return KUMA_ERROR_INVALID_PARAM;
+        return KMError::INVALID_PARAM;
     }
     poll_fds_[idx].events = get_events(events);
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int VPoll::wait(uint32_t wait_ms)
+KMError VPoll::wait(uint32_t wait_ms)
 {
 #ifdef KUMA_OS_WIN
     int num_revts = WSAPoll(&poll_fds_[0], poll_fds_.size(), wait_ms);
@@ -196,7 +196,7 @@ int VPoll::wait(uint32_t wait_ms)
         } else {
             KUMA_ERRTRACE("VPoll::wait, err="<<getLastError());
         }
-        return KUMA_ERROR_INVALID_STATE;
+        return KMError::INVALID_STATE;
     }
 
     // copy poll fds since event handler may unregister fd
@@ -214,7 +214,7 @@ int VPoll::wait(uint32_t wait_ms)
         }
         ++idx;
     }
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 void VPoll::notify()

@@ -101,22 +101,22 @@ void TcpSocketImpl::cleanup()
     }
 }
 
-int TcpSocketImpl::setSslFlags(uint32_t ssl_flags)
+KMError TcpSocketImpl::setSslFlags(uint32_t ssl_flags)
 {
 #ifdef KUMA_HAS_OPENSSL
     ssl_flags_ = ssl_flags;
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 #else
-    return KUMA_ERROR_UNSUPPORT;
+    return KMError::UNSUPPORT;
 #endif
 }
 
-int TcpSocketImpl::bind(const char *bind_host, uint16_t bind_port)
+KMError TcpSocketImpl::bind(const char *bind_host, uint16_t bind_port)
 {
     KUMA_INFOTRACE("bind, bind_host="<<bind_host<<", bind_port="<<bind_port);
     if(getState() != State::IDLE) {
         KUMA_ERRXTRACE("bind, invalid state, state="<<getState());
-        return KUMA_ERROR_INVALID_STATE;
+        return KMError::INVALID_STATE;
     }
     if(fd_ != INVALID_FD) {
         cleanup();
@@ -126,12 +126,12 @@ int TcpSocketImpl::bind(const char *bind_host, uint16_t bind_port)
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_NUMERICHOST;//AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
     if(km_set_sock_addr(bind_host, bind_port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
-        return KUMA_ERROR_INVALID_PARAM;
+        return KMError::INVALID_PARAM;
     }
     fd_ = ::socket(ss_addr.ss_family, SOCK_STREAM, 0);
     if(INVALID_FD == fd_) {
         KUMA_ERRXTRACE("bind, socket failed, err="<<getLastError());
-        return KUMA_ERROR_FAILED;
+        return KMError::FAILED;
     }
     int addr_len = sizeof(ss_addr);
 #ifdef KUMA_OS_MAC
@@ -143,28 +143,28 @@ int TcpSocketImpl::bind(const char *bind_host, uint16_t bind_port)
     int ret = ::bind(fd_, (struct sockaddr*)&ss_addr, addr_len);
     if(ret < 0) {
         KUMA_ERRXTRACE("bind, bind failed, err="<<getLastError());
-        return KUMA_ERROR_FAILED;
+        return KMError::FAILED;
     }
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int TcpSocketImpl::connect(const char *host, uint16_t port, EventCallback cb, uint32_t timeout_ms)
+KMError TcpSocketImpl::connect(const char *host, uint16_t port, EventCallback cb, uint32_t timeout_ms)
 {
     if(getState() != State::IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
-        return KUMA_ERROR_INVALID_STATE;
+        return KMError::INVALID_STATE;
     }
     connect_cb_ = std::move(cb);
     return connect_i(host, port, timeout_ms);
 }
 
-int TcpSocketImpl::connect_i(const char* host, uint16_t port, uint32_t timeout_ms)
+KMError TcpSocketImpl::connect_i(const char* host, uint16_t port, uint32_t timeout_ms)
 {
     KUMA_INFOXTRACE("connect_i, host="<<host<<", port="<<port<<", this="<<this);
 #ifndef KUMA_HAS_OPENSSL
     if (sslEnabled()) {
         KUMA_ERRXTRACE("connect_i, OpenSSL is disabled");
-        return KUMA_ERROR_UNSUPPORT;
+        return KMError::UNSUPPORT;
     }
 #endif
     sockaddr_storage ss_addr = {0};
@@ -173,13 +173,13 @@ int TcpSocketImpl::connect_i(const char* host, uint16_t port, uint32_t timeout_m
     hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
     if(km_set_sock_addr(host, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
         KUMA_ERRXTRACE("connect_i, failed to resolve host: "<<host);
-        return KUMA_ERROR_INVALID_PARAM;
+        return KMError::INVALID_PARAM;
     }
     if(INVALID_FD == fd_) {
         fd_ = ::socket(ss_addr.ss_family, SOCK_STREAM, 0);
         if(INVALID_FD == fd_) {
             KUMA_ERRXTRACE("connect_i, socket failed, err="<<getLastError());
-            return KUMA_ERROR_FAILED;
+            return KMError::FAILED;
         }
     }
     setSocketOption();
@@ -206,7 +206,7 @@ int TcpSocketImpl::connect_i(const char* host, uint16_t port, uint32_t timeout_m
         KUMA_ERRXTRACE("connect_i, error, fd="<<fd_<<", err="<<getLastError());
         cleanup();
         setState(State::CLOSED);
-        return KUMA_ERROR_FAILED;
+        return KMError::FAILED;
     }
 #if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
     socklen_t len = sizeof(ss_addr);
@@ -225,20 +225,20 @@ int TcpSocketImpl::connect_i(const char* host, uint16_t port, uint32_t timeout_m
     
     loop_->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
     registered_ = true;
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int TcpSocketImpl::attachFd(SOCKET_FD fd)
+KMError TcpSocketImpl::attachFd(SOCKET_FD fd)
 {
     KUMA_INFOXTRACE("attachFd, fd="<<fd<<", flags="<<ssl_flags_<<", state="<<getState());
     if(getState() != State::IDLE) {
         KUMA_ERRXTRACE("attachFd, invalid state, state="<<getState());
-        return KUMA_ERROR_INVALID_STATE;
+        return KMError::INVALID_STATE;
     }
 #ifndef KUMA_HAS_OPENSSL
     if (sslEnabled()) {
         KUMA_ERRXTRACE("attachFd, OpenSSL is disabled");
-        return KUMA_ERROR_UNSUPPORT;
+        return KMError::UNSUPPORT;
     }
 #endif
     
@@ -247,35 +247,35 @@ int TcpSocketImpl::attachFd(SOCKET_FD fd)
     setState(State::OPEN);
 #ifdef KUMA_HAS_OPENSSL
     if(sslEnabled()) {
-        int ret = startSslHandshake(AS_SERVER);
-        if(ret != KUMA_ERROR_NOERR) {
+        auto ret = startSslHandshake(SslRole::SERVER);
+        if(ret != KMError::NOERR) {
             return ret;
         }
     }
 #endif
     loop_->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
     registered_ = true;
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int TcpSocketImpl::attach(TcpSocketImpl &&other)
+KMError TcpSocketImpl::attach(TcpSocketImpl &&other)
 {
 #ifdef KUMA_HAS_OPENSSL
     SOCKET_FD fd;
     SSL* ssl = nullptr;
     uint32_t sslFlags = other.getSslFlags();
-    int ret = other.detachFd(fd, ssl);
+    auto ret = other.detachFd(fd, ssl);
     setSslFlags(sslFlags);
     ret = attachFd(fd, ssl);
 #else
     SOCKET_FD fd;
-    int ret = other.detachFd(fd);
+    auto ret = other.detachFd(fd);
     ret = attachFd(fd);
 #endif
     return ret;
 }
 
-int TcpSocketImpl::detachFd(SOCKET_FD &fd)
+KMError TcpSocketImpl::detachFd(SOCKET_FD &fd)
 {
     KUMA_INFOXTRACE("detachFd, fd="<<fd_<<", state="<<getState());
     fd = fd_;
@@ -286,34 +286,34 @@ int TcpSocketImpl::detachFd(SOCKET_FD &fd)
     }
     cleanup();
     setState(State::CLOSED);
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 #ifdef KUMA_HAS_OPENSSL
-int TcpSocketImpl::setAlpnProtocols(const AlpnProtos &protocols)
+KMError TcpSocketImpl::setAlpnProtocols(const AlpnProtos &protocols)
 {
     alpn_protos_ = protocols;
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int TcpSocketImpl::getAlpnSelected(std::string &proto)
+KMError TcpSocketImpl::getAlpnSelected(std::string &proto)
 {
     if (!sslEnabled()) {
-        return KUMA_ERROR_INVALID_PROTO;
+        return KMError::INVALID_PROTO;
     }
     if (ssl_handler_) {
         return ssl_handler_->getAlpnSelected(proto);
     } else {
-        return KUMA_ERROR_INVALID_STATE;
+        return KMError::INVALID_STATE;
     }
 }
 
-int TcpSocketImpl::attachFd(SOCKET_FD fd, SSL* ssl)
+KMError TcpSocketImpl::attachFd(SOCKET_FD fd, SSL* ssl)
 {
     KUMA_INFOXTRACE("attachFd, with ssl, fd="<<fd<<", flags="<<ssl_flags_<<", state="<<getState());
     if(getState() != State::IDLE) {
         KUMA_ERRXTRACE("attachFd, invalid state, state="<<getState());
-        return KUMA_ERROR_INVALID_STATE;
+        return KMError::INVALID_STATE;
     }
     
     fd_ = fd;
@@ -325,8 +325,8 @@ int TcpSocketImpl::attachFd(SOCKET_FD fd, SSL* ssl)
             ssl_handler_ = new SslHandler();
             ssl_handler_->attachSsl(ssl);
         } else {
-            int ret = startSslHandshake(AS_SERVER);
-            if(ret != KUMA_ERROR_NOERR) {
+            auto ret = startSslHandshake(SslRole::SERVER);
+            if(ret != KMError::NOERR) {
                 return ret;
             }
         }
@@ -334,10 +334,10 @@ int TcpSocketImpl::attachFd(SOCKET_FD fd, SSL* ssl)
 
     loop_->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
     registered_ = true;
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int TcpSocketImpl::detachFd(SOCKET_FD &fd, SSL* &ssl)
+KMError TcpSocketImpl::detachFd(SOCKET_FD &fd, SSL* &ssl)
 {
     KUMA_INFOXTRACE("detachFd, with ssl, fd="<<fd_<<", state="<<getState());
     fd = fd_;
@@ -351,15 +351,15 @@ int TcpSocketImpl::detachFd(SOCKET_FD &fd, SSL* &ssl)
     }
     cleanup();
     setState(State::CLOSED);
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int TcpSocketImpl::startSslHandshake(SslRole ssl_role)
+KMError TcpSocketImpl::startSslHandshake(SslRole ssl_role)
 {
-    KUMA_INFOXTRACE("startSslHandshake, ssl_role="<<ssl_role<<", fd="<<fd_<<", state="<<getState());
+    KUMA_INFOXTRACE("startSslHandshake, ssl_role="<<int(ssl_role)<<", fd="<<fd_<<", state="<<getState());
     if(INVALID_FD == fd_) {
         KUMA_ERRXTRACE("startSslHandshake, invalid fd");
-        return KUMA_ERROR_INVALID_STATE;
+        return KMError::INVALID_STATE;
     }
     if(ssl_handler_) {
         ssl_handler_->close();
@@ -367,11 +367,11 @@ int TcpSocketImpl::startSslHandshake(SslRole ssl_role)
         ssl_handler_ = nullptr;
     }
     ssl_handler_ = new SslHandler();
-    int ret = ssl_handler_->attachFd(fd_, ssl_role);
-    if(ret != KUMA_ERROR_NOERR) {
+    auto ret = ssl_handler_->attachFd(fd_, ssl_role);
+    if(ret != KMError::NOERR) {
         return ret;
     }
-    if (ssl_role == SslRole::AS_CLIENT) {
+    if (ssl_role == SslRole::CLIENT) {
         if (!alpn_protos_.empty()) {
             ssl_handler_->setAlpnProtocols(alpn_protos_);
         }
@@ -380,9 +380,9 @@ int TcpSocketImpl::startSslHandshake(SslRole ssl_role)
     ssl_flags_ |= SSL_ENABLE;
     SslHandler::SslState ssl_state = ssl_handler_->doSslHandshake();
     if(SslHandler::SslState::SSL_ERROR == ssl_state) {
-        return KUMA_ERROR_SSL_FAILED;
+        return KMError::SSL_FAILED;
     }
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 #endif
 
@@ -598,41 +598,41 @@ int TcpSocketImpl::receive(uint8_t* data, size_t length)
     return ret;
 }
 
-int TcpSocketImpl::close()
+KMError TcpSocketImpl::close()
 {
     KUMA_INFOXTRACE("close, state="<<getState());
     loop_->runInEventLoopSync([this] {
         cleanup();
         setState(State::CLOSED);
     });
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int TcpSocketImpl::pause()
+KMError TcpSocketImpl::pause()
 {
     return loop_->updateFd(fd_, KUMA_EV_ERROR);
 }
 
-int TcpSocketImpl::resume()
+KMError TcpSocketImpl::resume()
 {
     return loop_->updateFd(fd_, KUMA_EV_NETWORK);
 }
 
-void TcpSocketImpl::onConnect(int err)
+void TcpSocketImpl::onConnect(KMError err)
 {
-    KUMA_INFOXTRACE("onConnect, err="<<err<<", state="<<getState());
-    if(0 == err) {
+    KUMA_INFOXTRACE("onConnect, err="<<int(err)<<", state="<<getState());
+    if(KMError::NOERR == err) {
         setState(State::OPEN);
 #ifdef KUMA_HAS_OPENSSL
         if(sslEnabled()) {
-            err = startSslHandshake(AS_CLIENT);
-            if(KUMA_ERROR_NOERR == err && ssl_handler_->getState() == SslHandler::SslState::SSL_HANDSHAKE) {
+            err = startSslHandshake(SslRole::CLIENT);
+            if(KMError::NOERR == err && ssl_handler_->getState() == SslHandler::SslState::SSL_HANDSHAKE) {
                 return; // continue to SSL handshake
             }
         }
 #endif
     }
-    if(err != KUMA_ERROR_NOERR) {
+    if(err != KMError::NOERR) {
         cleanup();
         setState(State::CLOSED);
     }
@@ -640,7 +640,7 @@ void TcpSocketImpl::onConnect(int err)
     if(connect_cb) connect_cb(err);
 }
 
-void TcpSocketImpl::onSend(int err)
+void TcpSocketImpl::onSend(KMError err)
 {
     SOCKET_FD fd = fd_;
     if (loop_->isPollLT() && fd != INVALID_FD) {
@@ -649,14 +649,14 @@ void TcpSocketImpl::onSend(int err)
     if(write_cb_ && isReady()) write_cb_(err);
 }
 
-void TcpSocketImpl::onReceive(int err)
+void TcpSocketImpl::onReceive(KMError err)
 {
     if(read_cb_ && isReady()) read_cb_(err);
 }
 
-void TcpSocketImpl::onClose(int err)
+void TcpSocketImpl::onClose(KMError err)
 {
-    KUMA_INFOXTRACE("onClose, err="<<err<<", state="<<getState());
+    KUMA_INFOXTRACE("onClose, err="<<int(err)<<", state="<<getState());
     cleanup();
     setState(State::CLOSED);
     if(error_cb_) error_cb_(err);
@@ -671,13 +671,13 @@ void TcpSocketImpl::ioReady(uint32_t events)
             if(events & KUMA_EV_ERROR) {
                 KUMA_ERRXTRACE("ioReady, KUMA_EV_ERROR, events="<<events
                               <<", err="<<getLastError()<<", state="<<getState());
-                onConnect(KUMA_ERROR_POLLERR);
+                onConnect(KMError::POLL_ERROR);
             } else {
                 DESTROY_DETECTOR_SETUP();
-                onConnect(KUMA_ERROR_NOERR);
+                onConnect(KMError::NOERR);
                 DESTROY_DETECTOR_CHECK_VOID();
                 if((events & KUMA_EV_READ)) {
-                    onReceive(0);
+                    onReceive(KMError::NOERR);
                 }
             }
             break;
@@ -687,13 +687,13 @@ void TcpSocketImpl::ioReady(uint32_t events)
         {
 #ifdef KUMA_HAS_OPENSSL
             if(ssl_handler_ && ssl_handler_->getState() == SslHandler::SslState::SSL_HANDSHAKE) {
-                int err = KUMA_ERROR_NOERR;
+                auto err = KMError::NOERR;
                 if(events & KUMA_EV_ERROR) {
-                    err = KUMA_ERROR_POLLERR;
+                    err = KMError::POLL_ERROR;
                 } else {
                     SslHandler::SslState ssl_state = ssl_handler_->doSslHandshake();
                     if(SslHandler::SslState::SSL_ERROR == ssl_state) {
-                        err = KUMA_ERROR_SSL_FAILED;
+                        err = KMError::SSL_FAILED;
                     } else if(SslHandler::SslState::SSL_HANDSHAKE == ssl_state) {
                         return;
                     }
@@ -701,29 +701,29 @@ void TcpSocketImpl::ioReady(uint32_t events)
                 if(connect_cb_) {
                     auto connect_cb(std::move(connect_cb_));
                     connect_cb(err);
-                } else if(err != KUMA_ERROR_NOERR) {
+                } else if(err != KMError::NOERR) {
                     onClose(err);
                 } else {
                     events |= KUMA_EV_WRITE; // notify writable
                 }
-                if(err != KUMA_ERROR_NOERR) {
+                if(err != KMError::NOERR) {
                     return;
                 }
             }
 #endif
             DESTROY_DETECTOR_SETUP();
             if(events & KUMA_EV_READ) {// handle EPOLLIN firstly
-                onReceive(0);
+                onReceive(KMError::NOERR);
             }
             DESTROY_DETECTOR_CHECK_VOID();
             if((events & KUMA_EV_ERROR) && getState() == State::OPEN) {
                 KUMA_ERRXTRACE("ioReady, KUMA_EV_ERROR, events="<<events
                               <<", err="<<getLastError()<<", state="<<getState());
-                onClose(KUMA_ERROR_POLLERR);
+                onClose(KMError::POLL_ERROR);
                 break;
             }
             if((events & KUMA_EV_WRITE) && getState() == State::OPEN) {
-                onSend(0);
+                onSend(KMError::NOERR);
             }
             break;
         }

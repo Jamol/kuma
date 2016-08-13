@@ -87,18 +87,18 @@ void SslHandler::cleanup()
     setState(SSL_NONE);
 }
 
-int SslHandler::setAlpnProtocols(const AlpnProtos &protocols)
+KMError SslHandler::setAlpnProtocols(const AlpnProtos &protocols)
 {
     if (ssl_ && SSL_set_alpn_protos(ssl_, &protocols[0], (unsigned int)protocols.size()) == 1) {
-        return KUMA_ERROR_NOERR;
+        return KMError::NOERR;
     }
-    return KUMA_ERROR_SSL_FAILED;
+    return KMError::SSL_FAILED;
 }
 
-int SslHandler::getAlpnSelected(std::string &proto)
+KMError SslHandler::getAlpnSelected(std::string &proto)
 {
     if (!ssl_) {
-        return KUMA_ERROR_INVALID_STATE;
+        return KMError::INVALID_STATE;
     }
     const uint8_t *buf = nullptr;
     uint32_t len = 0;
@@ -108,13 +108,13 @@ int SslHandler::getAlpnSelected(std::string &proto)
     } else {
         proto.clear();
     }
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int SslHandler::attachFd(SOCKET_FD fd, SslRole ssl_role)
+KMError SslHandler::attachFd(SOCKET_FD fd, SslRole ssl_role)
 {
     cleanup();
-    is_server_ = ssl_role == AS_SERVER;
+    is_server_ = ssl_role == SslRole::SERVER;
     fd_ = fd;
 
     SSL_CTX* ctx = NULL;
@@ -125,38 +125,38 @@ int SslHandler::attachFd(SOCKET_FD fd, SslRole ssl_role)
     }
     if(NULL == ctx) {
         KUMA_ERRXTRACE("attachFd, CTX is NULL");
-        return KUMA_ERROR_SSL_FAILED;
+        return KMError::SSL_FAILED;
     }
     ssl_ = SSL_new(ctx);
     if(NULL == ssl_) {
         KUMA_ERRXTRACE("attachFd, SSL_new failed");
-        return KUMA_ERROR_SSL_FAILED;
+        return KMError::SSL_FAILED;
     }
     int ret = SSL_set_fd(ssl_, fd_);
     if(0 == ret) {
         KUMA_ERRXTRACE("attachFd, SSL_set_fd failed, err="<<ERR_reason_error_string(ERR_get_error()));
         SSL_free(ssl_);
         ssl_ = NULL;
-        return KUMA_ERROR_SSL_FAILED;
+        return KMError::SSL_FAILED;
     }
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int SslHandler::attachSsl(SSL* ssl)
+KMError SslHandler::attachSsl(SSL* ssl)
 {
     cleanup();
     ssl_ = ssl;
     if (ssl_) {
         setState(SSL_SUCCESS);
     }
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int SslHandler::detachSsl(SSL* &ssl)
+KMError SslHandler::detachSsl(SSL* &ssl)
 {
     ssl = ssl_;
     ssl_ = nullptr;
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 SslHandler::SslState SslHandler::sslConnect()
@@ -337,10 +337,10 @@ int SslHandler::receive(uint8_t* data, size_t size)
     return ret;
 }
 
-int SslHandler::close()
+KMError SslHandler::close()
 {
     cleanup();
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 SslHandler::SslState SslHandler::doSslHandshake()

@@ -46,7 +46,7 @@ public:
     
     uint32_t getStreamId() { return streamId_; }
     
-    int sendHeaders(const H2ConnectionPtr &conn, const HeaderVector &headers, size_t headersSize,bool endStream);
+    KMError sendHeaders(const H2ConnectionPtr &conn, const HeaderVector &headers, size_t headersSize,bool endStream);
     int sendData(const H2ConnectionPtr &conn, const uint8_t *data, size_t len, bool endStream = false);
     
     void close(const H2ConnectionPtr &conn);

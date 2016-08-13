@@ -27,19 +27,19 @@ class IHttpRequest
 {
 public:
     using DataCallback = std::function<void(uint8_t*, size_t)>;
-    using EventCallback = std::function<void(int)>;
+    using EventCallback = std::function<void(KMError)>;
     using HttpEventCallback = std::function<void(void)>;
     using EnumrateCallback = std::function<void(const std::string&, const std::string&)>;
     
     virtual ~IHttpRequest() = default;
     
-    virtual int setSslFlags(uint32_t ssl_flags) = 0;
+    virtual KMError setSslFlags(uint32_t ssl_flags) = 0;
     void addHeader(std::string name, std::string value);
     void addHeader(std::string name, uint32_t value);
-    int sendRequest(std::string method, std::string url, std::string ver);
+    KMError sendRequest(std::string method, std::string url, std::string ver);
     virtual int sendData(const uint8_t* data, size_t len) = 0;
     virtual void reset();
-    virtual int close() = 0;
+    virtual KMError close() = 0;
     
     virtual int getStatusCode() const = 0;
     virtual const std::string& getVersion() const = 0;
@@ -53,7 +53,7 @@ public:
     void setResponseCompleteCallback(HttpEventCallback cb) { response_cb_ = std::move(cb); }
     
 protected:
-    virtual int sendRequest() = 0;
+    virtual KMError sendRequest() = 0;
     virtual void checkHeaders() = 0;
     virtual bool isVersion1_1() { return false; }
     

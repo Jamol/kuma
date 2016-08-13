@@ -45,7 +45,7 @@ public:
         WS_ERROR_DESTROYED
     }WSError;
     typedef std::function<void(uint8_t*, size_t)> DataCallback;
-    typedef std::function<void(int)> HandshakeCallback;
+    typedef std::function<void(KMError)> HandshakeCallback;
     
     WSHandler();
     ~WSHandler() = default;

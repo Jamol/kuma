@@ -99,14 +99,14 @@ public:
         return fds_[READ_FD];
     }
     
-    int onEvent(uint32_t ev) {
+    KMError onEvent(uint32_t ev) {
         char buf[1024];
 #if defined(USE_PIPE) && !defined(KUMA_OS_WIN)
         while(read(fds_[READ_FD], buf, sizeof(buf))>0) ;
 #else
         recvfrom(fds_[READ_FD], buf, sizeof(buf), 0, NULL, NULL);
 #endif
-        return KUMA_ERROR_NOERR;
+        return KMError::NOERR;
     }
 private:
     void cleanup() {

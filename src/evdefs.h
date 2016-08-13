@@ -39,16 +39,16 @@ KUMA_NS_BEGIN
 
 #define INVALID_FD  ((SOCKET_FD)-1)
 
-typedef std::function<void(uint32_t)> IOCallback;
-typedef std::function<void(void)> LoopCallback;
+using IOCallback = std::function<void(uint32_t)>;
+using LoopCallback = std::function<void(void)>;
 
-typedef enum {
-    POLL_TYPE_NONE,
-    POLL_TYPE_POLL,
-    POLL_TYPE_EPOLL,
-    POLL_TYPE_SELECT,
-    POLL_TYPE_WIN
-}PollType;
+enum class PollType {
+    NONE,
+    POLL,
+    EPOLL,
+    SELECT,
+    WIN
+};
 
 KUMA_NS_END
 

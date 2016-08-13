@@ -48,20 +48,20 @@ void WebSocketImpl::setOrigin(const std::string& origin)
     origin_ = origin;
 }
 
-int WebSocketImpl::connect(const std::string& ws_url, EventCallback cb)
+KMError WebSocketImpl::connect(const std::string& ws_url, EventCallback cb)
 {
     if(getState() != State::IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
-        return KUMA_ERROR_INVALID_STATE;
+        return KMError::INVALID_STATE;
     }
     connect_cb_ = std::move(cb);
     return connect_i(ws_url);
 }
 
-int WebSocketImpl::connect_i(const std::string& ws_url)
+KMError WebSocketImpl::connect_i(const std::string& ws_url)
 {
     if(!uri_.parse(ws_url)) {
-        return false;
+        return KMError::INVALID_PARAM;
     }
     setState(State::CONNECTING);
     std::string str_port = uri_.getPort();
@@ -78,21 +78,21 @@ int WebSocketImpl::connect_i(const std::string& ws_url)
     return TcpConnection::connect(uri_.getHost().c_str(), port);
 }
 
-int WebSocketImpl::attachFd(SOCKET_FD fd, const uint8_t* init_data, size_t init_len)
+KMError WebSocketImpl::attachFd(SOCKET_FD fd, const uint8_t* init_data, size_t init_len)
 {
     ws_handler_.setDataCallback([this] (uint8_t* data, size_t len) { onWsData(data, len); });
-    ws_handler_.setHandshakeCallback([this] (int err) { onWsHandshake(err); });
+    ws_handler_.setHandshakeCallback([this] (KMError err) { onWsHandshake(err); });
     setState(State::UPGRADING);
     return TcpConnection::attachFd(fd, init_data, init_len);
 }
 
-int WebSocketImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
+KMError WebSocketImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
 {
     ws_handler_.setDataCallback([this] (uint8_t* data, size_t len) { onWsData(data, len); });
-    ws_handler_.setHandshakeCallback([this] (int err) { onWsHandshake(err); });
+    ws_handler_.setHandshakeCallback([this] (KMError err) { onWsHandshake(err); });
     setState(State::UPGRADING);
 
-    int ret = TcpConnection::attachSocket(std::move(tcp));
+    auto ret = TcpConnection::attachSocket(std::move(tcp));
     
     ws_handler_.setHttpParser(std::move(parser));
     return ret;
@@ -121,12 +121,12 @@ int WebSocketImpl::send(const uint8_t* data, size_t len)
     return ret < 0 ? ret : (int)len;
 }
 
-int WebSocketImpl::close()
+KMError WebSocketImpl::close()
 {
     KUMA_INFOXTRACE("close");
     cleanup();
     setState(State::CLOSED);
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 KMError WebSocketImpl::handleInputData(uint8_t *src, size_t len)
@@ -134,31 +134,31 @@ KMError WebSocketImpl::handleInputData(uint8_t *src, size_t len)
     if (getState() == State::OPEN || getState() == State::UPGRADING) {
         DESTROY_DETECTOR_SETUP();
         WSHandler::WSError err = ws_handler_.handleData(src, len);
-        DESTROY_DETECTOR_CHECK(KUMA_ERROR_DESTROYED);
+        DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
         if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
-            return KUMA_ERROR_INVALID_STATE;
+            return KMError::INVALID_STATE;
         }
         if(err != WSHandler::WSError::WS_ERROR_NOERR &&
            err != WSHandler::WSError::WS_ERROR_NEED_MORE_DATA) {
             cleanup();
             setState(State::CLOSED);
-            if(error_cb_) error_cb_(KUMA_ERROR_FAILED);
-            return KUMA_ERROR_FAILED;
+            if(error_cb_) error_cb_(KMError::FAILED);
+            return KMError::FAILED;
         }
     } else {
         KUMA_WARNXTRACE("handleInputData, invalid state: "<<getState());
     }
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-void WebSocketImpl::onConnect(int err)
+void WebSocketImpl::onConnect(KMError err)
 {
-    if(err != KUMA_ERROR_NOERR) {
+    if(err != KMError::NOERR) {
         if(connect_cb_) connect_cb_(err);
         return ;
     }
     ws_handler_.setDataCallback([this] (uint8_t* data, size_t len) { onWsData(data, len); });
-    ws_handler_.setHandshakeCallback([this] (int err) { onWsHandshake(err); });
+    ws_handler_.setHandshakeCallback([this] (KMError err) { onWsHandshake(err); });
     body_bytes_sent_ = 0;
     sendUpgradeRequest();
 }
@@ -172,12 +172,12 @@ void WebSocketImpl::onWrite()
             return; // wait upgrade response
         }
     }
-    if (write_cb_) write_cb_(0);
+    if (write_cb_) write_cb_(KMError::NOERR);
 }
 
-void WebSocketImpl::onError(int err)
+void WebSocketImpl::onError(KMError err)
 {
-    KUMA_INFOXTRACE("onError, err="<<err);
+    KUMA_INFOXTRACE("onError, err="<<int(err));
     cleanup();
     setState(State::CLOSED);
     if(error_cb_) error_cb_(err);
@@ -205,9 +205,9 @@ void WebSocketImpl::onStateOpen()
     KUMA_INFOXTRACE("onStateOpen");
     setState(State::OPEN);
     if(isServer()) {
-        if(write_cb_) write_cb_(0);
+        if(write_cb_) write_cb_(KMError::NOERR);
     } else {
-        if(connect_cb_) connect_cb_(0);
+        if(connect_cb_) connect_cb_(KMError::NOERR);
     }
 }
 
@@ -216,9 +216,9 @@ void WebSocketImpl::onWsData(uint8_t* data, size_t len)
     if(data_cb_) data_cb_(data, len);
 }
 
-void WebSocketImpl::onWsHandshake(int err)
+void WebSocketImpl::onWsHandshake(KMError err)
 {
-    if(0 == err) {
+    if(KMError::NOERR == err) {
         if(isServer()) {
             sendUpgradeResponse();
         } else {
@@ -226,6 +226,6 @@ void WebSocketImpl::onWsHandshake(int err)
         }
     } else {
         setState(State::IN_ERROR);
-        if(error_cb_) error_cb_(KUMA_ERROR_FAILED);
+        if(error_cb_) error_cb_(KMError::FAILED);
     }
 }

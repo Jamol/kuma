@@ -14,14 +14,14 @@ class TcpClient : public LoopObject
 public:
     TcpClient(TestLoop* loop, long conn_id);
     
-    int bind(const char* bind_host, uint16_t bind_port);
-    int connect(const char* host, uint16_t port);
+    KMError bind(const char* bind_host, uint16_t bind_port);
+    KMError connect(const char* host, uint16_t port);
     int close();
     
-    void onConnect(int err);
-    void onSend(int err);
-    void onReceive(int err);
-    void onClose(int err);
+    void onConnect(KMError err);
+    void onSend(KMError err);
+    void onReceive(KMError err);
+    void onClose(KMError err);
     void onTimer();
     
 private:

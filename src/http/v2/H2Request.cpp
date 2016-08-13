@@ -39,12 +39,12 @@ H2Request::~H2Request()
     
 }
 
-int H2Request::setSslFlags(uint32_t ssl_flags)
+KMError H2Request::setSslFlags(uint32_t ssl_flags)
 {
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int H2Request::sendRequest()
+KMError H2Request::sendRequest()
 {
     std::string str_port = uri_.getPort();
     uint16_t port = 80;
@@ -72,12 +72,12 @@ int H2Request::sendRequest()
         conn_->setSslFlags(ssl_flags);
         connMgr.addConnection(key, conn_);
         setState(State::CONNECTING);
-        return conn_->connect(uri_.getHost(), port, [this] (int err) { onConnect(err); });
+        return conn_->connect(uri_.getHost(), port, [this] (KMError err) { onConnect(err); });
     } else if (!conn_->isReady()) {
-        return KUMA_ERROR_INVALID_STATE;
+        return KMError::INVALID_STATE;
     }
     sendHeaders();
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 const std::string& H2Request::getHeaderValue(std::string name) const
@@ -160,9 +160,9 @@ void H2Request::sendHeaders()
     }
 }
 
-void H2Request::onConnect(int err)
+void H2Request::onConnect(KMError err)
 {
-    if(err != KUMA_ERROR_NOERR) {
+    if(err != KMError::NOERR) {
         if(error_cb_) error_cb_(err);
         return ;
     }
@@ -218,12 +218,12 @@ void H2Request::onRSTStream(int err)
     
 }
 
-int H2Request::close()
+KMError H2Request::close()
 {
     if (stream_) {
         stream_->close(conn_);
         stream_.reset();
     }
     conn_.reset();
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }

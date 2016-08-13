@@ -17,11 +17,11 @@ public:
     TcpServer(EventLoop* loop, int count);
     ~TcpServer();
     
-    int startListen(const char* proto, const char* host, uint16_t port);
-    int stopListen();
+    KMError startListen(const char* proto, const char* host, uint16_t port);
+    KMError stopListen();
     
     void onAccept(SOCKET_FD, const char* ip, uint16_t port);
-    void onError(int err);
+    void onError(KMError err);
     
 private:
     void cleanup();

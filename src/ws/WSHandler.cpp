@@ -123,12 +123,12 @@ void WSHandler::onHttpData(const char* data, size_t len)
 
 void WSHandler::onHttpEvent(HttpEvent ev)
 {
-    KUMA_INFOTRACE("WSHandler::onHttpEvent, ev="<<ev);
+    KUMA_INFOTRACE("WSHandler::onHttpEvent, ev="<<int(ev));
     switch (ev) {
-        case HTTP_HEADER_COMPLETE:
+        case HttpEvent::HEADER_COMPLETE:
             break;
             
-        case HTTP_COMPLETE:
+        case HttpEvent::COMPLETE:
             if(http_parser_.isRequest()) {
                 handleRequest();
             } else {
@@ -136,7 +136,7 @@ void WSHandler::onHttpEvent(HttpEvent ev)
             }
             break;
             
-        case HTTP_ERROR:
+        case HttpEvent::HTTP_ERROR:
             state_ = STATE_ERROR;
             break;
             
@@ -151,18 +151,18 @@ void WSHandler::handleRequest()
        !is_equal(http_parser_.getHeaderValue("Connection"), "Upgrade")) {
         state_ = STATE_ERROR;
         KUMA_INFOTRACE("WSHandler::handleRequest, not WebSocket request");
-        if(handshake_cb_) handshake_cb_(KUMA_ERROR_INVALID_PROTO);
+        if(handshake_cb_) handshake_cb_(KMError::INVALID_PROTO);
         return;
     }
     std::string sec_ws_key = http_parser_.getHeaderValue("Sec-WebSocket-Key");
     if(sec_ws_key.empty()) {
         state_ = STATE_ERROR;
         KUMA_INFOTRACE("WSHandler::handleRequest, no Sec-WebSocket-Key");
-        if(handshake_cb_) handshake_cb_(KUMA_ERROR_INVALID_PROTO);
+        if(handshake_cb_) handshake_cb_(KMError::INVALID_PROTO);
         return;
     }
     state_ = STATE_OPEN;
-    if(handshake_cb_) handshake_cb_(0);
+    if(handshake_cb_) handshake_cb_(KMError::NOERR);
 }
 
 void WSHandler::handleResponse()
@@ -171,11 +171,11 @@ void WSHandler::handleResponse()
        is_equal(http_parser_.getHeaderValue("Upgrade"), "WebSocket") &&
        is_equal(http_parser_.getHeaderValue("Connection"), "Upgrade")) {
         state_ = STATE_OPEN;
-        if(handshake_cb_) handshake_cb_(0);
+        if(handshake_cb_) handshake_cb_(KMError::NOERR);
     } else {
         state_ = STATE_ERROR;
         KUMA_INFOTRACE("WSHandler::handleResponse, invalid status code: "<<http_parser_.getStatusCode());
-        if(handshake_cb_) handshake_cb_(-1);
+        if(handshake_cb_) handshake_cb_(KMError::INVALID_PROTO);
     }
 }
 
@@ -332,7 +332,7 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                         ctx_.pos = 0;
                     } else {
                         memcpy(ctx_.hdr.maskey+ctx_.pos, data+pos, len-pos);
-                        ctx_.pos += len-pos;
+                        ctx_.pos += uint8_t(len-pos);
                         pos = len;
                         return WS_ERROR_NEED_MORE_DATA;
                     }

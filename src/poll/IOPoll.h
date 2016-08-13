@@ -85,10 +85,10 @@ public:
     virtual ~IOPoll() {}
     
     virtual bool init() = 0;
-    virtual int registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb) = 0;
-    virtual int unregisterFd(SOCKET_FD fd) = 0;
-    virtual int updateFd(SOCKET_FD fd, uint32_t events) = 0;
-    virtual int wait(uint32_t wait_time_ms) = 0;
+    virtual KMError registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb) = 0;
+    virtual KMError unregisterFd(SOCKET_FD fd) = 0;
+    virtual KMError updateFd(SOCKET_FD fd, uint32_t events) = 0;
+    virtual KMError wait(uint32_t wait_time_ms) = 0;
     virtual void notify() = 0;
     virtual PollType getType() const = 0;
     virtual bool isLevelTriggered() const = 0;

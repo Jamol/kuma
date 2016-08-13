@@ -42,23 +42,26 @@ class H2ConnectionImpl;
 class KUMA_API EventLoop
 {
 public:
-    EventLoop(PollType poll_type = POLL_TYPE_NONE);
+    EventLoop(PollType poll_type = PollType::NONE);
     ~EventLoop();
     
 public:
     bool init();
-    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
-    int updateFd(SOCKET_FD fd, uint32_t events);
-    int unregisterFd(SOCKET_FD fd, bool close_fd);
+    
+    /* NOTE: cb must be valid untill unregisterFd called
+     */
+    KMError registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
+    KMError updateFd(SOCKET_FD fd, uint32_t events);
+    KMError unregisterFd(SOCKET_FD fd, bool close_fd);
     
     PollType getPollType() const;
     bool isPollLT() const; // level trigger
     
 public:
     bool isInEventLoopThread() const;
-    int runInEventLoop(LoopCallback cb);
-    int runInEventLoopSync(LoopCallback cb);
-    int queueInEventLoop(LoopCallback cb);
+    KMError runInEventLoop(LoopCallback cb);
+    KMError runInEventLoopSync(LoopCallback cb);
+    KMError queueInEventLoop(LoopCallback cb);
     void loopOnce(uint32_t max_wait_ms);
     void loop(uint32_t max_wait_ms = -1);
     void stop();
@@ -71,28 +74,30 @@ private:
 class KUMA_API TcpSocket
 {
 public:
-    typedef std::function<void(int)> EventCallback;
+    using EventCallback = std::function<void(KMError)>;
     
     TcpSocket(EventLoop* loop);
     ~TcpSocket();
     
-    int setSslFlags(uint32_t ssl_flags);
+    KMError setSslFlags(uint32_t ssl_flags);
     uint32_t getSslFlags() const ;
     bool sslEnabled() const;
-    int bind(const char* bind_host, uint16_t bind_port);
-    int connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
-    int attachFd(SOCKET_FD fd);
-    int detachFd(SOCKET_FD &fd);
-    int startSslHandshake(SslRole ssl_role);
-    int getAlpnSelected(char *buf, size_t len);
+    KMError bind(const char* bind_host, uint16_t bind_port);
+    KMError connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
+    KMError attachFd(SOCKET_FD fd);
+    KMError detachFd(SOCKET_FD &fd);
+    KMError startSslHandshake(SslRole ssl_role);
+    KMError getAlpnSelected(char *buf, size_t len);
     int send(const uint8_t* data, size_t length);
     int send(iovec* iovs, int count);
     int receive(uint8_t* data, size_t length);
-    int close();
+    KMError close();
     
-    int pause();
-    int resume();
+    KMError pause();
+    KMError resume();
     
+    /* NOTE: cb must be valid untill close called
+     */
     void setReadCallback(EventCallback cb);
     void setWriteCallback(EventCallback cb);
     void setErrorCallback(EventCallback cb);
@@ -107,15 +112,15 @@ private:
 class KUMA_API TcpListener
 {
 public:
-    typedef std::function<void(SOCKET_FD, const char*, uint16_t)> ListenCallback;
-    typedef std::function<void(int)> ErrorCallback;
+    using ListenCallback = std::function<void(SOCKET_FD, const char*, uint16_t)>;
+    using ErrorCallback = std::function<void(KMError)>;
     
     TcpListener(EventLoop* loop);
     ~TcpListener();
     
-    int startListen(const char* host, uint16_t port);
-    int stopListen(const char* host, uint16_t port);
-    int close();
+    KMError startListen(const char* host, uint16_t port);
+    KMError stopListen(const char* host, uint16_t port);
+    KMError close();
     
     void setListenCallback(ListenCallback cb);
     void setErrorCallback(ErrorCallback cb);
@@ -128,19 +133,19 @@ private:
 class KUMA_API UdpSocket
 {
 public:
-    typedef std::function<void(int)> EventCallback;
+    using EventCallback = std::function<void(KMError)>;
     
     UdpSocket(EventLoop* loop);
     ~UdpSocket();
     
-    int bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags=0);
+    KMError bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags=0);
     int send(const uint8_t* data, size_t length, const char* host, uint16_t port);
     int send(iovec* iovs, int count, const char* host, uint16_t port);
     int receive(uint8_t* data, size_t length, char* ip, size_t ip_len, uint16_t& port);
-    int close();
+    KMError close();
     
-    int mcastJoin(const char* mcast_addr, uint16_t mcast_port);
-    int mcastLeave(const char* mcast_addr, uint16_t mcast_port);
+    KMError mcastJoin(const char* mcast_addr, uint16_t mcast_port);
+    KMError mcastLeave(const char* mcast_addr, uint16_t mcast_port);
     
     void setReadCallback(EventCallback cb);
     void setErrorCallback(EventCallback cb);
@@ -153,12 +158,12 @@ private:
 class KUMA_API Timer
 {
 public:
-    typedef std::function<void(void)> TimerCallback;
+    using TimerCallback = std::function<void(void)>;
     
     Timer(EventLoop* loop);
     ~Timer();
     
-    bool schedule(uint32_t delay_ms, TimerCallback cb, TimerMode mode=ONE_SHOT);
+    bool schedule(uint32_t delay_ms, TimerCallback cb, TimerMode mode=TimerMode::ONE_SHOT);
     void cancel();
     TimerImpl* pimpl();
     
@@ -169,9 +174,9 @@ private:
 class KUMA_API HttpParser
 {
 public:
-    typedef std::function<void(const char*, size_t)> DataCallback;
-    typedef std::function<void(HttpEvent)> EventCallback;
-    typedef std::function<void(const char*, const char*)> EnumrateCallback;
+    using DataCallback = std::function<void(const char*, size_t)>;
+    using EventCallback = std::function<void(HttpEvent)>;
+    using EnumrateCallback = std::function<void(const char*, const char*)>;
     
     HttpParser();
     ~HttpParser();
@@ -214,20 +219,20 @@ private:
 class KUMA_API HttpRequest
 {
 public:
-    typedef std::function<void(uint8_t*, size_t)> DataCallback;
-    typedef std::function<void(int)> EventCallback;
-    typedef std::function<void(void)> HttpEventCallback;
+    using DataCallback = std::function<void(uint8_t*, size_t)>;
+    using EventCallback = std::function<void(KMError)>;
+    using HttpEventCallback = std::function<void(void)>;
     
     HttpRequest(EventLoop* loop, const char* ver = "HTTP/1.1");
     ~HttpRequest();
     
-    int setSslFlags(uint32_t ssl_flags);
+    KMError setSslFlags(uint32_t ssl_flags);
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
-    int sendRequest(const char* method, const char* url);
+    KMError sendRequest(const char* method, const char* url);
     int sendData(const uint8_t* data, size_t len);
     void reset(); // reset for connection reuse
-    int close();
+    KMError close();
     
     int getStatusCode() const;
     const char* getVersion() const;
@@ -250,22 +255,22 @@ private:
 class KUMA_API HttpResponse
 {
 public:
-    typedef std::function<void(uint8_t*, size_t)> DataCallback;
-    typedef std::function<void(int)> EventCallback;
-    typedef std::function<void(void)> HttpEventCallback;
+    using DataCallback = std::function<void(uint8_t*, size_t)>;
+    using EventCallback = std::function<void(KMError)>;
+    using HttpEventCallback = std::function<void(void)>;
     
     HttpResponse(EventLoop* loop);
     ~HttpResponse();
     
-    int setSslFlags(uint32_t ssl_flags);
-    int attachFd(SOCKET_FD fd, uint8_t* init_data=nullptr, size_t init_len=0);
-    int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
+    KMError setSslFlags(uint32_t ssl_flags);
+    KMError attachFd(SOCKET_FD fd, uint8_t* init_data=nullptr, size_t init_len=0);
+    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser);
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
-    int sendResponse(int status_code, const char* desc = nullptr, const char* ver = "HTTP/1.1");
+    KMError sendResponse(int status_code, const char* desc = nullptr, const char* ver = "HTTP/1.1");
     int sendData(const uint8_t* data, size_t len);
     void reset(); // reset for connection reuse
-    int close();
+    KMError close();
     
     const char* getMethod() const;
     const char* getUrl() const;
@@ -290,22 +295,22 @@ private:
 class KUMA_API WebSocket
 {
 public:
-    typedef std::function<void(uint8_t*, size_t)> DataCallback;
-    typedef std::function<void(int)> EventCallback;
+    using DataCallback = std::function<void(uint8_t*, size_t)>;
+    using EventCallback = std::function<void(KMError)>;
     
     WebSocket(EventLoop* loop);
     ~WebSocket();
     
-    int setSslFlags(uint32_t ssl_flags);
+    KMError setSslFlags(uint32_t ssl_flags);
     void setProtocol(const char* proto);
     const char* getProtocol() const;
     void setOrigin(const char* origin);
     const char* getOrigin() const;
-    int connect(const char* ws_url, EventCallback cb);
-    int attachFd(SOCKET_FD fd, const uint8_t* init_data=nullptr, size_t init_len=0);
-    int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
+    KMError connect(const char* ws_url, EventCallback cb);
+    KMError attachFd(SOCKET_FD fd, const uint8_t* init_data=nullptr, size_t init_len=0);
+    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser);
     int send(const uint8_t* data, size_t len);
-    int close();
+    KMError close();
     
     void setDataCallback(DataCallback cb);
     void setWriteCallback(EventCallback cb);
@@ -320,15 +325,16 @@ private:
 class KUMA_API H2Connection
 {
 public:
-    using ConnectCallback = std::function<void(int)>;
+    using ConnectCallback = std::function<void(KMError)>;
+    
     H2Connection(EventLoop* loop);
     ~H2Connection();
     
-    int setSslFlags(uint32_t ssl_flags);
-    int connect(const char* host, uint16_t port, ConnectCallback cb);
-    int attachFd(SOCKET_FD fd, const uint8_t* data=nullptr, size_t size=0);
-    int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
-    int close();
+    KMError setSslFlags(uint32_t ssl_flags);
+    KMError connect(const char* host, uint16_t port, ConnectCallback cb);
+    KMError attachFd(SOCKET_FD fd, const uint8_t* data=nullptr, size_t size=0);
+    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser);
+    KMError close();
     
     H2ConnectionImpl* pimpl();
     
@@ -336,9 +342,11 @@ private:
     H2ConnectionImpl* pimpl_;
 };
 
+using TraceFunc = std::function<void(int, const char*)>; // (level, msg)
+
 KUMA_API void init(const char* path = nullptr);
 KUMA_API void fini();
-KUMA_API void setTraceFunc(std::function<void(int, const char*)> func);
+KUMA_API void setTraceFunc(TraceFunc func);
 
 KUMA_NS_END
 

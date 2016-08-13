@@ -201,7 +201,7 @@ int HttpParserImpl::parse(const char* data, size_t len)
         return parsed_len;
     }
     if(PARSE_STATE_ERROR == parse_state && event_cb_) {
-        event_cb_(HTTP_ERROR);
+        event_cb_(HttpEvent::HTTP_ERROR);
     }
     return parsed_len;
 }
@@ -216,17 +216,17 @@ bool HttpParserImpl::setEOF()
     return false;
 }
 
-int HttpParserImpl::saveData(const char* cur_pos, const char* end)
+KMError HttpParserImpl::saveData(const char* cur_pos, const char* end)
 {
     if(cur_pos == end) {
-        return KUMA_ERROR_NOERR;
+        return KMError::NOERR;
     }
     auto old_len = str_buf_.size();
     if((end - cur_pos) + old_len > MAX_HTTP_HEADER_SIZE) {
-        return -1;
+        return KMError::BUFFER_TOO_SMALL;
     }
     str_buf_.append(cur_pos, end);
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 HttpParserImpl::ParseState HttpParserImpl::parseHttp(const char*& cur_pos, const char* end)
@@ -247,7 +247,7 @@ HttpParserImpl::ParseState HttpParserImpl::parseHttp(const char*& cur_pos, const
             read_state_ = HTTP_READ_HEAD;
         } else {
             // need more data
-            if(saveData(cur_pos, end) != KUMA_ERROR_NOERR) {
+            if(saveData(cur_pos, end) != KMError::NOERR) {
                 return PARSE_STATE_ERROR;
             }
             cur_pos = end; // all data was consumed
@@ -277,7 +277,7 @@ HttpParserImpl::ParseState HttpParserImpl::parseHttp(const char*& cur_pos, const
         }
         if(HTTP_READ_HEAD == read_state_)
         {// need more data
-            if(saveData(cur_pos, end) != KUMA_ERROR_NOERR) {
+            if(saveData(cur_pos, end) != KMError::NOERR) {
                 return PARSE_STATE_ERROR;
             }
             cur_pos = end; // all data was consumed
@@ -395,7 +395,7 @@ HttpParserImpl::ParseState HttpParserImpl::parseChunk(const char*& cur_pos, cons
                 b_line = getLine(cur_pos, end, p_line, p_end);
                 if(!b_line)
                 {// need more data, save remain data.
-                    if(saveData(cur_pos, end) != KUMA_ERROR_NOERR) {
+                    if(saveData(cur_pos, end) != KMError::NOERR) {
                         return PARSE_STATE_ERROR;
                     }
                     cur_pos = end;
@@ -476,7 +476,7 @@ HttpParserImpl::ParseState HttpParserImpl::parseChunk(const char*& cur_pos, cons
                     }
                     clearBuffer(); // discard trailer
                 } else { // need more data
-                    if(saveData(cur_pos, end) != KUMA_ERROR_NOERR) {
+                    if(saveData(cur_pos, end) != KMError::NOERR) {
                         return PARSE_STATE_ERROR;
                     }
                     cur_pos = end; // all data was consumed
@@ -508,13 +508,13 @@ void HttpParserImpl::onHeaderComplete()
         upgrade_ = true;
         KUMA_INFOTRACE("HttpParser::onHeaderComplete, Upgrade="<<it->second);
     }
-    if(event_cb_) event_cb_(HTTP_HEADER_COMPLETE);
+    if(event_cb_) event_cb_(HttpEvent::HEADER_COMPLETE);
 }
 
 void HttpParserImpl::onComplete()
 {
     KUMA_INFOTRACE("HttpParser::onComplete");
-    if(event_cb_) event_cb_(HTTP_COMPLETE);
+    if(event_cb_) event_cb_(HttpEvent::COMPLETE);
 }
 
 bool HttpParserImpl::decodeUrl()

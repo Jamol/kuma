@@ -31,12 +31,12 @@ public:
     ~WinPoll();
     
     bool init();
-    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
-    int unregisterFd(SOCKET_FD fd);
-    int updateFd(SOCKET_FD fd, uint32_t events);
-    int wait(uint32_t wait_ms);
+    KMError registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
+    KMError unregisterFd(SOCKET_FD fd);
+    KMError updateFd(SOCKET_FD fd, uint32_t events);
+    KMError wait(uint32_t wait_ms);
     void notify();
-    PollType getType() const { return POLL_TYPE_WIN; }
+    PollType getType() const { return PollType::WIN; }
     bool isLevelTriggered() const { return false; }
 
 public:
@@ -125,23 +125,23 @@ void WinPoll::resizePollItems(SOCKET_FD fd)
     }
 }
 
-int WinPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
+KMError WinPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
 {
     KUMA_INFOTRACE("WinPoll::registerFd, fd=" << fd << ", events=" << events);
     resizePollItems(fd);
     poll_items_[fd].fd = fd;
     poll_items_[fd].cb = std::move(cb);
     WSAAsyncSelect(fd, hwnd_, WM_SOCKET_NOTIFY, get_events(events) | FD_CONNECT);
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int WinPoll::unregisterFd(SOCKET_FD fd)
+KMError WinPoll::unregisterFd(SOCKET_FD fd)
 {
     KUMA_INFOTRACE("WinPoll::unregisterFd, fd="<<fd);
     SOCKET_FD max_fd = poll_items_.size() - 1;
     if (fd < 0 || -1 == max_fd || fd > max_fd) {
         KUMA_WARNTRACE("WinPoll::unregisterFd, failed, max_fd=" << max_fd);
-        return KUMA_ERROR_INVALID_PARAM;
+        return KMError::INVALID_PARAM;
     }
     if (fd == max_fd) {
         poll_items_.pop_back();
@@ -150,31 +150,31 @@ int WinPoll::unregisterFd(SOCKET_FD fd)
         poll_items_[fd].fd = INVALID_FD;
     }
     WSAAsyncSelect(fd, hwnd_, 0, 0);
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int WinPoll::updateFd(SOCKET_FD fd, uint32_t events)
+KMError WinPoll::updateFd(SOCKET_FD fd, uint32_t events)
 {
     SOCKET_FD max_fd = poll_items_.size() - 1;
     if (fd < 0 || -1 == max_fd || fd > max_fd) {
         KUMA_WARNTRACE("WinPoll::updateFd, failed, fd="<<fd<<", max_fd=" << max_fd);
-        return KUMA_ERROR_INVALID_PARAM;
+        return KMError::INVALID_PARAM;
     }
     if(poll_items_[fd].fd != fd) {
         KUMA_WARNTRACE("WinPoll::updateFd, failed, fd="<<fd<<", fd1="<<poll_items_[fd].fd);
-        return KUMA_ERROR_INVALID_PARAM;
+        return KMError::INVALID_PARAM;
     }
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int WinPoll::wait(uint32_t wait_ms)
+KMError WinPoll::wait(uint32_t wait_ms)
 {
     MSG msg;
     if (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessage(&msg);
     }
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 void WinPoll::notify()

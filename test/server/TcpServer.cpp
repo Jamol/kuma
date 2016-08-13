@@ -22,7 +22,7 @@ void TcpServer::cleanup()
 
 }
 
-int TcpServer::startListen(const char* proto, const char* host, uint16_t port)
+KMError TcpServer::startListen(const char* proto, const char* host, uint16_t port)
 {
     if(strcmp(proto, "tcp") == 0) {
         proto_ = PROTO_TCP;
@@ -41,15 +41,15 @@ int TcpServer::startListen(const char* proto, const char* host, uint16_t port)
     }
     loop_pool_.init(thr_count_);
     server_.setListenCallback([this] (SOCKET_FD fd, const char* ip, uint16_t port) { onAccept(fd, ip, port); });
-    server_.setErrorCallback([this] (int err) { onError(err); });
+    server_.setErrorCallback([this] (KMError err) { onError(err); });
     return server_.startListen(host, port);
 }
 
-int TcpServer::stopListen()
+KMError TcpServer::stopListen()
 {
     server_.stopListen(nullptr, 0);
     loop_pool_.stop();
-    return 0;
+    return KMError::NOERR;
 }
 
 void TcpServer::onAccept(SOCKET_FD fd, const char* ip, uint16_t port)
@@ -59,7 +59,7 @@ void TcpServer::onAccept(SOCKET_FD fd, const char* ip, uint16_t port)
     test_loop->addFd(fd, proto_);
 }
 
-void TcpServer::onError(int err)
+void TcpServer::onError(KMError err)
 {
     printf("TcpServer::onError, err=%d\n", err);
 }

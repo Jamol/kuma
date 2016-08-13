@@ -15,13 +15,13 @@ class UdpClient : public LoopObject
 public:
     UdpClient(TestLoop* loop, long conn_id);
     
-    int bind(const char* bind_host, uint16_t bind_port);
+    KMError bind(const char* bind_host, uint16_t bind_port);
     int close();
     
     void startSend(const char* host, uint16_t port);
 
-    void onReceive(int err);
-    void onClose(int err);
+    void onReceive(KMError err);
+    void onClose(KMError err);
     
 private:
     void sendData();

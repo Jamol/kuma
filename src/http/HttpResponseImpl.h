@@ -30,20 +30,20 @@ class HttpResponseImpl : public KMObject, public DestroyDetector, public TcpConn
 {
 public:
     typedef std::function<void(uint8_t*, size_t)> DataCallback;
-    typedef std::function<void(int)> EventCallback;
+    typedef std::function<void(KMError)> EventCallback;
     typedef std::function<void(void)> HttpEventCallback;
     
     HttpResponseImpl(EventLoopImpl* loop);
     ~HttpResponseImpl();
     
-    int attachFd(SOCKET_FD fd, uint8_t* init_data = nullptr, size_t init_len = 0);
-    int attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
+    KMError attachFd(SOCKET_FD fd, uint8_t* init_data = nullptr, size_t init_len = 0);
+    KMError attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
     void addHeader(const std::string& name, const std::string& value);
     void addHeader(const std::string& name, uint32_t value);
-    int sendResponse(int status_code, const std::string& desc, const std::string& ver);
+    KMError sendResponse(int status_code, const std::string& desc, const std::string& ver);
     int sendData(const uint8_t* data, size_t len);
     void reset(); // reset for connection reuse
-    int close();
+    KMError close();
     
     const std::string& getMethod() const { return http_parser_.getMethod(); }
     const std::string& getUrl() const { return http_parser_.getUrl(); }
@@ -62,7 +62,7 @@ public:
 protected:
     KMError handleInputData(uint8_t *src, size_t len) override;
     void onWrite() override;
-    void onError(int err) override;
+    void onError(KMError err) override;
     
 private:
     enum State {

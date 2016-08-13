@@ -16,7 +16,7 @@ class H2ConnTest : public LoopObject
 public:
     H2ConnTest(TestLoop* loop, long conn_id);
     
-    int attachSocket(TcpSocket&& tcp, HttpParser&& parser);
+    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser);
     int close();
     
 private:

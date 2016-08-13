@@ -39,35 +39,35 @@ class EventLoopImpl;
 class TcpSocketImpl : public KMObject, public DestroyDetector
 {
 public:
-    typedef std::function<void(int)> EventCallback;
+    typedef std::function<void(KMError)> EventCallback;
     
     TcpSocketImpl(EventLoopImpl* loop);
     TcpSocketImpl(const TcpSocketImpl &other) = delete;
     TcpSocketImpl& operator= (const TcpSocketImpl &other) = delete;
     ~TcpSocketImpl();
     
-    int setSslFlags(uint32_t ssl_flags);
+    KMError setSslFlags(uint32_t ssl_flags);
     uint32_t getSslFlags() const { return ssl_flags_; }
     bool sslEnabled() const;
-    int bind(const char* bind_host, uint16_t bind_port);
-    int connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
-    int attachFd(SOCKET_FD fd);
-    int attach(TcpSocketImpl &&other);
-    int detachFd(SOCKET_FD &fd);
+    KMError bind(const char* bind_host, uint16_t bind_port);
+    KMError connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
+    KMError attachFd(SOCKET_FD fd);
+    KMError attach(TcpSocketImpl &&other);
+    KMError detachFd(SOCKET_FD &fd);
 #ifdef KUMA_HAS_OPENSSL
-    int setAlpnProtocols(const AlpnProtos &protocols);
-    int getAlpnSelected(std::string &proto);
-    int attachFd(SOCKET_FD fd, SSL* ssl);
-    int detachFd(SOCKET_FD &fd, SSL* &ssl);
-    int startSslHandshake(SslRole ssl_role);
+    KMError setAlpnProtocols(const AlpnProtos &protocols);
+    KMError getAlpnSelected(std::string &proto);
+    KMError attachFd(SOCKET_FD fd, SSL* ssl);
+    KMError detachFd(SOCKET_FD &fd, SSL* &ssl);
+    KMError startSslHandshake(SslRole ssl_role);
 #endif
     int send(const uint8_t* data, size_t length);
     int send(iovec* iovs, int count);
     int receive(uint8_t* data, size_t length);
-    int close();
+    KMError close();
     
-    int pause();
-    int resume();
+    KMError pause();
+    KMError resume();
     
     void setReadCallback(EventCallback cb) { read_cb_ = std::move(cb); }
     void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
@@ -77,13 +77,13 @@ public:
     EventLoopImpl* getEventLoop() { return loop_; }
     
 private:
-    int connect_i(const char* addr, uint16_t port, uint32_t timeout_ms);
+    KMError connect_i(const char* addr, uint16_t port, uint32_t timeout_ms);
     void setSocketOption();
     void ioReady(uint32_t events);
-    void onConnect(int err);
-    void onSend(int err);
-    void onReceive(int err);
-    void onClose(int err);
+    void onConnect(KMError err);
+    void onSend(KMError err);
+    void onReceive(KMError err);
+    void onClose(KMError err);
     
 private:
     enum State {

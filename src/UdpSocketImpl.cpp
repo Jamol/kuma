@@ -92,7 +92,7 @@ void UdpSocketImpl::cleanup()
     }
 }
 
-int UdpSocketImpl::bind(const char *bind_host, uint16_t bind_port, uint32_t udp_flags)
+KMError UdpSocketImpl::bind(const char *bind_host, uint16_t bind_port, uint32_t udp_flags)
 {
     KUMA_INFOXTRACE("bind, bind_host="<<bind_host<<", bind_port="<<bind_port);
     if(fd_ != INVALID_FD) {
@@ -105,12 +105,12 @@ int UdpSocketImpl::bind(const char *bind_host, uint16_t bind_port, uint32_t udp_
     hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
     if(km_set_sock_addr(bind_host, bind_port, &hints, (struct sockaddr*)&bind_addr_, sizeof(bind_addr_)) != 0) {
         KUMA_ERRXTRACE("bind, km_set_sock_addr failed");
-        return KUMA_ERROR_INVALID_PARAM;
+        return KMError::INVALID_PARAM;
     }
     fd_ = socket(bind_addr_.ss_family, SOCK_DGRAM, 0);
     if(INVALID_FD == fd_) {
         KUMA_ERRXTRACE("bind, socket error, err="<<getLastError());
-        return KUMA_ERROR_FAILED;
+        return KMError::FAILED;
     }
     setSocketOption();
 
@@ -129,7 +129,7 @@ int UdpSocketImpl::bind(const char *bind_host, uint16_t bind_port, uint32_t udp_
         }
 #endif
     } else {
-        return KUMA_ERROR_INVALID_PROTO;
+        return KMError::INVALID_PROTO;
     }
     int addr_len = sizeof(bind_addr_);
 #ifdef KUMA_OS_MAC
@@ -141,7 +141,7 @@ int UdpSocketImpl::bind(const char *bind_host, uint16_t bind_port, uint32_t udp_
 
     if(::bind(fd_, (struct sockaddr *)&bind_addr_, addr_len) < 0) {
         KUMA_ERRXTRACE("bind, bind error: "<<getLastError());
-        return KUMA_ERROR_FAILED;
+        return KMError::FAILED;
     }
     
     sockaddr_storage ss_addr = {0};
@@ -159,7 +159,7 @@ int UdpSocketImpl::bind(const char *bind_host, uint16_t bind_port, uint32_t udp_
     
     loop_->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
     registered_ = true;
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 void UdpSocketImpl::setSocketOption()
@@ -185,12 +185,12 @@ void UdpSocketImpl::setSocketOption()
     setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt_val, sizeof(int));
 }
 
-int UdpSocketImpl::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
+KMError UdpSocketImpl::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
 {
     KUMA_INFOXTRACE("mcastJoin, mcast_addr"<<(mcast_addr?mcast_addr:"")<<", mcast_port="<<mcast_port);
     if(!km_is_mcast_address(mcast_addr)) {
         KUMA_ERRXTRACE("mcastJoin, invalid mcast address");
-        return KUMA_ERROR_INVALID_PARAM;
+        return KMError::INVALID_PARAM;
     }
     struct addrinfo hints = {0};
     hints.ai_family = AF_UNSPEC;
@@ -200,13 +200,13 @@ int UdpSocketImpl::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
     mcast_port_ = mcast_port;
     if(bind_addr_.ss_family != mcast_addr_.ss_family) {
         KUMA_ERRXTRACE("mcastJoin, invalid mcast address family");
-        return KUMA_ERROR_INVALID_PARAM;
+        return KMError::INVALID_PARAM;
     }
     if(INVALID_FD == fd_) {
         fd_ = socket(mcast_addr_.ss_family, SOCK_DGRAM, 0);
         if(INVALID_FD == fd_) {
             KUMA_ERRXTRACE("mcastJoin, socket error, err="<<getLastError());
-            return KUMA_ERROR_SOCKERR;
+            return KMError::SOCK_ERROR;
         }
     }
     
@@ -227,7 +227,7 @@ int UdpSocketImpl::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
         
         if (setsockopt(fd_, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*) &mcast_req_v4_, sizeof(mcast_req_v4_)) != 0) {
             KUMA_ERRXTRACE("mcastJoin, failed to join in multicast group, err="<<getLastError());
-            return KUMA_ERROR_SOCKERR;
+            return KMError::SOCK_ERROR;
         }
     } else if(AF_INET6 == mcast_addr_.ss_family) {
         sockaddr_in6 *pa = (sockaddr_in6 *)&bind_addr_;
@@ -242,10 +242,10 @@ int UdpSocketImpl::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
         
         if (setsockopt(fd_, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, (char*) &mcast_req_v6_, sizeof(mcast_req_v6_)) != 0) {
             KUMA_ERRXTRACE("mcastJoin, failed to join in multicast group, err="<<getLastError());
-            return KUMA_ERROR_SOCKERR;
+            return KMError::SOCK_ERROR;
         }
     } else {
-        return KUMA_ERROR_INVALID_PARAM;
+        return KMError::INVALID_PARAM;
     }
     char ttl = 32;
     if (setsockopt(fd_,
@@ -263,14 +263,14 @@ int UdpSocketImpl::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
     {
         KUMA_WARNXTRACE("mcastJoin, failed to disable loop, err="<<getLastError());
     }
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-int UdpSocketImpl::mcastLeave(const char* mcast_addr, uint16_t mcast_port)
+KMError UdpSocketImpl::mcastLeave(const char* mcast_addr, uint16_t mcast_port)
 {
     KUMA_INFOXTRACE("mcastLeave, mcast_addr: "<<(mcast_addr?mcast_addr:"")<<", mcast_port: "<<mcast_port);
     if(INVALID_FD == fd_) {
-        return KUMA_ERROR_INVALID_STATE;
+        return KMError::INVALID_STATE;
     }
     if(AF_INET == mcast_addr_.ss_family) {
         if(setsockopt(fd_, IPPROTO_IP, IP_DROP_MEMBERSHIP, (char*)&mcast_req_v4_, sizeof(mcast_req_v4_)) != 0) {
@@ -281,7 +281,7 @@ int UdpSocketImpl::mcastLeave(const char* mcast_addr, uint16_t mcast_port)
             KUMA_INFOXTRACE("mcastLeave, failed, err="<<getLastError());
         }
     }
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 int UdpSocketImpl::send(const uint8_t* data, size_t length, const char* host, uint16_t port)
@@ -444,30 +444,30 @@ int UdpSocketImpl::receive(uint8_t* data, size_t length, char* ip, size_t ip_len
     return ret;
 }
 
-int UdpSocketImpl::close()
+KMError UdpSocketImpl::close()
 {
     KUMA_INFOXTRACE("close");
     loop_->runInEventLoopSync([this] {
         cleanup();
     });
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
-void UdpSocketImpl::onSend(int err)
+void UdpSocketImpl::onSend(KMError err)
 {
     if(loop_->isPollLT()) {
         loop_->updateFd(fd_, KUMA_EV_READ | KUMA_EV_ERROR);
     }
 }
 
-void UdpSocketImpl::onReceive(int err)
+void UdpSocketImpl::onReceive(KMError err)
 {
     if(read_cb_ && fd_ != INVALID_FD) read_cb_(err);
 }
 
-void UdpSocketImpl::onClose(int err)
+void UdpSocketImpl::onClose(KMError err)
 {
-    KUMA_INFOXTRACE("onClose, err="<<err);
+    KUMA_INFOXTRACE("onClose, err="<<int(err));
     cleanup();
     if(error_cb_) error_cb_(err);
 }
@@ -476,16 +476,16 @@ void UdpSocketImpl::ioReady(uint32_t events)
 {
     DESTROY_DETECTOR_SETUP();
     if(events & KUMA_EV_READ) {// handle EPOLLIN firstly
-        onReceive(0);
+        onReceive(KMError::NOERR);
     }
     DESTROY_DETECTOR_CHECK_VOID();
     if((events & KUMA_EV_ERROR) && fd_ != INVALID_FD) {
         KUMA_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events="<<events
                        <<", err="<<getLastError());
-        onClose(KUMA_ERROR_POLLERR);
+        onClose(KMError::POLL_ERROR);
         return;
     }
     if((events & KUMA_EV_WRITE) && fd_ != INVALID_FD) {
-        onSend(0);
+        onSend(KMError::NOERR);
     }
 }

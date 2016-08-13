@@ -32,7 +32,7 @@ H2Stream::H2Stream(uint32_t streamId)
     KM_SetObjKey("H2Stream_"<<streamId);
 }
 
-int H2Stream::sendHeaders(const H2ConnectionPtr &conn, const HeaderVector &headers, size_t headersSize, bool endStream)
+KMError H2Stream::sendHeaders(const H2ConnectionPtr &conn, const HeaderVector &headers, size_t headersSize, bool endStream)
 {
     HeadersFrame frame;
     frame.setStreamId(getStreamId());
@@ -41,7 +41,7 @@ int H2Stream::sendHeaders(const H2ConnectionPtr &conn, const HeaderVector &heade
         frame.addFlags(H2_FRAME_FLAG_END_STREAM);
     }
     frame.setHeaders(std::move(headers), headersSize);
-    int ret = conn->sendH2Frame(&frame);
+    auto ret = conn->sendH2Frame(&frame);
     if (getState() == State::IDLE) {
         setState(State::OPEN);
     } else if (getState() == State::RESERVED_L) {
@@ -65,13 +65,12 @@ int H2Stream::sendData(const H2ConnectionPtr &conn, const uint8_t *data, size_t 
         frame.addFlags(H2_FRAME_FLAG_END_STREAM);
     }
     frame.setData(data, len);
-    int ret = conn->sendH2Frame(&frame);
-    if (ret > 0) {
-        remoteWindowSize_ -= ret;
+    auto ret = conn->sendH2Frame(&frame);
+    if (KMError::NOERR == ret) {
         if (endStream) {
             endStreamSent();
         }
-        return ret;
+        return int(len);
     }
     
     return 0;

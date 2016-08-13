@@ -9,7 +9,7 @@ H2ConnTest::H2ConnTest(TestLoop* loop, long conn_id)
     
 }
 
-int H2ConnTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
+KMError H2ConnTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
 {
     return conn_.attachSocket(std::move(tcp), std::move(parser));
 }

@@ -18,9 +18,9 @@ public:
     int close();
     
     void onData(uint8_t*, size_t);
-    void onConnect(int err);
-    void onSend(int err);
-    void onClose(int err);
+    void onConnect(KMError err);
+    void onSend(KMError err);
+    void onClose(KMError err);
     
 private:
     void sendData();

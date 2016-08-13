@@ -355,7 +355,7 @@ extern "C" int km_parse_address(const char* addr,
                                 char* host, int  host_len, unsigned short* port)
 {
     if(!addr || !host)
-        return KUMA_ERROR_INVALID_PARAM;
+        return -1;
     
     const char* tmp1 = nullptr;
     int tmp_len = 0;
@@ -414,7 +414,7 @@ extern "C" int km_parse_address(const char* addr,
         *port = tmp ? atoi(tmp) : 0;
     }
     
-    return KUMA_ERROR_NOERR;
+    return 0;
 }
 
 int set_nonblocking(int fd) {

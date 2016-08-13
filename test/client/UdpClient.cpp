@@ -16,17 +16,17 @@ UdpClient::UdpClient(TestLoop* loop, long conn_id)
     
 }
 
-int UdpClient::bind(const char* bind_host, uint16_t bind_port)
+KMError UdpClient::bind(const char* bind_host, uint16_t bind_port)
 {
-    udp_.bind(bind_host, bind_port);
-    udp_.setReadCallback([this] (int err) { onReceive(err); });
-    udp_.setErrorCallback([this] (int err) { onClose(err); });
-    return 0;
+    udp_.setReadCallback([this] (KMError err) { onReceive(err); });
+    udp_.setErrorCallback([this] (KMError err) { onClose(err); });
+    return udp_.bind(bind_host, bind_port);
 }
 
 int UdpClient::close()
 {
-    return udp_.close();
+    udp_.close();
+    return 0;
 }
 
 void UdpClient::startSend(const char* host, uint16_t port)
@@ -44,7 +44,7 @@ void UdpClient::sendData()
     udp_.send(buf, sizeof(buf), host_.c_str(), port_);
 }
 
-void UdpClient::onReceive(int err)
+void UdpClient::onReceive(KMError err)
 {
     char buf[4096] = {0};
     char ip[128];
@@ -74,7 +74,7 @@ void UdpClient::onReceive(int err)
     } while (0);
 }
 
-void UdpClient::onClose(int err)
+void UdpClient::onClose(KMError err)
 {
     printf("UdpClient::onClose, err=%d\n", err);
     loop_->removeObject(conn_id_);

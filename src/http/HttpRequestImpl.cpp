@@ -81,7 +81,7 @@ void HttpRequestImpl::buildRequest()
     send_buffer_.assign(str.begin(), str.end());
 }
 
-int HttpRequestImpl::sendRequest()
+KMError HttpRequestImpl::sendRequest()
 {
     if (getState() == State::IDLE) {
         setState(State::CONNECTING);
@@ -99,7 +99,7 @@ int HttpRequestImpl::sendRequest()
         return TcpConnection::connect(uri_.getHost().c_str(), port);
     } else { // connection reuse
         sendRequestHeader();
-        return KUMA_ERROR_NOERR;
+        return KMError::NOERR;
     }
 }
 
@@ -168,12 +168,12 @@ void HttpRequestImpl::reset()
     }
 }
 
-int HttpRequestImpl::close()
+KMError HttpRequestImpl::close()
 {
     KUMA_INFOXTRACE("close");
     cleanup();
     setState(State::CLOSED);
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 void HttpRequestImpl::sendRequestHeader()
@@ -183,11 +183,11 @@ void HttpRequestImpl::sendRequestHeader()
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     buildRequest();
     setState(State::SENDING_HEADER);
-    int ret = sendBufferedData();
-    if(ret != KUMA_ERROR_NOERR) {
+    auto ret = sendBufferedData();
+    if(ret != KMError::NOERR) {
         cleanup();
         setState(State::IN_ERROR);
-        if(error_cb_) error_cb_(KUMA_ERROR_SOCKERR);
+        if(error_cb_) error_cb_(KMError::SOCK_ERROR);
         return;
     } else if (sendBufferEmpty()) {
         if(!is_chunked_ && 0 == content_length_) {
@@ -195,15 +195,15 @@ void HttpRequestImpl::sendRequestHeader()
         } else {
             setState(State::SENDING_BODY);
             if (write_cb_) {
-                write_cb_(0);
+                write_cb_(KMError::NOERR);
             }
         }
     }
 }
 
-void HttpRequestImpl::onConnect(int err)
+void HttpRequestImpl::onConnect(KMError err)
 {
-    if(err != KUMA_ERROR_NOERR) {
+    if(err != KMError::NOERR) {
         if(error_cb_) error_cb_(err);
         return ;
     }
@@ -214,14 +214,14 @@ KMError HttpRequestImpl::handleInputData(uint8_t *src, size_t len)
 {
     DESTROY_DETECTOR_SETUP();
     int bytes_used = http_parser_.parse((char*)src, len);
-    DESTROY_DETECTOR_CHECK(KUMA_ERROR_DESTROYED);
+    DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
     if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
-        return KUMA_ERROR_FAILED;
+        return KMError::FAILED;
     }
     if(bytes_used != len) {
         KUMA_WARNXTRACE("handleInputData, bytes_used="<<bytes_used<<", bytes_read="<<len);
     }
-    return KUMA_ERROR_NOERR;
+    return KMError::NOERR;
 }
 
 void HttpRequestImpl::onWrite()
@@ -240,12 +240,12 @@ void HttpRequestImpl::onWrite()
         }
     }
     
-    if(write_cb_) write_cb_(0);
+    if(write_cb_) write_cb_(KMError::NOERR);
 }
 
-void HttpRequestImpl::onError(int err)
+void HttpRequestImpl::onError(KMError err)
 {
-    KUMA_INFOXTRACE("onError, err="<<err);
+    KUMA_INFOXTRACE("onError, err="<<int(err));
     if (getState() == State::RECVING_RESPONSE) {
         DESTROY_DETECTOR_SETUP();
         bool completed = http_parser_.setEOF();
@@ -258,7 +258,7 @@ void HttpRequestImpl::onError(int err)
     cleanup();
     if(getState() < State::COMPLETE) {
         setState(State::IN_ERROR);
-        if(error_cb_) error_cb_(KUMA_ERROR_SOCKERR);
+        if(error_cb_) error_cb_(KMError::SOCK_ERROR);
     } else {
         setState(State::CLOSED);
     }
@@ -271,21 +271,21 @@ void HttpRequestImpl::onHttpData(const char* data, size_t len)
 
 void HttpRequestImpl::onHttpEvent(HttpEvent ev)
 {
-    KUMA_INFOXTRACE("onHttpEvent, ev="<<ev);
+    KUMA_INFOXTRACE("onHttpEvent, ev="<<int(ev));
     switch (ev) {
-        case HTTP_HEADER_COMPLETE:
+        case HttpEvent::HEADER_COMPLETE:
             if(header_cb_) header_cb_();
             break;
             
-        case HTTP_COMPLETE:
+        case HttpEvent::COMPLETE:
             setState(State::COMPLETE);
             if(response_cb_) response_cb_();
             break;
             
-        case HTTP_ERROR:
+        case HttpEvent::HTTP_ERROR:
             cleanup();
             setState(State::IN_ERROR);
-            if(error_cb_) error_cb_(KUMA_ERROR_FAILED);
+            if(error_cb_) error_cb_(KMError::FAILED);
             break;
             
         default:

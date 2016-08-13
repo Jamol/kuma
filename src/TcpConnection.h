@@ -33,30 +33,30 @@ public:
     TcpConnection(EventLoopImpl* loop);
 	virtual ~TcpConnection();
     
-    int setSslFlags(uint32_t ssl_flags);
+    KMError setSslFlags(uint32_t ssl_flags);
     uint32_t getSslFlags() const { return tcp_.getSslFlags(); }
     bool sslEnabled() const { return tcp_.sslEnabled(); }
-    int connect(const std::string &host, uint16_t port);
-    int attachFd(SOCKET_FD fd, const uint8_t* data=nullptr, size_t size=0);
-    int attachSocket(TcpSocketImpl&& tcp);
+    KMError connect(const std::string &host, uint16_t port);
+    KMError attachFd(SOCKET_FD fd, const uint8_t* data=nullptr, size_t size=0);
+    KMError attachSocket(TcpSocketImpl &&tcp);
     int send(const uint8_t* data, size_t len);
     int send(iovec* iovs, int count);
-    int close();
+    KMError close();
     
 protected:
     virtual KMError handleInputData(uint8_t *src, size_t len) = 0;
-    virtual void onConnect(int err) {};
+    virtual void onConnect(KMError err) {};
     virtual void onWrite() = 0;
-    virtual void onError(int err) = 0;
+    virtual void onError(KMError err) = 0;
     bool isServer() { return isServer_; }
     bool sendBufferEmpty() { return send_buffer_.empty(); }
     KMError sendBufferedData();
     EventLoopImpl* getEventLoop() { return loop_; }
     
 private:
-    void onSend(int err);
-    void onReceive(int err);
-    void onClose(int err);
+    void onSend(KMError err);
+    void onReceive(KMError err);
+    void onClose(KMError err);
     
 private:
     void cleanup();

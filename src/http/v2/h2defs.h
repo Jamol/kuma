@@ -45,8 +45,8 @@ enum H2SettingsId : uint16_t {
     MAX_HEADER_LIST_SIZE    = 6
 };
 
-enum H2Error : int32_t {
-    H2_NO_ERROR             = 0x0,
+enum class H2Error : int32_t {
+    NOERR                   = 0x0,
     PROTOCOL_ERROR          = 0x1,
     INTERNAL_ERROR          = 0x2,
     FLOW_CONTROL_ERROR      = 0x3,

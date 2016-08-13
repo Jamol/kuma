@@ -27,14 +27,14 @@ class TcpListenerImpl : public KMObject
 {
 public:
     typedef std::function<void(SOCKET_FD, const char*, uint16_t)> ListenCallback;
-    typedef std::function<void(int)> ErrorCallback;
+    typedef std::function<void(KMError)> ErrorCallback;
     
     TcpListenerImpl(EventLoopImpl* loop);
     ~TcpListenerImpl();
     
-    int startListen(const char* host, uint16_t port);
-    int stopListen(const char* host, uint16_t port);
-    int close();
+    KMError startListen(const char* host, uint16_t port);
+    KMError stopListen(const char* host, uint16_t port);
+    KMError close();
     
     void setListenCallback(ListenCallback cb) { accept_cb_ = std::move(cb); }
     void setErrorCallback(ErrorCallback cb) { error_cb_ = std::move(cb); }
@@ -45,7 +45,7 @@ private:
     void setSocketOption();
     void ioReady(uint32_t events);
     void onAccept();
-    void onClose(int err);
+    void onClose(KMError err);
     
 private:
     void cleanup();

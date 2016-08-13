@@ -41,8 +41,8 @@ public:
 class FrameParser : public DestroyDetector
 {
 public:
-	FrameParser(FrameCallback *cb);
-	~FrameParser();
+    FrameParser(FrameCallback *cb);
+    ~FrameParser();
     
     enum class ParseState {
         SUCCESS,

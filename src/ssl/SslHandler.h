@@ -40,16 +40,16 @@ public:
     SslHandler();
     ~SslHandler();
     
-    int setAlpnProtocols(const AlpnProtos &protocols);
-    int getAlpnSelected(std::string &proto);
-    int attachFd(SOCKET_FD fd, SslRole ssl_role);
-    int attachSsl(SSL* ssl);
-    int detachSsl(SSL* &ssl);
+    KMError setAlpnProtocols(const AlpnProtos &protocols);
+    KMError getAlpnSelected(std::string &proto);
+    KMError attachFd(SOCKET_FD fd, SslRole ssl_role);
+    KMError attachSsl(SSL* ssl);
+    KMError detachSsl(SSL* &ssl);
     SslState doSslHandshake();
     int send(const uint8_t* data, size_t size);
     int send(const iovec* iovs, int count);
     int receive(uint8_t* data, size_t size);
-    int close();
+    KMError close();
     
     bool isServer() { return is_server_; }
     SSL* getSsl() { return ssl_; }

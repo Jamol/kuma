@@ -59,17 +59,17 @@ bool EventLoop::isPollLT() const
     return  pimpl_->isPollLT();
 }
 
-int EventLoop::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
+KMError EventLoop::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
 {
     return pimpl_->registerFd(fd, events, std::move(cb));
 }
 
-int EventLoop::updateFd(SOCKET_FD fd, uint32_t events)
+KMError EventLoop::updateFd(SOCKET_FD fd, uint32_t events)
 {
     return pimpl_->updateFd(fd, events);
 }
 
-int EventLoop::unregisterFd(SOCKET_FD fd, bool close_fd)
+KMError EventLoop::unregisterFd(SOCKET_FD fd, bool close_fd)
 {
     return pimpl_->unregisterFd(fd, close_fd);
 }
@@ -94,17 +94,17 @@ EventLoopImpl* EventLoop::pimpl()
     return pimpl_;
 }
 
-int EventLoop::runInEventLoop(LoopCallback cb)
+KMError EventLoop::runInEventLoop(LoopCallback cb)
 {
     return pimpl_->runInEventLoop(std::move(cb));
 }
 
-int EventLoop::runInEventLoopSync(LoopCallback cb)
+KMError EventLoop::runInEventLoopSync(LoopCallback cb)
 {
     return pimpl_->runInEventLoopSync(std::move(cb));
 }
 
-int EventLoop::queueInEventLoop(LoopCallback cb)
+KMError EventLoop::queueInEventLoop(LoopCallback cb)
 {
     return pimpl_->runInEventLoopSync(std::move(cb));
 }
@@ -121,7 +121,7 @@ TcpSocket::~TcpSocket()
     delete pimpl_;
 }
 
-int TcpSocket::setSslFlags(uint32_t ssl_flags)
+KMError TcpSocket::setSslFlags(uint32_t ssl_flags)
 {
     return pimpl_->setSslFlags(ssl_flags);
 }
@@ -136,50 +136,50 @@ bool TcpSocket::sslEnabled() const
     return pimpl_->sslEnabled();
 }
 
-int TcpSocket::bind(const char* bind_host, uint16_t bind_port)
+KMError TcpSocket::bind(const char* bind_host, uint16_t bind_port)
 {
     return pimpl_->bind(bind_host, bind_port);
 }
 
-int TcpSocket::connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout)
+KMError TcpSocket::connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout)
 {
     return pimpl_->connect(host, port, std::move(cb), timeout);
 }
 
-int TcpSocket::attachFd(SOCKET_FD fd)
+KMError TcpSocket::attachFd(SOCKET_FD fd)
 {
     return pimpl_->attachFd(fd);
 }
 
-int TcpSocket::detachFd(SOCKET_FD &fd)
+KMError TcpSocket::detachFd(SOCKET_FD &fd)
 {
     return pimpl_->detachFd(fd);
 }
 
-int TcpSocket::startSslHandshake(SslRole ssl_role)
+KMError TcpSocket::startSslHandshake(SslRole ssl_role)
 {
 #ifdef KUMA_HAS_OPENSSL
     return pimpl_->startSslHandshake(ssl_role);
 #else
-    return KUMA_ERROR_UNSUPPORT;
+    return KMError::UNSUPPORT;
 #endif
 }
 
-int TcpSocket::getAlpnSelected(char *buf, size_t len)
+KMError TcpSocket::getAlpnSelected(char *buf, size_t len)
 {
 #ifdef KUMA_HAS_OPENSSL
     std::string proto;
-    int ret = pimpl_->getAlpnSelected(proto);
-    if (ret == KUMA_ERROR_NOERR) {
+    auto ret = pimpl_->getAlpnSelected(proto);
+    if (ret == KMError::NOERR) {
         if (proto.size() >= len) {
-            return KUMA_ERROR_BUFFER_TOO_SMALL;
+            return KMError::BUFFER_TOO_SMALL;
         }
         memcpy(buf, proto.c_str(), proto.size());
         buf[proto.size()] = '\0';
     }
     return ret;
 #else
-    return KUMA_ERROR_UNSUPPORT;
+    return KMError::UNSUPPORT;
 #endif
 }
 
@@ -198,17 +198,17 @@ int TcpSocket::receive(uint8_t* data, size_t length)
     return pimpl_->receive(data, length);
 }
 
-int TcpSocket::close()
+KMError TcpSocket::close()
 {
     return pimpl_->close();
 }
 
-int TcpSocket::pause()
+KMError TcpSocket::pause()
 {
     return pimpl_->pause();
 }
 
-int TcpSocket::resume()
+KMError TcpSocket::resume()
 {
     return pimpl_->resume();
 }
@@ -249,17 +249,17 @@ TcpListener::~TcpListener()
     delete pimpl_;
 }
 
-int TcpListener::startListen(const char* host, uint16_t port)
+KMError TcpListener::startListen(const char* host, uint16_t port)
 {
     return pimpl_->startListen(host, port);
 }
 
-int TcpListener::stopListen(const char* host, uint16_t port)
+KMError TcpListener::stopListen(const char* host, uint16_t port)
 {
     return pimpl_->stopListen(host, port);
 }
 
-int TcpListener::close()
+KMError TcpListener::close()
 {
     return pimpl_->close();
 }
@@ -291,7 +291,7 @@ UdpSocket::~UdpSocket()
     delete pimpl_;
 }
 
-int UdpSocket::bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags)
+KMError UdpSocket::bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags)
 {
     return pimpl_->bind(bind_host, bind_port, udp_flags);
 }
@@ -311,17 +311,17 @@ int UdpSocket::receive(uint8_t* data, size_t length, char* ip, size_t ip_len, ui
     return pimpl_->receive(data, length, ip, ip_len, port);
 }
 
-int UdpSocket::close()
+KMError UdpSocket::close()
 {
     return pimpl_->close();
 }
 
-int UdpSocket::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
+KMError UdpSocket::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
 {
     return pimpl_->mcastJoin(mcast_addr, mcast_port);
 }
 
-int UdpSocket::mcastLeave(const char* mcast_addr, uint16_t mcast_port)
+KMError UdpSocket::mcastLeave(const char* mcast_addr, uint16_t mcast_port)
 {
     return pimpl_->mcastLeave(mcast_addr, mcast_port);
 }
@@ -512,7 +512,7 @@ HttpRequest::~HttpRequest()
     delete pimpl_;
 }
 
-int HttpRequest::setSslFlags(uint32_t ssl_flags)
+KMError HttpRequest::setSslFlags(uint32_t ssl_flags)
 {
     return pimpl_->setSslFlags(ssl_flags);
 }
@@ -527,7 +527,7 @@ void HttpRequest::addHeader(const char* name, uint32_t value)
     pimpl_->addHeader(name, value);
 }
 
-int HttpRequest::sendRequest(const char* method, const char* url)
+KMError HttpRequest::sendRequest(const char* method, const char* url)
 {
     return pimpl_->sendRequest(method, url, ver_);
 }
@@ -542,7 +542,7 @@ void HttpRequest::reset()
     pimpl_->reset();
 }
 
-int HttpRequest::close()
+KMError HttpRequest::close()
 {
     return pimpl_->close();
 }
@@ -611,17 +611,17 @@ HttpResponse::~HttpResponse()
     delete pimpl_;
 }
 
-int HttpResponse::setSslFlags(uint32_t ssl_flags)
+KMError HttpResponse::setSslFlags(uint32_t ssl_flags)
 {
     return pimpl_->setSslFlags(ssl_flags);
 }
 
-int HttpResponse::attachFd(SOCKET_FD fd, uint8_t* init_data, size_t init_len)
+KMError HttpResponse::attachFd(SOCKET_FD fd, uint8_t* init_data, size_t init_len)
 {
     return pimpl_->attachFd(fd, init_data, init_len);
 }
 
-int HttpResponse::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
+KMError HttpResponse::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
 {
     return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move(*parser.pimpl()));
 }
@@ -636,7 +636,7 @@ void HttpResponse::addHeader(const char* name, uint32_t value)
     return pimpl_->addHeader(name, value);
 }
 
-int HttpResponse::sendResponse(int status_code, const char* desc, const char* ver)
+KMError HttpResponse::sendResponse(int status_code, const char* desc, const char* ver)
 {
     return pimpl_->sendResponse(status_code, desc, ver);
 }
@@ -651,7 +651,7 @@ void HttpResponse::reset()
     pimpl_->reset();
 }
 
-int HttpResponse::close()
+KMError HttpResponse::close()
 {
     return pimpl_->close();
 }
@@ -736,7 +736,7 @@ WebSocket::~WebSocket()
     delete pimpl_;
 }
 
-int WebSocket::setSslFlags(uint32_t ssl_flags)
+KMError WebSocket::setSslFlags(uint32_t ssl_flags)
 {
     return pimpl_->setSslFlags(ssl_flags);
 }
@@ -761,17 +761,17 @@ const char* WebSocket::getOrigin() const
     return pimpl_->getOrigin().c_str();
 }
 
-int WebSocket::connect(const char* ws_url, EventCallback cb)
+KMError WebSocket::connect(const char* ws_url, EventCallback cb)
 {
     return pimpl_->connect(ws_url, std::move(cb));
 }
 
-int WebSocket::attachFd(SOCKET_FD fd, const uint8_t* init_data, size_t init_len)
+KMError WebSocket::attachFd(SOCKET_FD fd, const uint8_t* init_data, size_t init_len)
 {
     return pimpl_->attachFd(fd, init_data, init_len);
 }
 
-int WebSocket::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
+KMError WebSocket::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
 {
     return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move((*parser.pimpl())));
 }
@@ -781,7 +781,7 @@ int WebSocket::send(const uint8_t* data, size_t len)
     return pimpl_->send(data, len);
 }
 
-int WebSocket::close()
+KMError WebSocket::close()
 {
     return pimpl_->close();
 }
@@ -818,27 +818,27 @@ H2Connection::~H2Connection()
     delete pimpl_;
 }
 
-int H2Connection::setSslFlags(uint32_t ssl_flags)
+KMError H2Connection::setSslFlags(uint32_t ssl_flags)
 {
     return pimpl_->setSslFlags(ssl_flags);
 }
 
-int H2Connection::connect(const char* host, uint16_t port, ConnectCallback cb)
+KMError H2Connection::connect(const char* host, uint16_t port, ConnectCallback cb)
 {
     return pimpl_->connect(host, port, cb);
 }
 
-int H2Connection::attachFd(SOCKET_FD fd, const uint8_t* data, size_t size)
+KMError H2Connection::attachFd(SOCKET_FD fd, const uint8_t* data, size_t size)
 {
     return pimpl_->attachFd(fd, data, size);
 }
 
-int H2Connection::attachSocket(TcpSocket &&tcp, HttpParser &&parser)
+KMError H2Connection::attachSocket(TcpSocket &&tcp, HttpParser &&parser)
 {
     return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move(*parser.pimpl()));
 }
 
-int H2Connection::close()
+KMError H2Connection::close()
 {
     return pimpl_->close();
 }

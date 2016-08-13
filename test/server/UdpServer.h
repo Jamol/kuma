@@ -11,11 +11,11 @@ class UdpServer
 public:
     UdpServer(EventLoop* loop);
     
-    int bind(const char* host, uint16_t port);
+    KMError bind(const char* host, uint16_t port);
     int close();
     
-    void onReceive(int err);
-    void onClose(int err);
+    void onReceive(KMError err);
+    void onClose(KMError err);
     
 private:
     EventLoop*  loop_;

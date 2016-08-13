@@ -36,9 +36,9 @@ public:
     H2Request(EventLoopImpl* loop);
     ~H2Request();
     
-    int setSslFlags(uint32_t ssl_flags) override;
+    KMError setSslFlags(uint32_t ssl_flags) override;
     int sendData(const uint8_t* data, size_t len) override;
-    int close() override;
+    KMError close() override;
     
     int getStatusCode() const override { return status_code_; }
     const std::string& getVersion() const override { return VersionHTTP2_0; }
@@ -51,9 +51,9 @@ public:
     void onRSTStream(int err);
     
 private:
-    void onConnect(int err);
+    void onConnect(KMError err);
     
-    int sendRequest() override;
+    KMError sendRequest() override;
     void checkHeaders() override;
     size_t buildHeaders(HeaderVector &headers);
     void sendHeaders();

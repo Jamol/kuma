@@ -14,10 +14,10 @@ HttpTest::HttpTest(TestLoop* loop, long conn_id)
     
 }
 
-int HttpTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
+KMError HttpTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
 {
-    http_.setWriteCallback([this] (int err) { onSend(err); });
-    http_.setErrorCallback([this] (int err) { onClose(err); });
+    http_.setWriteCallback([this] (KMError err) { onSend(err); });
+    http_.setErrorCallback([this] (KMError err) { onClose(err); });
     
     http_.setDataCallback([this] (uint8_t* data, size_t len) { onHttpData(data, len); });
     http_.setHeaderCompleteCallback([this] () { onHeaderComplete(); });
@@ -27,10 +27,10 @@ int HttpTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
     return http_.attachFd(fd);
 }
 
-int HttpTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
+KMError HttpTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
 {
-    http_.setWriteCallback([this] (int err) { onSend(err); });
-    http_.setErrorCallback([this] (int err) { onClose(err); });
+    http_.setWriteCallback([this] (KMError err) { onSend(err); });
+    http_.setErrorCallback([this] (KMError err) { onClose(err); });
     
     http_.setDataCallback([this] (uint8_t* data, size_t len) { onHttpData(data, len); });
     http_.setHeaderCompleteCallback([this] () { onHeaderComplete(); });
@@ -42,15 +42,16 @@ int HttpTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
 
 int HttpTest::close()
 {
-    return http_.close();
+    http_.close();
+    return 0;
 }
 
-void HttpTest::onSend(int err)
+void HttpTest::onSend(KMError err)
 {
     sendTestData();
 }
 
-void HttpTest::onClose(int err)
+void HttpTest::onClose(KMError err)
 {
     printf("HttpTest::onClose, err=%d\n", err);
     loop_->removeObject(conn_id_);

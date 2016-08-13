@@ -12,12 +12,12 @@ class TcpTest : public LoopObject
 public:
     TcpTest(TestLoop* loop, long conn_id);
     
-    int attachFd(SOCKET_FD fd);
+    KMError attachFd(SOCKET_FD fd);
     int close();
     
-    void onSend(int err);
-    void onReceive(int err);
-    void onClose(int err);
+    void onSend(KMError err);
+    void onReceive(KMError err);
+    void onClose(KMError err);
     
 private:
     TestLoop*  loop_;

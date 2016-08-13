@@ -19,8 +19,8 @@ public:
     int close();
 
     void onData(uint8_t* data, size_t len);
-    void onSend(int err);
-    void onClose(int err);
+    void onSend(KMError err);
+    void onClose(KMError err);
     void onHeaderComplete();
     void onRequestComplete();
     
@@ -30,7 +30,7 @@ private:
 private:
     TestLoop*   loop_;
     HttpRequest http_request_;
-    uint32_t    total_bytes_read_;
+    size_t      total_bytes_read_;
     long        conn_id_;
 };
 

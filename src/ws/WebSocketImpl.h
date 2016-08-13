@@ -29,7 +29,7 @@ class WebSocketImpl : public KMObject, public DestroyDetector, public TcpConnect
 {
 public:
     typedef std::function<void(uint8_t*, size_t)> DataCallback;
-    typedef std::function<void(int)> EventCallback;
+    typedef std::function<void(KMError)> EventCallback;
     
     WebSocketImpl(EventLoopImpl* loop);
     ~WebSocketImpl();
@@ -38,11 +38,11 @@ public:
     const std::string& getProtocol() const { return proto_; }
     void setOrigin(const std::string& origin);
     const std::string& getOrigin() const { return origin_; }
-    int connect(const std::string& ws_url, EventCallback cb);
-    int attachFd(SOCKET_FD fd, const uint8_t* init_data = nullptr, size_t init_len = 0);
-    int attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
+    KMError connect(const std::string& ws_url, EventCallback cb);
+    KMError attachFd(SOCKET_FD fd, const uint8_t* init_data = nullptr, size_t init_len = 0);
+    KMError attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
     int send(const uint8_t* data, size_t len);
-    int close();
+    KMError close();
     
     void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
     void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
@@ -59,19 +59,19 @@ private:
     };
     void setState(State state) { state_ = state; }
     State getState() { return state_; }
-    int connect_i(const std::string& ws_url);
+    KMError connect_i(const std::string& ws_url);
     void cleanup();
     
     void sendUpgradeRequest();
     void sendUpgradeResponse();
     void onWsData(uint8_t* data, size_t len);
-    void onWsHandshake(int err);
+    void onWsHandshake(KMError err);
     void onStateOpen();
     
-    void onConnect(int err) override;
+    void onConnect(KMError err) override;
     KMError handleInputData(uint8_t *src, size_t len) override;
     void onWrite() override;
-    void onError(int err) override;
+    void onError(KMError err) override;
     
 private:
     State                   state_ = State::IDLE;

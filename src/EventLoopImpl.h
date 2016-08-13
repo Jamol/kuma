@@ -42,14 +42,14 @@ public:
     };
     
 public:
-    EventLoopImpl(PollType poll_type = POLL_TYPE_NONE);
+    EventLoopImpl(PollType poll_type = PollType::NONE);
     ~EventLoopImpl();
 
 public:
     bool init();
-    int registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
-    int updateFd(SOCKET_FD fd, uint32_t events);
-    int unregisterFd(SOCKET_FD fd, bool close_fd);
+    KMError registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
+    KMError updateFd(SOCKET_FD fd, uint32_t events);
+    KMError unregisterFd(SOCKET_FD fd, bool close_fd);
     TimerManagerPtr getTimerMgr() { return timer_mgr_; }
     
     void addListener(Listener *l);
@@ -60,9 +60,9 @@ public:
     
 public:
     bool isInEventLoopThread() const { return std::this_thread::get_id() == thread_id_; }
-    int runInEventLoop(LoopCallback cb);
-    int runInEventLoopSync(LoopCallback cb);
-    int queueInEventLoop(LoopCallback cb);
+    KMError runInEventLoop(LoopCallback cb);
+    KMError runInEventLoopSync(LoopCallback cb);
+    KMError queueInEventLoop(LoopCallback cb);
     void loopOnce(uint32_t max_wait_ms);
     void loop(uint32_t max_wait_ms = -1);
     void notify();

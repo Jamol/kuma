@@ -37,27 +37,27 @@ KUMA_NS_BEGIN
 # define KUMA_API
 #endif
 
-typedef enum{
-    KUMA_ERROR_NOERR    = 0,
-    KUMA_ERROR_FAILED,
-    KUMA_ERROR_INVALID_STATE,
-    KUMA_ERROR_INVALID_PARAM,
-    KUMA_ERROR_INVALID_PROTO,
-    KUMA_ERROR_ALREADY_EXIST,
-    KUMA_ERROR_AGAIN,
-    KUMA_ERROR_SOCKERR,
-    KUMA_ERROR_POLLERR,
-    KUMA_ERROR_SSL_FAILED,
-    KUMA_ERROR_BUFFER_TOO_SMALL,
-    KUMA_ERROR_UNSUPPORT,
-    KUMA_ERROR_DESTROYED
-}KMError;
+enum class KMError : int {
+    NOERR    = 0,
+    FAILED,
+    INVALID_STATE,
+    INVALID_PARAM,
+    INVALID_PROTO,
+    ALREADY_EXIST,
+    AGAIN,
+    SOCK_ERROR,
+    POLL_ERROR,
+    SSL_FAILED,
+    BUFFER_TOO_SMALL,
+    UNSUPPORT,
+    DESTROYED
+};
 
-typedef enum {
-    HTTP_HEADER_COMPLETE,
-    HTTP_COMPLETE,
+enum class HttpEvent : int {
+    HEADER_COMPLETE,
+    COMPLETE,
     HTTP_ERROR
-}HttpEvent;
+};
 
 typedef enum {
     SSL_NONE                    = 0,
@@ -69,15 +69,15 @@ typedef enum {
     SSL_ALLOW_REVOKED_CERT      = 0X20
 }SslFlag;
 
-typedef enum {
-    AS_CLIENT,
-    AS_SERVER
-}SslRole;
+enum class SslRole {
+    CLIENT,
+    SERVER
+};
 
-typedef enum {
+enum class TimerMode {
     ONE_SHOT,
     REPEATING
-}TimerMode;
+};
 
 #define UDP_FLAG_MULTICAST  1
 

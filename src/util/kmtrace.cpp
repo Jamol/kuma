@@ -8,6 +8,7 @@
 
 #include "kmtrace.h"
 #include "util.h"
+#include "kmapi.h"
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -32,10 +33,10 @@ KUMA_NS_BEGIN
 #define LOCALTIME_R localtime_r
 #endif
 
-std::function<void(int, const char*)> trace_func;
-void setTraceFunc(std::function<void(int, const char*)> func)
+TraceFunc trace_func;
+void setTraceFunc(TraceFunc func)
 {
-    trace_func = func;
+    trace_func = std::move(func);
 }
 
 void TracePrint(int level, const char* szMessage, ...)

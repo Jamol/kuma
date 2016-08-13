@@ -7,19 +7,20 @@ UdpServer::UdpServer(EventLoop* loop)
     
 }
 
-int UdpServer::bind(const char* host, uint16_t port)
+KMError UdpServer::bind(const char* host, uint16_t port)
 {
-    udp_.setReadCallback([this] (int err) { onReceive(err); });
-    udp_.setErrorCallback([this] (int err) { onClose(err); });
+    udp_.setReadCallback([this] (KMError err) { onReceive(err); });
+    udp_.setErrorCallback([this] (KMError err) { onClose(err); });
     return udp_.bind(host, port);
 }
 
 int UdpServer::close()
 {
-    return udp_.close();
+    udp_.close();
+    return 0;
 }
 
-void UdpServer::onReceive(int err)
+void UdpServer::onReceive(KMError err)
 {
     char buf[4096] = {0};
     char ip[128];
@@ -39,7 +40,7 @@ void UdpServer::onReceive(int err)
     } while(true);
 }
 
-void UdpServer::onClose(int err)
+void UdpServer::onClose(KMError err)
 {
     printf("UdpServer::onClose, err=%d\n", err);
 }
