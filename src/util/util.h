@@ -105,6 +105,11 @@ extern "C" {
     KUMA_API bool km_is_ipv6_address(const char* addr);
     KUMA_API bool km_is_ip_address(const char* addr);
     KUMA_API bool km_is_mcast_address(const char* addr);
+    
+#ifndef KUMA_OS_MAC
+    size_t strlcpy(char *, const char *, size_t);
+    size_t strlcat(char *, const char *, size_t);
+#endif
 }
 
 KUMA_NS_END

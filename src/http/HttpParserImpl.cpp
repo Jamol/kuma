@@ -46,7 +46,7 @@ HttpParserImpl::HttpParserImpl(HttpParserImpl&& other)
 
 HttpParserImpl& HttpParserImpl::operator=(const HttpParserImpl& other)
 {
-    if(this != & other) {
+    if(this != &other) {
         is_request_ = other.is_request_;
         str_buf_ = other.str_buf_;
         read_state_ = other.read_state_;
@@ -74,7 +74,7 @@ HttpParserImpl& HttpParserImpl::operator=(const HttpParserImpl& other)
 
 HttpParserImpl& HttpParserImpl::operator=(HttpParserImpl&& other)
 {
-    if(this != & other) {
+    if(this != &other) {
         is_request_ = other.is_request_;
         str_buf_.swap(other.str_buf_);
         read_state_ = other.read_state_;

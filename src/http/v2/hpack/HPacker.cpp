@@ -23,6 +23,7 @@
 #include "hpack_huffman_table.h"
 
 #include <math.h>
+#include <string.h> // for memcpy
 
 namespace hpack {
 
