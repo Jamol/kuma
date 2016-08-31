@@ -67,6 +67,7 @@ public:
     void loop(uint32_t max_wait_ms = -1);
     void notify();
     void stop();
+    bool stopped() const { return stop_loop_; }
     
 private:
     typedef std::recursive_mutex KM_Mutex;

@@ -1,6 +1,8 @@
 #include "HttpTest.h"
 #include "TestLoop.h"
 
+#include <string.h>
+
 #ifdef KUMA_OS_WIN
 #define strcasecmp _stricmp
 #endif

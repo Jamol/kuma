@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -47,7 +53,7 @@ private:
     typedef std::map<int, IOCallback> IOCallbackMap;
 
     int             epoll_fd_;
-    Notifier        notifier_;
+    NotifierPtr     notifier_ { std::move(Notifier::createNotifier()) };
 };
 
 EPoll::EPoll()
@@ -70,12 +76,12 @@ bool EPoll::init()
     if(INVALID_FD == epoll_fd_) {
         return false;
     }
-    if (!notifier_.ready()) {
-        if(!notifier_.init()) {
+    if (!notifier_->ready()) {
+        if(!notifier_->init()) {
             return false;
         }
-        IOCallback cb ([this](uint32_t ev) { notifier_.onEvent(ev); });
-        registerFd(notifier_.getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, std::move(cb));
+        IOCallback cb ([this](uint32_t ev) { notifier_->onEvent(ev); });
+        registerFd(notifier_->getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, std::move(cb));
     }
     return true;
 }
@@ -165,7 +171,7 @@ KMError EPoll::wait(uint32_t wait_ms)
         if(errno != EINTR) {
             KUMA_ERRTRACE("EPoll::wait, errno="<<errno);
         }
-        KUMA_INFOTRACE("EPoll::wait, epoll_wait, nfds="<<nfds<<", errno="<<errno);
+        KUMA_INFOTRACE("EPoll::wait, nfds="<<nfds<<", errno="<<errno);
     } else {
         for (int i=0; i<nfds; ++i) {
             SOCKET_FD fd = (SOCKET_FD)(long)events[i].data.ptr;
@@ -180,7 +186,7 @@ KMError EPoll::wait(uint32_t wait_ms)
 
 void EPoll::notify()
 {
-    notifier_.notify();
+    notifier_->notify();
 }
 
 IOPoll* createEPoll() {

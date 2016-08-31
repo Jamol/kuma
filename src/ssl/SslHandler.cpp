@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -89,10 +95,14 @@ void SslHandler::cleanup()
 
 KMError SslHandler::setAlpnProtocols(const AlpnProtos &protocols)
 {
+#if OPENSSL_VERSION_NUMBER >= 0x1000200fL && !defined(OPENSSL_NO_TLSEXT)
     if (ssl_ && SSL_set_alpn_protos(ssl_, &protocols[0], (unsigned int)protocols.size()) == 1) {
         return KMError::NOERR;
     }
     return KMError::SSL_FAILED;
+#else
+    return KMError::UNSUPPORT;
+#endif
 }
 
 KMError SslHandler::getAlpnSelected(std::string &proto)
@@ -111,6 +121,18 @@ KMError SslHandler::getAlpnSelected(std::string &proto)
     return KMError::NOERR;
 }
 
+KMError SslHandler::setServerName(const std::string &serverName)
+{
+#if OPENSSL_VERSION_NUMBER >= 0x1000105fL && !defined(OPENSSL_NO_TLSEXT)
+    if (ssl_ && SSL_set_tlsext_host_name(ssl_, serverName.c_str()) == 1) {
+        return KMError::NOERR;
+    }
+    return KMError::SSL_FAILED;
+#else
+    return KMError::UNSUPPORT;
+#endif
+}
+
 KMError SslHandler::attachFd(SOCKET_FD fd, SslRole ssl_role)
 {
     cleanup();
@@ -119,9 +141,9 @@ KMError SslHandler::attachFd(SOCKET_FD fd, SslRole ssl_role)
 
     SSL_CTX* ctx = NULL;
     if(is_server_) {
-        ctx = OpenSslLib::getServerContext();
+        ctx = OpenSslLib::defaultServerContext();
     } else {
-        ctx = OpenSslLib::getClientContext();
+        ctx = OpenSslLib::defaultClientContext();
     }
     if(NULL == ctx) {
         KUMA_ERRXTRACE("attachFd, CTX is NULL");

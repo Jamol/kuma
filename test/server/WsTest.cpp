@@ -1,6 +1,8 @@
 #include "WsTest.h"
 #include "TestLoop.h"
 
+#include <string.h>
+
 WsTest::WsTest(TestLoop* loop, long conn_id)
 : loop_(loop)
 , ws_(loop->getEventLoop())

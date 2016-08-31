@@ -56,12 +56,13 @@ void H2ConnectionImpl::cleanup()
         registeredToLoop_ = false;
         tcp_.getEventLoop()->removeListener(this);
     }
+    tcp_.close();
     if (!key_.empty()) {
         auto &connMgr = H2ConnectionMgr::getRequestConnMgr(sslEnabled());
-        connMgr.removeConnection(key_);
-        key_.clear();
+        std::string key(std::move(key_));
+        // will destroy self when calling from loop stop
+        connMgr.removeConnection(key);
     }
-    tcp_.close();
 }
 
 void H2ConnectionImpl::setConnectionKey(const std::string &key)
@@ -129,8 +130,8 @@ KMError H2ConnectionImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& par
     KUMA_ASSERT(parser.isRequest());
     httpParser_ = std::move(parser);
     nextStreamId_ = 2;
-    if (sslEnabled()) {
-        return KMError::INVALID_PROTO;
+    if (tcp.sslEnabled()) {
+        setState(State::HANDSHAKE);
     } else {
         setState(State::UPGRADING);
     }
@@ -140,7 +141,12 @@ KMError H2ConnectionImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& par
         return ret;
     }
     
-    return handleUpgradeRequest();
+    if (tcp.sslEnabled()) {
+        sendPreface();
+        return KMError::NOERR;
+    } else {
+        return handleUpgradeRequest();
+    }
 }
 
 KMError H2ConnectionImpl::close()

@@ -25,6 +25,9 @@
 		6F5C79E21D59CC8700FF8C83 /* DestroyDetector.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F5C79E11D59CC8700FF8C83 /* DestroyDetector.h */; };
 		6F6208FB1A26BDB1000DAF4B /* kmconf.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208F81A26BDB1000DAF4B /* kmconf.h */; };
 		6F6208FD1A26BDB1000DAF4B /* kmapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208FA1A26BDB1000DAF4B /* kmapi.h */; };
+		6F75128F1D76BD46000BE6EC /* PipeNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F75128D1D76BD46000BE6EC /* PipeNotifier.h */; };
+		6F7512921D76BE27000BE6EC /* Notifier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7512911D76BE27000BE6EC /* Notifier.cpp */; };
+		6F7512941D76C237000BE6EC /* SocketNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F7512931D76C237000BE6EC /* SocketNotifier.h */; };
 		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
 		6F9E76761D365C43005E04B2 /* IHttpRequest.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F9E76751D365C43005E04B2 /* IHttpRequest.h */; };
 		6F9E76781D3665DA005E04B2 /* IHttpRequest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F9E76771D3665DA005E04B2 /* IHttpRequest.cpp */; };
@@ -99,6 +102,9 @@
 		6F5C79E11D59CC8700FF8C83 /* DestroyDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DestroyDetector.h; sourceTree = "<group>"; };
 		6F6208F81A26BDB1000DAF4B /* kmconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmconf.h; sourceTree = "<group>"; };
 		6F6208FA1A26BDB1000DAF4B /* kmapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmapi.h; sourceTree = "<group>"; };
+		6F75128D1D76BD46000BE6EC /* PipeNotifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PipeNotifier.h; sourceTree = "<group>"; };
+		6F7512911D76BE27000BE6EC /* Notifier.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Notifier.cpp; sourceTree = "<group>"; };
+		6F7512931D76C237000BE6EC /* SocketNotifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SocketNotifier.h; sourceTree = "<group>"; };
 		6F852DF11985E33000271D87 /* kuma.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = kuma.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F852E421985EB2B00271D87 /* kuma-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "kuma-Prefix.pch"; sourceTree = SOURCE_ROOT; };
 		6F852E441985EB4700271D87 /* kumaProj.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaProj.xcconfig; sourceTree = "<group>"; };
@@ -174,8 +180,11 @@
 			isa = PBXGroup;
 			children = (
 				6FBB2C8C1D139C430024550F /* IOPoll.h */,
+				6F7512911D76BE27000BE6EC /* Notifier.cpp */,
 				6FBB2C8D1D139C430024550F /* Notifier.h */,
+				6F75128D1D76BD46000BE6EC /* PipeNotifier.h */,
 				6FBB2C8E1D139C430024550F /* SelectPoll.cpp */,
+				6F7512931D76C237000BE6EC /* SocketNotifier.h */,
 				6FBB2C8F1D139C430024550F /* VPoll.cpp */,
 			);
 			path = poll;
@@ -360,7 +369,9 @@
 				6FBB2CBD1D139C990024550F /* WebSocketImpl.h in Headers */,
 				6F5C79E21D59CC8700FF8C83 /* DestroyDetector.h in Headers */,
 				6FE0EF181D40986D006136B7 /* StaticTable.h in Headers */,
+				6F7512941D76C237000BE6EC /* SocketNotifier.h in Headers */,
 				6FE0EF011D409863006136B7 /* FrameParser.h in Headers */,
+				6F75128F1D76BD46000BE6EC /* PipeNotifier.h in Headers */,
 				6FE0EF051D409863006136B7 /* H2ConnectionMgr.h in Headers */,
 				6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */,
 				6FA951421A3808450033C9CF /* kmdefs.h in Headers */,
@@ -433,6 +444,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6F7512921D76BE27000BE6EC /* Notifier.cpp in Sources */,
 				6FBB2CB41D139C700024550F /* OpenSslLib.cpp in Sources */,
 				6FBB2CAE1D139C560024550F /* Uri.cpp in Sources */,
 				6FE0EF141D40986D006136B7 /* HPacker.cpp in Sources */,

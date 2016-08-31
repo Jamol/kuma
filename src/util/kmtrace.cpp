@@ -82,7 +82,8 @@ void TracePrint(int level, const char* szMessage, ...)
 #ifdef KUMA_OS_WIN
         OutputDebugString(ss.str().c_str());
 #else
-        printf("%s\n", ss.str().c_str());
+        ss << std::endl;
+        std::cout << ss.str();
 #endif
     }
 }

@@ -65,7 +65,7 @@ static int huffDecode(const uint8_t *src, size_t len, std::string &str) {
 
 static int huffEncode(const std::string &str, uint8_t *buf, size_t len) {
     uint8_t *ptr = buf;
-    const uint8_t *end = buf + len;
+    //const uint8_t *end = buf + len;
     const char* src = str.c_str();
     const char* src_end = src + str.length();
     
@@ -207,7 +207,7 @@ static int decodeString(const uint8_t *buf, size_t len, std::string &str)
     if (ptr == end) {
         return -1;
     }
-    bool H = *ptr & 0x80;
+    bool H = !!(*ptr & 0x80);
     uint64_t slen = 0;
     int ret = decodeInteger(7, ptr, end - ptr, slen);
     if (ret <= 0) {

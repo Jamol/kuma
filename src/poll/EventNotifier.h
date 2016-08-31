@@ -19,29 +19,63 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __Notifier_H__
-#define __Notifier_H__
+#ifndef __EventNotifier_H__
+#define __EventNotifier_H__
 
-#include "evdefs.h"
-
-#include <memory>
+#include "util/util.h"
+#include "Notifier.h"
 
 KUMA_NS_BEGIN
 
-class Notifier
+# include <sys/eventfd.h>
+
+class EventNotifier : public Notifier
 {
 public:
-    virtual ~Notifier() {}
-    virtual bool init() = 0;
-    virtual bool ready() = 0;
-    virtual void notify() = 0;
-    virtual SOCKET_FD getReadFD() = 0;
-    virtual KMError onEvent(uint32_t ev) = 0;
+    ~EventNotifier() {
+        cleanup();
+    }
+    bool init() override {
+        cleanup();
+        efd_ = eventfd(0, EFD_NONBLOCK);
+        return efd_ >= 0;
+    }
+    bool ready() override {
+        return efd_ >= 0;
+    }
+    void notify() override {
+        if (efd_ >= 0) {
+            //eventfd_write(efd_, 1);
+            uint64_t count = 1;
+            int ret = write(efd_, &count, sizeof(count));
+            if (ret != sizeof(count)) {
+            }
+        }
+    }
     
-    static std::unique_ptr<Notifier> createNotifier();
-};
+    SOCKET_FD getReadFD() override {
+        return efd_;
+    }
+    
+    KMError onEvent(uint32_t ev) override {
+        //eventfd_t val;
+        //eventfd_read(efd_, &val);
+        uint64_t count = 0;
+        int ret = read(efd_, &count, sizeof(count));
+        if (ret != sizeof(count)) {
+        }
+        return KMError::NOERR;
+    }
+private:
+    void cleanup() {
+        if (efd_ != -1) {
+            close(efd_);
+            efd_ = -1;
+        }
+    }
 
-using NotifierPtr = std::unique_ptr<Notifier>;
+    int efd_ { -1 };
+};
 
 KUMA_NS_END
 

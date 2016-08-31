@@ -80,8 +80,9 @@ public:
     ~TcpSocket();
     
     KMError setSslFlags(uint32_t ssl_flags);
-    uint32_t getSslFlags() const ;
+    uint32_t getSslFlags() const;
     bool sslEnabled() const;
+    KMError setSslServerName(const char *server_name);
     KMError bind(const char* bind_host, uint16_t bind_port);
     KMError connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
     KMError attachFd(SOCKET_FD fd);

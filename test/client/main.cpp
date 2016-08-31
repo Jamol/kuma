@@ -14,6 +14,8 @@
 #include <signal.h>
 #endif
 
+#include <string.h> // for strcmp
+
 using namespace kuma;
 
 #define THREAD_COUNT    10
@@ -42,12 +44,12 @@ void HandlerRoutine(int sig)
 #endif
 
 static const char* g_usage =
-"   client [option] tcp://www.kuma.com:8443\n"
-"   client [option] http://www.kuma.com\n"
-"   client [option] ws://www.kuma.com\n"
-"   client [option] udp//www.kuma.com:5500\n"
-"   client [option] mcast//224.0.0.1:5500\n\n"
-"   -b host:port    local host and port to be binded to\n"
+"   client [option] tcp://127.0.0.1:52328\n"
+"   client [option] http://google.com/\n"
+"   client [option] ws://www.websocket.org/\n"
+"   client [option] udp//127.0.0.1:52328\n"
+"   client [option] mcast//224.0.0.1:52328\n\n"
+"   -b host:port    local host and port to be bound to\n"
 "   -c number       concurrent clients\n"
 "   -t ms           send interval\n"
 "   -v              print version\n"

@@ -1,6 +1,8 @@
 #include "TcpServer.h"
 
 #include <string.h>
+#include <iostream>
+#include <sstream>
 
 TcpServer::TcpServer(EventLoop* loop, int count)
 : loop_(loop)
@@ -54,7 +56,9 @@ KMError TcpServer::stopListen()
 
 void TcpServer::onAccept(SOCKET_FD fd, const char* ip, uint16_t port)
 {
-    printf("TcpServer::onAccept, fd=%lld, ip=%s, port=%d, proto=%d\n", fd, ip, port, proto_);
+    std::stringstream ss;
+    ss << "TcpServer::onAccept, fd=" << fd << ", ip=" << ip << ", port=" << port << ", proto=" << proto_ << std::endl;
+    std::cout << ss.str();
     TestLoop* test_loop = loop_pool_.getNextLoop();
     test_loop->addFd(fd, proto_);
 }

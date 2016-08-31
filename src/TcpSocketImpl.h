@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -27,7 +33,7 @@
 #endif
 
 #ifdef KUMA_HAS_OPENSSL
-#include "SslHandler.h"
+#include "ssl/SslHandler.h"
 #endif
 
 #include <vector>
@@ -57,6 +63,7 @@ public:
 #ifdef KUMA_HAS_OPENSSL
     KMError setAlpnProtocols(const AlpnProtos &protocols);
     KMError getAlpnSelected(std::string &proto);
+    KMError setSslServerName(std::string serverName);
     KMError attachFd(SOCKET_FD fd, SSL* ssl);
     KMError detachFd(SOCKET_FD &fd, SSL* &ssl);
     KMError startSslHandshake(SslRole ssl_role);
@@ -108,6 +115,7 @@ private:
 #ifdef KUMA_HAS_OPENSSL
     SslHandler*     ssl_handler_{ nullptr };
     AlpnProtos      alpn_protos_;
+    std::string     ssl_server_name;
 #endif
     
     EventCallback   connect_cb_;

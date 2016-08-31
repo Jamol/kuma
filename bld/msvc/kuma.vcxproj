@@ -177,6 +177,7 @@
     <ClCompile Include="..\..\src\http\v2\hpack\HPacker.cpp" />
     <ClCompile Include="..\..\src\http\v2\hpack\HPackTable.cpp" />
     <ClCompile Include="..\..\src\kmapi.cpp" />
+    <ClCompile Include="..\..\src\poll\Notifier.cpp" />
     <ClCompile Include="..\..\src\poll\SelectPoll.cpp" />
     <ClCompile Include="..\..\src\poll\VPoll.cpp" />
     <ClCompile Include="..\..\src\ssl\OpenSslLib.cpp" />

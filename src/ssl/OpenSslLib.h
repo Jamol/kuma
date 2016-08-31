@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -22,6 +28,7 @@
 
 #include <mutex>
 #include <vector>
+#include <memory>
 
 #include <openssl/crypto.h>
 #include <openssl/ssl.h>
@@ -42,11 +49,20 @@ public:
     static int appVerifyCallback(X509_STORE_CTX *ctx, void *arg);
     static unsigned long threadIdCallback(void);
     static void lockingCallback(int mode, int n, const char *file, int line);
-    static int alpnCallback(SSL *ssl, const unsigned char **out, unsigned char *outlen, const unsigned char *_in, unsigned int inlen, void *_protocols);
+    
+#if OPENSSL_VERSION_NUMBER >= 0x1000200fL && !defined(OPENSSL_NO_TLSEXT)
+    static int alpnCallback(SSL *ssl, const unsigned char **out, unsigned char *outlen, const unsigned char *_in, unsigned int inlen, void *arg);
+#endif
+    
+#if OPENSSL_VERSION_NUMBER >= 0x1000105fL && !defined(OPENSSL_NO_TLSEXT)
+    static int serverNameCallback(SSL *ssl, int *ad, void *arg);
+#endif
+    
     static int passwdCallback(char *buf, int size, int rwflag, void *userdata);
     
-    static SSL_CTX* getClientContext();
-    static SSL_CTX* getServerContext();
+    static SSL_CTX* defaultClientContext();
+    static SSL_CTX* defaultServerContext();
+    static SSL_CTX* getSSLContext(const char *hostName);
     
 private:
     static bool init(const std::string &path);
@@ -57,9 +73,9 @@ protected:
     static bool             initialized_;
     static std::once_flag   once_flag_init_;
     static std::string      certs_path_;
-    static SSL_CTX*         ssl_ctx_client_;
+    static SSL_CTX*         ssl_ctx_client_; // default client SSL context
     static std::once_flag   once_flag_client_;
-    static SSL_CTX*         ssl_ctx_server_;
+    static SSL_CTX*         ssl_ctx_server_; // default server SSL context
     static std::once_flag   once_flag_server_;
     static std::mutex*      ssl_locks_;
 };

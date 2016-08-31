@@ -4,15 +4,7 @@
 
 ROOTDIR = ..
 SRCDIR = $(ROOTDIR)/src
-
 VENDORDIR = $(ROOTDIR)/vendor
-OPENSSL_HOME = $(VENDORDIR)/openssl
-OPENSSL_INCLUDE = $(OPENSSL_HOME)/include
-ifneq ($(x64),1)
-	OPENSSL_LIBS = $(OPENSSL_HOME)/lib/linux/lib
-else
-	OPENSSL_LIBS = $(OPENSSL_HOME)/lib/linux/lib64
-endif
 
 BINDIR = $(ROOTDIR)/bin/linux
 LIBDIR = $(ROOTDIR)/lib
@@ -23,19 +15,19 @@ TARGET = libkuma.so
 ##############################################################################
 #
 
-INCLUDES = -I. -I$(VENDORDIR) -I$(OPENSSL_INCLUDE)
+INCLUDES = -I. -I$(VENDORDIR)
 #
 ##############################################################################
 #
-LIBS = $(OPENSSL_LIBS)/libssl.a $(OPENSSL_LIBS)/libcrypto.a
+#LIBS = $(OPENSSL_LIBS)/libssl.a $(OPENSSL_LIBS)/libcrypto.a
 
 #
 ##############################################################################
 #
 CXX=g++
 
-CXXFLAGS = -g -std=c++11 -pipe -fPIC -Wall -Wextra -pedantic
-LDFLAGS = -shared -Wl,-Bsymbolic -lpthread -ldl
+CXXFLAGS = -g -std=c++11 -pipe -fPIC -Wall -Wextra -pedantic -DKUMA_HAS_OPENSSL
+LDFLAGS = -shared -Wl,-Bsymbolic -lpthread -ldl -lssl -lcrypto
 
 SRCS =  \
     EventLoopImpl.cpp \
@@ -47,6 +39,7 @@ SRCS =  \
     poll/EPoll.cpp \
     poll/VPoll.cpp \
     poll/SelectPoll.cpp \
+    poll/Notifier.cpp \
     http/Uri.cpp \
     http/HttpParserImpl.cpp \
     http/IHttpRequest.cpp \

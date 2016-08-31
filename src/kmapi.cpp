@@ -26,7 +26,7 @@
 #include "http/v2/H2Request.h"
 
 #ifdef KUMA_HAS_OPENSSL
-#include "OpenSslLib.h"
+#include "ssl/OpenSslLib.h"
 #endif
 
 #include "kmapi.h"
@@ -134,6 +134,15 @@ uint32_t TcpSocket::getSslFlags() const
 bool TcpSocket::sslEnabled() const
 {
     return pimpl_->sslEnabled();
+}
+
+KMError TcpSocket::setSslServerName(const char *server_name)
+{
+#ifdef KUMA_HAS_OPENSSL
+    return pimpl_->setSslServerName(server_name);
+#else
+    return KMError::UNSUPPORT;
+#endif
 }
 
 KMError TcpSocket::bind(const char* bind_host, uint16_t bind_port)

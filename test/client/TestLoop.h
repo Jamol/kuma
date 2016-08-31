@@ -6,6 +6,7 @@
 #include <thread>
 #include <mutex>
 #include <map>
+#include <memory>
 
 using namespace kuma;
 
@@ -39,7 +40,7 @@ public:
     
     void addObject(long conn_id, LoopObject* obj);
     void removeObject(long conn_id);
-    EventLoop* getEventLoop() { return loop_; }
+    EventLoop* getEventLoop() { return loop_.get(); }
     
 private:
     void cleanup();
@@ -48,7 +49,7 @@ private:
 private:
     typedef std::map<long, LoopObject*> ObjectMap;
     
-    EventLoop*      loop_;
+    std::unique_ptr<EventLoop>  loop_;
     LoopPool*       server_;
     
     std::mutex      obj_mutex_;

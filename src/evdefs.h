@@ -17,7 +17,11 @@
 #define __KUMAEVDEFS_H__
 
 #include "kmdefs.h"
-
+#ifdef KUMA_OS_WIN
+# include <Ws2tcpip.h>
+#else
+# include <sys/socket.h>
+#endif
 #include <functional>
 
 KUMA_NS_BEGIN

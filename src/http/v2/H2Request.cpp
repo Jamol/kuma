@@ -49,11 +49,12 @@ KMError H2Request::sendRequest()
     std::string str_port = uri_.getPort();
     uint16_t port = 80;
     uint32_t ssl_flags = SSL_NONE;
+    if (is_equal("https", uri_.getScheme())) {
+        ssl_flags = SSL_ENABLE;
+        port = 443;
+    }
     if(!str_port.empty()) {
         port = std::stoi(str_port);
-    } else if(is_equal("https", uri_.getScheme())) {
-        port = 443;
-        ssl_flags = SSL_ENABLE;
     }
     std::string key;
     char ip_buf[128];

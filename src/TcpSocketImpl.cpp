@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -308,6 +314,12 @@ KMError TcpSocketImpl::getAlpnSelected(std::string &proto)
     }
 }
 
+KMError TcpSocketImpl::setSslServerName(std::string serverName)
+{
+    ssl_server_name = std::move(serverName);
+    return KMError::NOERR;
+}
+
 KMError TcpSocketImpl::attachFd(SOCKET_FD fd, SSL* ssl)
 {
     KUMA_INFOXTRACE("attachFd, with ssl, fd="<<fd<<", flags="<<ssl_flags_<<", state="<<getState());
@@ -375,7 +387,9 @@ KMError TcpSocketImpl::startSslHandshake(SslRole ssl_role)
         if (!alpn_protos_.empty()) {
             ssl_handler_->setAlpnProtocols(alpn_protos_);
         }
-        //SSL_set_tlsext_host_name(ssl_handler_->getSsl(), host_);
+        if (!ssl_server_name.empty()) {
+            ssl_handler_->setServerName(ssl_server_name);
+        }
     }
     ssl_flags_ |= SSL_ENABLE;
     SslHandler::SslState ssl_state = ssl_handler_->doSslHandshake();
@@ -601,10 +615,12 @@ int TcpSocketImpl::receive(uint8_t* data, size_t length)
 KMError TcpSocketImpl::close()
 {
     KUMA_INFOXTRACE("close, state="<<getState());
-    loop_->runInEventLoopSync([this] {
-        cleanup();
-        setState(State::CLOSED);
-    });
+    if (loop_ && !loop_->stopped()) {
+        loop_->runInEventLoopSync([this] {
+            cleanup();
+            setState(State::CLOSED);
+        });
+    }
     return KMError::NOERR;
 }
 
@@ -700,7 +716,9 @@ void TcpSocketImpl::ioReady(uint32_t events)
                 }
                 if(connect_cb_) {
                     auto connect_cb(std::move(connect_cb_));
+                    DESTROY_DETECTOR_SETUP();
                     connect_cb(err);
+                    DESTROY_DETECTOR_CHECK_VOID();
                 } else if(err != KMError::NOERR) {
                     onClose(err);
                 } else {
@@ -711,11 +729,11 @@ void TcpSocketImpl::ioReady(uint32_t events)
                 }
             }
 #endif
-            DESTROY_DETECTOR_SETUP();
             if(events & KUMA_EV_READ) {// handle EPOLLIN firstly
+                DESTROY_DETECTOR_SETUP();
                 onReceive(KMError::NOERR);
+                DESTROY_DETECTOR_CHECK_VOID();
             }
-            DESTROY_DETECTOR_CHECK_VOID();
             if((events & KUMA_EV_ERROR) && getState() == State::OPEN) {
                 KUMA_ERRXTRACE("ioReady, KUMA_EV_ERROR, events="<<events
                               <<", err="<<getLastError()<<", state="<<getState());

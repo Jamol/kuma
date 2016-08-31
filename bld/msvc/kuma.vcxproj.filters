@@ -135,6 +135,9 @@
     <ClCompile Include="..\..\src\http\IHttpRequest.cpp">
       <Filter>Source Files\http</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\poll\Notifier.cpp">
+      <Filter>Source Files\poll</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\util\kmqueue.h">

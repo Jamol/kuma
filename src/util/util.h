@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -17,6 +23,7 @@
 #define __kuma_util_h__
 
 #include "kmdefs.h"
+#include "evdefs.h" // for SOCKET_FD
 #include <string>
 
 struct addrinfo;
@@ -44,11 +51,14 @@ KUMA_NS_BEGIN
 #endif
 
 #ifndef TICK_COUNT_TYPE
-# define TICK_COUNT_TYPE	unsigned long
+# define TICK_COUNT_TYPE	uint64_t
 #endif
 
-int set_nonblocking(int fd);
-int find_first_set(unsigned int b);
+#define UNUSED(x) (void)(x)
+
+int set_nonblocking(SOCKET_FD fd);
+int find_first_set(uint32_t b);
+int find_first_set(uint64_t b);
 TICK_COUNT_TYPE get_tick_count_ms();
 TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_TYPE& start_tick);
 

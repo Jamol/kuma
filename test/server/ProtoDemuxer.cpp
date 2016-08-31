@@ -3,6 +3,8 @@
 #include <string>
 #include <sstream>
 
+#include <string.h>
+
 #ifdef KUMA_OS_WIN
 # define snprintf       _snprintf
 # define vsnprintf      _vsnprintf
@@ -80,7 +82,7 @@ bool ProtoDemuxer::checkHttp2()
     if (tcp_.sslEnabled()) {
         char buf[64];
         auto ret = tcp_.getAlpnSelected(buf, sizeof(buf));
-        if (ret == KMError::NOERR && strcmp("h2", buf)) { // HTTP/2.0
+        if (ret == KMError::NOERR && strcmp("h2", buf) == 0) { // HTTP/2.0
             loop_->addHttp2(std::move(tcp_), std::move(http_parser_));
             loop_->removeObject(conn_id_);
             return true;

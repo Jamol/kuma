@@ -22,6 +22,7 @@ LOCAL_SRC_FILES := \
     poll/EPoll.cpp \
     poll/VPoll.cpp \
     poll/SelectPoll.cpp \
+    poll/Notifier.cpp \
     http/Uri.cpp \
     http/HttpParserImpl.cpp \
     http/IHttpRequest.cpp \
@@ -47,7 +48,6 @@ LOCAL_SRC_FILES := \
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH) \
-	$(LOCAL_PATH)/ssl \
 	$(MY_ROOT)/vendor \
 	$(MY_ROOT)/vendor/openssl/include
 

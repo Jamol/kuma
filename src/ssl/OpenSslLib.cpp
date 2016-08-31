@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -108,6 +114,7 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
         SSL_CTX_set_options(ssl_ctx, flags);
         SSL_CTX_set_mode(ssl_ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
         SSL_CTX_set_mode(ssl_ctx, SSL_MODE_ENABLE_PARTIAL_WRITE);
+        SSL_CTX_set_mode(ssl_ctx, SSL_MODE_AUTO_RETRY);
         
 #if 0
         if (clientMode) {
@@ -134,6 +141,7 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
                 break;
             }
             SSL_CTX_set_default_passwd_cb(ssl_ctx, passwdCallback);
+            SSL_CTX_set_default_passwd_cb_userdata(ssl_ctx, ssl_ctx);
             if(SSL_CTX_use_PrivateKey_file(ssl_ctx, keyFile.c_str(), SSL_FILETYPE_PEM) != 1) {
                 KUMA_WARNTRACE("SSL_CTX_use_PrivateKey_file failed, file="<<keyFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
                 break;
@@ -159,7 +167,14 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
             //SSL_CTX_set_cert_verify_callback(ssl_ctx, appVerifyCallback, &arg1);
         }
         if (!clientMode) {
+#if OPENSSL_VERSION_NUMBER >= 0x1000200fL && !defined(OPENSSL_NO_TLSEXT)
             SSL_CTX_set_alpn_select_cb(ssl_ctx, alpnCallback, (void*)&alpnProtos);
+#endif
+            
+#if OPENSSL_VERSION_NUMBER >= 0x1000105fL && !defined(OPENSSL_NO_TLSEXT)
+            SSL_CTX_set_tlsext_servername_callback(ssl_ctx, serverNameCallback);
+            SSL_CTX_set_tlsext_servername_arg(ssl_ctx, ssl_ctx);
+#endif
         }
         ctx_ok = true;
     } while(0);
@@ -170,7 +185,7 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
     return ssl_ctx;
 }
 
-SSL_CTX* OpenSslLib::getClientContext()
+SSL_CTX* OpenSslLib::defaultClientContext()
 {
     if (!ssl_ctx_client_) {
         std::call_once(once_flag_client_, []{
@@ -183,7 +198,7 @@ SSL_CTX* OpenSslLib::getClientContext()
     return ssl_ctx_client_;
 }
 
-SSL_CTX* OpenSslLib::getServerContext()
+SSL_CTX* OpenSslLib::defaultServerContext()
 {
     if (!ssl_ctx_server_) {
         std::call_once(once_flag_server_, []{
@@ -196,8 +211,15 @@ SSL_CTX* OpenSslLib::getServerContext()
     return ssl_ctx_server_;
 }
 
+SSL_CTX* OpenSslLib::getSSLContext(const char *hostName)
+{
+    return defaultServerContext();
+}
+
 void OpenSslLib::fini()
 {
+    CRYPTO_set_id_callback(nullptr);
+    CRYPTO_set_locking_callback(nullptr);
     EVP_cleanup();
     ERR_free_strings();
 }
@@ -216,6 +238,7 @@ int OpenSslLib::verifyCallback(int ok, X509_STORE_CTX *ctx)
     if(NULL == ctx) {
         return -1;
     }
+    //SSL* ssl = static_cast<SSL*>(X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx()));
     if(ctx->current_cert) {
         char *s, buf[1024];
         s = X509_NAME_oneline(X509_get_subject_name(ctx->current_cert), buf, sizeof(buf));
@@ -289,6 +312,9 @@ unsigned long OpenSslLib::threadIdCallback(void)
 
 void OpenSslLib::lockingCallback(int mode, int n, const char *file, int line)
 {
+    UNUSED(file);
+    UNUSED(line);
+    
     if (mode & CRYPTO_LOCK) {
         ssl_locks_[n].lock();
     }
@@ -297,6 +323,7 @@ void OpenSslLib::lockingCallback(int mode, int n, const char *file, int line)
     }
 }
 
+#if OPENSSL_VERSION_NUMBER >= 0x1000200fL && !defined(OPENSSL_NO_TLSEXT)
 int OpenSslLib::alpnCallback(SSL *ssl, const unsigned char **out, unsigned char *outlen, const unsigned char *_in, unsigned int inlen,
                           void *arg)
 {
@@ -307,6 +334,28 @@ int OpenSslLib::alpnCallback(SSL *ssl, const unsigned char **out, unsigned char 
     }
     return SSL_TLSEXT_ERR_OK;
 }
+#endif
+
+#if OPENSSL_VERSION_NUMBER >= 0x1000105fL && !defined(OPENSSL_NO_TLSEXT)
+int OpenSslLib::serverNameCallback(SSL *ssl, int *ad, void *arg)
+{
+    UNUSED(ad);
+    
+    if (!ssl) {
+        return SSL_TLSEXT_ERR_NOACK;
+    }
+    
+    const char *serverName = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+    if (serverName) {
+        SSL_CTX *ssl_ctx_old = reinterpret_cast<SSL_CTX*>(arg);
+        SSL_CTX *ssl_ctx_new = getSSLContext(serverName);
+        if (ssl_ctx_new != ssl_ctx_old) {
+            SSL_set_SSL_CTX(ssl, ssl_ctx_new);
+        }
+    }
+    return SSL_TLSEXT_ERR_NOACK;
+}
+#endif
 
 int OpenSslLib::passwdCallback(char *buf, int size, int rwflag, void *userdata)
 {

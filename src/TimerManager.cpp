@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -105,7 +111,7 @@ bool TimerManager::scheduleTimer(TimerImpl* timer, uint32_t delay_ms, TimerMode 
         if(reschedule_node_ == timer_node) {
             reschedule_node_ = nullptr;
         }
-        long diff = now_tick - last_tick_;
+        long diff = long(now_tick - last_tick_);
         if(last_remain_ms_ == -1 || (diff >= 0 && delay_ms < last_remain_ms_ - diff)) {
             // need update poll wait time
             need_notify = !loop_->isInEventLoopThread();
@@ -445,7 +451,7 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
         if(*remain_ms <= delta_tick) {
             *remain_ms = 0;
         } else {
-            *remain_ms -= delta_tick;
+            *remain_ms -= (unsigned long)delta_tick;
         }
         last_remain_ms_ = *remain_ms;
     }

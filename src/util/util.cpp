@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -417,7 +423,7 @@ extern "C" int km_parse_address(const char* addr,
     return 0;
 }
 
-int set_nonblocking(int fd) {
+int set_nonblocking(SOCKET_FD fd) {
 #ifdef KUMA_OS_WIN
     int mode = 1;
     ::ioctlsocket(fd, FIONBIO, (ULONG*)&mode);
@@ -428,7 +434,7 @@ int set_nonblocking(int fd) {
     return 0;
 }
 
-int find_first_set(unsigned int b)
+int find_first_set(uint32_t b)
 {
     if(0 == b) {
         return -1;
@@ -447,10 +453,32 @@ int find_first_set(unsigned int b)
     return n;
 }
 
+int find_first_set(uint64_t b)
+{
+    if(0 == b) {
+        return -1;
+    }
+    int n = 0;
+    if (!(0xffffffff & b))
+        n += 32;
+    if (!((0xffffLL << n) & b))
+        n += 16;
+    if (!((0xffLL << n) & b))
+        n += 8;
+    if (!((0xfLL << n) & b))
+        n += 4;
+    if (!((0x3LL << n) & b))
+        n += 2;
+    if (!((0x1LL << n) & b))
+        n += 1;
+    return n;
+}
+
 TICK_COUNT_TYPE get_tick_count_ms()
 {
-    std::chrono::steady_clock::time_point _now = std::chrono::steady_clock::now();
-    std::chrono::milliseconds _now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(_now.time_since_epoch());
+    using namespace std::chrono;
+    steady_clock::time_point _now = steady_clock::now();
+    milliseconds _now_ms = duration_cast<milliseconds>(_now.time_since_epoch());
 	return (TICK_COUNT_TYPE)_now_ms.count();
 }
 
