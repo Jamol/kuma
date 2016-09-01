@@ -163,9 +163,9 @@
   <ItemGroup>
     <ClCompile Include="..\..\src\EventLoopImpl.cpp" />
     <ClCompile Include="..\..\src\http\HttpParserImpl.cpp" />
+    <ClCompile Include="..\..\src\http\HttpRequestBase.cpp" />
     <ClCompile Include="..\..\src\http\HttpRequestImpl.cpp" />
     <ClCompile Include="..\..\src\http\HttpResponseImpl.cpp" />
-    <ClCompile Include="..\..\src\http\IHttpRequest.cpp" />
     <ClCompile Include="..\..\src\http\Uri.cpp" />
     <ClCompile Include="..\..\src\http\v2\FrameParser.cpp" />
     <ClCompile Include="..\..\src\http\v2\H2ConnectionImpl.cpp" />
@@ -197,9 +197,9 @@
     <ClInclude Include="..\..\src\evdefs.h" />
     <ClInclude Include="..\..\src\EventLoopImpl.h" />
     <ClInclude Include="..\..\src\http\HttpParserImpl.h" />
+    <ClInclude Include="..\..\src\http\HttpRequestBase.h" />
     <ClInclude Include="..\..\src\http\HttpRequestImpl.h" />
     <ClInclude Include="..\..\src\http\HttpResponseImpl.h" />
-    <ClInclude Include="..\..\src\http\IHttpRequest.h" />
     <ClInclude Include="..\..\src\http\Uri.h" />
     <ClInclude Include="..\..\src\http\v2\FrameParser.h" />
     <ClInclude Include="..\..\src\http\v2\H2ConnectionImpl.h" />

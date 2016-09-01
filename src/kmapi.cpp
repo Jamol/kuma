@@ -603,7 +603,7 @@ void HttpRequest::setResponseCompleteCallback(HttpEventCallback cb)
     pimpl_->setResponseCompleteCallback(std::move(cb));
 }
 
-IHttpRequest* HttpRequest::pimpl()
+HttpRequestBase* HttpRequest::pimpl()
 {
     return pimpl_;
 }

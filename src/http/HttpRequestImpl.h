@@ -20,13 +20,13 @@
 #include "HttpParserImpl.h"
 #include "TcpConnection.h"
 #include "Uri.h"
-#include "IHttpRequest.h"
+#include "HttpRequestBase.h"
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
 
 KUMA_NS_BEGIN
 
-class HttpRequestImpl : public KMObject, public DestroyDetector, public IHttpRequest, public TcpConnection
+class HttpRequestImpl : public KMObject, public DestroyDetector, public HttpRequestBase, public TcpConnection
 {
 public:
     HttpRequestImpl(EventLoopImpl* loop);

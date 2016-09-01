@@ -24,7 +24,8 @@
 		6F84E9821D5B031300AF8E3B /* H2Stream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F84E97A1D5B031300AF8E3B /* H2Stream.cpp */; };
 		6F84E9891D5B032D00AF8E3B /* HPacker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F84E9841D5B032D00AF8E3B /* HPacker.cpp */; };
 		6F84E98A1D5B032D00AF8E3B /* HPackTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F84E9861D5B032D00AF8E3B /* HPackTable.cpp */; };
-		6F84E9941D5B1C7200AF8E3B /* IHttpRequest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F84E9921D5B1C7200AF8E3B /* IHttpRequest.cpp */; };
+		6F91F1751D782EF8004A95B9 /* HttpRequestBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F1731D782EF8004A95B9 /* HttpRequestBase.cpp */; };
+		6F91F1771D782F1A004A95B9 /* Notifier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F1761D782F1A004A95B9 /* Notifier.cpp */; };
 		6FECED011C2138E700310F52 /* HttpParserImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECECF91C2138E700310F52 /* HttpParserImpl.cpp */; };
 		6FECED021C2138E700310F52 /* HttpRequestImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECECFB1C2138E700310F52 /* HttpRequestImpl.cpp */; };
 		6FECED031C2138E700310F52 /* HttpResponseImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECECFD1C2138E700310F52 /* HttpResponseImpl.cpp */; };
@@ -107,8 +108,9 @@
 		6F84E98B1D5B035F00AF8E3B /* DestroyDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DestroyDetector.h; sourceTree = "<group>"; };
 		6F84E98C1D5B036F00AF8E3B /* kmobject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmobject.h; sourceTree = "<group>"; };
 		6F84E9911D5B1C7200AF8E3B /* httpdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httpdefs.h; sourceTree = "<group>"; };
-		6F84E9921D5B1C7200AF8E3B /* IHttpRequest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IHttpRequest.cpp; sourceTree = "<group>"; };
-		6F84E9931D5B1C7200AF8E3B /* IHttpRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IHttpRequest.h; sourceTree = "<group>"; };
+		6F91F1731D782EF8004A95B9 /* HttpRequestBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpRequestBase.cpp; sourceTree = "<group>"; };
+		6F91F1741D782EF8004A95B9 /* HttpRequestBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpRequestBase.h; sourceTree = "<group>"; };
+		6F91F1761D782F1A004A95B9 /* Notifier.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Notifier.cpp; sourceTree = "<group>"; };
 		6FECECF91C2138E700310F52 /* HttpParserImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpParserImpl.cpp; sourceTree = "<group>"; };
 		6FECECFA1C2138E700310F52 /* HttpParserImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpParserImpl.h; sourceTree = "<group>"; };
 		6FECECFB1C2138E700310F52 /* HttpRequestImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpRequestImpl.cpp; sourceTree = "<group>"; };
@@ -261,8 +263,8 @@
 			children = (
 				6F84E96C1D5B02EF00AF8E3B /* v2 */,
 				6F84E9911D5B1C7200AF8E3B /* httpdefs.h */,
-				6F84E9921D5B1C7200AF8E3B /* IHttpRequest.cpp */,
-				6F84E9931D5B1C7200AF8E3B /* IHttpRequest.h */,
+				6F91F1731D782EF8004A95B9 /* HttpRequestBase.cpp */,
+				6F91F1741D782EF8004A95B9 /* HttpRequestBase.h */,
 				6FECECF91C2138E700310F52 /* HttpParserImpl.cpp */,
 				6FECECFA1C2138E700310F52 /* HttpParserImpl.h */,
 				6FECECFB1C2138E700310F52 /* HttpRequestImpl.cpp */,
@@ -320,6 +322,7 @@
 		6FECED081C21396F00310F52 /* poll */ = {
 			isa = PBXGroup;
 			children = (
+				6F91F1761D782F1A004A95B9 /* Notifier.cpp */,
 				6FECED091C2139A400310F52 /* IOPoll.h */,
 				6FECED0A1C2139A400310F52 /* Notifier.h */,
 				6FECED0B1C2139A400310F52 /* SelectPoll.cpp */,
@@ -417,6 +420,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6F91F1771D782F1A004A95B9 /* Notifier.cpp in Sources */,
+				6F91F1751D782EF8004A95B9 /* HttpRequestBase.cpp in Sources */,
 				6F7D5FEA1B33EC65000FF2F8 /* UdpSocketImpl.cpp in Sources */,
 				6FECED041C2138E700310F52 /* Uri.cpp in Sources */,
 				6F84E9891D5B032D00AF8E3B /* HPacker.cpp in Sources */,
@@ -434,7 +439,6 @@
 				6FECED031C2138E700310F52 /* HttpResponseImpl.cpp in Sources */,
 				6FECED141C2139B100310F52 /* SslHandler.cpp in Sources */,
 				6FECED1C1C2139CA00310F52 /* base64.cpp in Sources */,
-				6F84E9941D5B1C7200AF8E3B /* IHttpRequest.cpp in Sources */,
 				6F84E9811D5B031300AF8E3B /* H2Response.cpp in Sources */,
 				6F7D5FE51B33EC65000FF2F8 /* kmapi.cpp in Sources */,
 				6F7D5FE41B33EC65000FF2F8 /* EventLoopImpl.cpp in Sources */,

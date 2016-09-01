@@ -25,7 +25,7 @@ LOCAL_SRC_FILES := \
     poll/Notifier.cpp \
     http/Uri.cpp \
     http/HttpParserImpl.cpp \
-    http/IHttpRequest.cpp \
+    http/HttpRequestBase.cpp \
     http/HttpRequestImpl.cpp \
     http/HttpResponseImpl.cpp \
     http/v2/H2Frame.cpp \

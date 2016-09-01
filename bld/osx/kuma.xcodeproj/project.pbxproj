@@ -29,8 +29,8 @@
 		6F7512921D76BE27000BE6EC /* Notifier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7512911D76BE27000BE6EC /* Notifier.cpp */; };
 		6F7512941D76C237000BE6EC /* SocketNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F7512931D76C237000BE6EC /* SocketNotifier.h */; };
 		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
-		6F9E76761D365C43005E04B2 /* IHttpRequest.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F9E76751D365C43005E04B2 /* IHttpRequest.h */; };
-		6F9E76781D3665DA005E04B2 /* IHttpRequest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F9E76771D3665DA005E04B2 /* IHttpRequest.cpp */; };
+		6F91F1711D782DD3004A95B9 /* HttpRequestBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F16F1D782DD3004A95B9 /* HttpRequestBase.cpp */; };
+		6F91F1721D782DD3004A95B9 /* HttpRequestBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F91F1701D782DD3004A95B9 /* HttpRequestBase.h */; };
 		6F9E767A1D36758B005E04B2 /* httpdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F9E76791D36758B005E04B2 /* httpdefs.h */; };
 		6FA951421A3808450033C9CF /* kmdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FA951411A3808450033C9CF /* kmdefs.h */; };
 		6FBB2C901D139C430024550F /* IOPoll.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FBB2C8C1D139C430024550F /* IOPoll.h */; };
@@ -109,8 +109,8 @@
 		6F852E421985EB2B00271D87 /* kuma-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "kuma-Prefix.pch"; sourceTree = SOURCE_ROOT; };
 		6F852E441985EB4700271D87 /* kumaProj.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaProj.xcconfig; sourceTree = "<group>"; };
 		6F852E451985EB4700271D87 /* kumaTarget.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaTarget.xcconfig; sourceTree = "<group>"; };
-		6F9E76751D365C43005E04B2 /* IHttpRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IHttpRequest.h; sourceTree = "<group>"; };
-		6F9E76771D3665DA005E04B2 /* IHttpRequest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IHttpRequest.cpp; sourceTree = "<group>"; };
+		6F91F16F1D782DD3004A95B9 /* HttpRequestBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HttpRequestBase.cpp; path = ../HttpRequestBase.cpp; sourceTree = "<group>"; };
+		6F91F1701D782DD3004A95B9 /* HttpRequestBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HttpRequestBase.h; path = ../HttpRequestBase.h; sourceTree = "<group>"; };
 		6F9E76791D36758B005E04B2 /* httpdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httpdefs.h; sourceTree = "<group>"; };
 		6F9E76E71D3BB34E005E04B2 /* kmobject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = kmobject.h; sourceTree = "<group>"; };
 		6FA951411A3808450033C9CF /* kmdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmdefs.h; sourceTree = "<group>"; };
@@ -268,6 +268,8 @@
 		6FE0EEEF1D40982B006136B7 /* v2 */ = {
 			isa = PBXGroup;
 			children = (
+				6F91F16F1D782DD3004A95B9 /* HttpRequestBase.cpp */,
+				6F91F1701D782DD3004A95B9 /* HttpRequestBase.h */,
 				6FE0EEF11D409863006136B7 /* FrameParser.cpp */,
 				6FE0EEF21D409863006136B7 /* FrameParser.h */,
 				6FE0EEF31D409863006136B7 /* H2ConnectionImpl.cpp */,
@@ -316,8 +318,6 @@
 			children = (
 				6FE0EEEF1D40982B006136B7 /* v2 */,
 				6F9E76791D36758B005E04B2 /* httpdefs.h */,
-				6F9E76771D3665DA005E04B2 /* IHttpRequest.cpp */,
-				6F9E76751D365C43005E04B2 /* IHttpRequest.h */,
 				6FBB2C9A1D139C560024550F /* HttpParserImpl.cpp */,
 				6FBB2C9B1D139C560024550F /* HttpParserImpl.h */,
 				6FBB2C9C1D139C560024550F /* HttpRequestImpl.cpp */,
@@ -354,7 +354,6 @@
 				6F0098AD1B01FEC800122C15 /* TcpSocketImpl.h in Headers */,
 				6FE0EF081D409863006136B7 /* H2Frame.h in Headers */,
 				6FBB2CA91D139C560024550F /* HttpParserImpl.h in Headers */,
-				6F9E76761D365C43005E04B2 /* IHttpRequest.h in Headers */,
 				6FE0EF171D40986D006136B7 /* HPackTable.h in Headers */,
 				6F0098B11B03110100122C15 /* UdpSocketImpl.h in Headers */,
 				6FBB2C901D139C430024550F /* IOPoll.h in Headers */,
@@ -384,6 +383,7 @@
 				6F472B321D43B53500D01201 /* TcpConnection.h in Headers */,
 				6FE0EF0C1D409863006136B7 /* H2Response.h in Headers */,
 				6FF7478E1B29587D0007F34D /* base64.h in Headers */,
+				6F91F1721D782DD3004A95B9 /* HttpRequestBase.h in Headers */,
 				6FBB2CB71D139C700024550F /* SslHandler.h in Headers */,
 				6FBB2CBF1D139C990024550F /* WSHandler.h in Headers */,
 				6FF211D81B1556FB006603BB /* evdefs.h in Headers */,
@@ -452,12 +452,12 @@
 				6FE0EF0D1D409863006136B7 /* H2Stream.cpp in Sources */,
 				6F472B311D43B53500D01201 /* TcpConnection.cpp in Sources */,
 				6FBB2CAC1D139C560024550F /* HttpResponseImpl.cpp in Sources */,
-				6F9E76781D3665DA005E04B2 /* IHttpRequest.cpp in Sources */,
 				6FE0EF041D409863006136B7 /* H2ConnectionMgr.cpp in Sources */,
 				6FE0EF001D409863006136B7 /* FrameParser.cpp in Sources */,
 				6F0098B31B03124400122C15 /* TcpSocketImpl.cpp in Sources */,
 				6F2D403E1B1834D300E24928 /* UdpSocketImpl.cpp in Sources */,
 				6FBB2CB61D139C700024550F /* SslHandler.cpp in Sources */,
+				6F91F1711D782DD3004A95B9 /* HttpRequestBase.cpp in Sources */,
 				6FBB2CAA1D139C560024550F /* HttpRequestImpl.cpp in Sources */,
 				6FBB2C931D139C430024550F /* VPoll.cpp in Sources */,
 				6FF212931B181103006603BB /* kmapi.cpp in Sources */,

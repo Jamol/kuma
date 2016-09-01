@@ -1,8 +1,14 @@
-/* Copyright (c) 2014, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2016, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -13,7 +19,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "IHttpRequest.h"
+#include "HttpRequestBase.h"
 #include "util/kmtrace.h"
 #include "util/util.h"
 
@@ -24,7 +30,7 @@ using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
 //
-void IHttpRequest::addHeader(std::string name, std::string value)
+void HttpRequestBase::addHeader(std::string name, std::string value)
 {
     if(!name.empty()) {
         if (is_equal("Content-Length", name)) {
@@ -40,12 +46,12 @@ void IHttpRequest::addHeader(std::string name, std::string value)
     }
 }
 
-void IHttpRequest::addHeader(std::string name, uint32_t value)
+void HttpRequestBase::addHeader(std::string name, uint32_t value)
 {
     addHeader(std::move(name), std::to_string(value));
 }
 
-KMError IHttpRequest::sendRequest(std::string method, std::string url, std::string ver)
+KMError HttpRequestBase::sendRequest(std::string method, std::string url, std::string ver)
 {
     if (getState() != State::IDLE && getState() != State::WAIT_FOR_REUSE) {
         return KMError::INVALID_STATE;
@@ -60,7 +66,7 @@ KMError IHttpRequest::sendRequest(std::string method, std::string url, std::stri
     return sendRequest();
 }
 
-void IHttpRequest::reset()
+void HttpRequestBase::reset()
 {
     header_map_.clear();
     has_content_length_ = false;

@@ -34,7 +34,7 @@ class UdpSocketImpl;
 class TcpListenerImpl;
 class TimerImpl;
 class HttpParserImpl;
-class IHttpRequest;
+class HttpRequestBase;
 class HttpResponseImpl;
 class WebSocketImpl;
 class H2ConnectionImpl;
@@ -246,10 +246,10 @@ public:
     void setHeaderCompleteCallback(HttpEventCallback cb);
     void setResponseCompleteCallback(HttpEventCallback cb);
     
-    IHttpRequest* pimpl();
+    HttpRequestBase* pimpl();
     
 private:
-    IHttpRequest* pimpl_;
+    HttpRequestBase* pimpl_;
     char ver_[9] = {0};
 };
 

@@ -132,11 +132,11 @@
     <ClCompile Include="..\..\src\http\v2\hpack\HPackTable.cpp">
       <Filter>Source Files\http\v2\hpack</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\http\IHttpRequest.cpp">
-      <Filter>Source Files\http</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\poll\Notifier.cpp">
       <Filter>Source Files\poll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\http\HttpRequestBase.cpp">
+      <Filter>Source Files\http</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -245,7 +245,7 @@
     <ClInclude Include="..\..\src\http\v2\hpack\StaticTable.h">
       <Filter>Header Files\http\v2\hpack</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\http\IHttpRequest.h">
+    <ClInclude Include="..\..\src\http\HttpRequestBase.h">
       <Filter>Header Files\http</Filter>
     </ClInclude>
   </ItemGroup>

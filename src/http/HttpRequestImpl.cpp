@@ -161,7 +161,7 @@ int HttpRequestImpl::sendChunk(const uint8_t* data, size_t len)
 
 void HttpRequestImpl::reset()
 {
-    IHttpRequest::reset();
+    HttpRequestBase::reset();
     http_parser_.reset();
     if (getState() == State::COMPLETE) {
         setState(State::WAIT_FOR_REUSE);

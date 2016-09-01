@@ -24,13 +24,13 @@
 
 #include "kmdefs.h"
 #include "H2ConnectionImpl.h"
-#include "http/IHttpRequest.h"
+#include "http/HttpRequestBase.h"
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
 
 KUMA_NS_BEGIN
 
-class H2Request : public KMObject, public DestroyDetector, public IHttpRequest
+class H2Request : public KMObject, public DestroyDetector, public HttpRequestBase
 {
 public:
     H2Request(EventLoopImpl* loop);
