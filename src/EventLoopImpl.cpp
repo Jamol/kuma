@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -28,7 +34,7 @@ EventLoopImpl::EventLoopImpl(PollType poll_type)
 : poll_(createIOPoll(poll_type))
 , timer_mgr_(new TimerManager(this))
 {
-    
+    KM_SetObjKey("EventLoop");
 }
 
 EventLoopImpl::~EventLoopImpl()
@@ -159,7 +165,7 @@ void EventLoopImpl::loop(uint32_t max_wait_ms)
         l->loopStopped();
     }
     listeners_.clear();
-    KUMA_INFOTRACE("EventLoop::loop, stopped");
+    KUMA_INFOXTRACE("loop, stopped");
 }
 
 void EventLoopImpl::notify()
@@ -169,7 +175,7 @@ void EventLoopImpl::notify()
 
 void EventLoopImpl::stop()
 {
-    KUMA_INFOTRACE("EventLoop::stop");
+    KUMA_INFOXTRACE("stop");
     stop_loop_ = true;
     poll_->notify();
 }

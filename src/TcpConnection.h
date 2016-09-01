@@ -44,6 +44,8 @@ public:
     KMError close();
     
 protected:
+    // subclass should install destroy detector in this interface or implement delayed destroy
+    // otherwise invalid memory accessing will happen on onReceive
     virtual KMError handleInputData(uint8_t *src, size_t len) = 0;
     virtual void onConnect(KMError err) {};
     virtual void onWrite() = 0;

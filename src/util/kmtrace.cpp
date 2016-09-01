@@ -83,7 +83,9 @@ void TracePrint(int level, const char* szMessage, ...)
         OutputDebugString(ss.str().c_str());
 #else
         ss << std::endl;
-        std::cout << ss.str();
+        // sometimes the outputs are garbled when two threads print log with cout simultaneously
+        //std::cout << ss.str();
+        printf("%s", ss.str().c_str());
 #endif
     }
 }

@@ -38,19 +38,19 @@ KUMA_NS_BEGIN
 #endif
 
 enum class KMError : int {
-    NOERR    = 0,
-    FAILED,
-    INVALID_STATE,
-    INVALID_PARAM,
-    INVALID_PROTO,
-    ALREADY_EXIST,
-    AGAIN,
-    SOCK_ERROR,
-    POLL_ERROR,
-    SSL_FAILED,
-    BUFFER_TOO_SMALL,
-    UNSUPPORT,
-    DESTROYED
+    NOERR               = 0,
+    FAILED              = -1,
+    INVALID_STATE       = -2,
+    INVALID_PARAM       = -3,
+    INVALID_PROTO       = -4,
+    ALREADY_EXIST       = -5,
+    AGAIN               = -6,
+    SOCK_ERROR          = -7,
+    POLL_ERROR          = -8,
+    SSL_FAILED          = -9,
+    BUFFER_TOO_SMALL    = -10,
+    UNSUPPORT           = -11,
+    DESTROYED           = -12
 };
 
 enum class HttpEvent : int {

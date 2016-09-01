@@ -618,9 +618,11 @@ KMError TcpSocketImpl::close()
     if (loop_ && !loop_->stopped()) {
         loop_->runInEventLoopSync([this] {
             cleanup();
-            setState(State::CLOSED);
         });
+    } else {
+        cleanup();
     }
+    setState(State::CLOSED);
     return KMError::NOERR;
 }
 

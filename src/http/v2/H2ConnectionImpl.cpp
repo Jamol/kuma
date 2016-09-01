@@ -345,7 +345,10 @@ KMError H2ConnectionImpl::handleInputData(uint8_t *buf, size_t len)
     if (getState() == State::OPEN) {
         return parseInputData(buf, len);
     } else if (getState() == State::UPGRADING) {
+        // H2 connection will be destroyed when invalid http request received
+        DESTROY_DETECTOR_SETUP();
         int ret = httpParser_.parse((char*)buf, (uint32_t)len);
+        DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
         if (ret >= len) {
             return KMError::NOERR;
         }

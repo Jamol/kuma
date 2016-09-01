@@ -258,40 +258,50 @@ int SslHandler::send(const uint8_t* data, size_t size)
         return -1;
     }
     ERR_clear_error();
-    int ret = SSL_write(ssl_, data, (int)size);
-    int ssl_err = SSL_get_error(ssl_, ret);
-    switch (ssl_err)
-    {
-        case SSL_ERROR_NONE:
-            break;
-        case SSL_ERROR_WANT_READ:
-        case SSL_ERROR_WANT_WRITE:
-            ret = 0;
-            break;
-        case SSL_ERROR_SYSCALL:
-            if(errno == EAGAIN || errno == EINTR) {
+    size_t offset = 0;
+    
+    // loop send until read/write want since we enabled partial write
+    while (offset < size) {
+        int ret = SSL_write(ssl_, data + offset, (int)(size - offset));
+        int ssl_err = SSL_get_error(ssl_, ret);
+        switch (ssl_err)
+        {
+            case SSL_ERROR_NONE:
+                break;
+            case SSL_ERROR_WANT_READ:
+            case SSL_ERROR_WANT_WRITE:
                 ret = 0;
                 break;
+            case SSL_ERROR_SYSCALL:
+                if(errno == EAGAIN || errno == EINTR) {
+                    ret = 0;
+                    break;
+                }
+                // fallthru to log error
+            default:
+            {
+                const char* err_str = ERR_reason_error_string(ERR_get_error());
+                KUMA_ERRXTRACE("send, SSL_write failed, fd="<<fd_
+                               <<", ssl_status="<<ret
+                               <<", ssl_err="<<ssl_err
+                               <<", errno="<<getLastError()
+                               <<", err_msg="<<(err_str?err_str:""));
+                ret = -1;
+                break;
             }
-            // fallthru to log error
-        default:
-        {
-            const char* err_str = ERR_reason_error_string(ERR_get_error());
-            KUMA_ERRXTRACE("send, SSL_write failed, fd="<<fd_
-                           <<", ssl_status="<<ret
-                           <<", ssl_err="<<ssl_err
-                           <<", errno="<<getLastError()
-                           <<", err_msg="<<(err_str?err_str:""));
-            ret = -1;
+        }
+        
+        if(ret < 0) {
+            cleanup();
+            return ret;
+        }
+        offset += ret;
+        if (ret == 0) {
             break;
         }
     }
-    
-    if(ret < 0) {
-        cleanup();
-    }
     //KUMA_INFOXTRACE("send, ret: "<<ret<<", len: "<<len);
-    return ret;
+    return int(offset);
 }
 
 int SslHandler::send(const iovec* iovs, int count)
