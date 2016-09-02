@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -17,22 +23,22 @@
 #define __WebSocketImpl_H__
 
 #include "kmdefs.h"
+#include "kmapi.h"
 #include "WSHandler.h"
-#include "TcpSocketImpl.h"
 #include "TcpConnection.h"
 #include "http/Uri.h"
 #include "util/DestroyDetector.h"
 
 KUMA_NS_BEGIN
 
-class WebSocketImpl : public KMObject, public DestroyDetector, public TcpConnection
+class WebSocket::Impl : public KMObject, public DestroyDetector, public TcpConnection
 {
 public:
-    typedef std::function<void(uint8_t*, size_t)> DataCallback;
-    typedef std::function<void(KMError)> EventCallback;
+    using DataCallback = WebSocket::DataCallback;
+    using EventCallback = WebSocket::EventCallback;
     
-    WebSocketImpl(EventLoopImpl* loop);
-    ~WebSocketImpl();
+    Impl(EventLoop::Impl* loop);
+    ~Impl();
     
     void setProtocol(const std::string& proto);
     const std::string& getProtocol() const { return proto_; }
@@ -40,7 +46,7 @@ public:
     const std::string& getOrigin() const { return origin_; }
     KMError connect(const std::string& ws_url, EventCallback cb);
     KMError attachFd(SOCKET_FD fd, const uint8_t* init_data = nullptr, size_t init_len = 0);
-    KMError attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
+    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser);
     int send(const uint8_t* data, size_t len);
     KMError close();
     

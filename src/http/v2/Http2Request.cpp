@@ -19,7 +19,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "H2Request.h"
+#include "Http2Request.h"
 #include "http/Uri.h"
 #include "H2ConnectionMgr.h"
 #include "util/kmtrace.h"
@@ -28,23 +28,23 @@
 
 using namespace kuma;
 
-H2Request::H2Request(EventLoopImpl* loop)
+Http2Request::Http2Request(EventLoop::Impl* loop)
 : loop_(loop)
 {
-    KM_SetObjKey("H2Request");
+    KM_SetObjKey("Http2Request");
 }
 
-H2Request::~H2Request()
+Http2Request::~Http2Request()
 {
     
 }
 
-KMError H2Request::setSslFlags(uint32_t ssl_flags)
+KMError Http2Request::setSslFlags(uint32_t ssl_flags)
 {
     return KMError::NOERR;
 }
 
-KMError H2Request::sendRequest()
+KMError Http2Request::sendRequest()
 {
     std::string str_port = uri_.getPort();
     uint16_t port = 80;
@@ -68,7 +68,7 @@ KMError H2Request::sendRequest()
     auto &connMgr = H2ConnectionMgr::getRequestConnMgr(ssl_flags != SSL_NONE);
     conn_ = connMgr.getConnection(key);
     if (!conn_) {
-        conn_.reset(new H2ConnectionImpl(loop_));
+        conn_.reset(new H2Connection::Impl(loop_));
         conn_->setConnectionKey(key);
         conn_->setSslFlags(ssl_flags);
         connMgr.addConnection(key, conn_);
@@ -81,20 +81,20 @@ KMError H2Request::sendRequest()
     return KMError::NOERR;
 }
 
-const std::string& H2Request::getHeaderValue(std::string name) const
+const std::string& Http2Request::getHeaderValue(std::string name) const
 {
     auto it = rsp_headers_.find(name);
     return it != rsp_headers_.end() ? it->second : EmptyString;
 }
 
-void H2Request::forEachHeader(EnumrateCallback cb)
+void Http2Request::forEachHeader(EnumrateCallback cb)
 {
     for (auto &kv : rsp_headers_) {
         cb(kv.first, kv.second);
     }
 }
 
-void H2Request::checkHeaders()
+void Http2Request::checkHeaders()
 {
     if(header_map_.find("Accept") == header_map_.end()) {
         addHeader("accept", "*/*");
@@ -113,7 +113,7 @@ void H2Request::checkHeaders()
     }
 }
 
-size_t H2Request::buildHeaders(HeaderVector &headers)
+size_t Http2Request::buildHeaders(HeaderVector &headers)
 {
     size_t headers_size = 0;
     headers.emplace_back(std::make_pair(H2HeaderMethod, method_));
@@ -138,7 +138,7 @@ size_t H2Request::buildHeaders(HeaderVector &headers)
     return headers_size;
 }
 
-void H2Request::sendHeaders()
+void Http2Request::sendHeaders()
 {
     stream_ = conn_->createStream();
     stream_->setHeadersCallback([this] (const HeaderVector &headers, bool endSteam) {
@@ -161,7 +161,7 @@ void H2Request::sendHeaders()
     }
 }
 
-void H2Request::onConnect(KMError err)
+void Http2Request::onConnect(KMError err)
 {
     if(err != KMError::NOERR) {
         if(error_cb_) error_cb_(err);
@@ -170,7 +170,7 @@ void H2Request::onConnect(KMError err)
     sendHeaders();
 }
 
-int H2Request::sendData(const uint8_t* data, size_t len)
+int Http2Request::sendData(const uint8_t* data, size_t len)
 {
     body_bytes_sent_ += len;
     bool endStream = is_chunked_ ? !data : body_bytes_sent_ >= content_length_;
@@ -181,7 +181,7 @@ int H2Request::sendData(const uint8_t* data, size_t len)
     return ret;
 }
 
-void H2Request::onHeaders(const HeaderVector &headers, bool endSteam)
+void Http2Request::onHeaders(const HeaderVector &headers, bool endSteam)
 {
     if (headers.empty()) {
         return;
@@ -202,7 +202,7 @@ void H2Request::onHeaders(const HeaderVector &headers, bool endSteam)
     }
 }
 
-void H2Request::onData(uint8_t *data, size_t len, bool endSteam)
+void Http2Request::onData(uint8_t *data, size_t len, bool endSteam)
 {
     DESTROY_DETECTOR_SETUP();
     if (data_cb_ && len > 0) data_cb_(data, len);
@@ -214,12 +214,12 @@ void H2Request::onData(uint8_t *data, size_t len, bool endSteam)
     }
 }
 
-void H2Request::onRSTStream(int err)
+void Http2Request::onRSTStream(int err)
 {
     
 }
 
-KMError H2Request::close()
+KMError Http2Request::close()
 {
     if (stream_) {
         stream_->close(conn_);

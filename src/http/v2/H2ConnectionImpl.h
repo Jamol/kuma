@@ -38,17 +38,17 @@ using namespace hpack;
 
 KUMA_NS_BEGIN
 
-class H2ConnectionImpl : public KMObject, public DestroyDetector, public FrameCallback, public TcpConnection, public EventLoopImpl::Listener
+class H2Connection::Impl : public KMObject, public DestroyDetector, public FrameCallback, public TcpConnection, public EventLoop::Impl::Listener
 {
 public:
-    typedef std::function<void(KMError)> ConnectCallback;
+    using ConnectCallback = H2Connection::ConnectCallback;
     
-    H2ConnectionImpl(EventLoopImpl* loop);
-	~H2ConnectionImpl();
+    Impl(EventLoop::Impl* loop);
+	~Impl();
     
     KMError connect(const std::string &host, uint16_t port, ConnectCallback cb);
     KMError attachFd(SOCKET_FD fd, const uint8_t* data=nullptr, size_t size=0);
-    KMError attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
+    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser);
     KMError close();
     
     KMError sendH2Frame(H2Frame *frame);
@@ -125,7 +125,7 @@ private:
     
     std::string key_;
     
-    HttpParserImpl httpParser_;
+    HttpParser::Impl httpParser_;
     FrameParser frameParser_;
     HPacker hpEncoder_;
     HPacker hpDecoder_;
@@ -143,8 +143,8 @@ private:
     bool registeredToLoop_ = false;
 };
 
-using H2ConnectionPtr = std::shared_ptr<H2ConnectionImpl>;
-using H2ConnectionWeakPtr = std::weak_ptr<H2ConnectionImpl>;
+using H2ConnectionPtr = std::shared_ptr<H2Connection::Impl>;
+using H2ConnectionWeakPtr = std::weak_ptr<H2Connection::Impl>;
 
 KUMA_NS_END
 

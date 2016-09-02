@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -66,18 +72,18 @@
 
 using namespace kuma;
 
-UdpSocketImpl::UdpSocketImpl(EventLoopImpl* loop)
+UdpSocket::Impl::Impl(EventLoop::Impl* loop)
 : loop_(loop)
 {
     KM_SetObjKey("UdpSocket");
 }
 
-UdpSocketImpl::~UdpSocketImpl()
+UdpSocket::Impl::~Impl()
 {
     cleanup();
 }
 
-void UdpSocketImpl::cleanup()
+void UdpSocket::Impl::cleanup()
 {
     if(INVALID_FD != fd_) {
         SOCKET_FD fd = fd_;
@@ -92,7 +98,7 @@ void UdpSocketImpl::cleanup()
     }
 }
 
-KMError UdpSocketImpl::bind(const char *bind_host, uint16_t bind_port, uint32_t udp_flags)
+KMError UdpSocket::Impl::bind(const char *bind_host, uint16_t bind_port, uint32_t udp_flags)
 {
     KUMA_INFOXTRACE("bind, bind_host="<<bind_host<<", bind_port="<<bind_port);
     if(fd_ != INVALID_FD) {
@@ -162,7 +168,7 @@ KMError UdpSocketImpl::bind(const char *bind_host, uint16_t bind_port, uint32_t 
     return KMError::NOERR;
 }
 
-void UdpSocketImpl::setSocketOption()
+void UdpSocket::Impl::setSocketOption()
 {
     if(INVALID_FD == fd_) {
         return ;
@@ -185,7 +191,7 @@ void UdpSocketImpl::setSocketOption()
     setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt_val, sizeof(int));
 }
 
-KMError UdpSocketImpl::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
+KMError UdpSocket::Impl::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
 {
     KUMA_INFOXTRACE("mcastJoin, mcast_addr"<<(mcast_addr?mcast_addr:"")<<", mcast_port="<<mcast_port);
     if(!km_is_mcast_address(mcast_addr)) {
@@ -266,7 +272,7 @@ KMError UdpSocketImpl::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
     return KMError::NOERR;
 }
 
-KMError UdpSocketImpl::mcastLeave(const char* mcast_addr, uint16_t mcast_port)
+KMError UdpSocket::Impl::mcastLeave(const char* mcast_addr, uint16_t mcast_port)
 {
     KUMA_INFOXTRACE("mcastLeave, mcast_addr: "<<(mcast_addr?mcast_addr:"")<<", mcast_port: "<<mcast_port);
     if(INVALID_FD == fd_) {
@@ -284,7 +290,7 @@ KMError UdpSocketImpl::mcastLeave(const char* mcast_addr, uint16_t mcast_port)
     return KMError::NOERR;
 }
 
-int UdpSocketImpl::send(const uint8_t* data, size_t length, const char* host, uint16_t port)
+int UdpSocket::Impl::send(const uint8_t* data, size_t length, const char* host, uint16_t port)
 {
     if(INVALID_FD == fd_) {
         KUMA_ERRXTRACE("send, invalid fd");
@@ -333,7 +339,7 @@ int UdpSocketImpl::send(const uint8_t* data, size_t length, const char* host, ui
     return ret;
 }
 
-int UdpSocketImpl::send(iovec* iovs, int count, const char* host, uint16_t port)
+int UdpSocket::Impl::send(iovec* iovs, int count, const char* host, uint16_t port)
 {
     if(INVALID_FD == fd_) {
         KUMA_ERRXTRACE("send 2, invalid fd");
@@ -404,7 +410,7 @@ int UdpSocketImpl::send(iovec* iovs, int count, const char* host, uint16_t port)
     return ret;
 }
 
-int UdpSocketImpl::receive(uint8_t* data, size_t length, char* ip, size_t ip_len, uint16_t& port)
+int UdpSocket::Impl::receive(uint8_t* data, size_t length, char* ip, size_t ip_len, uint16_t& port)
 {
     if(INVALID_FD == fd_) {
         KUMA_ERRXTRACE("receive, invalid fd");
@@ -444,7 +450,7 @@ int UdpSocketImpl::receive(uint8_t* data, size_t length, char* ip, size_t ip_len
     return ret;
 }
 
-KMError UdpSocketImpl::close()
+KMError UdpSocket::Impl::close()
 {
     KUMA_INFOXTRACE("close");
     loop_->runInEventLoopSync([this] {
@@ -453,26 +459,26 @@ KMError UdpSocketImpl::close()
     return KMError::NOERR;
 }
 
-void UdpSocketImpl::onSend(KMError err)
+void UdpSocket::Impl::onSend(KMError err)
 {
     if(loop_->isPollLT()) {
         loop_->updateFd(fd_, KUMA_EV_READ | KUMA_EV_ERROR);
     }
 }
 
-void UdpSocketImpl::onReceive(KMError err)
+void UdpSocket::Impl::onReceive(KMError err)
 {
     if(read_cb_ && fd_ != INVALID_FD) read_cb_(err);
 }
 
-void UdpSocketImpl::onClose(KMError err)
+void UdpSocket::Impl::onClose(KMError err)
 {
     KUMA_INFOXTRACE("onClose, err="<<int(err));
     cleanup();
     if(error_cb_) error_cb_(err);
 }
 
-void UdpSocketImpl::ioReady(uint32_t events)
+void UdpSocket::Impl::ioReady(uint32_t events)
 {
     DESTROY_DETECTOR_SETUP();
     if(events & KUMA_EV_READ) {// handle EPOLLIN firstly

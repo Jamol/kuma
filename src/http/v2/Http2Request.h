@@ -19,22 +19,22 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __H2Request_H__
-#define __H2Request_H__
+#ifndef __Http2Request_H__
+#define __Http2Request_H__
 
 #include "kmdefs.h"
 #include "H2ConnectionImpl.h"
-#include "http/HttpRequestBase.h"
+#include "http/HttpRequestImpl.h"
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
 
 KUMA_NS_BEGIN
 
-class H2Request : public KMObject, public DestroyDetector, public HttpRequestBase
+class Http2Request : public KMObject, public DestroyDetector, public HttpRequest::Impl
 {
 public:
-    H2Request(EventLoopImpl* loop);
-    ~H2Request();
+    Http2Request(EventLoop::Impl* loop);
+    ~Http2Request();
     
     KMError setSslFlags(uint32_t ssl_flags) override;
     int sendData(const uint8_t* data, size_t len) override;
@@ -59,7 +59,7 @@ private:
     void sendHeaders();
     
 private:
-    EventLoopImpl* loop_;
+    EventLoop::Impl* loop_;
     H2ConnectionPtr conn_ = nullptr;
     H2StreamPtr stream_ = nullptr;
     

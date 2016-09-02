@@ -1,8 +1,14 @@
-/* Copyright (c) 2014, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2016, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -17,51 +23,81 @@
 #define __HttpRequestImpl_H__
 
 #include "kmdefs.h"
-#include "HttpParserImpl.h"
-#include "TcpConnection.h"
+#include "kmapi.h"
+#include "httpdefs.h"
 #include "Uri.h"
-#include "HttpRequestBase.h"
-#include "util/kmobject.h"
-#include "util/DestroyDetector.h"
+#include "HttpParserImpl.h"
+#include <map>
 
 KUMA_NS_BEGIN
 
-class HttpRequestImpl : public KMObject, public DestroyDetector, public HttpRequestBase, public TcpConnection
+class HttpRequest::Impl
 {
 public:
-    HttpRequestImpl(EventLoopImpl* loop);
-    ~HttpRequestImpl();
+    using DataCallback = HttpRequest::DataCallback;
+    using EventCallback = HttpRequest::EventCallback;
+    using HttpEventCallback = HttpRequest::HttpEventCallback;
+    using EnumrateCallback = HttpParser::Impl::EnumrateCallback;
     
-    KMError setSslFlags(uint32_t ssl_flags) override { return TcpConnection::setSslFlags(ssl_flags); }
-    int sendData(const uint8_t* data, size_t len) override;
-    void reset() override; // reset for connection reuse
-    KMError close() override;
+    virtual ~Impl() = default;
     
-    int getStatusCode() const override { return http_parser_.getStatusCode(); }
-    const std::string& getVersion() const override { return http_parser_.getVersion(); }
-    const std::string& getHeaderValue(std::string name) const override { return http_parser_.getHeaderValue(std::move(name)); }
-    void forEachHeader(HttpParserImpl::EnumrateCallback cb) override { return http_parser_.forEachHeader(std::move(cb)); }
+    virtual KMError setSslFlags(uint32_t ssl_flags) = 0;
+    void addHeader(std::string name, std::string value);
+    void addHeader(std::string name, uint32_t value);
+    KMError sendRequest(std::string method, std::string url, std::string ver);
+    virtual int sendData(const uint8_t* data, size_t len) = 0;
+    virtual void reset();
+    virtual KMError close() = 0;
     
-protected: // callbacks of tcp_socket
-    void onConnect(KMError err) override;
-    KMError handleInputData(uint8_t *src, size_t len) override;
-    void onWrite() override;
-    void onError(KMError err) override;
-
-private:
-    KMError sendRequest() override;
-    void checkHeaders() override;
-    void buildRequest();
-    int sendChunk(const uint8_t* data, size_t len);
-    void cleanup();
-    void sendRequestHeader();
-    bool isVersion1_1() override { return true; }
+    virtual int getStatusCode() const = 0;
+    virtual const std::string& getVersion() const = 0;
+    virtual const std::string& getHeaderValue(std::string name) const = 0;
+    virtual void forEachHeader(EnumrateCallback cb) = 0;
     
-    void onHttpData(const char* data, size_t len);
-    void onHttpEvent(HttpEvent ev);
+    void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
+    void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
+    void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
+    void setHeaderCompleteCallback(HttpEventCallback cb) { header_cb_ = std::move(cb); }
+    void setResponseCompleteCallback(HttpEventCallback cb) { response_cb_ = std::move(cb); }
     
-private:
-    HttpParserImpl          http_parser_;
+protected:
+    virtual KMError sendRequest() = 0;
+    virtual void checkHeaders() = 0;
+    virtual bool isVersion1_1() { return false; }
+    
+    enum class State {
+        IDLE,
+        CONNECTING,
+        SENDING_HEADER,
+        SENDING_BODY,
+        RECVING_RESPONSE,
+        COMPLETE,
+        WAIT_FOR_REUSE,
+        IN_ERROR,
+        CLOSED
+    };
+    void setState(State state) { state_ = state; }
+    State getState() const { return state_; }
+    
+protected:
+    State                   state_ = State::IDLE;
+    
+    HeaderMap               header_map_;
+    std::string             method_;
+    std::string             url_;
+    std::string             version_;
+    Uri                     uri_;
+    
+    bool                    has_content_length_ = false;
+    size_t                  content_length_ = 0;
+    bool                    is_chunked_ = false;
+    size_t                  body_bytes_sent_ = 0;
+    
+    DataCallback            data_cb_;
+    EventCallback           write_cb_;
+    EventCallback           error_cb_;
+    HttpEventCallback       header_cb_;
+    HttpEventCallback       response_cb_;
 };
 
 KUMA_NS_END

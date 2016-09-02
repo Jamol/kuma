@@ -114,12 +114,6 @@
     <ClCompile Include="..\..\src\http\v2\H2Frame.cpp">
       <Filter>Source Files\http\v2</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\http\v2\H2Request.cpp">
-      <Filter>Source Files\http\v2</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\http\v2\H2Response.cpp">
-      <Filter>Source Files\http\v2</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\http\v2\H2Stream.cpp">
       <Filter>Source Files\http\v2</Filter>
     </ClCompile>
@@ -135,8 +129,14 @@
     <ClCompile Include="..\..\src\poll\Notifier.cpp">
       <Filter>Source Files\poll</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\http\HttpRequestBase.cpp">
+    <ClCompile Include="..\..\src\http\Http1xRequest.cpp">
       <Filter>Source Files\http</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\http\v2\Http2Request.cpp">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\http\v2\Http2Response.cpp">
+      <Filter>Source Files\http\v2</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -221,12 +221,6 @@
     <ClInclude Include="..\..\src\http\v2\H2Frame.h">
       <Filter>Header Files\http\v2</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\http\v2\H2Request.h">
-      <Filter>Header Files\http\v2</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\http\v2\H2Response.h">
-      <Filter>Header Files\http\v2</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\http\v2\H2Stream.h">
       <Filter>Header Files\http\v2</Filter>
     </ClInclude>
@@ -245,8 +239,14 @@
     <ClInclude Include="..\..\src\http\v2\hpack\StaticTable.h">
       <Filter>Header Files\http\v2\hpack</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\http\HttpRequestBase.h">
+    <ClInclude Include="..\..\src\http\Http1xRequest.h">
       <Filter>Header Files\http</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\Http2Request.h">
+      <Filter>Header Files\http\v2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\Http2Response.h">
+      <Filter>Header Files\http\v2</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

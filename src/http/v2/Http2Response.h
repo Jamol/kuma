@@ -19,4 +19,20 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "H2Response.h"
+#ifndef __Http2Response_H__
+#define __Http2Response_H__
+
+#include "kmdefs.h"
+#include "H2ConnectionImpl.h"
+
+KUMA_NS_BEGIN
+
+class Http2Response : public KMObject
+{
+public:
+    Http2Response();
+};
+
+KUMA_NS_END
+
+#endif /* __H2Response_H__ */

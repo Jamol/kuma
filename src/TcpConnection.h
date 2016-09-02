@@ -30,7 +30,7 @@ KUMA_NS_BEGIN
 class TcpConnection
 {
 public:
-    TcpConnection(EventLoopImpl* loop);
+    TcpConnection(EventLoop::Impl* loop);
 	virtual ~TcpConnection();
     
     KMError setSslFlags(uint32_t ssl_flags);
@@ -38,7 +38,7 @@ public:
     bool sslEnabled() const { return tcp_.sslEnabled(); }
     KMError connect(const std::string &host, uint16_t port);
     KMError attachFd(SOCKET_FD fd, const uint8_t* data=nullptr, size_t size=0);
-    KMError attachSocket(TcpSocketImpl &&tcp);
+    KMError attachSocket(TcpSocket::Impl &&tcp);
     int send(const uint8_t* data, size_t len);
     int send(iovec* iovs, int count);
     KMError close();
@@ -53,7 +53,7 @@ protected:
     bool isServer() { return isServer_; }
     bool sendBufferEmpty() { return send_buffer_.empty(); }
     KMError sendBufferedData();
-    EventLoopImpl* getEventLoop() { return loop_; }
+    EventLoop::Impl* getEventLoop() { return loop_; }
     
 private:
     void onSend(KMError err);
@@ -65,18 +65,18 @@ private:
     void setupCallbacks();
     
 protected:
-    TcpSocketImpl tcp_;
+    TcpSocket::Impl tcp_;
     std::string host_;
     uint16_t port_{ 0 };
     std::vector<uint8_t> send_buffer_;
     size_t send_offset_{ 0 };
     
 private:
-    EventLoopImpl* loop_;
+    EventLoop::Impl*        loop_;
     
-    std::vector<uint8_t> initData_;
+    std::vector<uint8_t>    initData_;
     
-    bool isServer_{ false };
+    bool                    isServer_{ false };
 };
 
 KUMA_NS_END

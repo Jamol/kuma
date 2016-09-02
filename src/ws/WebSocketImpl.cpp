@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -22,33 +28,33 @@
 using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
-WebSocketImpl::WebSocketImpl(EventLoopImpl* loop)
+WebSocket::Impl::Impl(EventLoop::Impl* loop)
 : TcpConnection(loop)
 {
     KM_SetObjKey("WebSocket");
 }
 
-WebSocketImpl::~WebSocketImpl()
+WebSocket::Impl::~Impl()
 {
     
 }
 
-void WebSocketImpl::cleanup()
+void WebSocket::Impl::cleanup()
 {
     TcpConnection::close();
 }
 
-void WebSocketImpl::setProtocol(const std::string& proto)
+void WebSocket::Impl::setProtocol(const std::string& proto)
 {
     proto_ = proto;
 }
 
-void WebSocketImpl::setOrigin(const std::string& origin)
+void WebSocket::Impl::setOrigin(const std::string& origin)
 {
     origin_ = origin;
 }
 
-KMError WebSocketImpl::connect(const std::string& ws_url, EventCallback cb)
+KMError WebSocket::Impl::connect(const std::string& ws_url, EventCallback cb)
 {
     if(getState() != State::IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
@@ -58,7 +64,7 @@ KMError WebSocketImpl::connect(const std::string& ws_url, EventCallback cb)
     return connect_i(ws_url);
 }
 
-KMError WebSocketImpl::connect_i(const std::string& ws_url)
+KMError WebSocket::Impl::connect_i(const std::string& ws_url)
 {
     if(!uri_.parse(ws_url)) {
         return KMError::INVALID_PARAM;
@@ -78,7 +84,7 @@ KMError WebSocketImpl::connect_i(const std::string& ws_url)
     return TcpConnection::connect(uri_.getHost().c_str(), port);
 }
 
-KMError WebSocketImpl::attachFd(SOCKET_FD fd, const uint8_t* init_data, size_t init_len)
+KMError WebSocket::Impl::attachFd(SOCKET_FD fd, const uint8_t* init_data, size_t init_len)
 {
     ws_handler_.setDataCallback([this] (uint8_t* data, size_t len) { onWsData(data, len); });
     ws_handler_.setHandshakeCallback([this] (KMError err) { onWsHandshake(err); });
@@ -86,7 +92,7 @@ KMError WebSocketImpl::attachFd(SOCKET_FD fd, const uint8_t* init_data, size_t i
     return TcpConnection::attachFd(fd, init_data, init_len);
 }
 
-KMError WebSocketImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
+KMError WebSocket::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser)
 {
     ws_handler_.setDataCallback([this] (uint8_t* data, size_t len) { onWsData(data, len); });
     ws_handler_.setHandshakeCallback([this] (KMError err) { onWsHandshake(err); });
@@ -98,7 +104,7 @@ KMError WebSocketImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser
     return ret;
 }
 
-int WebSocketImpl::send(const uint8_t* data, size_t len)
+int WebSocket::Impl::send(const uint8_t* data, size_t len)
 {
     if(getState() != State::OPEN) {
         return -1;
@@ -121,7 +127,7 @@ int WebSocketImpl::send(const uint8_t* data, size_t len)
     return ret < 0 ? ret : (int)len;
 }
 
-KMError WebSocketImpl::close()
+KMError WebSocket::Impl::close()
 {
     KUMA_INFOXTRACE("close");
     cleanup();
@@ -129,7 +135,7 @@ KMError WebSocketImpl::close()
     return KMError::NOERR;
 }
 
-KMError WebSocketImpl::handleInputData(uint8_t *src, size_t len)
+KMError WebSocket::Impl::handleInputData(uint8_t *src, size_t len)
 {
     if (getState() == State::OPEN || getState() == State::UPGRADING) {
         DESTROY_DETECTOR_SETUP();
@@ -151,7 +157,7 @@ KMError WebSocketImpl::handleInputData(uint8_t *src, size_t len)
     return KMError::NOERR;
 }
 
-void WebSocketImpl::onConnect(KMError err)
+void WebSocket::Impl::onConnect(KMError err)
 {
     if(err != KMError::NOERR) {
         if(connect_cb_) connect_cb_(err);
@@ -163,7 +169,7 @@ void WebSocketImpl::onConnect(KMError err)
     sendUpgradeRequest();
 }
 
-void WebSocketImpl::onWrite()
+void WebSocket::Impl::onWrite()
 {
     if(getState() == State::UPGRADING) {
         if (isServer()) {
@@ -175,7 +181,7 @@ void WebSocketImpl::onWrite()
     if (write_cb_) write_cb_(KMError::NOERR);
 }
 
-void WebSocketImpl::onError(KMError err)
+void WebSocket::Impl::onError(KMError err)
 {
     KUMA_INFOXTRACE("onError, err="<<int(err));
     cleanup();
@@ -183,14 +189,14 @@ void WebSocketImpl::onError(KMError err)
     if(error_cb_) error_cb_(err);
 }
 
-void WebSocketImpl::sendUpgradeRequest()
+void WebSocket::Impl::sendUpgradeRequest()
 {
     std::string str(ws_handler_.buildUpgradeRequest(uri_.getPath(), uri_.getHost(), proto_, origin_));
     setState(State::UPGRADING);
     TcpConnection::send((const uint8_t*)str.c_str(), str.size());
 }
 
-void WebSocketImpl::sendUpgradeResponse()
+void WebSocket::Impl::sendUpgradeResponse()
 {
     std::string str(ws_handler_.buildUpgradeResponse());
     setState(State::UPGRADING);
@@ -200,7 +206,7 @@ void WebSocketImpl::sendUpgradeResponse()
     }
 }
 
-void WebSocketImpl::onStateOpen()
+void WebSocket::Impl::onStateOpen()
 {
     KUMA_INFOXTRACE("onStateOpen");
     setState(State::OPEN);
@@ -211,12 +217,12 @@ void WebSocketImpl::onStateOpen()
     }
 }
 
-void WebSocketImpl::onWsData(uint8_t* data, size_t len)
+void WebSocket::Impl::onWsData(uint8_t* data, size_t len)
 {
     if(data_cb_) data_cb_(data, len);
 }
 
-void WebSocketImpl::onWsHandshake(KMError err)
+void WebSocket::Impl::onWsHandshake(KMError err)
 {
     if(KMError::NOERR == err) {
         if(isServer()) {

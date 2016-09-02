@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -61,18 +67,18 @@
 
 using namespace kuma;
 
-TcpListenerImpl::TcpListenerImpl(EventLoopImpl* loop)
+TcpListener::Impl::Impl(EventLoop::Impl* loop)
 : loop_(loop)
 {
     KM_SetObjKey("TcpListener");
 }
 
-TcpListenerImpl::~TcpListenerImpl()
+TcpListener::Impl::~Impl()
 {
 
 }
 
-void TcpListenerImpl::cleanup()
+void TcpListener::Impl::cleanup()
 {
     if(INVALID_FD != fd_) {
         SOCKET_FD fd = fd_;
@@ -87,7 +93,7 @@ void TcpListenerImpl::cleanup()
     }
 }
 
-KMError TcpListenerImpl::startListen(const char* host, uint16_t port)
+KMError TcpListener::Impl::startListen(const char* host, uint16_t port)
 {
     KUMA_INFOXTRACE("startListen, host="<<host<<", port="<<port);
     sockaddr_storage ss_addr = {0};
@@ -127,7 +133,7 @@ KMError TcpListenerImpl::startListen(const char* host, uint16_t port)
     return KMError::NOERR;
 }
 
-KMError TcpListenerImpl::stopListen(const char* host, uint16_t port)
+KMError TcpListener::Impl::stopListen(const char* host, uint16_t port)
 {
     KUMA_INFOXTRACE("stopListen");
     stopped_ = true;
@@ -137,7 +143,7 @@ KMError TcpListenerImpl::stopListen(const char* host, uint16_t port)
     return KMError::NOERR;
 }
 
-void TcpListenerImpl::setSocketOption()
+void TcpListener::Impl::setSocketOption()
 {
     if(INVALID_FD == fd_) {
         return ;
@@ -160,7 +166,7 @@ void TcpListenerImpl::setSocketOption()
     setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt_val, sizeof(int));
 }
 
-KMError TcpListenerImpl::close()
+KMError TcpListener::Impl::close()
 {
     KUMA_INFOXTRACE("close");
     stopped_ = true;
@@ -170,7 +176,7 @@ KMError TcpListenerImpl::close()
     return KMError::NOERR;
 }
 
-void TcpListenerImpl::onAccept()
+void TcpListener::Impl::onAccept()
 {
     SOCKET_FD fd = INVALID_FD;
     while(!stopped_) {
@@ -203,14 +209,14 @@ void TcpListenerImpl::onAccept()
     }
 }
 
-void TcpListenerImpl::onClose(KMError err)
+void TcpListener::Impl::onClose(KMError err)
 {
     KUMA_INFOXTRACE("onClose, err="<<int(err));
     cleanup();
     if(error_cb_) error_cb_(err);
 }
 
-void TcpListenerImpl::ioReady(uint32_t events)
+void TcpListener::Impl::ioReady(uint32_t events)
 {
     if(events & KUMA_EV_ERROR) {
         KUMA_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events="<<events<<", err="<<getLastError());

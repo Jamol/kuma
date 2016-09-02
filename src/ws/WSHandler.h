@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -50,7 +56,7 @@ public:
     WSHandler();
     ~WSHandler() = default;
     
-    void setHttpParser(HttpParserImpl&& parser);
+    void setHttpParser(HttpParser::Impl&& parser);
     std::string buildUpgradeRequest(const std::string& path, const std::string& host,
                              const std::string& proto, const std::string& origin);
     std::string buildUpgradeResponse();
@@ -133,7 +139,7 @@ private:
     DecodeContext           ctx_;
     uint8_t                 opcode_{ WS_OPCODE_BINARY };
     
-    HttpParserImpl          http_parser_;
+    HttpParser::Impl        http_parser_;
     
     DataCallback            data_cb_;
     HandshakeCallback       handshake_cb_;

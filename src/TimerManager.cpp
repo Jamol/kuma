@@ -36,8 +36,8 @@ TICK_COUNT_TYPE calc_time_elapse_delta_ms(TICK_COUNT_TYPE now_tick, TICK_COUNT_T
 KUMA_NS_END
 
 //////////////////////////////////////////////////////////////////////////
-// TimerImpl
-TimerImpl::TimerImpl(TimerManagerPtr mgr)
+// Timer::Impl
+Timer::Impl::Impl(TimerManagerPtr mgr)
 : cb_()
 , timer_mgr_(mgr)
 , timer_node_()
@@ -45,12 +45,12 @@ TimerImpl::TimerImpl(TimerManagerPtr mgr)
     timer_node_.timer_ = this;
 }
 
-TimerImpl::~TimerImpl()
+Timer::Impl::~Impl()
 {
     cancel();
 }
 
-bool TimerImpl::schedule(uint32_t delay_ms, TimerCallback cb, TimerMode mode)
+bool Timer::Impl::schedule(uint32_t delay_ms, TimerCallback cb, TimerMode mode)
 {
     TimerManagerPtr mgr = timer_mgr_.lock();
     if(mgr) {
@@ -60,7 +60,7 @@ bool TimerImpl::schedule(uint32_t delay_ms, TimerCallback cb, TimerMode mode)
     return false;
 }
 
-void TimerImpl::cancel()
+void Timer::Impl::cancel()
 {
     TimerManagerPtr mgr = timer_mgr_.lock();
     if(mgr) {
@@ -70,7 +70,7 @@ void TimerImpl::cancel()
 
 //////////////////////////////////////////////////////////////////////////
 // TimerManager
-TimerManager::TimerManager(EventLoopImpl* loop)
+TimerManager::TimerManager(EventLoop::Impl* loop)
 : loop_(loop)
 {
     memset(&tv0_bitmap_, 0, sizeof(tv0_bitmap_));
@@ -88,7 +88,7 @@ TimerManager::~TimerManager()
     
 }
 
-bool TimerManager::scheduleTimer(TimerImpl* timer, uint32_t delay_ms, TimerMode mode)
+bool TimerManager::scheduleTimer(Timer::Impl* timer, uint32_t delay_ms, TimerMode mode)
 {
     TimerNode* timer_node = &timer->timer_node_;
     if(isTimerPending(timer_node) && delay_ms == timer_node->delay_ms_) {
@@ -123,7 +123,7 @@ bool TimerManager::scheduleTimer(TimerImpl* timer, uint32_t delay_ms, TimerMode 
     return ret;
 }
 
-void TimerManager::cancelTimer(TimerImpl* timer)
+void TimerManager::cancelTimer(Timer::Impl* timer)
 {
     TimerNode* timer_node = &timer->timer_node_;
     if(timer_node->cancelled_) {

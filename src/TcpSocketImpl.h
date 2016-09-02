@@ -23,6 +23,7 @@
 #define __TcpSocketImpl_H__
 
 #include "kmdefs.h"
+#include "kmapi.h"
 #include "evdefs.h"
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
@@ -40,17 +41,15 @@
 
 KUMA_NS_BEGIN
 
-class EventLoopImpl;
-
-class TcpSocketImpl : public KMObject, public DestroyDetector
+class TcpSocket::Impl : public KMObject, public DestroyDetector
 {
 public:
-    typedef std::function<void(KMError)> EventCallback;
+    using EventCallback = TcpSocket::EventCallback;
     
-    TcpSocketImpl(EventLoopImpl* loop);
-    TcpSocketImpl(const TcpSocketImpl &other) = delete;
-    TcpSocketImpl& operator= (const TcpSocketImpl &other) = delete;
-    ~TcpSocketImpl();
+    Impl(EventLoop::Impl* loop);
+    Impl(const Impl &other) = delete;
+    Impl& operator= (const Impl &other) = delete;
+    ~Impl();
     
     KMError setSslFlags(uint32_t ssl_flags);
     uint32_t getSslFlags() const { return ssl_flags_; }
@@ -58,7 +57,7 @@ public:
     KMError bind(const char* bind_host, uint16_t bind_port);
     KMError connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
     KMError attachFd(SOCKET_FD fd);
-    KMError attach(TcpSocketImpl &&other);
+    KMError attach(Impl &&other);
     KMError detachFd(SOCKET_FD &fd);
 #ifdef KUMA_HAS_OPENSSL
     KMError setAlpnProtocols(const AlpnProtos &protocols);
@@ -81,7 +80,7 @@ public:
     void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
     
     SOCKET_FD getFd() const { return fd_; }
-    EventLoopImpl* getEventLoop() { return loop_; }
+    EventLoop::Impl* getEventLoop() { return loop_; }
     
 private:
     KMError connect_i(const char* addr, uint16_t port, uint32_t timeout_ms);
@@ -106,22 +105,22 @@ private:
     bool isReady();
     
 private:
-    SOCKET_FD       fd_{ INVALID_FD };
-    EventLoopImpl*  loop_;
-    State           state_{ State::IDLE };
-    bool            registered_{ false };
-    uint32_t        ssl_flags_{ SSL_NONE };
+    SOCKET_FD           fd_{ INVALID_FD };
+    EventLoop::Impl*    loop_;
+    State               state_{ State::IDLE };
+    bool                registered_{ false };
+    uint32_t            ssl_flags_{ SSL_NONE };
     
 #ifdef KUMA_HAS_OPENSSL
-    SslHandler*     ssl_handler_{ nullptr };
-    AlpnProtos      alpn_protos_;
-    std::string     ssl_server_name;
+    SslHandler*         ssl_handler_{ nullptr };
+    AlpnProtos          alpn_protos_;
+    std::string         ssl_server_name;
 #endif
     
-    EventCallback   connect_cb_;
-    EventCallback   read_cb_;
-    EventCallback   write_cb_;
-    EventCallback   error_cb_;
+    EventCallback       connect_cb_;
+    EventCallback       read_cb_;
+    EventCallback       write_cb_;
+    EventCallback       error_cb_;
 };
 
 KUMA_NS_END

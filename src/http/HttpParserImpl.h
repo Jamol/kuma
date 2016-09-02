@@ -23,6 +23,7 @@
 #define __HttpParserImpl_H__
 
 #include "kmdefs.h"
+#include "kmapi.h"
 #include "httpdefs.h"
 #include "util/util.h"
 #include "util/DestroyDetector.h"
@@ -33,19 +34,19 @@
 
 KUMA_NS_BEGIN
 
-class HttpParserImpl : public DestroyDetector
+class HttpParser::Impl : public DestroyDetector
 {
 public:
     typedef std::function<void(const char*, size_t)> DataCallback;
     typedef std::function<void(HttpEvent)> EventCallback;
     typedef std::function<void(const std::string&, const std::string&)> EnumrateCallback;
     
-    HttpParserImpl() = default;
-    HttpParserImpl(const HttpParserImpl& other);
-    HttpParserImpl(HttpParserImpl&& other);
-    ~HttpParserImpl();
-    HttpParserImpl& operator=(const HttpParserImpl& other);
-    HttpParserImpl& operator=(HttpParserImpl&& other);
+    Impl() = default;
+    Impl(const Impl& other);
+    Impl(Impl&& other);
+    ~Impl();
+    Impl& operator=(const Impl& other);
+    Impl& operator=(Impl&& other);
     
     // return bytes parsed
     int parse(const char* data, size_t len);

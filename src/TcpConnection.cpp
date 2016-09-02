@@ -27,7 +27,7 @@
 using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
-TcpConnection::TcpConnection(EventLoopImpl* loop)
+TcpConnection::TcpConnection(EventLoop::Impl* loop)
 : loop_(loop), tcp_(loop)
 {
     
@@ -76,7 +76,7 @@ KMError TcpConnection::attachFd(SOCKET_FD fd, const uint8_t* data, size_t size)
     return tcp_.attachFd(fd);
 }
 
-KMError TcpConnection::attachSocket(TcpSocketImpl &&tcp)
+KMError TcpConnection::attachSocket(TcpSocket::Impl &&tcp)
 {
     isServer_ = true;
     setupCallbacks();

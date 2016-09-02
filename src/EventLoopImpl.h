@@ -22,6 +22,7 @@
 #ifndef __EventLoopImpl_H__
 #define __EventLoopImpl_H__
 
+#include "kmapi.h"
 #include "evdefs.h"
 #include "util/kmqueue.h"
 #include "TimerManager.h"
@@ -38,7 +39,7 @@ KUMA_NS_BEGIN
 
 class IOPoll;
 
-class EventLoopImpl : public KMObject
+class EventLoop::Impl : public KMObject
 {
 public:
     class Listener
@@ -49,8 +50,8 @@ public:
     };
     
 public:
-    EventLoopImpl(PollType poll_type = PollType::NONE);
-    ~EventLoopImpl();
+    Impl(PollType poll_type = PollType::NONE);
+    ~Impl();
 
 public:
     bool init();

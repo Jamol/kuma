@@ -1,8 +1,14 @@
-/* Copyright (c) 2014, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2016, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -23,272 +29,48 @@
 using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
-HttpRequestImpl::HttpRequestImpl(EventLoopImpl* loop)
-: TcpConnection(loop), http_parser_()
+//
+void HttpRequest::Impl::addHeader(std::string name, std::string value)
 {
-    KM_SetObjKey("HttpRequest");
-}
-
-HttpRequestImpl::~HttpRequestImpl()
-{
-    
-}
-
-void HttpRequestImpl::cleanup()
-{
-    TcpConnection::close();
-}
-
-void HttpRequestImpl::checkHeaders()
-{
-    if(header_map_.find("Accept") == header_map_.end()) {
-        addHeader("Accept", "*/*");
-    }
-    if(header_map_.find("Content-Type") == header_map_.end()) {
-        addHeader("Content-Type", "application/octet-stream");
-    }
-    if(header_map_.find("User-Agent") == header_map_.end()) {
-        addHeader("User-Agent", UserAgent);
-    }
-    addHeader("Host", uri_.getHost());
-    if(header_map_.find("Cache-Control") == header_map_.end()) {
-        addHeader("Cache-Control", "no-cache");
-    }
-    if(header_map_.find("Pragma") == header_map_.end()) {
-        addHeader("Pragma", "no-cache");
-    }
-}
-
-void HttpRequestImpl::buildRequest()
-{
-    std::stringstream ss;
-    ss << method_ << " ";
-    ss << uri_.getPath();
-    if(!uri_.getQuery().empty()) {
-        ss << "?" << uri_.getQuery();
-    }
-    if(!uri_.getFragment().empty()) {
-        ss << "#" << uri_.getFragment();
-    }
-    ss << " ";
-    ss << version_ << "\r\n";
-    for (auto &kv : header_map_) {
-        ss << kv.first << ": " << kv.second << "\r\n";
-    }
-    ss << "\r\n";
-    std::string str(ss.str());
-    send_offset_ = 0;
-    send_buffer_.assign(str.begin(), str.end());
-}
-
-KMError HttpRequestImpl::sendRequest()
-{
-    if (getState() == State::IDLE) {
-        setState(State::CONNECTING);
-        std::string str_port = uri_.getPort();
-        uint16_t port = 80;
-        uint32_t ssl_flags = SSL_NONE;
-        if(is_equal("https", uri_.getScheme())) {
-            port = 443;
-            ssl_flags = SSL_ENABLE | getSslFlags();
-        }
-        if(!str_port.empty()) {
-            port = std::stoi(str_port);
-        }
-        TcpConnection::setSslFlags(ssl_flags);
-        return TcpConnection::connect(uri_.getHost().c_str(), port);
-    } else { // connection reuse
-        sendRequestHeader();
-        return KMError::NOERR;
-    }
-}
-
-int HttpRequestImpl::sendData(const uint8_t* data, size_t len)
-{
-    if(!sendBufferEmpty() || getState() != State::SENDING_BODY) {
-        return 0;
-    }
-    if(is_chunked_) {
-        return sendChunk(data, len);
-    }
-    if(!data || 0 == len) {
-        return 0;
-    }
-    int ret = TcpConnection::send(data, len);
-    if(ret < 0) {
-        setState(State::IN_ERROR);
-    } else if(ret > 0) {
-        body_bytes_sent_ += ret;
-        if (body_bytes_sent_ >= content_length_ && sendBufferEmpty()) {
-            setState(State::RECVING_RESPONSE);
-        }
-    }
-    return ret;
-}
-
-int HttpRequestImpl::sendChunk(const uint8_t* data, size_t len)
-{
-    if(nullptr == data && 0 == len) { // chunk end
-        static const std::string _chunk_end_token_ = "0\r\n\r\n";
-        int ret = TcpConnection::send((uint8_t*)_chunk_end_token_.c_str(), (uint32_t)_chunk_end_token_.length());
-        if(ret < 0) {
-            setState(State::IN_ERROR);
-            return ret;
-        } else if(sendBufferEmpty()) { // should always empty
-            setState(State::RECVING_RESPONSE);
-        }
-        return 0;
-    } else {
-        std::stringstream ss;
-        ss.setf(std::ios_base::hex, std::ios_base::basefield);
-        ss << len << "\r\n";
-        std::string str;
-        ss >> str;
-        iovec iovs[3];
-        iovs[0].iov_base = (char*)str.c_str();
-        iovs[0].iov_len = str.length();
-        iovs[1].iov_base = (char*)data;
-        iovs[1].iov_len = len;
-        iovs[2].iov_base = (char*)"\r\n";
-        iovs[2].iov_len = 2;
-        int ret = TcpConnection::send(iovs, 3);
-        if(ret < 0) {
-            return ret;
-        }
-        return (int)len;
-    }
-}
-
-void HttpRequestImpl::reset()
-{
-    HttpRequestBase::reset();
-    http_parser_.reset();
-    if (getState() == State::COMPLETE) {
-        setState(State::WAIT_FOR_REUSE);
-    }
-}
-
-KMError HttpRequestImpl::close()
-{
-    KUMA_INFOXTRACE("close");
-    cleanup();
-    setState(State::CLOSED);
-    return KMError::NOERR;
-}
-
-void HttpRequestImpl::sendRequestHeader()
-{
-    body_bytes_sent_ = 0;
-    http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
-    http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
-    buildRequest();
-    setState(State::SENDING_HEADER);
-    auto ret = sendBufferedData();
-    if(ret != KMError::NOERR) {
-        cleanup();
-        setState(State::IN_ERROR);
-        if(error_cb_) error_cb_(KMError::SOCK_ERROR);
-        return;
-    } else if (sendBufferEmpty()) {
-        if(!is_chunked_ && 0 == content_length_) {
-            setState(State::RECVING_RESPONSE);
-        } else {
-            setState(State::SENDING_BODY);
-            if (write_cb_) {
-                write_cb_(KMError::NOERR);
+    if(!name.empty()) {
+        if (is_equal("Content-Length", name)) {
+            has_content_length_ = true;
+            content_length_ = atol(value.c_str());
+        } else if (is_equal("Transfer-Encoding", name) && is_equal("chunked", value)) {
+            is_chunked_ = true;
+            if (!isVersion1_1()) {
+                return; // omit chunked
             }
         }
+        header_map_[std::move(name)] = std::move(value);
     }
 }
 
-void HttpRequestImpl::onConnect(KMError err)
+void HttpRequest::Impl::addHeader(std::string name, uint32_t value)
 {
-    if(err != KMError::NOERR) {
-        if(error_cb_) error_cb_(err);
-        return ;
-    }
-    sendRequestHeader();
+    addHeader(std::move(name), std::to_string(value));
 }
 
-KMError HttpRequestImpl::handleInputData(uint8_t *src, size_t len)
+KMError HttpRequest::Impl::sendRequest(std::string method, std::string url, std::string ver)
 {
-    DESTROY_DETECTOR_SETUP();
-    int bytes_used = http_parser_.parse((char*)src, len);
-    DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
-    if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
-        return KMError::FAILED;
+    if (getState() != State::IDLE && getState() != State::WAIT_FOR_REUSE) {
+        return KMError::INVALID_STATE;
     }
-    if(bytes_used != len) {
-        KUMA_WARNXTRACE("handleInputData, bytes_used="<<bytes_used<<", bytes_read="<<len);
+    method_ = std::move(method);
+    url_ = std::move(url);
+    version_ = std::move(ver);
+    if(!uri_.parse(url_)) {
+        return KMError::INVALID_PARAM;
     }
-    return KMError::NOERR;
+    checkHeaders();
+    return sendRequest();
 }
 
-void HttpRequestImpl::onWrite()
+void HttpRequest::Impl::reset()
 {
-    if (getState() == State::SENDING_HEADER) {
-        if(!is_chunked_ && 0 == content_length_) {
-            setState(State::RECVING_RESPONSE);
-            return;
-        } else {
-            setState(State::SENDING_BODY);
-        }
-    } else if (getState() == State::SENDING_BODY) {
-        if (!is_chunked_ && body_bytes_sent_ >= content_length_) {
-            setState(State::RECVING_RESPONSE);
-            return;
-        }
-    }
-    
-    if(write_cb_) write_cb_(KMError::NOERR);
-}
-
-void HttpRequestImpl::onError(KMError err)
-{
-    KUMA_INFOXTRACE("onError, err="<<int(err));
-    if (getState() == State::RECVING_RESPONSE) {
-        DESTROY_DETECTOR_SETUP();
-        bool completed = http_parser_.setEOF();
-        DESTROY_DETECTOR_CHECK_VOID();
-        if(completed) {
-            cleanup();
-            return;
-        }
-    }
-    cleanup();
-    if(getState() < State::COMPLETE) {
-        setState(State::IN_ERROR);
-        if(error_cb_) error_cb_(KMError::SOCK_ERROR);
-    } else {
-        setState(State::CLOSED);
-    }
-}
-
-void HttpRequestImpl::onHttpData(const char* data, size_t len)
-{
-    if(data_cb_) data_cb_((uint8_t*)data, len);
-}
-
-void HttpRequestImpl::onHttpEvent(HttpEvent ev)
-{
-    KUMA_INFOXTRACE("onHttpEvent, ev="<<int(ev));
-    switch (ev) {
-        case HttpEvent::HEADER_COMPLETE:
-            if(header_cb_) header_cb_();
-            break;
-            
-        case HttpEvent::COMPLETE:
-            setState(State::COMPLETE);
-            if(response_cb_) response_cb_();
-            break;
-            
-        case HttpEvent::HTTP_ERROR:
-            cleanup();
-            setState(State::IN_ERROR);
-            if(error_cb_) error_cb_(KMError::FAILED);
-            break;
-            
-        default:
-            break;
-    }
+    header_map_.clear();
+    has_content_length_ = false;
+    content_length_ = 0;
+    is_chunked_ = false;
+    body_bytes_sent_ = 0;
 }

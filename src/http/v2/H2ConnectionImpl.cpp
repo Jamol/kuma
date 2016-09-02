@@ -37,7 +37,7 @@ namespace {
 }
 
 //////////////////////////////////////////////////////////////////////////
-H2ConnectionImpl::H2ConnectionImpl(EventLoopImpl* loop)
+H2Connection::Impl::Impl(EventLoop::Impl* loop)
 : TcpConnection(loop), frameParser_(this)
 {
     cmpPreface_ = ClientConnectionPreface;
@@ -45,12 +45,12 @@ H2ConnectionImpl::H2ConnectionImpl(EventLoopImpl* loop)
     KUMA_INFOXTRACE("H2Connection");
 }
 
-H2ConnectionImpl::~H2ConnectionImpl()
+H2Connection::Impl::~Impl()
 {
     KUMA_INFOXTRACE("~H2Connection");
 }
 
-void H2ConnectionImpl::cleanup()
+void H2Connection::Impl::cleanup()
 {
     if (registeredToLoop_) {
         registeredToLoop_ = false;
@@ -65,7 +65,7 @@ void H2ConnectionImpl::cleanup()
     }
 }
 
-void H2ConnectionImpl::setConnectionKey(const std::string &key)
+void H2Connection::Impl::setConnectionKey(const std::string &key)
 {
     key_ = key;
     if (!key.empty()) {
@@ -73,7 +73,7 @@ void H2ConnectionImpl::setConnectionKey(const std::string &key)
     }
 }
 
-KMError H2ConnectionImpl::connect(const std::string &host, uint16_t port, ConnectCallback cb)
+KMError H2Connection::Impl::connect(const std::string &host, uint16_t port, ConnectCallback cb)
 {
     if(getState() != State::IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
@@ -87,7 +87,7 @@ KMError H2ConnectionImpl::connect(const std::string &host, uint16_t port, Connec
     return connect_i(host, port);
 }
 
-KMError H2ConnectionImpl::connect_i(const std::string &host, uint16_t port)
+KMError H2Connection::Impl::connect_i(const std::string &host, uint16_t port)
 {
     nextStreamId_ = 1;
     httpParser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
@@ -107,7 +107,7 @@ KMError H2ConnectionImpl::connect_i(const std::string &host, uint16_t port)
     return TcpConnection::connect(host.c_str(), port);
 }
 
-KMError H2ConnectionImpl::attachFd(SOCKET_FD fd, const uint8_t* data, size_t size)
+KMError H2Connection::Impl::attachFd(SOCKET_FD fd, const uint8_t* data, size_t size)
 {
     nextStreamId_ = 2;
     
@@ -125,7 +125,7 @@ KMError H2ConnectionImpl::attachFd(SOCKET_FD fd, const uint8_t* data, size_t siz
     return ret;
 }
 
-KMError H2ConnectionImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
+KMError H2Connection::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser)
 {
     KUMA_ASSERT(parser.isRequest());
     httpParser_ = std::move(parser);
@@ -149,14 +149,14 @@ KMError H2ConnectionImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& par
     }
 }
 
-KMError H2ConnectionImpl::close()
+KMError H2Connection::Impl::close()
 {
     KUMA_INFOXTRACE("close");
     cleanup();
     return KMError::NOERR;
 }
 
-KMError H2ConnectionImpl::sendH2Frame(H2Frame *frame)
+KMError H2Connection::Impl::sendH2Frame(H2Frame *frame)
 {
     if (!sendBufferEmpty()) {
         return KMError::AGAIN;
@@ -183,7 +183,7 @@ KMError H2ConnectionImpl::sendH2Frame(H2Frame *frame)
     return sendBufferedData();
 }
 
-KMError H2ConnectionImpl::sendHeadersFrame(HeadersFrame *frame)
+KMError H2Connection::Impl::sendHeadersFrame(HeadersFrame *frame)
 {
     h2_priority_t pri;
     frame->setPriority(pri);
@@ -204,14 +204,14 @@ KMError H2ConnectionImpl::sendHeadersFrame(HeadersFrame *frame)
     return sendBufferedData();
 }
 
-H2StreamPtr H2ConnectionImpl::createStream() {
+H2StreamPtr H2Connection::Impl::createStream() {
     H2StreamPtr stream(new H2Stream(nextStreamId_));
     nextStreamId_ += 2;
     addStream(stream);
     return stream;
 }
 
-void H2ConnectionImpl::handleDataFrame(DataFrame *frame)
+void H2Connection::Impl::handleDataFrame(DataFrame *frame)
 {
     //KUMA_INFOXTRACE("handleDataFrame, streamId="<<frame->getStreamId()<<", size="<<frame->size()<<", flags="<<int(frame->getFlags()));
     H2StreamPtr stream = getStream(frame->getStreamId());
@@ -222,7 +222,7 @@ void H2ConnectionImpl::handleDataFrame(DataFrame *frame)
     }
 }
 
-void H2ConnectionImpl::handleHeadersFrame(HeadersFrame *frame)
+void H2Connection::Impl::handleHeadersFrame(HeadersFrame *frame)
 {
     KUMA_INFOXTRACE("handleHeadersFrame, streamId="<<frame->getStreamId()<<", flags="<<int(frame->getFlags()));
     H2StreamPtr stream = getStream(frame->getStreamId());
@@ -243,12 +243,12 @@ void H2ConnectionImpl::handleHeadersFrame(HeadersFrame *frame)
     stream->handleHeadersFrame(frame);
 }
 
-void H2ConnectionImpl::handlePriorityFrame(PriorityFrame *frame)
+void H2Connection::Impl::handlePriorityFrame(PriorityFrame *frame)
 {
     KUMA_INFOXTRACE("handlePriorityFrame, streamId="<<frame->getStreamId()<<", dep="<<frame->getPriority().streamId<<", weight="<<frame->getPriority().weight);
 }
 
-void H2ConnectionImpl::handleRSTStreamFrame(RSTStreamFrame *frame)
+void H2Connection::Impl::handleRSTStreamFrame(RSTStreamFrame *frame)
 {
     KUMA_INFOXTRACE("handleRSTStreamFrame, streamId="<<frame->getStreamId());
     H2StreamPtr stream = getStream(frame->getStreamId());
@@ -257,7 +257,7 @@ void H2ConnectionImpl::handleRSTStreamFrame(RSTStreamFrame *frame)
     }
 }
 
-void H2ConnectionImpl::handleSettingsFrame(SettingsFrame *frame)
+void H2Connection::Impl::handleSettingsFrame(SettingsFrame *frame)
 {
     KUMA_INFOXTRACE("handleSettingsFrame, count="<<frame->getParams().size()<<", flags="<<int(frame->getFlags()));
     if (frame->getStreamId() == 0) {
@@ -281,7 +281,7 @@ void H2ConnectionImpl::handleSettingsFrame(SettingsFrame *frame)
     }
 }
 
-void H2ConnectionImpl::handlePushFrame(PushPromiseFrame *frame)
+void H2Connection::Impl::handlePushFrame(PushPromiseFrame *frame)
 {
     KUMA_INFOXTRACE("handlePushFrame, streamId="<<frame->getStreamId()<<", promStreamId="<<frame->getPromisedStreamId()<<", bsize="<<frame->getBlockSize()<<", flags="<<int(frame->getFlags()));
 
@@ -301,7 +301,7 @@ void H2ConnectionImpl::handlePushFrame(PushPromiseFrame *frame)
     stream->handlePushFrame(frame);
 }
 
-void H2ConnectionImpl::handlePingFrame(PingFrame *frame)
+void H2Connection::Impl::handlePingFrame(PingFrame *frame)
 {
     KUMA_INFOXTRACE("handlePingFrame, streamId="<<frame->getStreamId());
     if (!frame->isAck()) {
@@ -313,12 +313,12 @@ void H2ConnectionImpl::handlePingFrame(PingFrame *frame)
     }
 }
 
-void H2ConnectionImpl::handleGoawayFrame(GoawayFrame *frame)
+void H2Connection::Impl::handleGoawayFrame(GoawayFrame *frame)
 {
     KUMA_INFOXTRACE("handleGoawayFrame, streamId="<<frame->getLastStreamId()<<", err="<<frame->getErrorCode());
 }
 
-void H2ConnectionImpl::handleWindowUpdateFrame(WindowUpdateFrame *frame)
+void H2Connection::Impl::handleWindowUpdateFrame(WindowUpdateFrame *frame)
 {
     KUMA_INFOXTRACE("handleWindowUpdateFrame, size=" << frame->getWindowSizeIncrement());
     if (frame->getStreamId() == 0) {
@@ -331,7 +331,7 @@ void H2ConnectionImpl::handleWindowUpdateFrame(WindowUpdateFrame *frame)
     }
 }
 
-void H2ConnectionImpl::handleContinuationFrame(ContinuationFrame *frame)
+void H2Connection::Impl::handleContinuationFrame(ContinuationFrame *frame)
 {
     KUMA_INFOXTRACE("handleContinuationFrame, streamId="<<frame->getStreamId()<<", flags="<<int(frame->getFlags()));
     H2StreamPtr stream = getStream(frame->getStreamId());
@@ -340,7 +340,7 @@ void H2ConnectionImpl::handleContinuationFrame(ContinuationFrame *frame)
     }
 }
 
-KMError H2ConnectionImpl::handleInputData(uint8_t *buf, size_t len)
+KMError H2Connection::Impl::handleInputData(uint8_t *buf, size_t len)
 {
     if (getState() == State::OPEN) {
         return parseInputData(buf, len);
@@ -382,7 +382,7 @@ KMError H2ConnectionImpl::handleInputData(uint8_t *buf, size_t len)
     return KMError::NOERR;
 }
 
-KMError H2ConnectionImpl::parseInputData(const uint8_t *buf, size_t len)
+KMError H2Connection::Impl::parseInputData(const uint8_t *buf, size_t len)
 {
     DESTROY_DETECTOR_SETUP();
     auto parseState = frameParser_.parseInputData(buf, len);
@@ -398,7 +398,7 @@ KMError H2ConnectionImpl::parseInputData(const uint8_t *buf, size_t len)
     return KMError::NOERR;
 }
 
-void H2ConnectionImpl::onFrame(H2Frame *frame)
+void H2Connection::Impl::onFrame(H2Frame *frame)
 {
     switch (frame->type()) {
         case H2FrameType::DATA:
@@ -446,12 +446,12 @@ void H2ConnectionImpl::onFrame(H2Frame *frame)
     }
 }
 
-void H2ConnectionImpl::onFrameError(const FrameHeader &hdr, H2Error err)
+void H2Connection::Impl::onFrameError(const FrameHeader &hdr, H2Error err)
 {
     KUMA_ERRXTRACE("onFrameError, streamId="<<hdr.getStreamId()<<", type="<<hdr.getType()<<", err="<<int(err));
 }
 
-void H2ConnectionImpl::addStream(H2StreamPtr stream)
+void H2Connection::Impl::addStream(H2StreamPtr stream)
 {
     KUMA_INFOXTRACE("addStream, streamId="<<stream->getStreamId());
     if (isPromisedStream(stream->getStreamId())) {
@@ -461,7 +461,7 @@ void H2ConnectionImpl::addStream(H2StreamPtr stream)
     }
 }
 
-H2StreamPtr H2ConnectionImpl::getStream(uint32_t streamId)
+H2StreamPtr H2Connection::Impl::getStream(uint32_t streamId)
 {
     auto &streams = isPromisedStream(streamId) ? promisedStreams_ : streams_;
     auto it = streams.find(streamId);
@@ -471,7 +471,7 @@ H2StreamPtr H2ConnectionImpl::getStream(uint32_t streamId)
     return H2StreamPtr();
 }
 
-void H2ConnectionImpl::removeStream(uint32_t streamId)
+void H2Connection::Impl::removeStream(uint32_t streamId)
 {
     KUMA_INFOXTRACE("removeStream, streamId="<<streamId);
     if (isPromisedStream(streamId)) {
@@ -481,13 +481,13 @@ void H2ConnectionImpl::removeStream(uint32_t streamId)
     }
 }
 
-void H2ConnectionImpl::loopStopped()
+void H2Connection::Impl::loopStopped()
 { // event loop exited
     registeredToLoop_ = false;
     cleanup();
 }
 
-std::string H2ConnectionImpl::buildUpgradeRequest()
+std::string H2Connection::Impl::buildUpgradeRequest()
 {
     ParamVector params;
     params.emplace_back(std::make_pair(INITIAL_WINDOW_SIZE, 2147483647));
@@ -510,7 +510,7 @@ std::string H2ConnectionImpl::buildUpgradeRequest()
     return ss.str();
 }
 
-std::string H2ConnectionImpl::buildUpgradeResponse()
+std::string H2Connection::Impl::buildUpgradeResponse()
 {
     std::stringstream ss;
     ss << "HTTP/1.1 101 Switching Protocols\r\n";
@@ -520,7 +520,7 @@ std::string H2ConnectionImpl::buildUpgradeResponse()
     return ss.str();
 }
 
-void H2ConnectionImpl::sendUpgradeRequest()
+void H2Connection::Impl::sendUpgradeRequest()
 {
     std::string str(buildUpgradeRequest());
     send_buffer_.assign(str.begin(), str.end());
@@ -529,7 +529,7 @@ void H2ConnectionImpl::sendUpgradeRequest()
     sendBufferedData();
 }
 
-void H2ConnectionImpl::sendUpgradeResponse()
+void H2Connection::Impl::sendUpgradeResponse()
 {
     std::string str(buildUpgradeResponse());
     send_buffer_.assign(str.begin(), str.end());
@@ -541,7 +541,7 @@ void H2ConnectionImpl::sendUpgradeResponse()
     }
 }
 
-void H2ConnectionImpl::sendPreface()
+void H2Connection::Impl::sendPreface()
 {
     setState(State::HANDSHAKE);
     ParamVector params;
@@ -580,7 +580,7 @@ void H2ConnectionImpl::sendPreface()
     }
 }
 
-void H2ConnectionImpl::onConnect(KMError err)
+void H2Connection::Impl::onConnect(KMError err)
 {
     if(err != KMError::NOERR) {
         onConnectError(err);
@@ -594,7 +594,7 @@ void H2ConnectionImpl::onConnect(KMError err)
     sendUpgradeRequest();
 }
 
-void H2ConnectionImpl::onWrite()
+void H2Connection::Impl::onWrite()
 {// send_buffer_ must be empty
     if(isServer() && getState() == State::UPGRADING) {
         // upgrade response is sent out, waiting for client preface
@@ -605,13 +605,13 @@ void H2ConnectionImpl::onWrite()
     }
 }
 
-void H2ConnectionImpl::onError(KMError err)
+void H2Connection::Impl::onError(KMError err)
 {
     KUMA_INFOXTRACE("onError, err="<<int(err));
     cleanup();
 }
 
-void H2ConnectionImpl::onConnectError(KMError err)
+void H2Connection::Impl::onConnectError(KMError err)
 {
     cleanup();
     setState(State::IN_ERROR);
@@ -619,12 +619,12 @@ void H2ConnectionImpl::onConnectError(KMError err)
     if (connect_cb) connect_cb(err);
 }
 
-void H2ConnectionImpl::onHttpData(const char* data, size_t len)
+void H2Connection::Impl::onHttpData(const char* data, size_t len)
 {
     KUMA_ERRXTRACE("onHttpData, len="<<len);
 }
 
-void H2ConnectionImpl::onHttpEvent(HttpEvent ev)
+void H2Connection::Impl::onHttpEvent(HttpEvent ev)
 {
     KUMA_INFOXTRACE("onHttpEvent, ev="<<int(ev));
     switch (ev) {
@@ -650,7 +650,7 @@ void H2ConnectionImpl::onHttpEvent(HttpEvent ev)
     }
 }
 
-KMError H2ConnectionImpl::handleUpgradeRequest()
+KMError H2Connection::Impl::handleUpgradeRequest()
 {
     bool hasUpgrade = false;
     bool hasH2Settings = false;
@@ -677,7 +677,7 @@ KMError H2ConnectionImpl::handleUpgradeRequest()
     return KMError::NOERR;
 }
 
-KMError H2ConnectionImpl::handleUpgradeResponse()
+KMError H2Connection::Impl::handleUpgradeResponse()
 {
     if(101 == httpParser_.getStatusCode() &&
        is_equal(httpParser_.getHeaderValue("Connection"), "Upgrade")) {
@@ -691,7 +691,7 @@ KMError H2ConnectionImpl::handleUpgradeResponse()
     }
 }
 
-void H2ConnectionImpl::onStateOpen()
+void H2Connection::Impl::onStateOpen()
 {
     KUMA_INFOXTRACE("onStateOpen");
     setState(State::OPEN);

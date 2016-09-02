@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -26,18 +32,18 @@
 
 KUMA_NS_BEGIN
 
-class HttpResponseImpl : public KMObject, public DestroyDetector, public TcpConnection
+class HttpResponse::Impl : public KMObject, public DestroyDetector, public TcpConnection
 {
 public:
-    typedef std::function<void(uint8_t*, size_t)> DataCallback;
-    typedef std::function<void(KMError)> EventCallback;
-    typedef std::function<void(void)> HttpEventCallback;
+    using DataCallback = HttpResponse::DataCallback;
+    using EventCallback = HttpResponse::EventCallback;
+    using HttpEventCallback = HttpResponse::HttpEventCallback;
     
-    HttpResponseImpl(EventLoopImpl* loop);
-    ~HttpResponseImpl();
+    Impl(EventLoop::Impl* loop);
+    ~Impl();
     
     KMError attachFd(SOCKET_FD fd, uint8_t* init_data = nullptr, size_t init_len = 0);
-    KMError attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser);
+    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser);
     void addHeader(const std::string& name, const std::string& value);
     void addHeader(const std::string& name, uint32_t value);
     KMError sendResponse(int status_code, const std::string& desc, const std::string& ver);
@@ -50,7 +56,7 @@ public:
     const std::string& getVersion() const { return http_parser_.getVersion(); }
     const std::string& getParamValue(std::string name) const { return http_parser_.getParamValue(std::move(name)); }
     const std::string& getHeaderValue(std::string name) const { return http_parser_.getHeaderValue(std::move(name)); }
-    void forEachHeader(HttpParserImpl::EnumrateCallback&& cb) { return http_parser_.forEachHeader(std::move(cb)); }
+    void forEachHeader(HttpParser::Impl::EnumrateCallback&& cb) { return http_parser_.forEachHeader(std::move(cb)); }
     
     void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
     void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
@@ -86,7 +92,7 @@ private:
     void notifyComplete();
     
 private:
-    HttpParserImpl          http_parser_;
+    HttpParser::Impl        http_parser_;
     State                   state_ = State::IDLE;
     
     HeaderMap               header_map_;

@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -17,20 +23,19 @@
 #define __TcpListenerImpl_H__
 
 #include "kmdefs.h"
+#include "kmapi.h"
 #include "evdefs.h"
 #include "util/kmobject.h"
 KUMA_NS_BEGIN
 
-class EventLoopImpl;
-
-class TcpListenerImpl : public KMObject
+class TcpListener::Impl : public KMObject
 {
 public:
-    typedef std::function<void(SOCKET_FD, const char*, uint16_t)> ListenCallback;
-    typedef std::function<void(KMError)> ErrorCallback;
+    using ListenCallback = TcpListener::ListenCallback;
+    using ErrorCallback = TcpListener::ErrorCallback;
     
-    TcpListenerImpl(EventLoopImpl* loop);
-    ~TcpListenerImpl();
+    Impl(EventLoop::Impl* loop);
+    ~Impl();
     
     KMError startListen(const char* host, uint16_t port);
     KMError stopListen(const char* host, uint16_t port);
@@ -51,14 +56,14 @@ private:
     void cleanup();
     
 private:
-    SOCKET_FD       fd_{ INVALID_FD };
-    EventLoopImpl*  loop_;
-    bool            registered_{ false };
-    uint32_t        flags_{ 0 };
-    bool            stopped_{ false };
+    SOCKET_FD           fd_{ INVALID_FD };
+    EventLoop::Impl*    loop_;
+    bool                registered_{ false };
+    uint32_t            flags_{ 0 };
+    bool                stopped_{ false };
     
-    ListenCallback  accept_cb_;
-    ErrorCallback   error_cb_;
+    ListenCallback      accept_cb_;
+    ErrorCallback       error_cb_;
 };
 
 KUMA_NS_END

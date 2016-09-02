@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -19,11 +25,11 @@
 #include "TcpListenerImpl.h"
 #include "TimerManager.h"
 #include "http/HttpParserImpl.h"
-#include "http/HttpRequestImpl.h"
+#include "http/Http1xRequest.h"
 #include "http/HttpResponseImpl.h"
 #include "ws/WebSocketImpl.h"
 #include "http/v2/H2ConnectionImpl.h"
-#include "http/v2/H2Request.h"
+#include "http/v2/Http2Request.h"
 
 #ifdef KUMA_HAS_OPENSSL
 #include "ssl/OpenSslLib.h"
@@ -34,7 +40,7 @@
 KUMA_NS_BEGIN
 
 EventLoop::EventLoop(PollType poll_type)
-: pimpl_(new EventLoopImpl(poll_type))
+: pimpl_(new Impl(poll_type))
 {
 
 }
@@ -89,7 +95,7 @@ void EventLoop::stop()
     pimpl_->stop();
 }
 
-EventLoopImpl* EventLoop::pimpl()
+EventLoop::Impl* EventLoop::pimpl()
 {
     return pimpl_;
 }
@@ -111,7 +117,7 @@ KMError EventLoop::queueInEventLoop(LoopCallback cb)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 TcpSocket::TcpSocket(EventLoop* loop)
-    : pimpl_(new TcpSocketImpl(loop->pimpl()))
+    : pimpl_(new Impl(loop->pimpl()))
 {
 
 }
@@ -242,14 +248,14 @@ SOCKET_FD TcpSocket::getFd() const
     return pimpl_->getFd();
 }
 
-TcpSocketImpl* TcpSocket::pimpl()
+TcpSocket::Impl* TcpSocket::pimpl()
 {
     return pimpl_;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 TcpListener::TcpListener(EventLoop* loop)
-: pimpl_(new TcpListenerImpl(loop->pimpl()))
+: pimpl_(new Impl(loop->pimpl()))
 {
 
 }
@@ -283,14 +289,14 @@ void TcpListener::setErrorCallback(ErrorCallback cb)
     pimpl_->setErrorCallback(std::move(cb));
 }
 
-TcpListenerImpl* TcpListener::pimpl()
+TcpListener::Impl* TcpListener::pimpl()
 {
     return pimpl_;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 UdpSocket::UdpSocket(EventLoop* loop)
-: pimpl_(new UdpSocketImpl(loop->pimpl()))
+: pimpl_(new Impl(loop->pimpl()))
 {
     
 }
@@ -345,7 +351,7 @@ void UdpSocket::setErrorCallback(EventCallback cb)
     pimpl_->setErrorCallback(std::move(cb));
 }
 
-UdpSocketImpl* UdpSocket::pimpl()
+UdpSocket::Impl* UdpSocket::pimpl()
 {
     return pimpl_;
 }
@@ -353,7 +359,7 @@ UdpSocketImpl* UdpSocket::pimpl()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Timer::Timer(EventLoop* loop)
-: pimpl_(new TimerImpl(loop->pimpl()->getTimerMgr()))
+: pimpl_(new Impl(loop->pimpl()->getTimerMgr()))
 {
     
 }
@@ -373,14 +379,14 @@ void Timer::cancel()
     pimpl_->cancel();
 }
 
-TimerImpl* Timer::pimpl()
+Timer::Impl* Timer::pimpl()
 {
     return pimpl_;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 HttpParser::HttpParser()
-: pimpl_(new HttpParserImpl())
+: pimpl_(new Impl())
 {
     
 }
@@ -500,7 +506,7 @@ void HttpParser::setEventCallback(EventCallback cb)
     pimpl_->setEventCallback(std::move(cb));
 }
 
-HttpParserImpl* HttpParser::pimpl()
+HttpParser::Impl* HttpParser::pimpl()
 {
     return pimpl_;
 }
@@ -510,9 +516,9 @@ HttpRequest::HttpRequest(EventLoop* loop, const char* ver)
 {
     strncpy_s(ver_, sizeof(ver_), ver, sizeof(ver_)-1);
     if (is_equal(ver, VersionHTTP2_0)) {
-        pimpl_ = new H2Request(loop->pimpl());
+        pimpl_ = new Http2Request(loop->pimpl());
     } else {
-        pimpl_ = new HttpRequestImpl(loop->pimpl());
+        pimpl_ = new Http1xRequest(loop->pimpl());
     }
 }
 
@@ -603,7 +609,7 @@ void HttpRequest::setResponseCompleteCallback(HttpEventCallback cb)
     pimpl_->setResponseCompleteCallback(std::move(cb));
 }
 
-HttpRequestBase* HttpRequest::pimpl()
+HttpRequest::Impl* HttpRequest::pimpl()
 {
     return pimpl_;
 }
@@ -611,7 +617,7 @@ HttpRequestBase* HttpRequest::pimpl()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 HttpResponse::HttpResponse(EventLoop* loop)
-: pimpl_(new HttpResponseImpl(loop->pimpl()))
+: pimpl_(new Impl(loop->pimpl()))
 {
     
 }
@@ -727,7 +733,7 @@ void HttpResponse::setResponseCompleteCallback(HttpEventCallback cb)
     pimpl_->setResponseCompleteCallback(std::move(cb));
 }
 
-HttpResponseImpl* HttpResponse::pimpl()
+HttpResponse::Impl* HttpResponse::pimpl()
 {
     return pimpl_;
 }
@@ -735,7 +741,7 @@ HttpResponseImpl* HttpResponse::pimpl()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 WebSocket::WebSocket(EventLoop* loop)
-: pimpl_(new WebSocketImpl(loop->pimpl()))
+: pimpl_(new Impl(loop->pimpl()))
 {
     
 }
@@ -810,14 +816,14 @@ void WebSocket::setErrorCallback(EventCallback cb)
     pimpl_->setErrorCallback(std::move(cb));
 }
 
-WebSocketImpl* WebSocket::pimpl()
+WebSocket::Impl* WebSocket::pimpl()
 {
     return pimpl_;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 H2Connection::H2Connection(EventLoop* loop)
-: pimpl_(new H2ConnectionImpl(loop->pimpl()))
+: pimpl_(new Impl(loop->pimpl()))
 {
     
 }
@@ -852,7 +858,7 @@ KMError H2Connection::close()
     return pimpl_->close();
 }
 
-H2ConnectionImpl* H2Connection::pimpl()
+H2Connection::Impl* H2Connection::pimpl()
 {
     return pimpl_;
 }

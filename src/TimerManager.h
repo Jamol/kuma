@@ -23,6 +23,7 @@
 #define __TimerManager_H__
 
 #include "kmdefs.h"
+#include "kmapi.h"
 #include "util/util.h"
 
 #include <memory>
@@ -39,17 +40,14 @@ KUMA_NS_BEGIN
 #define TIMER_VECTOR_MASK   (TIMER_VECTOR_SIZE - 1)
 #define TV_COUNT            4
 
-class TimerImpl;
-class EventLoopImpl;
-
 class TimerManager
 {
 public:
-    TimerManager(EventLoopImpl* loop);
+    TimerManager(EventLoop::Impl* loop);
     ~TimerManager();
 
-    bool scheduleTimer(TimerImpl* timer, uint32_t delay_ms, TimerMode mode);
-    void cancelTimer(TimerImpl* timer);
+    bool scheduleTimer(Timer::Impl* timer, uint32_t delay_ms, TimerMode mode);
+    void cancelTimer(Timer::Impl* timer);
 
     int checkExpire(unsigned long* remain_ms = nullptr);
 
@@ -70,7 +68,7 @@ public:
         bool            repeating_{ false };
         uint32_t        delay_ms_{ 0 };
         TICK_COUNT_TYPE start_tick_{ 0 };
-        TimerImpl*      timer_{ nullptr };
+        Timer::Impl*    timer_{ nullptr };
         
     protected:
         friend class TimerManager;
@@ -109,7 +107,7 @@ private:
     typedef std::recursive_mutex KM_Mutex;
     typedef std::lock_guard<KM_Mutex> KM_Lock_Guard;
     
-    EventLoopImpl* loop_;
+    EventLoop::Impl* loop_;
     KM_Mutex mutex_;
     KM_Mutex running_mutex_;
     TimerNode*  running_node_{ nullptr };
@@ -122,13 +120,13 @@ private:
 };
 typedef std::shared_ptr<TimerManager> TimerManagerPtr;
 
-class TimerImpl
+class Timer::Impl
 {
 public:
-    typedef std::function<void(void)> TimerCallback;
+    using TimerCallback = Timer::TimerCallback;
     
-    TimerImpl(TimerManagerPtr mgr);
-    ~TimerImpl();
+    Impl(TimerManagerPtr mgr);
+    ~Impl();
     
     bool schedule(uint32_t delay_ms, TimerCallback cb, TimerMode mode);
     void cancel();

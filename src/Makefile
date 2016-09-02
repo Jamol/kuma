@@ -42,14 +42,14 @@ SRCS =  \
     poll/Notifier.cpp \
     http/Uri.cpp \
     http/HttpParserImpl.cpp \
-    http/HttpRequestBase.cpp \
     http/HttpRequestImpl.cpp \
+    http/Http1xRequest.cpp \
     http/HttpResponseImpl.cpp \
     http/v2/H2Frame.cpp \
     http/v2/FrameParser.cpp \
     http/v2/H2Stream.cpp \
-    http/v2/H2Request.cpp \
-    http/v2/H2Response.cpp \
+    http/v2/Http2Request.cpp \
+    http/v2/Http2Response.cpp \
     http/v2/H2ConnectionImpl.cpp \
     http/v2/H2ConnectionMgr.cpp \
     http/v2/hpack/HPackTable.cpp \

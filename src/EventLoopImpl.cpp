@@ -30,14 +30,14 @@ KUMA_NS_BEGIN
 
 IOPoll* createIOPoll(PollType poll_type);
 
-EventLoopImpl::EventLoopImpl(PollType poll_type)
+EventLoop::Impl::Impl(PollType poll_type)
 : poll_(createIOPoll(poll_type))
 , timer_mgr_(new TimerManager(this))
 {
     KM_SetObjKey("EventLoop");
 }
 
-EventLoopImpl::~EventLoopImpl()
+EventLoop::Impl::~Impl()
 {
     if(poll_) {
         delete poll_;
@@ -45,7 +45,7 @@ EventLoopImpl::~EventLoopImpl()
     }
 }
 
-bool EventLoopImpl::init()
+bool EventLoop::Impl::init()
 {
     if(!poll_->init()) {
         return false;
@@ -55,7 +55,7 @@ bool EventLoopImpl::init()
     return true;
 }
 
-PollType EventLoopImpl::getPollType() const
+PollType EventLoop::Impl::getPollType() const
 {
     if(poll_) {
         return poll_->getType();
@@ -63,7 +63,7 @@ PollType EventLoopImpl::getPollType() const
     return PollType::NONE;
 }
 
-bool EventLoopImpl::isPollLT() const
+bool EventLoop::Impl::isPollLT() const
 {
     if(poll_) {
         return poll_->isLevelTriggered();
@@ -71,7 +71,7 @@ bool EventLoopImpl::isPollLT() const
     return false;
 }
 
-KMError EventLoopImpl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
+KMError EventLoop::Impl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
 {
     if(isInEventLoopThread()) {
         return poll_->registerFd(fd, events, std::move(cb));
@@ -84,7 +84,7 @@ KMError EventLoopImpl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
     });
 }
 
-KMError EventLoopImpl::updateFd(SOCKET_FD fd, uint32_t events)
+KMError EventLoop::Impl::updateFd(SOCKET_FD fd, uint32_t events)
 {
     if(isInEventLoopThread()) {
         return poll_->updateFd(fd, events);
@@ -97,7 +97,7 @@ KMError EventLoopImpl::updateFd(SOCKET_FD fd, uint32_t events)
     });
 }
 
-KMError EventLoopImpl::unregisterFd(SOCKET_FD fd, bool close_fd)
+KMError EventLoop::Impl::unregisterFd(SOCKET_FD fd, bool close_fd)
 {
     if(isInEventLoopThread()) {
         auto ret = poll_->unregisterFd(fd);
@@ -119,12 +119,12 @@ KMError EventLoopImpl::unregisterFd(SOCKET_FD fd, bool close_fd)
     }
 }
 
-void EventLoopImpl::addListener(Listener *l)
+void EventLoop::Impl::addListener(Listener *l)
 {
     listeners_.push_back(l);
 }
 
-void EventLoopImpl::removeListener(Listener *l)
+void EventLoop::Impl::removeListener(Listener *l)
 {
     for (auto it = listeners_.begin(); it != listeners_.end(); ++it) {
         if (*it == l) {
@@ -134,7 +134,7 @@ void EventLoopImpl::removeListener(Listener *l)
     }
 }
 
-void EventLoopImpl::loopOnce(uint32_t max_wait_ms)
+void EventLoop::Impl::loopOnce(uint32_t max_wait_ms)
 {
     LoopCallback cb;
     while (cb_queue_.dequeue(cb)) {
@@ -150,7 +150,7 @@ void EventLoopImpl::loopOnce(uint32_t max_wait_ms)
     poll_->wait((uint32_t)wait_ms);
 }
 
-void EventLoopImpl::loop(uint32_t max_wait_ms)
+void EventLoop::Impl::loop(uint32_t max_wait_ms)
 {
     while (!stop_loop_) {
         loopOnce(max_wait_ms);
@@ -168,19 +168,19 @@ void EventLoopImpl::loop(uint32_t max_wait_ms)
     KUMA_INFOXTRACE("loop, stopped");
 }
 
-void EventLoopImpl::notify()
+void EventLoop::Impl::notify()
 {
     poll_->notify();
 }
 
-void EventLoopImpl::stop()
+void EventLoop::Impl::stop()
 {
     KUMA_INFOXTRACE("stop");
     stop_loop_ = true;
     poll_->notify();
 }
 
-KMError EventLoopImpl::runInEventLoop(LoopCallback cb)
+KMError EventLoop::Impl::runInEventLoop(LoopCallback cb)
 {
     if(isInEventLoopThread()) {
         cb();
@@ -191,7 +191,7 @@ KMError EventLoopImpl::runInEventLoop(LoopCallback cb)
     return KMError::NOERR;
 }
 
-KMError EventLoopImpl::runInEventLoopSync(LoopCallback cb)
+KMError EventLoop::Impl::runInEventLoopSync(LoopCallback cb)
 {
     if(isInEventLoopThread()) {
         cb();
@@ -214,7 +214,7 @@ KMError EventLoopImpl::runInEventLoopSync(LoopCallback cb)
     return KMError::NOERR;
 }
 
-KMError EventLoopImpl::queueInEventLoop(LoopCallback cb)
+KMError EventLoop::Impl::queueInEventLoop(LoopCallback cb)
 {
     cb_queue_.enqueue(std::move(cb));
     if(!isInEventLoopThread()) {

@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -27,17 +33,6 @@
 #endif
 
 KUMA_NS_BEGIN
-
-class EventLoopImpl;
-class TcpSocketImpl;
-class UdpSocketImpl;
-class TcpListenerImpl;
-class TimerImpl;
-class HttpParserImpl;
-class HttpRequestBase;
-class HttpResponseImpl;
-class WebSocketImpl;
-class H2ConnectionImpl;
 
 class KUMA_API EventLoop
 {
@@ -65,10 +60,12 @@ public:
     void loopOnce(uint32_t max_wait_ms);
     void loop(uint32_t max_wait_ms = -1);
     void stop();
-    EventLoopImpl* pimpl();
+    
+    class Impl;
+    Impl* pimpl();
     
 private:
-    EventLoopImpl*  pimpl_;
+    Impl*  pimpl_;
 };
 
 class KUMA_API TcpSocket
@@ -104,10 +101,12 @@ public:
     void setErrorCallback(EventCallback cb);
     
     SOCKET_FD getFd() const;
-    TcpSocketImpl* pimpl();
+    
+    class Impl;
+    Impl* pimpl();
     
 private:
-    TcpSocketImpl* pimpl_;
+    Impl* pimpl_;
 };
 
 class KUMA_API TcpListener
@@ -125,10 +124,12 @@ public:
     
     void setListenCallback(ListenCallback cb);
     void setErrorCallback(ErrorCallback cb);
-    TcpListenerImpl* pimpl();
+    
+    class Impl;
+    Impl* pimpl();
     
 private:
-    TcpListenerImpl* pimpl_;
+    Impl* pimpl_;
 };
 
 class KUMA_API UdpSocket
@@ -150,10 +151,12 @@ public:
     
     void setReadCallback(EventCallback cb);
     void setErrorCallback(EventCallback cb);
-    UdpSocketImpl* pimpl();
+    
+    class Impl;
+    Impl* pimpl();
     
 private:
-    UdpSocketImpl* pimpl_;
+    Impl* pimpl_;
 };
 
 class KUMA_API Timer
@@ -166,10 +169,12 @@ public:
     
     bool schedule(uint32_t delay_ms, TimerCallback cb, TimerMode mode=TimerMode::ONE_SHOT);
     void cancel();
-    TimerImpl* pimpl();
+    
+    class Impl;
+    Impl* pimpl();
     
 private:
-    TimerImpl* pimpl_;
+    Impl* pimpl_;
 };
 
 class KUMA_API HttpParser
@@ -211,10 +216,11 @@ public:
     void setDataCallback(DataCallback cb);
     void setEventCallback(EventCallback cb);
     
-    HttpParserImpl* pimpl();
+    class Impl;
+    Impl* pimpl();
     
 private:
-    HttpParserImpl* pimpl_;
+    Impl* pimpl_;
 };
 
 class KUMA_API HttpRequest
@@ -246,10 +252,11 @@ public:
     void setHeaderCompleteCallback(HttpEventCallback cb);
     void setResponseCompleteCallback(HttpEventCallback cb);
     
-    HttpRequestBase* pimpl();
+    class Impl;
+    Impl* pimpl();
     
 private:
-    HttpRequestBase* pimpl_;
+    Impl* pimpl_;
     char ver_[9] = {0};
 };
 
@@ -287,10 +294,11 @@ public:
     void setRequestCompleteCallback(HttpEventCallback cb);
     void setResponseCompleteCallback(HttpEventCallback cb);
     
-    HttpResponseImpl* pimpl();
+    class Impl;
+    Impl* pimpl();
     
 private:
-    HttpResponseImpl* pimpl_;
+    Impl* pimpl_;
 };
 
 class KUMA_API WebSocket
@@ -317,10 +325,11 @@ public:
     void setWriteCallback(EventCallback cb);
     void setErrorCallback(EventCallback cb);
     
-    WebSocketImpl* pimpl();
+    class Impl;
+    Impl* pimpl();
     
 private:
-    WebSocketImpl* pimpl_;
+    Impl* pimpl_;
 };
 
 class KUMA_API H2Connection
@@ -337,10 +346,11 @@ public:
     KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser);
     KMError close();
     
-    H2ConnectionImpl* pimpl();
+    class Impl;
+    Impl* pimpl();
     
 private:
-    H2ConnectionImpl* pimpl_;
+    Impl* pimpl_;
 };
 
 using TraceFunc = std::function<void(int, const char*)>; // (level, msg)

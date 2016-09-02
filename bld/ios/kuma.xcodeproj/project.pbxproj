@@ -19,12 +19,12 @@
 		6F84E97D1D5B031300AF8E3B /* H2ConnectionImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F84E96F1D5B031300AF8E3B /* H2ConnectionImpl.cpp */; };
 		6F84E97E1D5B031300AF8E3B /* H2ConnectionMgr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F84E9711D5B031300AF8E3B /* H2ConnectionMgr.cpp */; };
 		6F84E97F1D5B031300AF8E3B /* H2Frame.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F84E9741D5B031300AF8E3B /* H2Frame.cpp */; };
-		6F84E9801D5B031300AF8E3B /* H2Request.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F84E9761D5B031300AF8E3B /* H2Request.cpp */; };
-		6F84E9811D5B031300AF8E3B /* H2Response.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F84E9781D5B031300AF8E3B /* H2Response.cpp */; };
+		6F84E9801D5B031300AF8E3B /* Http2Request.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F84E9761D5B031300AF8E3B /* Http2Request.cpp */; };
+		6F84E9811D5B031300AF8E3B /* Http2Response.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F84E9781D5B031300AF8E3B /* Http2Response.cpp */; };
 		6F84E9821D5B031300AF8E3B /* H2Stream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F84E97A1D5B031300AF8E3B /* H2Stream.cpp */; };
 		6F84E9891D5B032D00AF8E3B /* HPacker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F84E9841D5B032D00AF8E3B /* HPacker.cpp */; };
 		6F84E98A1D5B032D00AF8E3B /* HPackTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F84E9861D5B032D00AF8E3B /* HPackTable.cpp */; };
-		6F91F1751D782EF8004A95B9 /* HttpRequestBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F1731D782EF8004A95B9 /* HttpRequestBase.cpp */; };
+		6F91F1751D782EF8004A95B9 /* Http1xRequest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F1731D782EF8004A95B9 /* Http1xRequest.cpp */; };
 		6F91F1771D782F1A004A95B9 /* Notifier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F1761D782F1A004A95B9 /* Notifier.cpp */; };
 		6FECED011C2138E700310F52 /* HttpParserImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECECF91C2138E700310F52 /* HttpParserImpl.cpp */; };
 		6FECED021C2138E700310F52 /* HttpRequestImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECECFB1C2138E700310F52 /* HttpRequestImpl.cpp */; };
@@ -94,10 +94,10 @@
 		6F84E9731D5B031300AF8E3B /* h2defs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = h2defs.h; sourceTree = "<group>"; };
 		6F84E9741D5B031300AF8E3B /* H2Frame.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H2Frame.cpp; sourceTree = "<group>"; };
 		6F84E9751D5B031300AF8E3B /* H2Frame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H2Frame.h; sourceTree = "<group>"; };
-		6F84E9761D5B031300AF8E3B /* H2Request.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H2Request.cpp; sourceTree = "<group>"; };
-		6F84E9771D5B031300AF8E3B /* H2Request.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H2Request.h; sourceTree = "<group>"; };
-		6F84E9781D5B031300AF8E3B /* H2Response.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H2Response.cpp; sourceTree = "<group>"; };
-		6F84E9791D5B031300AF8E3B /* H2Response.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H2Response.h; sourceTree = "<group>"; };
+		6F84E9761D5B031300AF8E3B /* Http2Request.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Http2Request.cpp; sourceTree = "<group>"; };
+		6F84E9771D5B031300AF8E3B /* Http2Request.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Http2Request.h; sourceTree = "<group>"; };
+		6F84E9781D5B031300AF8E3B /* Http2Response.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Http2Response.cpp; sourceTree = "<group>"; };
+		6F84E9791D5B031300AF8E3B /* Http2Response.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Http2Response.h; sourceTree = "<group>"; };
 		6F84E97A1D5B031300AF8E3B /* H2Stream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H2Stream.cpp; sourceTree = "<group>"; };
 		6F84E97B1D5B031300AF8E3B /* H2Stream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H2Stream.h; sourceTree = "<group>"; };
 		6F84E9841D5B032D00AF8E3B /* HPacker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HPacker.cpp; sourceTree = "<group>"; };
@@ -108,8 +108,8 @@
 		6F84E98B1D5B035F00AF8E3B /* DestroyDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DestroyDetector.h; sourceTree = "<group>"; };
 		6F84E98C1D5B036F00AF8E3B /* kmobject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmobject.h; sourceTree = "<group>"; };
 		6F84E9911D5B1C7200AF8E3B /* httpdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httpdefs.h; sourceTree = "<group>"; };
-		6F91F1731D782EF8004A95B9 /* HttpRequestBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpRequestBase.cpp; sourceTree = "<group>"; };
-		6F91F1741D782EF8004A95B9 /* HttpRequestBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpRequestBase.h; sourceTree = "<group>"; };
+		6F91F1731D782EF8004A95B9 /* Http1xRequest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Http1xRequest.cpp; sourceTree = "<group>"; };
+		6F91F1741D782EF8004A95B9 /* Http1xRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Http1xRequest.h; sourceTree = "<group>"; };
 		6F91F1761D782F1A004A95B9 /* Notifier.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Notifier.cpp; sourceTree = "<group>"; };
 		6FECECF91C2138E700310F52 /* HttpParserImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpParserImpl.cpp; sourceTree = "<group>"; };
 		6FECECFA1C2138E700310F52 /* HttpParserImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpParserImpl.h; sourceTree = "<group>"; };
@@ -236,10 +236,10 @@
 				6F84E9731D5B031300AF8E3B /* h2defs.h */,
 				6F84E9741D5B031300AF8E3B /* H2Frame.cpp */,
 				6F84E9751D5B031300AF8E3B /* H2Frame.h */,
-				6F84E9761D5B031300AF8E3B /* H2Request.cpp */,
-				6F84E9771D5B031300AF8E3B /* H2Request.h */,
-				6F84E9781D5B031300AF8E3B /* H2Response.cpp */,
-				6F84E9791D5B031300AF8E3B /* H2Response.h */,
+				6F84E9761D5B031300AF8E3B /* Http2Request.cpp */,
+				6F84E9771D5B031300AF8E3B /* Http2Request.h */,
+				6F84E9781D5B031300AF8E3B /* Http2Response.cpp */,
+				6F84E9791D5B031300AF8E3B /* Http2Response.h */,
 				6F84E97A1D5B031300AF8E3B /* H2Stream.cpp */,
 				6F84E97B1D5B031300AF8E3B /* H2Stream.h */,
 			);
@@ -263,8 +263,8 @@
 			children = (
 				6F84E96C1D5B02EF00AF8E3B /* v2 */,
 				6F84E9911D5B1C7200AF8E3B /* httpdefs.h */,
-				6F91F1731D782EF8004A95B9 /* HttpRequestBase.cpp */,
-				6F91F1741D782EF8004A95B9 /* HttpRequestBase.h */,
+				6F91F1731D782EF8004A95B9 /* Http1xRequest.cpp */,
+				6F91F1741D782EF8004A95B9 /* Http1xRequest.h */,
 				6FECECF91C2138E700310F52 /* HttpParserImpl.cpp */,
 				6FECECFA1C2138E700310F52 /* HttpParserImpl.h */,
 				6FECECFB1C2138E700310F52 /* HttpRequestImpl.cpp */,
@@ -421,7 +421,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				6F91F1771D782F1A004A95B9 /* Notifier.cpp in Sources */,
-				6F91F1751D782EF8004A95B9 /* HttpRequestBase.cpp in Sources */,
+				6F91F1751D782EF8004A95B9 /* Http1xRequest.cpp in Sources */,
 				6F7D5FEA1B33EC65000FF2F8 /* UdpSocketImpl.cpp in Sources */,
 				6FECED041C2138E700310F52 /* Uri.cpp in Sources */,
 				6F84E9891D5B032D00AF8E3B /* HPacker.cpp in Sources */,
@@ -439,7 +439,7 @@
 				6FECED031C2138E700310F52 /* HttpResponseImpl.cpp in Sources */,
 				6FECED141C2139B100310F52 /* SslHandler.cpp in Sources */,
 				6FECED1C1C2139CA00310F52 /* base64.cpp in Sources */,
-				6F84E9811D5B031300AF8E3B /* H2Response.cpp in Sources */,
+				6F84E9811D5B031300AF8E3B /* Http2Response.cpp in Sources */,
 				6F7D5FE51B33EC65000FF2F8 /* kmapi.cpp in Sources */,
 				6F7D5FE41B33EC65000FF2F8 /* EventLoopImpl.cpp in Sources */,
 				6F7D5FE91B33EC65000FF2F8 /* TimerManager.cpp in Sources */,
@@ -447,7 +447,7 @@
 				6FECED131C2139B100310F52 /* OpenSslLib.cpp in Sources */,
 				6FECED241C2139D600310F52 /* WSHandler.cpp in Sources */,
 				6FECED1E1C2139CA00310F52 /* util.cpp in Sources */,
-				6F84E9801D5B031300AF8E3B /* H2Request.cpp in Sources */,
+				6F84E9801D5B031300AF8E3B /* Http2Request.cpp in Sources */,
 				6FECED011C2138E700310F52 /* HttpParserImpl.cpp in Sources */,
 				6FECED021C2138E700310F52 /* HttpRequestImpl.cpp in Sources */,
 				6F84E97D1D5B031300AF8E3B /* H2ConnectionImpl.cpp in Sources */,

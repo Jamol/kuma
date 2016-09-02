@@ -23,6 +23,7 @@
 #define __H2Stream_H__
 
 #include "kmdefs.h"
+#include "kmapi.h"
 #include "util/kmobject.h"
 #include <memory>
 
@@ -31,8 +32,7 @@
 
 KUMA_NS_BEGIN
 
-class H2ConnectionImpl;
-using H2ConnectionPtr = std::shared_ptr<H2ConnectionImpl>;
+using H2ConnectionPtr = std::shared_ptr<H2Connection::Impl>;
 
 class H2Stream : public KMObject
 {

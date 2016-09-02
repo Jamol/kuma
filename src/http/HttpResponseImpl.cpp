@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -26,23 +32,23 @@ static const std::string str_content_length = "Content-Length";
 static const std::string str_transfer_encoding = "Transfer-Encoding";
 static const std::string str_chunked = "chunked";
 //////////////////////////////////////////////////////////////////////////
-HttpResponseImpl::HttpResponseImpl(EventLoopImpl* loop)
+HttpResponse::Impl::Impl(EventLoop::Impl* loop)
 : TcpConnection(loop), http_parser_()
 {
     KM_SetObjKey("HttpResponse");
 }
 
-HttpResponseImpl::~HttpResponseImpl()
+HttpResponse::Impl::~Impl()
 {
     
 }
 
-void HttpResponseImpl::cleanup()
+void HttpResponse::Impl::cleanup()
 {
     TcpConnection::close();
 }
 
-KMError HttpResponseImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, size_t init_len)
+KMError HttpResponse::Impl::attachFd(SOCKET_FD fd, uint8_t* init_data, size_t init_len)
 {
     setState(State::RECVING_REQUEST);
     http_parser_.reset();
@@ -51,7 +57,7 @@ KMError HttpResponseImpl::attachFd(SOCKET_FD fd, uint8_t* init_data, size_t init
     return TcpConnection::attachFd(fd);
 }
 
-KMError HttpResponseImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& parser)
+KMError HttpResponse::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser)
 {
     setState(State::RECVING_REQUEST);
     http_parser_.reset();
@@ -66,21 +72,21 @@ KMError HttpResponseImpl::attachSocket(TcpSocketImpl&& tcp, HttpParserImpl&& par
     return ret;
 }
 
-void HttpResponseImpl::addHeader(const std::string& name, const std::string& value)
+void HttpResponse::Impl::addHeader(const std::string& name, const std::string& value)
 {
     if(!name.empty()) {
         header_map_[name] = value;
     }
 }
 
-void HttpResponseImpl::addHeader(const std::string& name, uint32_t value)
+void HttpResponse::Impl::addHeader(const std::string& name, uint32_t value)
 {
     std::stringstream ss;
     ss << value;
     addHeader(name, ss.str());
 }
 
-void HttpResponseImpl::buildResponse(int status_code, const std::string& desc, const std::string& ver)
+void HttpResponse::Impl::buildResponse(int status_code, const std::string& desc, const std::string& ver)
 {
     std::stringstream ss;
     ss << (!ver.empty()?ver:VersionHTTP1_1) << " " << status_code << " " << desc << "\r\n";
@@ -96,7 +102,7 @@ void HttpResponseImpl::buildResponse(int status_code, const std::string& desc, c
     send_buffer_.assign(str.begin(), str.end());
 }
 
-KMError HttpResponseImpl::sendResponse(int status_code, const std::string& desc, const std::string& ver)
+KMError HttpResponse::Impl::sendResponse(int status_code, const std::string& desc, const std::string& ver)
 {
     KUMA_INFOXTRACE("sendResponse, status_code="<<status_code);
     if (getState() != State::WAIT_FOR_RESPONSE) {
@@ -131,7 +137,7 @@ KMError HttpResponseImpl::sendResponse(int status_code, const std::string& desc,
     return KMError::NOERR;
 }
 
-int HttpResponseImpl::sendData(const uint8_t* data, size_t len)
+int HttpResponse::Impl::sendData(const uint8_t* data, size_t len)
 {
     if(!sendBufferEmpty() || getState() != State::SENDING_BODY) {
         return 0;
@@ -155,7 +161,7 @@ int HttpResponseImpl::sendData(const uint8_t* data, size_t len)
     return ret;
 }
 
-int HttpResponseImpl::sendChunk(const uint8_t* data, size_t len)
+int HttpResponse::Impl::sendChunk(const uint8_t* data, size_t len)
 {
     if(nullptr == data && 0 == len) { // chunk end
         static const std::string _chunk_end_token_ = "0\r\n\r\n";
@@ -189,7 +195,7 @@ int HttpResponseImpl::sendChunk(const uint8_t* data, size_t len)
     }
 }
 
-void HttpResponseImpl::reset()
+void HttpResponse::Impl::reset()
 {
     http_parser_.reset();
     header_map_.clear();
@@ -202,7 +208,7 @@ void HttpResponseImpl::reset()
     setState(State::RECVING_REQUEST);
 }
 
-KMError HttpResponseImpl::close()
+KMError HttpResponse::Impl::close()
 {
     KUMA_INFOXTRACE("close");
     cleanup();
@@ -210,7 +216,7 @@ KMError HttpResponseImpl::close()
     return KMError::NOERR;
 }
 
-KMError HttpResponseImpl::handleInputData(uint8_t *src, size_t len)
+KMError HttpResponse::Impl::handleInputData(uint8_t *src, size_t len)
 {
     DESTROY_DETECTOR_SETUP();
     int bytes_used = http_parser_.parse((char*)src, len);
@@ -224,7 +230,7 @@ KMError HttpResponseImpl::handleInputData(uint8_t *src, size_t len)
     return KMError::NOERR;
 }
 
-void HttpResponseImpl::onWrite()
+void HttpResponse::Impl::onWrite()
 {
     if (getState() == State::SENDING_HEADER) {
         if(has_content_length_ && 0 == content_length_ && !is_chunked_) {
@@ -244,7 +250,7 @@ void HttpResponseImpl::onWrite()
     if(write_cb_) write_cb_(KMError::NOERR);
 }
 
-void HttpResponseImpl::onError(KMError err)
+void HttpResponse::Impl::onError(KMError err)
 {
     KUMA_INFOXTRACE("onError, err="<<int(err));
     cleanup();
@@ -256,12 +262,12 @@ void HttpResponseImpl::onError(KMError err)
     }
 }
 
-void HttpResponseImpl::onHttpData(const char* data, size_t len)
+void HttpResponse::Impl::onHttpData(const char* data, size_t len)
 {
     if(data_cb_) data_cb_((uint8_t*)data, len);
 }
 
-void HttpResponseImpl::onHttpEvent(HttpEvent ev)
+void HttpResponse::Impl::onHttpEvent(HttpEvent ev)
 {
     KUMA_INFOXTRACE("onHttpEvent, ev="<<int(ev));
     switch (ev) {
@@ -285,7 +291,7 @@ void HttpResponseImpl::onHttpEvent(HttpEvent ev)
     }
 }
 
-void HttpResponseImpl::notifyComplete()
+void HttpResponse::Impl::notifyComplete()
 {
     if(response_cb_) response_cb_();
 }

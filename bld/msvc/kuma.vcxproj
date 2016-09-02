@@ -162,8 +162,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\EventLoopImpl.cpp" />
+    <ClCompile Include="..\..\src\http\Http1xRequest.cpp" />
     <ClCompile Include="..\..\src\http\HttpParserImpl.cpp" />
-    <ClCompile Include="..\..\src\http\HttpRequestBase.cpp" />
     <ClCompile Include="..\..\src\http\HttpRequestImpl.cpp" />
     <ClCompile Include="..\..\src\http\HttpResponseImpl.cpp" />
     <ClCompile Include="..\..\src\http\Uri.cpp" />
@@ -171,11 +171,11 @@
     <ClCompile Include="..\..\src\http\v2\H2ConnectionImpl.cpp" />
     <ClCompile Include="..\..\src\http\v2\H2ConnectionMgr.cpp" />
     <ClCompile Include="..\..\src\http\v2\H2Frame.cpp" />
-    <ClCompile Include="..\..\src\http\v2\H2Request.cpp" />
-    <ClCompile Include="..\..\src\http\v2\H2Response.cpp" />
     <ClCompile Include="..\..\src\http\v2\H2Stream.cpp" />
     <ClCompile Include="..\..\src\http\v2\hpack\HPacker.cpp" />
     <ClCompile Include="..\..\src\http\v2\hpack\HPackTable.cpp" />
+    <ClCompile Include="..\..\src\http\v2\Http2Request.cpp" />
+    <ClCompile Include="..\..\src\http\v2\Http2Response.cpp" />
     <ClCompile Include="..\..\src\kmapi.cpp" />
     <ClCompile Include="..\..\src\poll\Notifier.cpp" />
     <ClCompile Include="..\..\src\poll\SelectPoll.cpp" />
@@ -196,8 +196,8 @@
   <ItemGroup>
     <ClInclude Include="..\..\src\evdefs.h" />
     <ClInclude Include="..\..\src\EventLoopImpl.h" />
+    <ClInclude Include="..\..\src\http\Http1xRequest.h" />
     <ClInclude Include="..\..\src\http\HttpParserImpl.h" />
-    <ClInclude Include="..\..\src\http\HttpRequestBase.h" />
     <ClInclude Include="..\..\src\http\HttpRequestImpl.h" />
     <ClInclude Include="..\..\src\http\HttpResponseImpl.h" />
     <ClInclude Include="..\..\src\http\Uri.h" />
@@ -206,13 +206,13 @@
     <ClInclude Include="..\..\src\http\v2\H2ConnectionMgr.h" />
     <ClInclude Include="..\..\src\http\v2\h2defs.h" />
     <ClInclude Include="..\..\src\http\v2\H2Frame.h" />
-    <ClInclude Include="..\..\src\http\v2\H2Request.h" />
-    <ClInclude Include="..\..\src\http\v2\H2Response.h" />
     <ClInclude Include="..\..\src\http\v2\H2Stream.h" />
     <ClInclude Include="..\..\src\http\v2\hpack\HPacker.h" />
     <ClInclude Include="..\..\src\http\v2\hpack\HPackTable.h" />
     <ClInclude Include="..\..\src\http\v2\hpack\hpack_huffman_table.h" />
     <ClInclude Include="..\..\src\http\v2\hpack\StaticTable.h" />
+    <ClInclude Include="..\..\src\http\v2\Http2Request.h" />
+    <ClInclude Include="..\..\src\http\v2\Http2Response.h" />
     <ClInclude Include="..\..\src\kmapi.h" />
     <ClInclude Include="..\..\src\kmconf.h" />
     <ClInclude Include="..\..\src\kmdefs.h" />

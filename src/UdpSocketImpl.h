@@ -1,8 +1,14 @@
 /* Copyright (c) 2014, Fengping Bao <jamol@live.com>
  *
- * Permission to use, copy, modify, and/or distribute this software for any
- * purpose with or without fee is hereby granted, provided that the above
- * copyright notice and this permission notice appear in all copies.
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
  *
  * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
  * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
@@ -17,6 +23,7 @@
 #define __UdpSocketImpl_H__
 
 #include "kmdefs.h"
+#include "kmapi.h"
 #include "evdefs.h"
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
@@ -29,15 +36,13 @@
 
 KUMA_NS_BEGIN
 
-class EventLoopImpl;
-
-class UdpSocketImpl : public KMObject, public DestroyDetector
+class UdpSocket::Impl : public KMObject, public DestroyDetector
 {
 public:
-    typedef std::function<void(KMError)> EventCallback;
+    using EventCallback = UdpSocket::EventCallback;
     
-    UdpSocketImpl(EventLoopImpl* loop);
-    ~UdpSocketImpl();
+    Impl(EventLoop::Impl* loop);
+    ~Impl();
     
     KMError bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags);
     int send(const uint8_t* data, size_t length, const char* host, uint16_t port);
@@ -60,13 +65,13 @@ private:
     void cleanup();
     
 private:
-    SOCKET_FD       fd_{ INVALID_FD };
-    EventLoopImpl*  loop_;
-    bool            registered_{ false };
-    uint32_t        flags_{ 0 };
+    SOCKET_FD           fd_{ INVALID_FD };
+    EventLoop::Impl*    loop_;
+    bool                registered_{ false };
+    uint32_t            flags_{ 0 };
     
-    EventCallback   read_cb_;
-    EventCallback   error_cb_;
+    EventCallback       read_cb_;
+    EventCallback       error_cb_;
     
     sockaddr_storage    bind_addr_;
     sockaddr_storage    mcast_addr_;

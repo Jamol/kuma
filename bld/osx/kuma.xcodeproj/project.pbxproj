@@ -29,8 +29,8 @@
 		6F7512921D76BE27000BE6EC /* Notifier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7512911D76BE27000BE6EC /* Notifier.cpp */; };
 		6F7512941D76C237000BE6EC /* SocketNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F7512931D76C237000BE6EC /* SocketNotifier.h */; };
 		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
-		6F91F1711D782DD3004A95B9 /* HttpRequestBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F16F1D782DD3004A95B9 /* HttpRequestBase.cpp */; };
-		6F91F1721D782DD3004A95B9 /* HttpRequestBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F91F1701D782DD3004A95B9 /* HttpRequestBase.h */; };
+		6F91F1711D782DD3004A95B9 /* Http1xRequest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F16F1D782DD3004A95B9 /* Http1xRequest.cpp */; };
+		6F91F1721D782DD3004A95B9 /* Http1xRequest.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F91F1701D782DD3004A95B9 /* Http1xRequest.h */; };
 		6F9E767A1D36758B005E04B2 /* httpdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F9E76791D36758B005E04B2 /* httpdefs.h */; };
 		6FA951421A3808450033C9CF /* kmdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FA951411A3808450033C9CF /* kmdefs.h */; };
 		6FBB2C901D139C430024550F /* IOPoll.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FBB2C8C1D139C430024550F /* IOPoll.h */; };
@@ -62,10 +62,10 @@
 		6FE0EF061D409863006136B7 /* h2defs.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FE0EEF71D409863006136B7 /* h2defs.h */; };
 		6FE0EF071D409863006136B7 /* H2Frame.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FE0EEF81D409863006136B7 /* H2Frame.cpp */; };
 		6FE0EF081D409863006136B7 /* H2Frame.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FE0EEF91D409863006136B7 /* H2Frame.h */; };
-		6FE0EF091D409863006136B7 /* H2Request.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FE0EEFA1D409863006136B7 /* H2Request.cpp */; };
-		6FE0EF0A1D409863006136B7 /* H2Request.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FE0EEFB1D409863006136B7 /* H2Request.h */; };
-		6FE0EF0B1D409863006136B7 /* H2Response.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FE0EEFC1D409863006136B7 /* H2Response.cpp */; };
-		6FE0EF0C1D409863006136B7 /* H2Response.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FE0EEFD1D409863006136B7 /* H2Response.h */; };
+		6FE0EF091D409863006136B7 /* Http2Request.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FE0EEFA1D409863006136B7 /* Http2Request.cpp */; };
+		6FE0EF0A1D409863006136B7 /* Http2Request.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FE0EEFB1D409863006136B7 /* Http2Request.h */; };
+		6FE0EF0B1D409863006136B7 /* Http2Response.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FE0EEFC1D409863006136B7 /* Http2Response.cpp */; };
+		6FE0EF0C1D409863006136B7 /* Http2Response.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FE0EEFD1D409863006136B7 /* Http2Response.h */; };
 		6FE0EF0D1D409863006136B7 /* H2Stream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FE0EEFE1D409863006136B7 /* H2Stream.cpp */; };
 		6FE0EF0E1D409863006136B7 /* H2Stream.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FE0EEFF1D409863006136B7 /* H2Stream.h */; };
 		6FE0EF141D40986D006136B7 /* HPacker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FE0EF0F1D40986D006136B7 /* HPacker.cpp */; };
@@ -109,8 +109,8 @@
 		6F852E421985EB2B00271D87 /* kuma-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "kuma-Prefix.pch"; sourceTree = SOURCE_ROOT; };
 		6F852E441985EB4700271D87 /* kumaProj.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaProj.xcconfig; sourceTree = "<group>"; };
 		6F852E451985EB4700271D87 /* kumaTarget.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaTarget.xcconfig; sourceTree = "<group>"; };
-		6F91F16F1D782DD3004A95B9 /* HttpRequestBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = HttpRequestBase.cpp; path = ../HttpRequestBase.cpp; sourceTree = "<group>"; };
-		6F91F1701D782DD3004A95B9 /* HttpRequestBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = HttpRequestBase.h; path = ../HttpRequestBase.h; sourceTree = "<group>"; };
+		6F91F16F1D782DD3004A95B9 /* Http1xRequest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Http1xRequest.cpp; sourceTree = "<group>"; };
+		6F91F1701D782DD3004A95B9 /* Http1xRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Http1xRequest.h; sourceTree = "<group>"; };
 		6F9E76791D36758B005E04B2 /* httpdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httpdefs.h; sourceTree = "<group>"; };
 		6F9E76E71D3BB34E005E04B2 /* kmobject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = kmobject.h; sourceTree = "<group>"; };
 		6FA951411A3808450033C9CF /* kmdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmdefs.h; sourceTree = "<group>"; };
@@ -143,10 +143,10 @@
 		6FE0EEF71D409863006136B7 /* h2defs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = h2defs.h; sourceTree = "<group>"; };
 		6FE0EEF81D409863006136B7 /* H2Frame.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H2Frame.cpp; sourceTree = "<group>"; };
 		6FE0EEF91D409863006136B7 /* H2Frame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H2Frame.h; sourceTree = "<group>"; };
-		6FE0EEFA1D409863006136B7 /* H2Request.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H2Request.cpp; sourceTree = "<group>"; };
-		6FE0EEFB1D409863006136B7 /* H2Request.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H2Request.h; sourceTree = "<group>"; };
-		6FE0EEFC1D409863006136B7 /* H2Response.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H2Response.cpp; sourceTree = "<group>"; };
-		6FE0EEFD1D409863006136B7 /* H2Response.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H2Response.h; sourceTree = "<group>"; };
+		6FE0EEFA1D409863006136B7 /* Http2Request.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Http2Request.cpp; sourceTree = "<group>"; };
+		6FE0EEFB1D409863006136B7 /* Http2Request.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Http2Request.h; sourceTree = "<group>"; };
+		6FE0EEFC1D409863006136B7 /* Http2Response.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Http2Response.cpp; sourceTree = "<group>"; };
+		6FE0EEFD1D409863006136B7 /* Http2Response.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Http2Response.h; sourceTree = "<group>"; };
 		6FE0EEFE1D409863006136B7 /* H2Stream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H2Stream.cpp; sourceTree = "<group>"; };
 		6FE0EEFF1D409863006136B7 /* H2Stream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H2Stream.h; sourceTree = "<group>"; };
 		6FE0EF0F1D40986D006136B7 /* HPacker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HPacker.cpp; sourceTree = "<group>"; };
@@ -268,8 +268,6 @@
 		6FE0EEEF1D40982B006136B7 /* v2 */ = {
 			isa = PBXGroup;
 			children = (
-				6F91F16F1D782DD3004A95B9 /* HttpRequestBase.cpp */,
-				6F91F1701D782DD3004A95B9 /* HttpRequestBase.h */,
 				6FE0EEF11D409863006136B7 /* FrameParser.cpp */,
 				6FE0EEF21D409863006136B7 /* FrameParser.h */,
 				6FE0EEF31D409863006136B7 /* H2ConnectionImpl.cpp */,
@@ -279,10 +277,10 @@
 				6FE0EEF71D409863006136B7 /* h2defs.h */,
 				6FE0EEF81D409863006136B7 /* H2Frame.cpp */,
 				6FE0EEF91D409863006136B7 /* H2Frame.h */,
-				6FE0EEFA1D409863006136B7 /* H2Request.cpp */,
-				6FE0EEFB1D409863006136B7 /* H2Request.h */,
-				6FE0EEFC1D409863006136B7 /* H2Response.cpp */,
-				6FE0EEFD1D409863006136B7 /* H2Response.h */,
+				6FE0EEFA1D409863006136B7 /* Http2Request.cpp */,
+				6FE0EEFB1D409863006136B7 /* Http2Request.h */,
+				6FE0EEFC1D409863006136B7 /* Http2Response.cpp */,
+				6FE0EEFD1D409863006136B7 /* Http2Response.h */,
 				6FE0EEFE1D409863006136B7 /* H2Stream.cpp */,
 				6FE0EEFF1D409863006136B7 /* H2Stream.h */,
 				6FE0EEF01D409838006136B7 /* hpack */,
@@ -318,6 +316,8 @@
 			children = (
 				6FE0EEEF1D40982B006136B7 /* v2 */,
 				6F9E76791D36758B005E04B2 /* httpdefs.h */,
+				6F91F16F1D782DD3004A95B9 /* Http1xRequest.cpp */,
+				6F91F1701D782DD3004A95B9 /* Http1xRequest.h */,
 				6FBB2C9A1D139C560024550F /* HttpParserImpl.cpp */,
 				6FBB2C9B1D139C560024550F /* HttpParserImpl.h */,
 				6FBB2C9C1D139C560024550F /* HttpRequestImpl.cpp */,
@@ -377,13 +377,13 @@
 				6F6208FD1A26BDB1000DAF4B /* kmapi.h in Headers */,
 				6FBB2C911D139C430024550F /* Notifier.h in Headers */,
 				6F2963541A18AB0D00C3C79B /* kmtrace.h in Headers */,
-				6FE0EF0A1D409863006136B7 /* H2Request.h in Headers */,
+				6FE0EF0A1D409863006136B7 /* Http2Request.h in Headers */,
 				6FE0EF0E1D409863006136B7 /* H2Stream.h in Headers */,
 				6F29634F1A18AB0D00C3C79B /* kmqueue.h in Headers */,
 				6F472B321D43B53500D01201 /* TcpConnection.h in Headers */,
-				6FE0EF0C1D409863006136B7 /* H2Response.h in Headers */,
+				6FE0EF0C1D409863006136B7 /* Http2Response.h in Headers */,
 				6FF7478E1B29587D0007F34D /* base64.h in Headers */,
-				6F91F1721D782DD3004A95B9 /* HttpRequestBase.h in Headers */,
+				6F91F1721D782DD3004A95B9 /* Http1xRequest.h in Headers */,
 				6FBB2CB71D139C700024550F /* SslHandler.h in Headers */,
 				6FBB2CBF1D139C990024550F /* WSHandler.h in Headers */,
 				6FF211D81B1556FB006603BB /* evdefs.h in Headers */,
@@ -457,13 +457,13 @@
 				6F0098B31B03124400122C15 /* TcpSocketImpl.cpp in Sources */,
 				6F2D403E1B1834D300E24928 /* UdpSocketImpl.cpp in Sources */,
 				6FBB2CB61D139C700024550F /* SslHandler.cpp in Sources */,
-				6F91F1711D782DD3004A95B9 /* HttpRequestBase.cpp in Sources */,
+				6F91F1711D782DD3004A95B9 /* Http1xRequest.cpp in Sources */,
 				6FBB2CAA1D139C560024550F /* HttpRequestImpl.cpp in Sources */,
 				6FBB2C931D139C430024550F /* VPoll.cpp in Sources */,
 				6FF212931B181103006603BB /* kmapi.cpp in Sources */,
 				6FBB2CBC1D139C990024550F /* WebSocketImpl.cpp in Sources */,
 				6FF211031B130A2F006603BB /* TcpListenerImpl.cpp in Sources */,
-				6FE0EF0B1D409863006136B7 /* H2Response.cpp in Sources */,
+				6FE0EF0B1D409863006136B7 /* Http2Response.cpp in Sources */,
 				6FBB2CBE1D139C990024550F /* WSHandler.cpp in Sources */,
 				6F2D40471B194AE200E24928 /* TimerManager.cpp in Sources */,
 				6F2963531A18AB0D00C3C79B /* kmtrace.cpp in Sources */,
@@ -471,7 +471,7 @@
 				6FF211D91B1556FB006603BB /* EventLoopImpl.cpp in Sources */,
 				6FBB2C921D139C430024550F /* SelectPoll.cpp in Sources */,
 				6F2963561A18AB0D00C3C79B /* util.cpp in Sources */,
-				6FE0EF091D409863006136B7 /* H2Request.cpp in Sources */,
+				6FE0EF091D409863006136B7 /* Http2Request.cpp in Sources */,
 				6FBB2CA81D139C560024550F /* HttpParserImpl.cpp in Sources */,
 				6FF7478D1B29587D0007F34D /* base64.cpp in Sources */,
 				6FE0EF021D409863006136B7 /* H2ConnectionImpl.cpp in Sources */,
