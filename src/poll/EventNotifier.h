@@ -27,7 +27,8 @@
 
 KUMA_NS_BEGIN
 
-# include <sys/eventfd.h>
+#include <errno.h>
+#include <sys/eventfd.h>
 
 class EventNotifier : public Notifier
 {
