@@ -58,11 +58,15 @@ public:
     }
     
     KMError onEvent(uint32_t ev) override {
-        //eventfd_t val;
-        //eventfd_read(efd_, &val);
-        uint64_t count = 0;
-        int ret = read(efd_, &count, sizeof(count));
-        if (ret != sizeof(count)) {
+        while (true) {
+            //eventfd_t val;
+            //eventfd_read(efd_, &val);
+            uint64_t count = 0;
+            int ret = read(efd_, &count, sizeof(count));
+            if (ret < 0 && errno == EINTR) {
+                continue;
+            }
+            break;
         }
         return KMError::NOERR;
     }

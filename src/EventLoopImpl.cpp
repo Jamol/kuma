@@ -225,6 +225,7 @@ KMError EventLoop::Impl::queueInEventLoop(LoopCallback cb)
 
 IOPoll* createEPoll();
 IOPoll* createVPoll();
+IOPoll* createKQueue();
 IOPoll* createSelectPoll();
 
 IOPoll* createDefaultIOPoll()
@@ -234,7 +235,8 @@ IOPoll* createDefaultIOPoll()
 #elif defined(KUMA_OS_LINUX)
     return createEPoll();
 #elif defined(KUMA_OS_MAC)
-    return createVPoll();
+    return createKQueue();
+    //return createVPoll();
 #else
     return createSelectPoll();
 #endif
@@ -248,9 +250,17 @@ IOPoll* createIOPoll(PollType poll_type)
             return createVPoll();
         case PollType::SELECT:
             return createSelectPoll();
+        case PollType::KQUEUE:
+#ifdef KUMA_OS_MAC
+            return createKQueue();
+#else
+            return createDefaultIOPoll();
+#endif
         case PollType::EPOLL:
 #ifdef KUMA_OS_LINUX
             return createEPoll();
+#else
+            return createDefaultIOPoll();
 #endif
         default:
             return createDefaultIOPoll();

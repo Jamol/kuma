@@ -38,6 +38,7 @@
 # include <sys/time.h>
 # include <dlfcn.h>
 # include <unistd.h>
+# include <netinet/tcp.h>
 # ifdef KUMA_OS_MAC
 #  include "CoreFoundation/CoreFoundation.h"
 #  include <mach-o/dyld.h>
@@ -48,6 +49,7 @@
 #include <random>
 
 #include "kmobject.h"
+#include "kmtrace.h"
 
 KUMA_NS_BEGIN
 
@@ -428,10 +430,15 @@ int set_nonblocking(SOCKET_FD fd) {
     int mode = 1;
     ::ioctlsocket(fd, FIONBIO, (ULONG*)&mode);
 #else
-    int flag = fcntl(fd, F_GETFL, 0);
-    fcntl(fd, F_SETFL, flag | O_NONBLOCK | O_ASYNC);
+    int flag = ::fcntl(fd, F_GETFL, 0);
+    ::fcntl(fd, F_SETFL, flag | O_NONBLOCK | O_ASYNC);
 #endif
     return 0;
+}
+
+int set_tcpnodelay(SOCKET_FD fd) {
+    int opt_val = 1;
+    return ::setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (char*)&opt_val, sizeof(int));
 }
 
 int find_first_set(uint32_t b)

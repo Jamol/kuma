@@ -35,7 +35,7 @@ class EPoll : public IOPoll
 public:
     EPoll();
     ~EPoll();
-    
+
     bool init();
     KMError registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
     KMError unregisterFd(SOCKET_FD fd);
@@ -44,11 +44,11 @@ public:
     void notify();
     PollType getType() const { return PollType::EPOLL; }
     bool isLevelTriggered() const { return false; }
-    
+
 private:
     uint32_t get_events(uint32_t kuma_events);
     uint32_t get_kuma_events(uint32_t events);
-    
+
 private:
     typedef std::map<int, IOCallback> IOCallbackMap;
 
@@ -59,7 +59,7 @@ private:
 EPoll::EPoll()
 : epoll_fd_(INVALID_FD)
 {
-	
+
 }
 
 EPoll::~EPoll()
@@ -118,12 +118,16 @@ uint32_t EPoll::get_kuma_events(uint32_t events)
 
 KMError EPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
 {
+    if (fd < 0) {
+        return KMError::INVALID_PARAM;
+    }
     resizePollItems(fd);
     int epoll_op = EPOLL_CTL_ADD;
     if (INVALID_FD != poll_items_[fd].fd) {
         epoll_op = EPOLL_CTL_MOD;
     }
     poll_items_[fd].fd = fd;
+    poll_items_[fd].events = events;
     poll_items_[fd].cb = std::move(cb);
     struct epoll_event evt = {0};
     evt.data.ptr = (void*)(long)fd;
@@ -139,27 +143,34 @@ KMError EPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
 
 KMError EPoll::unregisterFd(SOCKET_FD fd)
 {
-    KUMA_INFOTRACE("EPoll::unregisterFd, fd="<<fd);
+    int max_fd = int(poll_items_.size() - 1);
+    KUMA_INFOTRACE("EPoll::unregisterFd, fd="<<fd<<", max_fd="<<max_fd);
+    if (fd < 0 || fd > max_fd) {
+        KUMA_WARNTRACE("EPoll::unregisterFd, failed, max_fd=" << max_fd);
+        return KMError::INVALID_PARAM;
+    }
     epoll_ctl(epoll_fd_, EPOLL_CTL_DEL, fd, NULL);
-    if(fd < poll_items_.size()) {
-        poll_items_[fd].fd = INVALID_FD;
-        poll_items_[fd].cb = nullptr;
+    if(fd < max_fd) {
+        poll_items_[fd].reset();
+    } else if (fd == max_fd) {
+        poll_items_.pop_back();
     }
     return KMError::NOERR;
 }
 
 KMError EPoll::updateFd(SOCKET_FD fd, uint32_t events)
 {
-    if(fd >= poll_items_.size() || INVALID_FD == poll_items_[fd].fd) {
+    if(fd < 0 || fd >= poll_items_.size() || INVALID_FD == poll_items_[fd].fd) {
         return KMError::FAILED;
     }
     struct epoll_event evt = {0};
     evt.data.ptr = (void*)(long)fd;
     evt.events = get_events(events);
     if(epoll_ctl(epoll_fd_, EPOLL_CTL_MOD, fd, &evt) < 0) {
-        KUMA_INFOTRACE("EPoll::updateFd error, fd="<<fd<<", errno="<<errno);
+        KUMA_ERRTRACE("EPoll::updateFd error, fd="<<fd<<", errno="<<errno);
         return KMError::FAILED;
     }
+    poll_items_[fd].events = events;
     return KMError::NOERR;
 }
 

@@ -23,6 +23,7 @@
 #define __SocketNotifier_H__
 
 #include "util/util.h"
+#include "util/AutoCleaner.h"
 #include "Notifier.h"
 
 KUMA_NS_BEGIN
@@ -40,39 +41,55 @@ public:
     bool init() override {
         cleanup();
 
-        fds_[READ_FD] = socket(AF_INET, SOCK_DGRAM, 0);
-        fds_[WRITE_FD] = socket(AF_INET, SOCK_DGRAM, 0);
+        sockaddr_storage ss_addr {0};
         struct addrinfo hints = {0};
         hints.ai_family = AF_INET;
-        hints.ai_socktype = SOCK_DGRAM;
-        hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-        if(km_set_sock_addr("127.0.0.1", 0, &hints, (struct sockaddr*)&ss_addr_, sizeof(ss_addr_)) != 0) {
+        hints.ai_socktype = SOCK_STREAM;
+        hints.ai_flags = AI_ADDRCONFIG;
+        if(km_set_sock_addr("127.0.0.1", 0, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
+            return false;
+        }
+        auto lfd = ::socket(AF_INET, SOCK_STREAM, 0);
+        AUTO_CLEAN([lfd]{ closeFd(lfd); });
+        if(::bind(lfd, (const sockaddr*)&ss_addr, sizeof(sockaddr_in)) != 0) {
+            return false;
+        }
+        socklen_t addr_len = sizeof(ss_addr);
+        if(::getsockname(lfd, (struct sockaddr*)&ss_addr, &addr_len) != 0) {
+            return false;
+        }
+        char ip[128] = {0};
+        uint16_t port = 0;
+        km_get_sock_addr((struct sockaddr*)&ss_addr, addr_len, ip, sizeof(ip), &port);
+        if(km_set_sock_addr("127.0.0.1", port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
+            return false;
+        }
+        if (::listen(lfd, 16) != 0) {
+            return false;
+        }
+
+        fds_[WRITE_FD] = ::socket(AF_INET, SOCK_STREAM, 0);
+        if (::connect(fds_[WRITE_FD], (const sockaddr*)&ss_addr, sizeof(sockaddr_in)) != 0) {
             cleanup();
             return false;
         }
-        if(bind(fds_[READ_FD], (const sockaddr*)&ss_addr_, sizeof(sockaddr_in)) != 0) {
-            cleanup();
-            return false;
-        }
-        if(bind(fds_[WRITE_FD], (const sockaddr*)&ss_addr_, sizeof(sockaddr_in)) != 0) {
+        fds_[READ_FD] = ::accept(lfd, NULL, NULL);
+        if (INVALID_FD == fds_[READ_FD]) {
             cleanup();
             return false;
         }
         set_nonblocking(fds_[READ_FD]);
         set_nonblocking(fds_[WRITE_FD]);
-        addr_len_ = sizeof(ss_addr_);
-        if(getsockname(fds_[READ_FD], (struct sockaddr*)&ss_addr_, &addr_len_) != 0) {
-            cleanup();
-            return false;
-        }
+        set_tcpnodelay(fds_[READ_FD]);
+        set_tcpnodelay(fds_[WRITE_FD]);
         return true;
     }
     bool ready() override {
         return fds_[READ_FD] != INVALID_FD && fds_[WRITE_FD] != INVALID_FD;
     }
     void notify() {
-        uint64_t d = 1;
-        sendto(fds_[WRITE_FD], (const char *)&d, sizeof(d), 0, (struct sockaddr*)&ss_addr_, addr_len_);
+        char c = 1;
+        ::send(fds_[WRITE_FD], &c, sizeof(c), 0);
     }
     
     SOCKET_FD getReadFD() override {
@@ -81,7 +98,10 @@ public:
     
     KMError onEvent(uint32_t ev) override {
         char buf[1024];
-        recvfrom(fds_[READ_FD], buf, sizeof(buf), 0, NULL, NULL);
+        int ret = ::recv(fds_[READ_FD], buf, sizeof(buf), 0);
+        while (ret == sizeof(buf)) {
+            ret = ::recv(fds_[READ_FD], buf, sizeof(buf), 0);
+        }
         return KMError::NOERR;
     }
 private:
@@ -97,8 +117,6 @@ private:
     }
 
     SOCKET_FD fds_[2] { INVALID_FD, INVALID_FD };
-    sockaddr_storage ss_addr_;
-    socklen_t addr_len_;
 };
 
 KUMA_NS_END

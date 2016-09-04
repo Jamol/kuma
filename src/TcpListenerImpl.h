@@ -31,7 +31,7 @@ KUMA_NS_BEGIN
 class TcpListener::Impl : public KMObject
 {
 public:
-    using ListenCallback = TcpListener::ListenCallback;
+    using AcceptCallback = TcpListener::AcceptCallback;
     using ErrorCallback = TcpListener::ErrorCallback;
     
     Impl(EventLoop::Impl* loop);
@@ -41,7 +41,7 @@ public:
     KMError stopListen(const char* host, uint16_t port);
     KMError close();
     
-    void setListenCallback(ListenCallback cb) { accept_cb_ = std::move(cb); }
+    void setAcceptCallback(AcceptCallback cb) { accept_cb_ = std::move(cb); }
     void setErrorCallback(ErrorCallback cb) { error_cb_ = std::move(cb); }
     
     SOCKET_FD getFd() const { return fd_; }
@@ -62,7 +62,7 @@ private:
     uint32_t            flags_{ 0 };
     bool                stopped_{ false };
     
-    ListenCallback      accept_cb_;
+    AcceptCallback      accept_cb_;
     ErrorCallback       error_cb_;
 };
 

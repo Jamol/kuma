@@ -279,9 +279,9 @@ KMError TcpListener::close()
     return pimpl_->close();
 }
 
-void TcpListener::setListenCallback(ListenCallback cb)
+void TcpListener::setAcceptCallback(AcceptCallback cb)
 {
-    pimpl_->setListenCallback(std::move(cb));
+    pimpl_->setAcceptCallback(std::move(cb));
 }
 
 void TcpListener::setErrorCallback(ErrorCallback cb)

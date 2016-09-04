@@ -56,6 +56,7 @@ enum class PollType {
     NONE,
     POLL,
     EPOLL,
+    KQUEUE,
     SELECT,
     WIN
 };

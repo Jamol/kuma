@@ -112,7 +112,7 @@ private:
 class KUMA_API TcpListener
 {
 public:
-    using ListenCallback = std::function<void(SOCKET_FD, const char*, uint16_t)>;
+    using AcceptCallback = std::function<void(SOCKET_FD, const char*, uint16_t)>;
     using ErrorCallback = std::function<void(KMError)>;
     
     TcpListener(EventLoop* loop);
@@ -122,7 +122,7 @@ public:
     KMError stopListen(const char* host, uint16_t port);
     KMError close();
     
-    void setListenCallback(ListenCallback cb);
+    void setAcceptCallback(AcceptCallback cb);
     void setErrorCallback(ErrorCallback cb);
     
     class Impl;

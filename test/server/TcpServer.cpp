@@ -42,7 +42,7 @@ KMError TcpServer::startListen(const char* proto, const char* host, uint16_t por
         proto_ = PROTO_AUTOS;
     }
     loop_pool_.init(thr_count_);
-    server_.setListenCallback([this] (SOCKET_FD fd, const char* ip, uint16_t port) { onAccept(fd, ip, port); });
+    server_.setAcceptCallback([this] (SOCKET_FD fd, const char* ip, uint16_t port) { onAccept(fd, ip, port); });
     server_.setErrorCallback([this] (KMError err) { onError(err); });
     return server_.startListen(host, port);
 }

@@ -411,21 +411,14 @@ void TcpSocket::Impl::setSocketOption()
 #endif
     
     // nonblock
-#ifdef KUMA_OS_WIN
-    int mode = 1;
-    ::ioctlsocket(fd_,FIONBIO,(ULONG*)&mode);
-#else
-    int flag = fcntl(fd_, F_GETFL, 0);
-    fcntl(fd_, F_SETFL, flag | O_NONBLOCK | O_ASYNC);
-#endif
+    set_nonblocking(fd_);
     
     if(0) {
         int opt_val = 1;
         setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt_val, sizeof(int));
     }
     
-    int opt_val = 1;
-    if(setsockopt(fd_, IPPROTO_TCP, TCP_NODELAY, (char*)&opt_val, sizeof(int)) != 0) {
+    if(set_tcpnodelay(fd_) != 0) {
         KUMA_WARNXTRACE("setSocketOption, failed to set TCP_NODELAY, fd="<<fd_<<", err="<<getLastError());
     }
 }

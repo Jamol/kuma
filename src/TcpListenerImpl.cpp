@@ -96,6 +96,9 @@ void TcpListener::Impl::cleanup()
 KMError TcpListener::Impl::startListen(const char* host, uint16_t port)
 {
     KUMA_INFOXTRACE("startListen, host="<<host<<", port="<<port);
+    if (INVALID_FD != fd_) {
+        return KMError::INVALID_STATE;
+    }
     sockaddr_storage ss_addr = {0};
     struct addrinfo hints = {0};
     hints.ai_family = AF_UNSPEC;
@@ -154,13 +157,7 @@ void TcpListener::Impl::setSocketOption()
 #endif
     
     // nonblock
-#ifdef KUMA_OS_WIN
-    int mode = 1;
-    ::ioctlsocket(fd_,FIONBIO,(ULONG*)&mode);
-#else
-    int flag = fcntl(fd_, F_GETFL, 0);
-    fcntl(fd_, F_SETFL, flag | O_NONBLOCK | O_ASYNC);
-#endif
+    set_nonblocking(fd_);
     
     int opt_val = 1;
     setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt_val, sizeof(int));

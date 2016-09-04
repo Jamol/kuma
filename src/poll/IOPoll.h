@@ -73,8 +73,17 @@ KUMA_NS_BEGIN
 
 struct PollItem
 {
-    SOCKET_FD fd = INVALID_FD;
-    int idx = -1;
+    void reset() {
+        fd = INVALID_FD;
+        idx = -1;
+        events = 0;
+        revents = 0;
+        cb = nullptr;
+    }
+    SOCKET_FD fd { INVALID_FD };
+    int idx { -1 };
+    uint32_t events { 0 }; // kuma events registered
+    uint32_t revents { 0 }; // kuma events received
     IOCallback cb;
 };
 typedef std::vector<PollItem>   PollItemVector;

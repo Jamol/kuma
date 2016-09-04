@@ -31,6 +31,7 @@
 		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
 		6F91F1711D782DD3004A95B9 /* Http1xRequest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F16F1D782DD3004A95B9 /* Http1xRequest.cpp */; };
 		6F91F1721D782DD3004A95B9 /* Http1xRequest.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F91F1701D782DD3004A95B9 /* Http1xRequest.h */; };
+		6F91F1B21D7ADF77004A95B9 /* KQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F1B11D7ADF77004A95B9 /* KQueue.cpp */; };
 		6F9E767A1D36758B005E04B2 /* httpdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F9E76791D36758B005E04B2 /* httpdefs.h */; };
 		6FA951421A3808450033C9CF /* kmdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FA951411A3808450033C9CF /* kmdefs.h */; };
 		6FBB2C901D139C430024550F /* IOPoll.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FBB2C8C1D139C430024550F /* IOPoll.h */; };
@@ -111,6 +112,7 @@
 		6F852E451985EB4700271D87 /* kumaTarget.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaTarget.xcconfig; sourceTree = "<group>"; };
 		6F91F16F1D782DD3004A95B9 /* Http1xRequest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Http1xRequest.cpp; sourceTree = "<group>"; };
 		6F91F1701D782DD3004A95B9 /* Http1xRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Http1xRequest.h; sourceTree = "<group>"; };
+		6F91F1B11D7ADF77004A95B9 /* KQueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = KQueue.cpp; sourceTree = "<group>"; };
 		6F9E76791D36758B005E04B2 /* httpdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httpdefs.h; sourceTree = "<group>"; };
 		6F9E76E71D3BB34E005E04B2 /* kmobject.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = kmobject.h; sourceTree = "<group>"; };
 		6FA951411A3808450033C9CF /* kmdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmdefs.h; sourceTree = "<group>"; };
@@ -179,6 +181,7 @@
 		6F2963631A18AC4C00C3C79B /* poll */ = {
 			isa = PBXGroup;
 			children = (
+				6F91F1B11D7ADF77004A95B9 /* KQueue.cpp */,
 				6FBB2C8C1D139C430024550F /* IOPoll.h */,
 				6F7512911D76BE27000BE6EC /* Notifier.cpp */,
 				6FBB2C8D1D139C430024550F /* Notifier.h */,
@@ -455,6 +458,7 @@
 				6FE0EF041D409863006136B7 /* H2ConnectionMgr.cpp in Sources */,
 				6FE0EF001D409863006136B7 /* FrameParser.cpp in Sources */,
 				6F0098B31B03124400122C15 /* TcpSocketImpl.cpp in Sources */,
+				6F91F1B21D7ADF77004A95B9 /* KQueue.cpp in Sources */,
 				6F2D403E1B1834D300E24928 /* UdpSocketImpl.cpp in Sources */,
 				6FBB2CB61D139C700024550F /* SslHandler.cpp in Sources */,
 				6F91F1711D782DD3004A95B9 /* Http1xRequest.cpp in Sources */,

@@ -154,6 +154,8 @@ KMError SslHandler::attachFd(SOCKET_FD fd, SslRole ssl_role)
         KUMA_ERRXTRACE("attachFd, SSL_new failed");
         return KMError::SSL_FAILED;
     }
+    //SSL_set_mode(ssl_, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+    //SSL_set_mode(ssl_, SSL_MODE_ENABLE_PARTIAL_WRITE);
     int ret = SSL_set_fd(ssl_, fd_);
     if(0 == ret) {
         KUMA_ERRXTRACE("attachFd, SSL_set_fd failed, err="<<ERR_reason_error_string(ERR_get_error()));

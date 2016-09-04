@@ -239,6 +239,7 @@ int OpenSslLib::verifyCallback(int ok, X509_STORE_CTX *ctx)
         return -1;
     }
     //SSL* ssl = static_cast<SSL*>(X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx()));
+    //SSL_CTX* ssl_ctx = ::SSL_get_SSL_CTX(ssl);
     if(ctx->current_cert) {
         char *s, buf[1024];
         s = X509_NAME_oneline(X509_get_subject_name(ctx->current_cert), buf, sizeof(buf));

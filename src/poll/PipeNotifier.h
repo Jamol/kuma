@@ -57,8 +57,8 @@ public:
     }
     void notify() override {
         if(fds_[WRITE_FD] != INVALID_FD) {
-            int i = 1;
-            write(fds_[WRITE_FD], &i, sizeof(i));
+            char c = 1;
+            write(fds_[WRITE_FD], &c, sizeof(c));
         }
     }
     
@@ -67,8 +67,17 @@ public:
     }
     
     KMError onEvent(uint32_t ev) override {
-        char buf[1024];
-        while(read(fds_[READ_FD], buf, sizeof(buf))>0) ;
+        while (true) {
+            char buf[1024];
+            auto ret = read(fds_[READ_FD], buf, sizeof(buf));
+            if (ret < 0 && errno == EINTR) {
+                continue;
+            }
+            while(ret == sizeof(buf)) {
+                ret = read(fds_[READ_FD], buf, sizeof(buf));
+            }
+            break;
+        }
         return KMError::NOERR;
     }
 private:

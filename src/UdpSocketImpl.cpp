@@ -179,13 +179,7 @@ void UdpSocket::Impl::setSocketOption()
 #endif
     
     // nonblock
-#ifdef KUMA_OS_WIN
-    int mode = 1;
-    ::ioctlsocket(fd_,FIONBIO,(ULONG*)&mode);
-#else
-    int flag = fcntl(fd_, F_GETFL, 0);
-    fcntl(fd_, F_SETFL, flag | O_NONBLOCK | O_ASYNC);
-#endif
+    set_nonblocking(fd_);
     
     int opt_val = 1;
     setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt_val, sizeof(int));

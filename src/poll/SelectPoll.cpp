@@ -33,14 +33,14 @@ public:
     SelectPoll();
     ~SelectPoll();
     
-    bool init();
-    KMError registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
-    KMError unregisterFd(SOCKET_FD fd);
-    KMError updateFd(SOCKET_FD fd, uint32_t events);
-    KMError wait(uint32_t wait_time_ms);
-    void notify();
-    PollType getType() const { return PollType::SELECT; }
-    bool isLevelTriggered() const { return true; }
+    bool init() override;
+    KMError registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb) override;
+    KMError unregisterFd(SOCKET_FD fd) override;
+    KMError updateFd(SOCKET_FD fd, uint32_t events) override;
+    KMError wait(uint32_t wait_time_ms) override;
+    void notify() override;
+    PollType getType() const override { return PollType::SELECT; }
+    bool isLevelTriggered() const override { return true; }
 
 private:
     void updateFdSet(SOCKET_FD fd, uint32_t events);
@@ -90,6 +90,9 @@ bool SelectPoll::init()
 
 KMError SelectPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
 {
+    if (fd < 0) {
+        return KMError::INVALID_PARAM;
+    }
     KUMA_INFOTRACE("SelectPoll::registerFd, fd=" << fd);
     resizePollItems(fd);
     if (INVALID_FD == poll_items_[fd].fd || -1 == poll_items_[fd].idx) {
@@ -100,6 +103,7 @@ KMError SelectPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
         poll_items_[fd].idx = int(poll_fds_.size() - 1);
     }
     poll_items_[fd].fd = fd;
+    poll_items_[fd].events = events;
     poll_items_[fd].cb = std::move(cb);
     updateFdSet(fd, events);
     return KMError::NOERR;
@@ -107,20 +111,18 @@ KMError SelectPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
 
 KMError SelectPoll::unregisterFd(SOCKET_FD fd)
 {
-    KUMA_INFOTRACE("SelectPoll::unregisterFd, fd="<<fd);
     int max_fd = int(poll_items_.size() - 1);
+    KUMA_INFOTRACE("SelectPoll::unregisterFd, fd="<<fd<<", max_fd="<<max_fd);
     if (fd < 0 || fd > max_fd) {
         KUMA_WARNTRACE("SelectPoll::unregisterFd, failed, max_fd=" << max_fd);
         return KMError::INVALID_PARAM;
     }
     updateFdSet(fd, 0);
     int idx = poll_items_[fd].idx;
-    if (fd == max_fd) {
+    if(fd < max_fd) {
+        poll_items_[fd].reset();
+    } else if (fd == max_fd) {
         poll_items_.pop_back();
-    } else {
-        poll_items_[fd].fd = INVALID_FD;
-        poll_items_[fd].cb = nullptr;
-        poll_items_[fd].idx = -1;
     }
     int last_idx = int(poll_fds_.size() - 1);
     if (idx > last_idx || -1 == idx) {
@@ -155,6 +157,7 @@ KMError SelectPoll::updateFd(SOCKET_FD fd, uint32_t events)
         return KMError::INVALID_PARAM;
     }
     poll_fds_[idx].events = events;
+    poll_items_[fd].events = events;
     updateFdSet(fd, events);
     return KMError::NOERR;
 }

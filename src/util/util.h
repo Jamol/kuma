@@ -57,6 +57,7 @@ KUMA_NS_BEGIN
 #define UNUSED(x) (void)(x)
 
 int set_nonblocking(SOCKET_FD fd);
+int set_tcpnodelay(SOCKET_FD fd);
 int find_first_set(uint32_t b);
 int find_first_set(uint64_t b);
 TICK_COUNT_TYPE get_tick_count_ms();
