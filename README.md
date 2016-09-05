@@ -1,4 +1,5 @@
 # kuma
+kuma is a multi-platform support network library developed in C++11. It implements interfaces for TCP/UDP/Multi-cast/HTTP/HTTP2(request only)/WebSocket/SSL/timer that drove by event loop. kuma supports epoll/poll/WSAPoll/kqueue/select on platform Linux/Windows/OSX/iOS/Android.
 
 
 ## Build
@@ -41,3 +42,4 @@ copy all CA certificates used to ca.cer
 copy your server certificate to server.cer
 copy your server private key to server.key
 ```
+
