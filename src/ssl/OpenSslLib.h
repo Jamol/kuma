@@ -65,19 +65,21 @@ public:
     static SSL_CTX* getSSLContext(const char *hostName);
     
 private:
-    static bool init(const std::string &path);
+    static bool doInit(const std::string &path);
+    static void doFini();
     static SSL_CTX* createSSLContext(const SSL_METHOD *method, const std::string &ca, const std::string &cert, const std::string &key, bool clientMode);
     
 protected:
     using SSL_CTX_ptr = std::unique_ptr<SSL_CTX, decltype(&::SSL_CTX_free)>;
-    static bool             initialized_;
-    static std::once_flag   once_flag_init_;
-    static std::string      certs_path_;
-    static SSL_CTX*         ssl_ctx_client_; // default client SSL context
-    static std::once_flag   once_flag_client_;
-    static SSL_CTX*         ssl_ctx_server_; // default server SSL context
-    static std::once_flag   once_flag_server_;
-    static std::mutex*      ssl_locks_;
+    static bool                 initialized_;
+    static std::uint32_t        init_ref_;
+    static std::string          certs_path_;
+    
+    static SSL_CTX*             ssl_ctx_client_; // default client SSL context
+    static std::once_flag       once_flag_client_;
+    static SSL_CTX*             ssl_ctx_server_; // default server SSL context
+    static std::once_flag       once_flag_server_;
+    static std::mutex*          ssl_locks_;
 };
 
 KUMA_NS_END

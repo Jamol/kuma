@@ -33,32 +33,42 @@
 using namespace kuma;
 
 bool OpenSslLib::initialized_ = false;
-std::once_flag OpenSslLib::once_flag_init_;
 std::string OpenSslLib::certs_path_;
+std::uint32_t OpenSslLib::init_ref_ { 0 };
+
 SSL_CTX* OpenSslLib::ssl_ctx_client_ = nullptr;
 std::once_flag OpenSslLib::once_flag_client_;
 SSL_CTX* OpenSslLib::ssl_ctx_server_ = nullptr;
 std::once_flag OpenSslLib::once_flag_server_;
 std::mutex* OpenSslLib::ssl_locks_ = nullptr;
 
-KUMA_NS_BEGIN
-static const AlpnProtos alpnProtos {2, 'h', '2'};
-KUMA_NS_END
+namespace {
+    const AlpnProtos alpnProtos {2, 'h', '2'};
+    
+    std::mutex& getOpenSslMutex()
+    {
+        static std::mutex m;
+        return m;
+    }
+}
 
 bool OpenSslLib::init(const char* path)
 {
+    std::lock_guard<std::mutex> g(getOpenSslMutex());
     if (initialized_) {
+        ++init_ref_;
         return true;
     }
     std::string str(path?path:"");
-    bool ret = true; //
-    std::call_once(once_flag_init_, [&str, &ret]{
-        ret = init(str);
-    });
-    return ret;
+    if (doInit(str)) {
+        initialized_ = true;
+        ++init_ref_;
+        return true;
+    }
+    return false;
 }
 
-bool OpenSslLib::init(const std::string &path)
+bool OpenSslLib::doInit(const std::string &path)
 {
     if(path.empty()) {
         certs_path_ = getCurrentModulePath();
@@ -71,9 +81,11 @@ bool OpenSslLib::init(const std::string &path)
         }
     }
     
-    ssl_locks_ = new std::mutex[CRYPTO_num_locks()];
-    CRYPTO_set_id_callback(threadIdCallback);
-    CRYPTO_set_locking_callback(lockingCallback);
+    if (CRYPTO_get_locking_callback() == NULL) {
+        ssl_locks_ = new std::mutex[CRYPTO_num_locks()];
+        CRYPTO_set_id_callback(threadIdCallback);
+        CRYPTO_set_locking_callback(lockingCallback);
+    }
     
     if (SSL_library_init() != 1) {
         return false;
@@ -87,8 +99,27 @@ bool OpenSslLib::init(const std::string &path)
         unsigned short rand_ret = rand() % 65536;
         RAND_seed(&rand_ret, sizeof(rand_ret));
     }
-    initialized_ = true;
     return true;
+}
+
+void OpenSslLib::fini()
+{
+    std::lock_guard<std::mutex> g(getOpenSslMutex());
+    if (--init_ref_ == 0) {
+        doFini();
+        initialized_ = false;
+    }
+}
+
+void OpenSslLib::doFini()
+{
+    if (ssl_locks_) {
+        CRYPTO_set_id_callback(nullptr);
+        CRYPTO_set_locking_callback(nullptr);
+    }
+    EVP_cleanup();
+    CRYPTO_cleanup_all_ex_data();
+    ERR_free_strings();
 }
 
 SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::string &caFile, const std::string &certFile, const std::string &keyFile, bool clientMode)
@@ -214,14 +245,6 @@ SSL_CTX* OpenSslLib::defaultServerContext()
 SSL_CTX* OpenSslLib::getSSLContext(const char *hostName)
 {
     return defaultServerContext();
-}
-
-void OpenSslLib::fini()
-{
-    CRYPTO_set_id_callback(nullptr);
-    CRYPTO_set_locking_callback(nullptr);
-    EVP_cleanup();
-    ERR_free_strings();
 }
 
 struct app_verify_arg

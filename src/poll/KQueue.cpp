@@ -56,7 +56,7 @@ private:
     NotifierPtr     notifier_ { std::move(Notifier::createNotifier()) };
     
     // on ET mode (EV_CLEAR is set), it seems EVFILT_READ won't be triggered
-    // when data is arrived before setting EVFILT_READ
+    // if EVFILT_READ is set after data arrived
     bool            work_on_et_mode_ { false };
 };
 

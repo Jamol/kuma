@@ -179,6 +179,9 @@ void TcpListener::Impl::onAccept()
     while(!stopped_) {
         fd = ::accept(fd_, NULL, NULL);
         if(INVALID_FD == fd) {
+            if (EINTR == errno) {
+                continue;
+            }
             return ;
         }
         char peer_ip[128] = {0};
