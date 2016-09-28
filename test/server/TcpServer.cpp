@@ -42,7 +42,7 @@ KMError TcpServer::startListen(const char* proto, const char* host, uint16_t por
         proto_ = PROTO_AUTOS;
     }
     loop_pool_.init(thr_count_);
-    server_.setAcceptCallback([this] (SOCKET_FD fd, const char* ip, uint16_t port) { onAccept(fd, ip, port); });
+    server_.setAcceptCallback([this] (SOCKET_FD fd, const char* ip, uint16_t port) -> bool { return onAccept(fd, ip, port); });
     server_.setErrorCallback([this] (KMError err) { onError(err); });
     return server_.startListen(host, port);
 }
@@ -54,13 +54,14 @@ KMError TcpServer::stopListen()
     return KMError::NOERR;
 }
 
-void TcpServer::onAccept(SOCKET_FD fd, const char* ip, uint16_t port)
+bool TcpServer::onAccept(SOCKET_FD fd, const char* ip, uint16_t port)
 {
     std::stringstream ss;
     ss << "TcpServer::onAccept, fd=" << fd << ", ip=" << ip << ", port=" << port << ", proto=" << proto_ << std::endl;
     std::cout << ss.str();
     TestLoop* test_loop = loop_pool_.getNextLoop();
     test_loop->addFd(fd, proto_);
+    return true;
 }
 
 void TcpServer::onError(KMError err)

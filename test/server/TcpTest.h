@@ -7,7 +7,7 @@
 
 using namespace kuma;
 
-class TcpTest : public LoopObject
+class TcpTest : public TestObject
 {
 public:
     TcpTest(TestLoop* loop, long conn_id);

@@ -77,6 +77,16 @@ public:
     void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
     void setEventCallback(EventCallback cb) { event_cb_ = std::move(cb); }
     
+public:
+    void setMethod(std::string m);
+    void setUrl(std::string url);
+    void setUrlPath(std::string path);
+    void setVersion(std::string ver);
+    void setHeaders(HeaderVector & headers);
+    void setHeaders(HeaderVector && headers);
+    void addParamValue(const std::string name, const std::string value);
+    void addHeaderValue(std::string name, std::string value);
+    
 private:
     typedef enum{
         PARSE_STATE_CONTINUE,
@@ -111,8 +121,6 @@ private:
     
     bool decodeUrl();
     bool parseUrl();
-    void addParamValue(const std::string& name, const std::string& value);
-    void addHeaderValue(std::string& name, std::string& value);
     
     bool hasBody();
     bool readEOF();

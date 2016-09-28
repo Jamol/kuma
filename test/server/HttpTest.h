@@ -8,13 +8,14 @@
 
 using namespace kuma;
 
-class HttpTest : public LoopObject
+class HttpTest : public TestObject
 {
 public:
-    HttpTest(TestLoop* loop, long conn_id);
+    HttpTest(ObjectManager* obj_mgr, long conn_id, const char* ver);
 
     KMError attachFd(SOCKET_FD fd, uint32_t ssl_flags);
     KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser);
+    KMError attachStream(H2Connection* conn, uint32_t streamId);
     int close();
     
     void onSend(KMError err);
@@ -26,11 +27,12 @@ public:
     void onResponseComplete();
     
 private:
+    void setupCallbacks();
     void cleanup();
     void sendTestData();
     
 private:
-    TestLoop*      loop_;
+    ObjectManager*  obj_mgr_;
     HttpResponse    http_;
     long            conn_id_;
     bool            is_options_;

@@ -26,10 +26,12 @@
 #include "TimerManager.h"
 #include "http/HttpParserImpl.h"
 #include "http/Http1xRequest.h"
+#include "http/Http1xResponse.h"
 #include "http/HttpResponseImpl.h"
 #include "ws/WebSocketImpl.h"
 #include "http/v2/H2ConnectionImpl.h"
 #include "http/v2/Http2Request.h"
+#include "http/v2/Http2Response.h"
 
 #ifdef KUMA_HAS_OPENSSL
 #include "ssl/OpenSslLib.h"
@@ -514,11 +516,10 @@ HttpParser::Impl* HttpParser::pimpl()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 HttpRequest::HttpRequest(EventLoop* loop, const char* ver)
 {
-    strncpy_s(ver_, sizeof(ver_), ver, sizeof(ver_)-1);
     if (is_equal(ver, VersionHTTP2_0)) {
-        pimpl_ = new Http2Request(loop->pimpl());
+        pimpl_ = new Http2Request(loop->pimpl(), ver);
     } else {
-        pimpl_ = new Http1xRequest(loop->pimpl());
+        pimpl_ = new Http1xRequest(loop->pimpl(), ver);
     }
 }
 
@@ -544,7 +545,7 @@ void HttpRequest::addHeader(const char* name, uint32_t value)
 
 KMError HttpRequest::sendRequest(const char* method, const char* url)
 {
-    return pimpl_->sendRequest(method, url, ver_);
+    return pimpl_->sendRequest(method, url);
 }
 
 int HttpRequest::sendData(const uint8_t* data, size_t len)
@@ -616,11 +617,15 @@ HttpRequest::Impl* HttpRequest::pimpl()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-HttpResponse::HttpResponse(EventLoop* loop)
-: pimpl_(new Impl(loop->pimpl()))
+HttpResponse::HttpResponse(EventLoop* loop, const char* ver)
 {
-    
+    if (is_equal(ver, VersionHTTP2_0)) {
+        pimpl_ = new Http2Response(loop->pimpl(), ver);
+    } else {
+        pimpl_ = new Http1xResponse(loop->pimpl(), ver);
+    }
 }
+
 HttpResponse::~HttpResponse()
 {
     delete pimpl_;
@@ -651,9 +656,9 @@ void HttpResponse::addHeader(const char* name, uint32_t value)
     return pimpl_->addHeader(name, value);
 }
 
-KMError HttpResponse::sendResponse(int status_code, const char* desc, const char* ver)
+KMError HttpResponse::sendResponse(int status_code, const char* desc)
 {
-    return pimpl_->sendResponse(status_code, desc, ver);
+    return pimpl_->sendResponse(status_code, desc);
 }
 
 int HttpResponse::sendData(const uint8_t* data, size_t len)
@@ -676,9 +681,9 @@ const char* HttpResponse::getMethod() const
     return pimpl_->getMethod().c_str();
 }
 
-const char* HttpResponse::getUrl() const
+const char* HttpResponse::getPath() const
 {
-    return pimpl_->getUrl().c_str();
+    return pimpl_->getPath().c_str();
 }
 
 const char* HttpResponse::getVersion() const
@@ -837,12 +842,12 @@ KMError H2Connection::setSslFlags(uint32_t ssl_flags)
 {
     return pimpl_->setSslFlags(ssl_flags);
 }
-
+/*
 KMError H2Connection::connect(const char* host, uint16_t port, ConnectCallback cb)
 {
     return pimpl_->connect(host, port, cb);
 }
-
+*/
 KMError H2Connection::attachFd(SOCKET_FD fd, const uint8_t* data, size_t size)
 {
     return pimpl_->attachFd(fd, data, size);
@@ -853,9 +858,24 @@ KMError H2Connection::attachSocket(TcpSocket &&tcp, HttpParser &&parser)
     return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move(*parser.pimpl()));
 }
 
+KMError H2Connection::attachStream(uint32_t streamId, HttpResponse* rsp)
+{
+    return pimpl_->attachStream(streamId, rsp->pimpl());
+}
+
 KMError H2Connection::close()
 {
     return pimpl_->close();
+}
+
+void H2Connection::setAcceptCallback(AcceptCallback cb)
+{
+    pimpl_->setAcceptCallback(std::move(cb));
+}
+
+void H2Connection::setErrorCallback(ErrorCallback cb)
+{
+    pimpl_->setErrorCallback(std::move(cb));
 }
 
 H2Connection::Impl* H2Connection::pimpl()

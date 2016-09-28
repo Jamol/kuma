@@ -43,6 +43,7 @@ void WsTest::onSend(KMError err)
 void WsTest::onClose(KMError err)
 {
     printf("WsTest::onClose, err=%d\n", err);
+    ws_.close();
     loop_->removeObject(conn_id_);
 }
 
@@ -53,7 +54,7 @@ void WsTest::onData(uint8_t* data, size_t len)
     if(ret < 0) {
         ws_.close();
         loop_->removeObject(conn_id_);
-    }
+    }// else should buffer remain data if ret < len
 }
 
 void WsTest::sendTestData()
@@ -65,6 +66,7 @@ void WsTest::sendTestData()
         if (ret < 0) {
             break;
         } else if (ret < sizeof(buf)) {
+            // should buffer remain data if ret < sizeof(buf)
             //printf("WsTest::sendTestData, break, ret=%d\n", ret);
             break;
         }

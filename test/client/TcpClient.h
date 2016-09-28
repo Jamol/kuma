@@ -9,7 +9,7 @@
 
 using namespace kuma;
 
-class TcpClient : public LoopObject
+class TcpClient : public TestObject
 {
 public:
     TcpClient(TestLoop* loop, long conn_id);

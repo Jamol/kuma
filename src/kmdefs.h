@@ -53,10 +53,11 @@ enum class KMError : int {
     AGAIN               = -6,
     SOCK_ERROR          = -7,
     POLL_ERROR          = -8,
-    SSL_FAILED          = -9,
-    BUFFER_TOO_SMALL    = -10,
-    UNSUPPORT           = -11,
-    DESTROYED           = -12
+    PROTO_ERROR         = -9,
+    SSL_FAILED          = -10,
+    BUFFER_TOO_SMALL    = -11,
+    UNSUPPORT           = -12,
+    DESTROYED           = -13
 };
 
 enum class HttpEvent : int {

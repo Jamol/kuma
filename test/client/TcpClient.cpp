@@ -43,6 +43,7 @@ void TcpClient::sendData()
     uint8_t buf[1024];
     *(uint32_t*)buf = htonl(++index_);
     tcp_.send(buf, sizeof(buf));
+    // should buffer remain data if send length < sizeof(buf)
 }
 
 void TcpClient::onConnect(KMError err)
@@ -90,6 +91,8 @@ void TcpClient::onReceive(KMError err)
 void TcpClient::onClose(KMError err)
 {
     printf("TcpClient::onClose, err=%d\n", err);
+    timer_.cancel();
+    tcp_.close();
     loop_->removeObject(conn_id_);
 }
 

@@ -22,15 +22,24 @@ typedef enum {
     PROTO_AUTOS
 } Proto;
 
-class LoopObject
+class TestObject
 {
 public:
-    virtual ~LoopObject() {}
+    virtual ~TestObject() {}
     virtual int close() = 0;
 };
 
+class ObjectManager
+{
+public:
+    virtual ~ObjectManager() {}
+    virtual void addObject(long conn_id, TestObject* obj) = 0;
+    virtual void removeObject(long conn_id) = 0;
+    virtual EventLoop* getEventLoop() = 0;
+};
+
 class LoopPool;
-class TestLoop
+class TestLoop : public ObjectManager
 {
 public:
     TestLoop(LoopPool* loopPool, PollType poll_type = PollType::NONE);
@@ -41,20 +50,21 @@ public:
     void addFd(SOCKET_FD fd, Proto proto);
     
     void addHttp(TcpSocket&& tcp, HttpParser&& parser);
-    void addHttp2(TcpSocket&& tcp, HttpParser&& parser);
+    void addHttp2(H2Connection* conn, uint32_t streamId);
+    void addH2Conn(TcpSocket&& tcp, HttpParser&& parser);
     void addWebSocket(TcpSocket&& tcp, HttpParser&& parser);
     
-    void addObject(long conn_id, LoopObject* obj);
-    void removeObject(long conn_id);
+    void addObject(long conn_id, TestObject* obj) override;
+    void removeObject(long conn_id) override;
     
-    EventLoop* getEventLoop() { return loop_.get(); }
+    EventLoop* getEventLoop() override { return loop_.get(); }
     
 private:
     void cleanup();
     void run();
     
 private:
-    typedef std::map<long, LoopObject*> ObjectMap;
+    typedef std::map<long, TestObject*> ObjectMap;
     
     std::unique_ptr<EventLoop>  loop_;
     LoopPool*       loopPool_;

@@ -8,7 +8,7 @@
 
 using namespace kuma;
 
-class WsTest : public LoopObject
+class WsTest : public TestObject
 {
 public:
     WsTest(TestLoop* loop, long conn_id);

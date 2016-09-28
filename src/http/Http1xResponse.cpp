@@ -19,65 +19,71 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "Http1xRequest.h"
+#include "Http1xResponse.h"
+#include "EventLoopImpl.h"
 #include "util/kmtrace.h"
-#include "util/util.h"
 
-#include <sstream>
 #include <iterator>
 
 using namespace kuma;
 
+static const std::string str_content_type = "Content-Type";
+static const std::string str_content_length = "Content-Length";
+static const std::string str_transfer_encoding = "Transfer-Encoding";
+static const std::string str_chunked = "chunked";
 //////////////////////////////////////////////////////////////////////////
-Http1xRequest::Http1xRequest(EventLoop::Impl* loop, std::string ver)
-: HttpRequest::Impl(std::move(ver)), TcpConnection(loop), http_parser_()
+Http1xResponse::Http1xResponse(EventLoop::Impl* loop, std::string ver)
+: HttpResponse::Impl(std::move(ver)), TcpConnection(loop)
 {
-    KM_SetObjKey("Http1xRequest");
+    KM_SetObjKey("Http1xResponse");
 }
 
-Http1xRequest::~Http1xRequest()
+Http1xResponse::~Http1xResponse()
 {
     
 }
 
-void Http1xRequest::cleanup()
+void Http1xResponse::cleanup()
 {
     TcpConnection::close();
 }
 
-void Http1xRequest::checkHeaders()
+KMError Http1xResponse::setSslFlags(uint32_t ssl_flags)
 {
-    if(header_map_.find("Accept") == header_map_.end()) {
-        addHeader("Accept", "*/*");
-    }
-    if(header_map_.find("Content-Type") == header_map_.end()) {
-        addHeader("Content-Type", "application/octet-stream");
-    }
-    if(header_map_.find("User-Agent") == header_map_.end()) {
-        addHeader("User-Agent", UserAgent);
-    }
-    addHeader("Host", uri_.getHost());
-    if(header_map_.find("Cache-Control") == header_map_.end()) {
-        addHeader("Cache-Control", "no-cache");
-    }
-    if(header_map_.find("Pragma") == header_map_.end()) {
-        addHeader("Pragma", "no-cache");
-    }
+    return TcpConnection::setSslFlags(ssl_flags);
 }
 
-void Http1xRequest::buildRequest()
+KMError Http1xResponse::attachFd(SOCKET_FD fd, uint8_t* init_data, size_t init_len)
+{
+    setState(State::RECVING_REQUEST);
+    http_parser_.reset();
+    http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
+    http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
+    return TcpConnection::attachFd(fd);
+}
+
+KMError Http1xResponse::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser)
+{
+    setState(State::RECVING_REQUEST);
+    http_parser_.reset();
+    http_parser_ = std::move(parser);
+    http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
+    http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
+
+    auto ret = TcpConnection::attachSocket(std::move(tcp));
+    if(ret == KMError::NOERR && http_parser_.paused()) {
+        http_parser_.resume();
+    }
+    return ret;
+}
+
+void Http1xResponse::buildResponse(int status_code, const std::string& desc, const std::string& ver)
 {
     std::stringstream ss;
-    ss << method_ << " ";
-    ss << uri_.getPath();
-    if(!uri_.getQuery().empty()) {
-        ss << "?" << uri_.getQuery();
+    ss << (!ver.empty()?ver:VersionHTTP1_1) << " " << status_code << " " << desc << "\r\n";
+    if(header_map_.find(str_content_type) == header_map_.end()) {
+        ss << "Content-Type: application/octet-stream\r\n";
     }
-    if(!uri_.getFragment().empty()) {
-        ss << "#" << uri_.getFragment();
-    }
-    ss << " ";
-    ss << version_ << "\r\n";
     for (auto &kv : header_map_) {
         ss << kv.first << ": " << kv.second << "\r\n";
     }
@@ -87,29 +93,42 @@ void Http1xRequest::buildRequest()
     send_buffer_.assign(str.begin(), str.end());
 }
 
-KMError Http1xRequest::sendRequest()
+KMError Http1xResponse::sendResponse(int status_code, const std::string& desc, const std::string& ver)
 {
-    if (getState() == State::IDLE) {
-        setState(State::CONNECTING);
-        std::string str_port = uri_.getPort();
-        uint16_t port = 80;
-        uint32_t ssl_flags = SSL_NONE;
-        if(is_equal("https", uri_.getScheme())) {
-            port = 443;
-            ssl_flags = SSL_ENABLE | getSslFlags();
-        }
-        if(!str_port.empty()) {
-            port = std::stoi(str_port);
-        }
-        TcpConnection::setSslFlags(ssl_flags);
-        return TcpConnection::connect(uri_.getHost().c_str(), port);
-    } else { // connection reuse
-        sendRequestHeader();
-        return KMError::NOERR;
+    KUMA_INFOXTRACE("sendResponse, status_code="<<status_code);
+    if (getState() != State::WAIT_FOR_RESPONSE) {
+        return KMError::INVALID_STATE;
     }
+    auto it = header_map_.find(str_content_length);
+    if(it != header_map_.end()) {
+        has_content_length_ = true;
+        content_length_ = std::stoi(it->second);
+    }
+    it = header_map_.find(str_transfer_encoding);
+    if(it != header_map_.end() && is_equal(str_chunked, it->second)) {
+        is_chunked_ = true;
+    }
+    body_bytes_sent_ = 0;
+    buildResponse(status_code, desc, ver);
+    setState(State::SENDING_HEADER);
+    auto ret = sendBufferedData();
+    if(ret != KMError::NOERR) {
+        cleanup();
+        setState(State::IN_ERROR);
+        return KMError::SOCK_ERROR;
+    } else if (sendBufferEmpty()) {
+        if(has_content_length_ && 0 == content_length_ && !is_chunked_) {
+            setState(State::COMPLETE);
+            getEventLoop()->queueInEventLoop([this] { notifyComplete(); });
+        } else {
+            setState(State::SENDING_BODY);
+            getEventLoop()->queueInEventLoop([this] { if (write_cb_) write_cb_(KMError::NOERR); });
+        }
+    }
+    return KMError::NOERR;
 }
 
-int Http1xRequest::sendData(const uint8_t* data, size_t len)
+int Http1xResponse::sendData(const uint8_t* data, size_t len)
 {
     if(!sendBufferEmpty() || getState() != State::SENDING_BODY) {
         return 0;
@@ -125,14 +144,15 @@ int Http1xRequest::sendData(const uint8_t* data, size_t len)
         setState(State::IN_ERROR);
     } else if(ret > 0) {
         body_bytes_sent_ += ret;
-        if (body_bytes_sent_ >= content_length_ && sendBufferEmpty()) {
-            setState(State::RECVING_RESPONSE);
+        if (has_content_length_ && body_bytes_sent_ >= content_length_ && sendBufferEmpty()) {
+            setState(State::COMPLETE);
+            getEventLoop()->queueInEventLoop([this] { notifyComplete(); });
         }
     }
     return ret;
 }
 
-int Http1xRequest::sendChunk(const uint8_t* data, size_t len)
+int Http1xResponse::sendChunk(const uint8_t* data, size_t len)
 {
     if(nullptr == data && 0 == len) { // chunk end
         static const std::string _chunk_end_token_ = "0\r\n\r\n";
@@ -141,7 +161,8 @@ int Http1xRequest::sendChunk(const uint8_t* data, size_t len)
             setState(State::IN_ERROR);
             return ret;
         } else if(sendBufferEmpty()) { // should always empty
-            setState(State::RECVING_RESPONSE);
+            setState(State::COMPLETE);
+            getEventLoop()->queueInEventLoop([this] { notifyComplete(); });
         }
         return 0;
     } else {
@@ -165,16 +186,17 @@ int Http1xRequest::sendChunk(const uint8_t* data, size_t len)
     }
 }
 
-void Http1xRequest::reset()
+void Http1xResponse::reset()
 {
-    HttpRequest::Impl::reset();
-    http_parser_.reset();
-    if (getState() == State::COMPLETE) {
-        setState(State::WAIT_FOR_REUSE);
-    }
+    // reset TcpConnection
+    send_buffer_.clear();
+    send_offset_ = 0;
+    
+    HttpResponse::Impl::reset();
+    setState(State::RECVING_REQUEST);
 }
 
-KMError Http1xRequest::close()
+KMError Http1xResponse::close()
 {
     KUMA_INFOXTRACE("close");
     cleanup();
@@ -182,41 +204,7 @@ KMError Http1xRequest::close()
     return KMError::NOERR;
 }
 
-void Http1xRequest::sendRequestHeader()
-{
-    body_bytes_sent_ = 0;
-    http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
-    http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
-    buildRequest();
-    setState(State::SENDING_HEADER);
-    auto ret = sendBufferedData();
-    if(ret != KMError::NOERR) {
-        cleanup();
-        setState(State::IN_ERROR);
-        if(error_cb_) error_cb_(KMError::SOCK_ERROR);
-        return;
-    } else if (sendBufferEmpty()) {
-        if(!is_chunked_ && 0 == content_length_) {
-            setState(State::RECVING_RESPONSE);
-        } else {
-            setState(State::SENDING_BODY);
-            if (write_cb_) {
-                write_cb_(KMError::NOERR);
-            }
-        }
-    }
-}
-
-void Http1xRequest::onConnect(KMError err)
-{
-    if(err != KMError::NOERR) {
-        if(error_cb_) error_cb_(err);
-        return ;
-    }
-    sendRequestHeader();
-}
-
-KMError Http1xRequest::handleInputData(uint8_t *src, size_t len)
+KMError Http1xResponse::handleInputData(uint8_t *src, size_t len)
 {
     DESTROY_DETECTOR_SETUP();
     int bytes_used = http_parser_.parse((char*)src, len);
@@ -230,37 +218,29 @@ KMError Http1xRequest::handleInputData(uint8_t *src, size_t len)
     return KMError::NOERR;
 }
 
-void Http1xRequest::onWrite()
+void Http1xResponse::onWrite()
 {
     if (getState() == State::SENDING_HEADER) {
-        if(!is_chunked_ && 0 == content_length_) {
-            setState(State::RECVING_RESPONSE);
+        if(has_content_length_ && 0 == content_length_ && !is_chunked_) {
+            setState(State::COMPLETE);
+            notifyComplete();
             return;
         } else {
             setState(State::SENDING_BODY);
         }
     } else if (getState() == State::SENDING_BODY) {
-        if (!is_chunked_ && body_bytes_sent_ >= content_length_) {
-            setState(State::RECVING_RESPONSE);
-            return;
+        if(!is_chunked_ && has_content_length_ && body_bytes_sent_ >= content_length_) {
+            setState(State::COMPLETE);
+            notifyComplete();
+            return ;
         }
     }
-    
     if(write_cb_) write_cb_(KMError::NOERR);
 }
 
-void Http1xRequest::onError(KMError err)
+void Http1xResponse::onError(KMError err)
 {
     KUMA_INFOXTRACE("onError, err="<<int(err));
-    if (getState() == State::RECVING_RESPONSE) {
-        DESTROY_DETECTOR_SETUP();
-        bool completed = http_parser_.setEOF();
-        DESTROY_DETECTOR_CHECK_VOID();
-        if(completed) {
-            cleanup();
-            return;
-        }
-    }
     cleanup();
     if(getState() < State::COMPLETE) {
         setState(State::IN_ERROR);
@@ -270,12 +250,12 @@ void Http1xRequest::onError(KMError err)
     }
 }
 
-void Http1xRequest::onHttpData(const char* data, size_t len)
+void Http1xResponse::onHttpData(const char* data, size_t len)
 {
     if(data_cb_) data_cb_((uint8_t*)data, len);
 }
 
-void Http1xRequest::onHttpEvent(HttpEvent ev)
+void Http1xResponse::onHttpEvent(HttpEvent ev)
 {
     KUMA_INFOXTRACE("onHttpEvent, ev="<<int(ev));
     switch (ev) {
@@ -284,8 +264,8 @@ void Http1xRequest::onHttpEvent(HttpEvent ev)
             break;
             
         case HttpEvent::COMPLETE:
-            setState(State::COMPLETE);
-            if(response_cb_) response_cb_();
+            setState(State::WAIT_FOR_RESPONSE);
+            if(request_cb_) request_cb_();
             break;
             
         case HttpEvent::HTTP_ERROR:

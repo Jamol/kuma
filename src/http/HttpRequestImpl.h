@@ -39,12 +39,13 @@ public:
     using HttpEventCallback = HttpRequest::HttpEventCallback;
     using EnumrateCallback = HttpParser::Impl::EnumrateCallback;
     
+    Impl(std::string ver);
     virtual ~Impl() = default;
     
     virtual KMError setSslFlags(uint32_t ssl_flags) = 0;
-    void addHeader(std::string name, std::string value);
-    void addHeader(std::string name, uint32_t value);
-    KMError sendRequest(std::string method, std::string url, std::string ver);
+    virtual void addHeader(std::string name, std::string value);
+    virtual void addHeader(std::string name, uint32_t value);
+    KMError sendRequest(std::string method, std::string url);
     virtual int sendData(const uint8_t* data, size_t len) = 0;
     virtual void reset();
     virtual KMError close() = 0;
@@ -63,7 +64,7 @@ public:
 protected:
     virtual KMError sendRequest() = 0;
     virtual void checkHeaders() = 0;
-    virtual bool isVersion1_1() { return false; }
+    virtual bool isVersion2() { return true; }
     
     enum class State {
         IDLE,

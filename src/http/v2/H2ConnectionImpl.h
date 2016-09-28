@@ -38,10 +38,14 @@ using namespace hpack;
 
 KUMA_NS_BEGIN
 
+class Http2Response;
+
 class H2Connection::Impl : public KMObject, public DestroyDetector, public FrameCallback, public TcpConnection, public EventLoop::Impl::Listener
 {
 public:
-    using ConnectCallback = H2Connection::ConnectCallback;
+    using ConnectCallback = std::function<void(KMError)>;
+    using AcceptCallback = H2Connection::AcceptCallback;
+    using ErrorCallback = H2Connection::ErrorCallback;
     
     Impl(EventLoop::Impl* loop);
 	~Impl();
@@ -49,17 +53,20 @@ public:
     KMError connect(const std::string &host, uint16_t port, ConnectCallback cb);
     KMError attachFd(SOCKET_FD fd, const uint8_t* data=nullptr, size_t size=0);
     KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser);
+    KMError attachStream(uint32_t streamId, HttpResponse::Impl* rsp);
     KMError close();
+    void setAcceptCallback(AcceptCallback cb) { accept_cb_ = std::move(cb); }
+    void setErrorCallback(ErrorCallback cb) { error_cb_ = std::move(cb); }
     
     KMError sendH2Frame(H2Frame *frame);
-    
-    KMError sendHeadersFrame(HeadersFrame *frame);
     
     bool isReady() { return getState() == State::OPEN; }
     
     void setConnectionKey(const std::string &key);
     
     H2StreamPtr createStream();
+    H2StreamPtr createStream(uint32_t streamId);
+    H2StreamPtr getStream(uint32_t streamId);
     void removeStream(uint32_t streamId);
     
     void loopStopped() override;
@@ -80,6 +87,7 @@ private:
     
 private:
     KMError connect_i(const std::string &host, uint16_t port);
+    KMError sendHeadersFrame(HeadersFrame *frame);
     KMError parseInputData(const uint8_t *buf, size_t len);
     void handleDataFrame(DataFrame *frame);
     void handleHeadersFrame(HeadersFrame *frame);
@@ -93,7 +101,6 @@ private:
     void handleContinuationFrame(ContinuationFrame *frame);
     
     void addStream(H2StreamPtr stream);
-    H2StreamPtr getStream(uint32_t streamId);
     
     std::string buildUpgradeRequest();
     std::string buildUpgradeResponse();
@@ -118,10 +125,15 @@ private:
     void cleanup();
     
     void onConnectError(KMError err);
+    void notifyBlockedStreams();
+    void updateRemoteWindowSize(uint32_t streamId, uint32_t windowSize);
+    bool isControlFrame(H2Frame *frame);
     
 private:
     State state_ = State::IDLE;
     ConnectCallback connect_cb_; // client only
+    AcceptCallback accept_cb_; // server only
+    ErrorCallback error_cb_;
     
     std::string key_;
     
@@ -132,10 +144,13 @@ private:
     
     std::map<uint32_t, H2StreamPtr> streams_;
     std::map<uint32_t, H2StreamPtr> promisedStreams_;
+    std::vector<uint32_t>           blocked_streams_;
     
     std::string             cmpPreface_; // server only
     
-    size_t remoteWindowSize_ = 65535;
+    uint32_t localWindowSize_ = H2_MAX_WINDOW_SIZE;
+    size_t remoteWindowSize_ = H2_DEFAULT_WINDOW_SIZE;
+    uint32_t remoteFrameSize_ = 16384;
     
     uint32_t nextStreamId_ = 0;
     

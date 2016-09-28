@@ -39,7 +39,6 @@ SRCS =  \
     HttpClient.cpp\
     UdpClient.cpp\
     WsClient.cpp\
-    H2ConnTest.cpp \
     main.cpp
     
 OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(patsubst %.cpp,$(OBJDIR)/%.o,$(patsubst %.cxx,$(OBJDIR)/%.o,$(SRCS))))

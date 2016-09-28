@@ -19,55 +19,49 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __Http1xRequest_H__
-#define __Http1xRequest_H__
+#ifndef __Http1xResponse_H__
+#define __Http1xResponse_H__
 
 #include "kmdefs.h"
+#include "httpdefs.h"
 #include "HttpParserImpl.h"
 #include "TcpConnection.h"
 #include "Uri.h"
-#include "HttpRequestImpl.h"
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
+#include "HttpResponseImpl.h"
 
 KUMA_NS_BEGIN
 
-class Http1xRequest : public KMObject, public DestroyDetector, public HttpRequest::Impl, public TcpConnection
+class Http1xResponse : public KMObject, public HttpResponse::Impl, public DestroyDetector, public TcpConnection
 {
 public:
-    Http1xRequest(EventLoop::Impl* loop, std::string ver);
-    ~Http1xRequest();
+    Http1xResponse(EventLoop::Impl* loop, std::string ver);
+    ~Http1xResponse();
     
-    KMError setSslFlags(uint32_t ssl_flags) override { return TcpConnection::setSslFlags(ssl_flags); }
+    KMError setSslFlags(uint32_t ssl_flags) override;
+    KMError attachFd(SOCKET_FD fd, uint8_t* init_data = nullptr, size_t init_len = 0) override;
+    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser) override;
+    KMError sendResponse(int status_code, const std::string& desc, const std::string& ver) override;
     int sendData(const uint8_t* data, size_t len) override;
     void reset() override; // reset for connection reuse
     KMError close() override;
-    
-    int getStatusCode() const override { return http_parser_.getStatusCode(); }
-    const std::string& getVersion() const override { return http_parser_.getVersion(); }
-    const std::string& getHeaderValue(std::string name) const override { return http_parser_.getHeaderValue(std::move(name)); }
-    void forEachHeader(HttpParser::Impl::EnumrateCallback cb) override { return http_parser_.forEachHeader(std::move(cb)); }
-    
-protected: // callbacks of tcp_socket
-    void onConnect(KMError err) override;
+
+protected:
     KMError handleInputData(uint8_t *src, size_t len) override;
     void onWrite() override;
     void onError(KMError err) override;
-
-private:
-    KMError sendRequest() override;
-    void checkHeaders() override;
-    void buildRequest();
-    int sendChunk(const uint8_t* data, size_t len);
-    void cleanup();
-    void sendRequestHeader();
-    bool isVersion2() override { return false; }
     
+    // callbacks of HttpParser
     void onHttpData(const char* data, size_t len);
     void onHttpEvent(HttpEvent ev);
     
+    bool isVersion2() override { return false; }
+    
 private:
-    HttpParser::Impl        http_parser_;
+    void buildResponse(int status_code, const std::string& desc, const std::string& ver);
+    int sendChunk(const uint8_t* data, size_t len);
+    void cleanup();
 };
 
 KUMA_NS_END

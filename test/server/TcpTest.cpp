@@ -46,12 +46,13 @@ void TcpTest::onReceive(KMError err)
         if(ret < 0) {
             tcp_.close();
             loop_->removeObject(conn_id_);
-        }
+        }// else should buffer remain data if ret < bytes_read
     } while(true);
 }
 
 void TcpTest::onClose(KMError err)
 {
     printf("TcpTest::onClose, err=%d\n", err);
+    tcp_.close();
     loop_->removeObject(conn_id_);
 }

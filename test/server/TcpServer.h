@@ -20,7 +20,7 @@ public:
     KMError startListen(const char* proto, const char* host, uint16_t port);
     KMError stopListen();
     
-    void onAccept(SOCKET_FD, const char* ip, uint16_t port);
+    bool onAccept(SOCKET_FD, const char* ip, uint16_t port);
     void onError(KMError err);
     
 private:

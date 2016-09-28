@@ -166,10 +166,11 @@ KMError SslHandler::attachFd(SOCKET_FD fd, SslRole ssl_role)
     return KMError::NOERR;
 }
 
-KMError SslHandler::attachSsl(SSL* ssl)
+KMError SslHandler::attachSsl(SOCKET_FD fd, SSL* ssl)
 {
     cleanup();
     ssl_ = ssl;
+    fd_ = fd;
     if (ssl_) {
         setState(SSL_SUCCESS);
     }

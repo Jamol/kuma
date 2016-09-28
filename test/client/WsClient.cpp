@@ -43,6 +43,7 @@ void WsClient::sendData()
     uint8_t buf[1024];
     *(uint32_t*)buf = htonl(++index_);
     ws_.send(buf, sizeof(buf));
+    // should buffer remain data if send length < sizeof(buf)
 }
 
 void WsClient::onConnect(KMError err)
@@ -86,5 +87,7 @@ void WsClient::onData(uint8_t* data, size_t len)
 void WsClient::onClose(KMError err)
 {
     printf("WsClient::onClose, err=%d\n", err);
+    timer_.cancel();
+    ws_.close();
     loop_->removeObject(conn_id_);
 }

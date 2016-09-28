@@ -25,6 +25,8 @@
 		6F5C79E21D59CC8700FF8C83 /* DestroyDetector.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F5C79E11D59CC8700FF8C83 /* DestroyDetector.h */; };
 		6F6208FB1A26BDB1000DAF4B /* kmconf.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208F81A26BDB1000DAF4B /* kmconf.h */; };
 		6F6208FD1A26BDB1000DAF4B /* kmapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6208FA1A26BDB1000DAF4B /* kmapi.h */; };
+		6F6D12EE1D965A9D008B64E6 /* Http1xResponse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F6D12EC1D965A9D008B64E6 /* Http1xResponse.cpp */; };
+		6F6D12EF1D965A9D008B64E6 /* Http1xResponse.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F6D12ED1D965A9D008B64E6 /* Http1xResponse.h */; };
 		6F75128F1D76BD46000BE6EC /* PipeNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F75128D1D76BD46000BE6EC /* PipeNotifier.h */; };
 		6F7512921D76BE27000BE6EC /* Notifier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7512911D76BE27000BE6EC /* Notifier.cpp */; };
 		6F7512941D76C237000BE6EC /* SocketNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F7512931D76C237000BE6EC /* SocketNotifier.h */; };
@@ -103,6 +105,8 @@
 		6F5C79E11D59CC8700FF8C83 /* DestroyDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DestroyDetector.h; sourceTree = "<group>"; };
 		6F6208F81A26BDB1000DAF4B /* kmconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmconf.h; sourceTree = "<group>"; };
 		6F6208FA1A26BDB1000DAF4B /* kmapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmapi.h; sourceTree = "<group>"; };
+		6F6D12EC1D965A9D008B64E6 /* Http1xResponse.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Http1xResponse.cpp; sourceTree = "<group>"; };
+		6F6D12ED1D965A9D008B64E6 /* Http1xResponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Http1xResponse.h; sourceTree = "<group>"; };
 		6F75128D1D76BD46000BE6EC /* PipeNotifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PipeNotifier.h; sourceTree = "<group>"; };
 		6F7512911D76BE27000BE6EC /* Notifier.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Notifier.cpp; sourceTree = "<group>"; };
 		6F7512931D76C237000BE6EC /* SocketNotifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SocketNotifier.h; sourceTree = "<group>"; };
@@ -321,6 +325,8 @@
 				6F9E76791D36758B005E04B2 /* httpdefs.h */,
 				6F91F16F1D782DD3004A95B9 /* Http1xRequest.cpp */,
 				6F91F1701D782DD3004A95B9 /* Http1xRequest.h */,
+				6F6D12EC1D965A9D008B64E6 /* Http1xResponse.cpp */,
+				6F6D12ED1D965A9D008B64E6 /* Http1xResponse.h */,
 				6FBB2C9A1D139C560024550F /* HttpParserImpl.cpp */,
 				6FBB2C9B1D139C560024550F /* HttpParserImpl.h */,
 				6FBB2C9C1D139C560024550F /* HttpRequestImpl.cpp */,
@@ -388,6 +394,7 @@
 				6FF7478E1B29587D0007F34D /* base64.h in Headers */,
 				6F91F1721D782DD3004A95B9 /* Http1xRequest.h in Headers */,
 				6FBB2CB71D139C700024550F /* SslHandler.h in Headers */,
+				6F6D12EF1D965A9D008B64E6 /* Http1xResponse.h in Headers */,
 				6FBB2CBF1D139C990024550F /* WSHandler.h in Headers */,
 				6FF211D81B1556FB006603BB /* evdefs.h in Headers */,
 				6FE0EF151D40986D006136B7 /* HPacker.h in Headers */,
@@ -470,6 +477,7 @@
 				6FE0EF0B1D409863006136B7 /* Http2Response.cpp in Sources */,
 				6FBB2CBE1D139C990024550F /* WSHandler.cpp in Sources */,
 				6F2D40471B194AE200E24928 /* TimerManager.cpp in Sources */,
+				6F6D12EE1D965A9D008B64E6 /* Http1xResponse.cpp in Sources */,
 				6F2963531A18AB0D00C3C79B /* kmtrace.cpp in Sources */,
 				6FE0EF071D409863006136B7 /* H2Frame.cpp in Sources */,
 				6FF211D91B1556FB006603BB /* EventLoopImpl.cpp in Sources */,

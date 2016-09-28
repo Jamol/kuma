@@ -10,7 +10,7 @@ using namespace kuma;
 
 using std_time_point = std::chrono::steady_clock::time_point;
 
-class HttpClient : public LoopObject
+class HttpClient : public TestObject
 {
 public:
     HttpClient(TestLoop* loop, long conn_id);

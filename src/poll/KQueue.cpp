@@ -166,6 +166,7 @@ KMError KQueue::updateFd(SOCKET_FD fd, uint32_t events)
     if(fd < 0 || fd >= poll_items_.size() || INVALID_FD == poll_items_[fd].fd) {
         return KMError::FAILED;
     }
+    
     struct kevent kevents[2];
     int nchanges = 0;
     if (!!(poll_items_[fd].events & KUMA_EV_READ) && !(events & KUMA_EV_READ)) {
@@ -176,7 +177,9 @@ KMError KQueue::updateFd(SOCKET_FD fd, uint32_t events)
         EV_SET(&kevents[nchanges++], fd, EVFILT_WRITE, EV_DELETE, 0, 0, 0);
         poll_items_[fd].events &= ~KUMA_EV_WRITE;
     }
-    ::kevent(kqueue_fd_, kevents, nchanges, 0, 0, 0);
+    if (nchanges) { // remove events
+        ::kevent(kqueue_fd_, kevents, nchanges, 0, 0, 0);
+    }
     if (poll_items_[fd].events == events) {
         return KMError::NOERR;
     }
@@ -191,10 +194,11 @@ KMError KQueue::updateFd(SOCKET_FD fd, uint32_t events)
     if (events & KUMA_EV_WRITE) {
         EV_SET(&kevents[nchanges++], fd, EVFILT_WRITE, op , 0, 0, 0);
     }
-    if(::kevent(kqueue_fd_, kevents, nchanges, 0, 0, 0) == -1) {
+    if(nchanges && ::kevent(kqueue_fd_, kevents, nchanges, 0, 0, 0) == -1) {
         KUMA_ERRTRACE("KQueue::updateFd error, fd="<<fd<<", errno="<<errno);
         return KMError::FAILED;
     }
+    poll_items_[fd].events = events;
     //KUMA_INFOTRACE("KQueue::updateFd, fd="<<fd<<", ev="<<events);
     return KMError::NOERR;
 }

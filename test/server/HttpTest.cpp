@@ -7,16 +7,16 @@
 #define strcasecmp _stricmp
 #endif
 
-HttpTest::HttpTest(TestLoop* loop, long conn_id)
-: loop_(loop)
-, http_(loop->getEventLoop())
+HttpTest::HttpTest(ObjectManager* obj_mgr, long conn_id, const char* ver)
+: obj_mgr_(obj_mgr)
+, http_(obj_mgr->getEventLoop(), ver)
 , conn_id_(conn_id)
 , is_options_(false)
 {
     
 }
 
-KMError HttpTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
+void HttpTest::setupCallbacks()
 {
     http_.setWriteCallback([this] (KMError err) { onSend(err); });
     http_.setErrorCallback([this] (KMError err) { onClose(err); });
@@ -25,21 +25,25 @@ KMError HttpTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
     http_.setHeaderCompleteCallback([this] () { onHeaderComplete(); });
     http_.setRequestCompleteCallback([this] () { onRequestComplete(); });
     http_.setResponseCompleteCallback([this] () { onResponseComplete(); });
+}
+
+KMError HttpTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
+{
+    setupCallbacks();
     http_.setSslFlags(ssl_flags);
     return http_.attachFd(fd);
 }
 
 KMError HttpTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
 {
-    http_.setWriteCallback([this] (KMError err) { onSend(err); });
-    http_.setErrorCallback([this] (KMError err) { onClose(err); });
-    
-    http_.setDataCallback([this] (uint8_t* data, size_t len) { onHttpData(data, len); });
-    http_.setHeaderCompleteCallback([this] () { onHeaderComplete(); });
-    http_.setRequestCompleteCallback([this] () { onRequestComplete(); });
-    http_.setResponseCompleteCallback([this] () { onResponseComplete(); });
-    
+    setupCallbacks();
     return http_.attachSocket(std::move(tcp), std::move(parser));
+}
+
+KMError HttpTest::attachStream(H2Connection* conn, uint32_t streamId)
+{
+    setupCallbacks();
+    return conn->attachStream(streamId, &http_);
 }
 
 int HttpTest::close()
@@ -56,7 +60,8 @@ void HttpTest::onSend(KMError err)
 void HttpTest::onClose(KMError err)
 {
     printf("HttpTest::onClose, err=%d\n", err);
-    loop_->removeObject(conn_id_);
+    http_.close();
+    obj_mgr_->removeObject(conn_id_);
 }
 
 void HttpTest::onHttpData(uint8_t* data, size_t len)
@@ -102,13 +107,14 @@ void HttpTest::sendTestData()
     if (is_options_) {
         return;
     }
-    uint8_t buf[128*1024];
+    uint8_t buf[16*1024];
     memset(buf, 'a', sizeof(buf));
     while (true) {
         int ret = http_.sendData(buf, sizeof(buf));
         if (ret < 0) {
             break;
         } else if (ret < sizeof(buf)) {
+            // should buffer remain data
             break;
         }
     }

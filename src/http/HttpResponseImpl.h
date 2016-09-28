@@ -32,27 +32,29 @@
 
 KUMA_NS_BEGIN
 
-class HttpResponse::Impl : public KMObject, public DestroyDetector, public TcpConnection
+class HttpResponse::Impl
 {
 public:
     using DataCallback = HttpResponse::DataCallback;
     using EventCallback = HttpResponse::EventCallback;
     using HttpEventCallback = HttpResponse::HttpEventCallback;
     
-    Impl(EventLoop::Impl* loop);
-    ~Impl();
+    Impl(std::string ver);
+    virtual ~Impl();
     
-    KMError attachFd(SOCKET_FD fd, uint8_t* init_data = nullptr, size_t init_len = 0);
-    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser);
-    void addHeader(const std::string& name, const std::string& value);
-    void addHeader(const std::string& name, uint32_t value);
-    KMError sendResponse(int status_code, const std::string& desc, const std::string& ver);
-    int sendData(const uint8_t* data, size_t len);
-    void reset(); // reset for connection reuse
-    KMError close();
+    virtual KMError setSslFlags(uint32_t ssl_flags) { return KMError::UNSUPPORT; }
+    virtual KMError attachFd(SOCKET_FD fd, uint8_t* init_data=nullptr, size_t init_len=0) { return KMError::UNSUPPORT; }
+    virtual KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser) { return KMError::UNSUPPORT; }
+    virtual KMError attachStream(H2Connection::Impl* conn, uint32_t streamId) { return KMError::UNSUPPORT; }
+    virtual void addHeader(std::string name, std::string value);
+    virtual void addHeader(std::string name, uint32_t value);
+    KMError sendResponse(int status_code, const std::string& desc);
+    virtual int sendData(const uint8_t* data, size_t len) = 0;
+    virtual void reset();
+    virtual KMError close() = 0;
     
     const std::string& getMethod() const { return http_parser_.getMethod(); }
-    const std::string& getUrl() const { return http_parser_.getUrl(); }
+    const std::string& getPath() const { return http_parser_.getUrlPath(); }
     const std::string& getVersion() const { return http_parser_.getVersion(); }
     const std::string& getParamValue(std::string name) const { return http_parser_.getParamValue(std::move(name)); }
     const std::string& getHeaderValue(std::string name) const { return http_parser_.getHeaderValue(std::move(name)); }
@@ -64,13 +66,11 @@ public:
     void setHeaderCompleteCallback(HttpEventCallback cb) { header_cb_ = std::move(cb); }
     void setRequestCompleteCallback(HttpEventCallback cb) { request_cb_ = std::move(cb); }
     void setResponseCompleteCallback(HttpEventCallback cb) { response_cb_ = std::move(cb); }
-
-protected:
-    KMError handleInputData(uint8_t *src, size_t len) override;
-    void onWrite() override;
-    void onError(KMError err) override;
     
-private:
+protected:
+    virtual KMError sendResponse(int status_code, const std::string& desc, const std::string& ver) = 0;
+    virtual bool isVersion2() { return true; }
+    
     enum State {
         IDLE,
         RECVING_REQUEST,
@@ -83,24 +83,20 @@ private:
     };
     void setState(State state) { state_ = state; }
     State getState() const { return state_; }
-    void buildResponse(int status_code, const std::string& desc, const std::string& ver);
-    int sendChunk(const uint8_t* data, size_t len);
-    void cleanup();
     
-    void onHttpData(const char* data, size_t len);
-    void onHttpEvent(HttpEvent ev);
     void notifyComplete();
     
-private:
+protected:
     HttpParser::Impl        http_parser_;
     State                   state_ = State::IDLE;
     
+    std::string             version_;
     HeaderMap               header_map_;
     
     bool                    is_chunked_ = false;
     bool                    has_content_length_ = false;
-    uint32_t                content_length_ = 0;
-    uint32_t                body_bytes_sent_ = 0;
+    size_t                  content_length_ = 0;
+    size_t                  body_bytes_sent_ = 0;
     
     DataCallback            data_cb_;
     EventCallback           write_cb_;

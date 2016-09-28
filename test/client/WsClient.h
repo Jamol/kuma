@@ -9,7 +9,7 @@
 
 using namespace kuma;
 
-class WsClient : public LoopObject
+class WsClient : public TestObject
 {
 public:
     WsClient(TestLoop* loop, long conn_id);

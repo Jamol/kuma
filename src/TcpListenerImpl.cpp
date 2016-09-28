@@ -201,9 +201,7 @@ void TcpListener::Impl::onAccept()
         }
         
         KUMA_INFOXTRACE("onAccept, fd="<<fd<<", peer_ip="<<peer_ip<<", peer_port="<<peer_port);
-        if(accept_cb_) {
-            accept_cb_(fd, peer_ip, peer_port);
-        } else {
+        if(!accept_cb_ || !accept_cb_(fd, peer_ip, peer_port)) {
             closeFd(fd);
         }
     }

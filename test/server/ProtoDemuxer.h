@@ -9,7 +9,7 @@
 
 using namespace kuma;
 
-class ProtoDemuxer : public LoopObject, public DestroyDetector
+class ProtoDemuxer : public TestObject, public DestroyDetector
 {
 public:
     ProtoDemuxer(TestLoop* loop, long conn_id);

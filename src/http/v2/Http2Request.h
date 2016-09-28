@@ -33,10 +33,11 @@ KUMA_NS_BEGIN
 class Http2Request : public KMObject, public DestroyDetector, public HttpRequest::Impl
 {
 public:
-    Http2Request(EventLoop::Impl* loop);
+    Http2Request(EventLoop::Impl* loop, std::string ver);
     ~Http2Request();
     
     KMError setSslFlags(uint32_t ssl_flags) override;
+    void addHeader(std::string name, std::string value) override;
     int sendData(const uint8_t* data, size_t len) override;
     KMError close() override;
     
@@ -46,9 +47,10 @@ public:
     void forEachHeader(EnumrateCallback cb) override;
     
 public:
-    void onHeaders(const HeaderVector &headers, bool endSteam);
+    void onHeaders(const HeaderVector &headers, bool endHeaders, bool endSteam);
     void onData(uint8_t *data, size_t len, bool endSteam);
     void onRSTStream(int err);
+    void onWrite();
     
 private:
     void onConnect(KMError err);
@@ -60,8 +62,8 @@ private:
     
 private:
     EventLoop::Impl* loop_;
-    H2ConnectionPtr conn_ = nullptr;
-    H2StreamPtr stream_ = nullptr;
+    H2ConnectionPtr conn_;
+    H2StreamPtr stream_;
     
     int status_code_ = 0;
     HeaderMap rsp_headers_;

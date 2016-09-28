@@ -4,7 +4,6 @@
 #include "HttpClient.h"
 #include "WsClient.h"
 #include "UdpClient.h"
-#include "H2ConnTest.h"
 
 #include <string.h>
 #include <string>
@@ -118,7 +117,7 @@ void TestLoop::startTest(std::string& addr_url, std::string& bind_addr)
     }
 }
 
-void TestLoop::addObject(long conn_id, LoopObject* obj)
+void TestLoop::addObject(long conn_id, TestObject* obj)
 {
     std::lock_guard<std::mutex> lg(obj_mutex_);
     obj_map_.insert(std::make_pair(conn_id, obj));

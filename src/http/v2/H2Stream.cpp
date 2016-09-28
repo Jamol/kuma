@@ -26,13 +26,14 @@
 using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
-H2Stream::H2Stream(uint32_t streamId)
+H2Stream::H2Stream(uint32_t streamId, uint32_t remoteWindowSize)
 : streamId_(streamId)
 {
+    remoteWindowSize_ = remoteWindowSize;
     KM_SetObjKey("H2Stream_"<<streamId);
 }
 
-KMError H2Stream::sendHeaders(const H2ConnectionPtr &conn, const HeaderVector &headers, size_t headersSize, bool endStream)
+KMError H2Stream::sendHeaders(H2Connection::Impl *conn, const HeaderVector &headers, size_t headersSize, bool endStream)
 {
     HeadersFrame frame;
     frame.setStreamId(getStreamId());
@@ -54,29 +55,51 @@ KMError H2Stream::sendHeaders(const H2ConnectionPtr &conn, const HeaderVector &h
     return ret;
 }
 
-int H2Stream::sendData(const H2ConnectionPtr &conn, const uint8_t *data, size_t len, bool endStream)
+int H2Stream::sendData(H2Connection::Impl *conn, const uint8_t *data, size_t len, bool endStream)
 {
-    if (remoteWindowSize_ < len) {
+    if (getState() == State::CLOSED) {
+        return -1;
+    }
+    if (write_blocked_) {
         return 0;
     }
+    if (0 == remoteWindowSize_ && (!endStream || len != 0)) {
+        write_blocked_ = true;
+        KUMA_INFOXTRACE("sendData, remote window size is 0");
+        return 0;
+    }
+    size_t send_len = remoteWindowSize_ < len ? remoteWindowSize_ : len;
     DataFrame frame;
     frame.setStreamId(getStreamId());
     if (endStream) {
         frame.addFlags(H2_FRAME_FLAG_END_STREAM);
     }
-    frame.setData(data, len);
+    frame.setData(data, send_len);
     auto ret = conn->sendH2Frame(&frame);
+    //KUMA_INFOXTRACE("sendData, len="<<len<<", send_len="<<send_len<<", ret="<<int(ret)<<", win="<<remoteWindowSize_);
     if (KMError::NOERR == ret) {
         if (endStream) {
             endStreamSent();
         }
-        return int(len);
+        remoteWindowSize_ -= send_len;
+        return int(send_len);
+    } else if (KMError::AGAIN == ret || KMError::BUFFER_TOO_SMALL == ret) {
+        write_blocked_ = true;
+        return 0;
     }
     
-    return 0;
+    return -1;
 }
 
-void H2Stream::close(const H2ConnectionPtr &conn)
+KMError H2Stream::sendWindowUpdate(H2Connection::Impl *conn, uint32_t increment)
+{
+    WindowUpdateFrame frame;
+    frame.setStreamId(getStreamId());
+    frame.setWindowSizeIncrement(increment);
+    return conn->sendH2Frame(&frame);
+}
+
+void H2Stream::close(H2Connection::Impl *conn)
 {
     if (conn) {
         conn->removeStream(getStreamId());
@@ -108,8 +131,8 @@ void H2Stream::handleDataFrame(DataFrame *frame)
         KUMA_INFOXTRACE("handleDataFrame, END_STREAM received");
         endStreamReceived();
     }
-    if (cb_data_) {
-        cb_data_((uint8_t*)frame->data(), frame->size(), endStream);
+    if (data_cb_) {
+        data_cb_((uint8_t*)frame->data(), frame->size(), endStream);
     }
 }
 
@@ -125,8 +148,9 @@ void H2Stream::handleHeadersFrame(HeadersFrame *frame)
         KUMA_INFOXTRACE("handleHeadersFrame, END_STREAM received");
         endStreamReceived();
     }
-    if (cb_headers_) {
-        cb_headers_(frame->getHeaders(), endStream);
+    bool endHeaders = frame->hasEndHeaders();
+    if (headers_cb_) {
+        headers_cb_(frame->getHeaders(), endHeaders, endStream);
     }
 }
 
@@ -137,10 +161,10 @@ void H2Stream::handlePriorityFrame(PriorityFrame *frame)
 
 void H2Stream::handleRSTStreamFrame(RSTStreamFrame *frame)
 {
-    KUMA_INFOXTRACE("handleRSTStreamFrame, err="<<frame->getErrorCode()<<", state="<<getState());
+    //KUMA_INFOXTRACE("handleRSTStreamFrame, err="<<frame->getErrorCode()<<", state="<<getState());
     setState(State::CLOSED);
-    if (cb_reset_) {
-        cb_reset_(frame->getErrorCode());
+    if (reset_cb_) {
+        reset_cb_(frame->getErrorCode());
     }
 }
 
@@ -157,10 +181,25 @@ void H2Stream::handlePushFrame(PushPromiseFrame *frame)
 
 void H2Stream::handleWindowUpdateFrame(WindowUpdateFrame *frame)
 {
-    remoteWindowSize_ += frame->getWindowSizeIncrement();
+    bool need_on_write = write_blocked_ && 0 == remoteWindowSize_;
+    remoteWindowSize_ = frame->getWindowSizeIncrement();
+    if (need_on_write) {
+        onWrite();
+    }
 }
 
 void H2Stream::handleContinuationFrame(ContinuationFrame *frame)
 {
     
+}
+
+void H2Stream::onWrite()
+{
+    write_blocked_ = false;
+    if (write_cb_) write_cb_();
+}
+
+void H2Stream::onError(int err)
+{
+    if (reset_cb_) reset_cb_(err);
 }

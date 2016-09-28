@@ -81,7 +81,7 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
             case PROTO_HTTPS:
             {
                 long conn_id = loopPool_->getConnId();
-                HttpTest* http = new HttpTest(this, conn_id);
+                HttpTest* http = new HttpTest(this, conn_id, "HTTP/1.1");
                 addObject(conn_id, http);
                 http->attachFd(fd, proto==PROTO_HTTPS?SSL_ENABLE:0);
                 break;
@@ -118,16 +118,25 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
 void TestLoop::addHttp(TcpSocket&& tcp, HttpParser&& parser)
 {
     long conn_id = loopPool_->getConnId();
-    HttpTest* http = new HttpTest(this, conn_id);
+    HttpTest* http = new HttpTest(this, conn_id, "HTTP/1.1");
     addObject(conn_id, http);
     http->attachSocket(std::move(tcp), std::move(parser));
 }
 
-void TestLoop::addHttp2(TcpSocket&& tcp, HttpParser&& parser)
+void TestLoop::addH2Conn(TcpSocket&& tcp, HttpParser&& parser)
 {
     long conn_id = loopPool_->getConnId();
     H2ConnTest *h2conn = new H2ConnTest(this, conn_id);
+    addObject(conn_id, h2conn);
     h2conn->attachSocket(std::move(tcp), std::move(parser));
+}
+
+void TestLoop::addHttp2(H2Connection* conn, uint32_t streamId)
+{
+    long conn_id = loopPool_->getConnId();
+    HttpTest* http = new HttpTest(this, conn_id, "HTTP/2.0");
+    addObject(conn_id, http);
+    http->attachStream(conn, streamId);
 }
 
 void TestLoop::addWebSocket(TcpSocket&& tcp, HttpParser&& parser)
@@ -138,7 +147,7 @@ void TestLoop::addWebSocket(TcpSocket&& tcp, HttpParser&& parser)
     ws->attachSocket(std::move(tcp), std::move(parser));
 }
 
-void TestLoop::addObject(long conn_id, LoopObject* obj)
+void TestLoop::addObject(long conn_id, TestObject* obj)
 {
     std::lock_guard<std::mutex> lg(obj_mutex_);
     obj_map_.insert(std::make_pair(conn_id, obj));

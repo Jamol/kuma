@@ -335,7 +335,7 @@ KMError TcpSocket::Impl::attachFd(SOCKET_FD fd, SSL* ssl)
     if(sslEnabled()) {
         if (ssl) {
             ssl_handler_ = new SslHandler();
-            ssl_handler_->attachSsl(ssl);
+            ssl_handler_->attachSsl(fd, ssl);
         } else {
             auto ret = startSslHandshake(SslRole::SERVER);
             if(ret != KMError::NOERR) {

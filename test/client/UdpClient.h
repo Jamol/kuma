@@ -10,7 +10,7 @@
 
 using namespace kuma;
 
-class UdpClient : public LoopObject
+class UdpClient : public TestObject
 {
 public:
     UdpClient(TestLoop* loop, long conn_id);

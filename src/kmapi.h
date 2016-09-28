@@ -63,7 +63,7 @@ public:
     
     class Impl;
     Impl* pimpl();
-    
+
 private:
     Impl*  pimpl_;
 };
@@ -112,7 +112,7 @@ private:
 class KUMA_API TcpListener
 {
 public:
-    using AcceptCallback = std::function<void(SOCKET_FD, const char*, uint16_t)>;
+    using AcceptCallback = std::function<bool(SOCKET_FD, const char*, uint16_t)>;
     using ErrorCallback = std::function<void(KMError)>;
     
     TcpListener(EventLoop* loop);
@@ -257,7 +257,6 @@ public:
     
 private:
     Impl* pimpl_;
-    char ver_[9] = {0};
 };
 
 class KUMA_API HttpResponse
@@ -267,7 +266,7 @@ public:
     using EventCallback = std::function<void(KMError)>;
     using HttpEventCallback = std::function<void(void)>;
     
-    HttpResponse(EventLoop* loop);
+    HttpResponse(EventLoop* loop, const char* ver);
     ~HttpResponse();
     
     KMError setSslFlags(uint32_t ssl_flags);
@@ -275,13 +274,13 @@ public:
     KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser);
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
-    KMError sendResponse(int status_code, const char* desc = nullptr, const char* ver = "HTTP/1.1");
+    KMError sendResponse(int status_code, const char* desc = nullptr);
     int sendData(const uint8_t* data, size_t len);
     void reset(); // reset for connection reuse
     KMError close();
     
     const char* getMethod() const;
-    const char* getUrl() const;
+    const char* getPath() const;
     const char* getVersion() const;
     const char* getParamValue(const char* name) const;
     const char* getHeaderValue(const char* name) const;
@@ -335,16 +334,19 @@ private:
 class KUMA_API H2Connection
 {
 public:
-    using ConnectCallback = std::function<void(KMError)>;
+    using AcceptCallback = std::function<bool(uint32_t/* stream ID */)>;
+    using ErrorCallback = std::function<void(int)>;
     
     H2Connection(EventLoop* loop);
     ~H2Connection();
     
     KMError setSslFlags(uint32_t ssl_flags);
-    KMError connect(const char* host, uint16_t port, ConnectCallback cb);
     KMError attachFd(SOCKET_FD fd, const uint8_t* data=nullptr, size_t size=0);
     KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser);
+    KMError attachStream(uint32_t streamId, HttpResponse* rsp);
     KMError close();
+    void setAcceptCallback(AcceptCallback cb);
+    void setErrorCallback(ErrorCallback cb);
     
     class Impl;
     Impl* pimpl();

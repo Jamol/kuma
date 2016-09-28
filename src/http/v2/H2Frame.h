@@ -71,7 +71,7 @@ public:
     virtual int encode(uint8_t *dst, size_t len) = 0;
     int encodeHeader(uint8_t *dst, size_t len, FrameHeader &hdr);
     
-    size_t getPayloadLength() { return hdr_.getLength(); }
+    size_t getPayloadLength() { return hdr_.getLength()?hdr_.getLength():calcPayloadSize(); }
     void setStreamId(uint32_t streamId) { hdr_.setStreamId(streamId); }
     uint32_t getStreamId() { return hdr_.getStreamId(); }
     void setFlags(uint8_t flags) { hdr_.setFlags(flags); }

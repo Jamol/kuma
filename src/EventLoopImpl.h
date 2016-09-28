@@ -78,10 +78,7 @@ public:
     bool stopped() const { return stop_loop_; }
     
 private:
-    typedef std::recursive_mutex KM_Mutex;
-    typedef std::lock_guard<KM_Mutex> KM_Lock_Guard;
-    
-    typedef KM_QueueMT<LoopCallback, KM_Mutex> CallbackQueue;
+    using CallbackQueue = KM_QueueMT<LoopCallback, std::mutex>;
     
     IOPoll*         poll_;
     bool            stop_loop_{ false };

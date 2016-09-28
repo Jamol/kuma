@@ -41,6 +41,7 @@ void HttpClient::onSend(KMError err)
 void HttpClient::onClose(KMError err)
 {
     printf("HttpClient::onClose, err=%d\n", err);
+    http_request_.close();
     loop_->removeObject(conn_id_);
 }
 

@@ -37,23 +37,26 @@ using H2ConnectionPtr = std::shared_ptr<H2Connection::Impl>;
 class H2Stream : public KMObject
 {
 public:
-    using HeadersCallback = std::function<void(const HeaderVector &, bool)>;
+    using HeadersCallback = std::function<void(const HeaderVector &, bool, bool)>;
     using DataCallback = std::function<void(uint8_t *, size_t, bool)>;
     using RSTStreamCallback = std::function<void(int)>;
+    using WriteCallback = std::function<void(void)>;
     
 public:
-    H2Stream(uint32_t streamId);
+    H2Stream(uint32_t streamId, uint32_t remoteWindowSize);
     
     uint32_t getStreamId() { return streamId_; }
     
-    KMError sendHeaders(const H2ConnectionPtr &conn, const HeaderVector &headers, size_t headersSize,bool endStream);
-    int sendData(const H2ConnectionPtr &conn, const uint8_t *data, size_t len, bool endStream = false);
+    KMError sendHeaders(H2Connection::Impl *conn, const HeaderVector &headers, size_t headersSize,bool endStream);
+    int sendData(H2Connection::Impl *conn, const uint8_t *data, size_t len, bool endStream = false);
+    KMError sendWindowUpdate(H2Connection::Impl *conn, uint32_t increment);
     
-    void close(const H2ConnectionPtr &conn);
+    void close(H2Connection::Impl *conn);
     
-    void setHeadersCallback(HeadersCallback cb) { cb_headers_ = std::move(cb); }
-    void setDataCallback(DataCallback cb) { cb_data_ = std::move(cb); }
-    void setRSTStreamCallback(RSTStreamCallback cb) { cb_reset_ = std::move(cb); }
+    void setHeadersCallback(HeadersCallback cb) { headers_cb_ = std::move(cb); }
+    void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
+    void setRSTStreamCallback(RSTStreamCallback cb) { reset_cb_ = std::move(cb); }
+    void setWriteCallback(WriteCallback cb) { write_cb_ = std::move(cb); }
     
 public:
     void handleDataFrame(DataFrame *frame);
@@ -64,6 +67,8 @@ public:
     void handlePushFrame(PushPromiseFrame *frame);
     void handleWindowUpdateFrame(WindowUpdateFrame *frame);
     void handleContinuationFrame(ContinuationFrame *frame);
+    void onWrite();
+    void onError(int err);
     
 private:
     enum State {
@@ -84,11 +89,14 @@ private:
 private:
     uint32_t streamId_;
     State state_ = State::IDLE;
-    HeadersCallback cb_headers_;
-    DataCallback cb_data_;
-    RSTStreamCallback cb_reset_;
+    HeadersCallback headers_cb_;
+    DataCallback data_cb_;
+    RSTStreamCallback reset_cb_;
+    WriteCallback write_cb_;
     
-    size_t remoteWindowSize_ = 65535;
+    bool write_blocked_ { false };
+    
+    size_t remoteWindowSize_ = H2_DEFAULT_WINDOW_SIZE;
 };
 
 using H2StreamPtr = std::shared_ptr<H2Stream>;

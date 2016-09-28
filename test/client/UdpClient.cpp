@@ -77,5 +77,6 @@ void UdpClient::onReceive(KMError err)
 void UdpClient::onClose(KMError err)
 {
     printf("UdpClient::onClose, err=%d\n", err);
+    udp_.close();
     loop_->removeObject(conn_id_);
 }

@@ -50,7 +50,7 @@ public:
     KMError getAlpnSelected(std::string &proto);
     KMError setServerName(const std::string &serverName);
     KMError attachFd(SOCKET_FD fd, SslRole ssl_role);
-    KMError attachSsl(SSL* ssl);
+    KMError attachSsl(SOCKET_FD fd, SSL* ssl);
     KMError detachSsl(SSL* &ssl);
     SslState doSslHandshake();
     int send(const uint8_t* data, size_t size);

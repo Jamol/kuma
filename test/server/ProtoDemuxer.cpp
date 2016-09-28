@@ -83,7 +83,7 @@ bool ProtoDemuxer::checkHttp2()
         char buf[64];
         auto ret = tcp_.getAlpnSelected(buf, sizeof(buf));
         if (ret == KMError::NOERR && strcmp("h2", buf) == 0) { // HTTP/2.0
-            loop_->addHttp2(std::move(tcp_), std::move(http_parser_));
+            loop_->addH2Conn(std::move(tcp_), std::move(http_parser_));
             loop_->removeObject(conn_id_);
             return true;
         }
@@ -114,7 +114,7 @@ void ProtoDemuxer::demuxHttp()
         if (strcasecmp(http_parser_.getHeaderValue("Upgrade"), "WebSocket") == 0) {
             loop_->addWebSocket(std::move(tcp_), std::move(http_parser_));
         } else if (hasH2Settings && strcasecmp(http_parser_.getHeaderValue("Upgrade"), "h2c") == 0) {
-            loop_->addHttp2(std::move(tcp_), std::move(http_parser_));
+            loop_->addH2Conn(std::move(tcp_), std::move(http_parser_));
         }
     } else {
         loop_->addHttp(std::move(tcp_), std::move(http_parser_));

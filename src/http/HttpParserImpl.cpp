@@ -385,7 +385,7 @@ bool HttpParser::Impl::parseHeaderLine(const char* line, const char* line_end)
     p_line = p + 1;
     str_value.assign(p_line, p_end);
     clearBuffer();
-    addHeaderValue(str_name, str_value);
+    addHeaderValue(std::move(str_name), std::move(str_value));
     return true;
 }
 
@@ -584,32 +584,32 @@ bool HttpParser::Impl::parseUrl()
         pos1 = query.find('&', pos);
         if(pos1 == std::string::npos){
             std::string value(query.begin()+pos, query.end());
-            addParamValue(name, value);
+            addParamValue(std::move(name), std::move(value));
             break;
         }
         std::string value(query.begin()+pos, query.begin()+pos1);
         pos = pos1 + 1;
-        addParamValue(name, value);
+        addParamValue(std::move(name), std::move(value));
     }
     
     return true;
 }
 
-void HttpParser::Impl::addParamValue(const std::string& name, const std::string& value)
+void HttpParser::Impl::addParamValue(const std::string name, const std::string value)
 {
     if(!name.empty()) {
-        param_map_[name] = value;
+        param_map_[std::move(name)] = std::move(value);
     }
 }
 
-void HttpParser::Impl::addHeaderValue(std::string& name, std::string& value)
+void HttpParser::Impl::addHeaderValue(std::string name, std::string value)
 {
     trim_left(name);
     trim_right(name);
     trim_left(value);
     trim_right(value);
     if(!name.empty()) {
-        header_map_[name] = value;
+        header_map_[std::move(name)] = std::move(value);
     }
 }
 
@@ -642,6 +642,40 @@ void HttpParser::Impl::forEachHeader(EnumrateCallback cb)
 {
     for (auto &kv : header_map_) {
         cb(kv.first, kv.second);
+    }
+}
+
+void HttpParser::Impl::setMethod(std::string m)
+{
+    method_ = std::move(m);
+}
+
+void HttpParser::Impl::setUrl(std::string url)
+{
+    url_ = std::move(url);
+}
+
+void HttpParser::Impl::setUrlPath(std::string path)
+{
+    url_path_ = std::move(path);
+}
+
+void HttpParser::Impl::setVersion(std::string ver)
+{
+    version_ = std::move(ver);
+}
+
+void HttpParser::Impl::setHeaders(HeaderVector & headers)
+{
+    for (auto &kv : headers) {
+        header_map_.emplace(kv.first, kv.second);
+    }
+}
+
+void HttpParser::Impl::setHeaders(HeaderVector && headers)
+{
+    for (auto &kv : headers) {
+        header_map_.emplace(std::move(kv.first), std::move(kv.second));
     }
 }
 

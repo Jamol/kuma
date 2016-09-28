@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		6F29765E1B311D5900EB467D /* kuma.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F29765D1B311D5900EB467D /* kuma.dylib */; };
 		6F29765F1B311D5900EB467D /* kuma.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F29765D1B311D5900EB467D /* kuma.dylib */; };
-		6FDC9EC61D3F38CF00097089 /* H2ConnTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EB71D3F38CF00097089 /* H2ConnTest.cpp */; };
 		6FDC9EC71D3F38CF00097089 /* HttpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EB91D3F38CF00097089 /* HttpClient.cpp */; };
 		6FDC9EC81D3F38CF00097089 /* LoopPool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EBB1D3F38CF00097089 /* LoopPool.cpp */; };
 		6FDC9EC91D3F38CF00097089 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EBD1D3F38CF00097089 /* main.cpp */; };
@@ -77,8 +76,6 @@
 /* Begin PBXFileReference section */
 		6F29765D1B311D5900EB467D /* kuma.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = kuma.dylib; path = ../../../bin/osx/Debug/kuma.dylib; sourceTree = "<group>"; };
 		6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = kuma.xcodeproj; path = ../../../bld/osx/kuma.xcodeproj; sourceTree = "<group>"; };
-		6FDC9EB71D3F38CF00097089 /* H2ConnTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H2ConnTest.cpp; sourceTree = "<group>"; };
-		6FDC9EB81D3F38CF00097089 /* H2ConnTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H2ConnTest.h; sourceTree = "<group>"; };
 		6FDC9EB91D3F38CF00097089 /* HttpClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpClient.cpp; sourceTree = "<group>"; };
 		6FDC9EBA1D3F38CF00097089 /* HttpClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpClient.h; sourceTree = "<group>"; };
 		6FDC9EBB1D3F38CF00097089 /* LoopPool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LoopPool.cpp; sourceTree = "<group>"; };
@@ -166,8 +163,6 @@
 		6FF211B11B155298006603BB /* client */ = {
 			isa = PBXGroup;
 			children = (
-				6FDC9EB71D3F38CF00097089 /* H2ConnTest.cpp */,
-				6FDC9EB81D3F38CF00097089 /* H2ConnTest.h */,
 				6FDC9EB91D3F38CF00097089 /* HttpClient.cpp */,
 				6FDC9EBA1D3F38CF00097089 /* HttpClient.h */,
 				6FDC9EBB1D3F38CF00097089 /* LoopPool.cpp */,
@@ -314,7 +309,6 @@
 				6FDC9ECD1D3F38CF00097089 /* WsClient.cpp in Sources */,
 				6FDC9EC81D3F38CF00097089 /* LoopPool.cpp in Sources */,
 				6FDC9ECB1D3F38CF00097089 /* TestLoop.cpp in Sources */,
-				6FDC9EC61D3F38CF00097089 /* H2ConnTest.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

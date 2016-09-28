@@ -23,6 +23,7 @@
 #include "util/kmtrace.h"
 #include "util/base64.h"
 #include "H2ConnectionMgr.h"
+#include "Http2Response.h"
 
 #include <sstream>
 #include <algorithm>
@@ -149,6 +150,11 @@ KMError H2Connection::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl
     }
 }
 
+KMError H2Connection::Impl::attachStream(uint32_t streamId, HttpResponse::Impl* rsp)
+{
+    return rsp->attachStream(this, streamId);
+}
+
 KMError H2Connection::Impl::close()
 {
     KUMA_INFOXTRACE("close");
@@ -158,8 +164,14 @@ KMError H2Connection::Impl::close()
 
 KMError H2Connection::Impl::sendH2Frame(H2Frame *frame)
 {
-    if (!sendBufferEmpty()) {
+    if (!sendBufferEmpty() && !isControlFrame(frame)) {
+        blocked_streams_.push_back(frame->getStreamId());
         return KMError::AGAIN;
+    }
+    
+    //if (isControlFrame(frame))
+    {
+        KUMA_INFOXTRACE("sendH2Frame, type="<<frame->type()<<", streamId="<<frame->getStreamId());
     }
     
     if (frame->type() == H2FrameType::HEADERS) {
@@ -167,6 +179,8 @@ KMError H2Connection::Impl::sendH2Frame(H2Frame *frame)
         return sendHeadersFrame(headers);
     } else if (frame->type() == H2FrameType::DATA) {
         if (remoteWindowSize_ < frame->getPayloadLength()) {
+            KUMA_INFOXTRACE("sendH2Frame, BUFFER_TOO_SMALL, win="<<remoteWindowSize_<<", len="<<frame->getPayloadLength());
+            blocked_streams_.push_back(frame->getStreamId());
             return KMError::BUFFER_TOO_SMALL;
         }
         remoteWindowSize_ -= frame->getPayloadLength();
@@ -174,9 +188,17 @@ KMError H2Connection::Impl::sendH2Frame(H2Frame *frame)
     
     size_t payloadSize = frame->calcPayloadSize();
     size_t frameSize = payloadSize + H2_FRAME_HEADER_SIZE;
-    send_buffer_.resize(frameSize);
-    int ret = frame->encode(&send_buffer_[0], send_buffer_.size());
+    size_t buffSize = 0;
+    if (!sendBufferEmpty() && send_offset_) {
+        buffSize = send_buffer_.size() - send_offset_;
+        memmove(&send_buffer_[0], &send_buffer_[0] + send_offset_, buffSize);
+    }
+    if (buffSize + frameSize != send_buffer_.size()) {
+        send_buffer_.resize(buffSize + frameSize);
+    }
+    int ret = frame->encode(&send_buffer_[0] + buffSize, frameSize);
     if (ret < 0) {
+        KUMA_ERRXTRACE("sendH2Frame, failed to encode frame");
         return KMError::INVALID_PARAM;
     }
     send_offset_ = 0;
@@ -204,18 +226,35 @@ KMError H2Connection::Impl::sendHeadersFrame(HeadersFrame *frame)
     return sendBufferedData();
 }
 
-H2StreamPtr H2Connection::Impl::createStream() {
-    H2StreamPtr stream(new H2Stream(nextStreamId_));
+H2StreamPtr H2Connection::Impl::createStream()
+{
+    H2StreamPtr stream(new H2Stream(nextStreamId_, uint32_t(remoteWindowSize_)));
     nextStreamId_ += 2;
+    addStream(stream);
+    return stream;
+}
+
+H2StreamPtr H2Connection::Impl::createStream(uint32_t streamId)
+{
+    H2StreamPtr stream(new H2Stream(streamId, uint32_t(remoteWindowSize_)));
     addStream(stream);
     return stream;
 }
 
 void H2Connection::Impl::handleDataFrame(DataFrame *frame)
 {
-    //KUMA_INFOXTRACE("handleDataFrame, streamId="<<frame->getStreamId()<<", size="<<frame->size()<<", flags="<<int(frame->getFlags()));
+    KUMA_INFOXTRACE("handleDataFrame, streamId="<<frame->getStreamId()<<", size="<<frame->size()<<", flags="<<int(frame->getFlags()));
     H2StreamPtr stream = getStream(frame->getStreamId());
     if (stream) {
+        if (localWindowSize_ >= frame->getPayloadLength()) {
+            localWindowSize_ -= frame->getPayloadLength();
+        } else {
+            localWindowSize_ = 0;
+        }
+        if (localWindowSize_ < H2_DEFAULT_WINDOW_SIZE) {
+            localWindowSize_ = H2_MAX_WINDOW_SIZE;
+            updateRemoteWindowSize(0, localWindowSize_);
+        }
         stream->handleDataFrame(frame);
     } else {
         KUMA_WARNXTRACE("handleDataFrame, cannot find stream, streamId="<<frame->getStreamId()<<", size="<<frame->size()<<", flags="<<int(frame->getFlags()));
@@ -226,18 +265,24 @@ void H2Connection::Impl::handleHeadersFrame(HeadersFrame *frame)
 {
     KUMA_INFOXTRACE("handleHeadersFrame, streamId="<<frame->getStreamId()<<", flags="<<int(frame->getFlags()));
     H2StreamPtr stream = getStream(frame->getStreamId());
-    if (!stream) {
-        if (isServer()) {
-            stream = H2StreamPtr(new H2Stream(frame->getStreamId()));
-        } else {
-            return; // client: no local steram or promised stream
-        }
+    if (!stream && !isServer()) {
+        KUMA_WARNXTRACE("handleHeadersFrame, cannot find local stream or promised stream, streamId="<<frame->getStreamId());
+        return; // client: no local steram or promised stream
     }
     
     HeaderVector headers;
     if (hpDecoder_.decode(frame->getBlock(), frame->getBlockSize(), headers) < 0) {
         KUMA_ERRXTRACE("handleHeadersFrame, hpack decode failed");
         return;
+    }
+    
+    if (!stream) {
+        // new stream arrived on server side
+        stream = createStream(frame->getStreamId());
+        if (accept_cb_ && !accept_cb_(frame->getStreamId())) {
+            removeStream(frame->getStreamId());
+            return;
+        }
     }
     frame->setHeaders(std::move(headers), 0);
     stream->handleHeadersFrame(frame);
@@ -250,7 +295,7 @@ void H2Connection::Impl::handlePriorityFrame(PriorityFrame *frame)
 
 void H2Connection::Impl::handleRSTStreamFrame(RSTStreamFrame *frame)
 {
-    KUMA_INFOXTRACE("handleRSTStreamFrame, streamId="<<frame->getStreamId());
+    KUMA_INFOXTRACE("handleRSTStreamFrame, streamId="<<frame->getStreamId()<<", err="<<frame->getErrorCode());
     H2StreamPtr stream = getStream(frame->getStreamId());
     if (stream) {
         stream->handleRSTStreamFrame(frame);
@@ -259,24 +304,40 @@ void H2Connection::Impl::handleRSTStreamFrame(RSTStreamFrame *frame)
 
 void H2Connection::Impl::handleSettingsFrame(SettingsFrame *frame)
 {
-    KUMA_INFOXTRACE("handleSettingsFrame, count="<<frame->getParams().size()<<", flags="<<int(frame->getFlags()));
+    KUMA_INFOXTRACE("handleSettingsFrame, streamId="<<frame->getStreamId()<<", count="<<frame->getParams().size()<<", flags="<<int(frame->getFlags()));
+    if (frame->isAck()) {
+        return;
+    } else { // send setings ack
+        SettingsFrame settings;
+        settings.setStreamId(frame->getStreamId());
+        settings.setAck(true);
+        sendH2Frame(&settings);
+    }
     if (frame->getStreamId() == 0) {
-        if (!frame->isAck()) { // send setings ack
-            SettingsFrame settings;
-            settings.setStreamId(0);
-            settings.setAck(true);
-            sendH2Frame(&settings);
-            if (!isServer() && getState() < State::OPEN) { // first frame from server must be settings
-                prefaceReceived_ = true;
-                if (getState() == State::HANDSHAKE && sendBufferEmpty()) {
-                    onStateOpen();
-                }
+        for (auto &kv : frame->getParams()) {
+            KUMA_INFOXTRACE("handleSettingsFrame, id="<<kv.first<<", value="<<kv.second);
+            switch (kv.first) {
+                case HEADER_TABLE_SIZE:
+                    hpDecoder_.setMaxTableSize(kv.second);
+                    break;
+                case INITIAL_WINDOW_SIZE:
+                    remoteWindowSize_ = kv.second;
+                    break;
+                case MAX_FRAME_SIZE:
+                    remoteFrameSize_ = kv.second;
+                    break;
+            }
+        }
+        if (!isServer() && getState() < State::OPEN) { // first frame from server must be settings
+            prefaceReceived_ = true;
+            if (getState() == State::HANDSHAKE && sendBufferEmpty()) {
+                onStateOpen();
             }
         }
     } else {
         H2StreamPtr stream = getStream(frame->getStreamId());
         if (stream) {
-            handleSettingsFrame(frame);
+            stream->handleSettingsFrame(frame);
         }
     }
 }
@@ -296,7 +357,7 @@ void H2Connection::Impl::handlePushFrame(PushPromiseFrame *frame)
             return;
         }
     }
-    H2StreamPtr stream(new H2Stream(frame->getPromisedStreamId()));
+    H2StreamPtr stream(new H2Stream(frame->getPromisedStreamId(), H2_DEFAULT_WINDOW_SIZE));
     addStream(stream);
     stream->handlePushFrame(frame);
 }
@@ -316,13 +377,40 @@ void H2Connection::Impl::handlePingFrame(PingFrame *frame)
 void H2Connection::Impl::handleGoawayFrame(GoawayFrame *frame)
 {
     KUMA_INFOXTRACE("handleGoawayFrame, streamId="<<frame->getLastStreamId()<<", err="<<frame->getErrorCode());
+    if (registeredToLoop_) {
+        registeredToLoop_ = false;
+        tcp_.getEventLoop()->removeListener(this);
+    }
+    tcp_.close();
+    auto streams = std::move(streams_);
+    for (auto it : streams) {
+        it.second->onError(frame->getErrorCode());
+    }
+    streams = std::move(promisedStreams_);
+    for (auto it : streams) {
+        it.second->onError(frame->getErrorCode());
+    }
+    auto error_cb = std::move(error_cb_);
+    if (!key_.empty()) {
+        auto &connMgr = H2ConnectionMgr::getRequestConnMgr(sslEnabled());
+        std::string key(std::move(key_));
+        // will destroy self when calling from loop stop
+        connMgr.removeConnection(key);
+    }
+    if (error_cb) {
+        error_cb(frame->getErrorCode());
+    }
 }
 
 void H2Connection::Impl::handleWindowUpdateFrame(WindowUpdateFrame *frame)
 {
-    KUMA_INFOXTRACE("handleWindowUpdateFrame, size=" << frame->getWindowSizeIncrement());
+    KUMA_INFOXTRACE("handleWindowUpdateFrame, streamId="<<frame->getStreamId()<<", size=" << frame->getWindowSizeIncrement()<<", old="<<remoteWindowSize_);
     if (frame->getStreamId() == 0) {
-        remoteWindowSize_ += frame->getWindowSizeIncrement();
+        bool need_notify = !remoteWindowSize_ && !blocked_streams_.empty();
+        remoteWindowSize_ = frame->getWindowSizeIncrement();
+        if (need_notify && remoteWindowSize_ > 0) {
+            notifyBlockedStreams();
+        }
     } else {
         H2StreamPtr stream = getStream(frame->getStreamId());
         if (stream) {
@@ -490,7 +578,7 @@ void H2Connection::Impl::loopStopped()
 std::string H2Connection::Impl::buildUpgradeRequest()
 {
     ParamVector params;
-    params.emplace_back(std::make_pair(INITIAL_WINDOW_SIZE, 2147483647));
+    params.emplace_back(std::make_pair(INITIAL_WINDOW_SIZE, H2_MAX_WINDOW_SIZE));
     params.emplace_back(std::make_pair(MAX_FRAME_SIZE, 65536));
     uint8_t buf[2 * H2_SETTING_ITEM_SIZE];
     SettingsFrame settings;
@@ -545,7 +633,7 @@ void H2Connection::Impl::sendPreface()
 {
     setState(State::HANDSHAKE);
     ParamVector params;
-    params.emplace_back(std::make_pair(INITIAL_WINDOW_SIZE, 2147483647));
+    params.emplace_back(std::make_pair(INITIAL_WINDOW_SIZE, H2_MAX_WINDOW_SIZE));
     params.emplace_back(std::make_pair(MAX_FRAME_SIZE, 65536));
     size_t setting_size = H2_FRAME_HEADER_SIZE + params.size() * H2_SETTING_ITEM_SIZE;
     size_t encoded_len = 0;
@@ -571,7 +659,7 @@ void H2Connection::Impl::sendPreface()
     encoded_len += ret;
     WindowUpdateFrame win_update;
     win_update.setStreamId(0);
-    win_update.setWindowSizeIncrement(2147418112);
+    win_update.setWindowSizeIncrement(localWindowSize_);
     win_update.encode(&send_buffer_[0] + encoded_len, send_buffer_.size() - encoded_len);
     send_offset_ = 0;
     sendBufferedData();
@@ -603,12 +691,18 @@ void H2Connection::Impl::onWrite()
     } else if (getState() == State::HANDSHAKE && prefaceReceived_) {
         onStateOpen();
     }
+    if (getState() == State::OPEN) {
+        notifyBlockedStreams();
+    }
 }
 
 void H2Connection::Impl::onError(KMError err)
 {
     KUMA_INFOXTRACE("onError, err="<<int(err));
     cleanup();
+    if (error_cb_) {
+        error_cb_(int(err));
+    }
 }
 
 void H2Connection::Impl::onConnectError(KMError err)
@@ -617,6 +711,31 @@ void H2Connection::Impl::onConnectError(KMError err)
     setState(State::IN_ERROR);
     auto connect_cb(std::move(connect_cb_));
     if (connect_cb) connect_cb(err);
+}
+
+void H2Connection::Impl::notifyBlockedStreams()
+{
+    while (!blocked_streams_.empty() && sendBufferEmpty()) {
+        uint32_t streamId = blocked_streams_.back();
+        blocked_streams_.pop_back();
+        auto stream = getStream(streamId);
+        if (stream) {
+            stream->onWrite();
+        }
+    }
+}
+
+void H2Connection::Impl::updateRemoteWindowSize(uint32_t streamId, uint32_t windowSize)
+{
+    WindowUpdateFrame frame;
+    frame.setStreamId(0);
+    frame.setWindowSizeIncrement(localWindowSize_);
+    sendH2Frame(&frame);
+}
+
+bool H2Connection::Impl::isControlFrame(H2Frame *frame)
+{
+    return frame->type() != H2FrameType::DATA;
 }
 
 void H2Connection::Impl::onHttpData(const char* data, size_t len)
