@@ -35,18 +35,19 @@ public:
     using UpdateCallback = std::function<void(uint32_t)>;
     
     FlowControl(UpdateCallback cb);
-    void setLocalWindowSize(uint32_t windowSize);
+    void setLocalWindowSizeStep(uint32_t windowSize);
     void increaseLocalWindowSize(uint32_t windowSize);
     void increaseRemoteWindowSize(uint32_t windowSize);
     void notifyBytesSent(size_t bytes);
     void notifyBytesReceived(size_t bytes);
+    void initLocalWindowSize(uint32_t windowSize);
     void initRemoteWindowSize(uint32_t windowSize);
     
     uint32_t getLocalWindowSize() { return uint32_t(localWindowSize_); }
     uint32_t getRemoteWindowSize() { return uint32_t(remoteWindowSize_); }
     
 private:
-    size_t initLocalWindowSize_ = H2_DEFAULT_WINDOW_SIZE;
+    size_t localWindowSizeStep_ = H2_DEFAULT_WINDOW_SIZE;
     size_t localWindowSize_ = H2_DEFAULT_WINDOW_SIZE;
     size_t bytesReceived_ = 0;
     

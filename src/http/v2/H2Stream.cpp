@@ -26,13 +26,12 @@
 using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
-H2Stream::H2Stream(uint32_t streamId, H2Connection::Impl* conn, uint32_t remoteWindowSize)
+H2Stream::H2Stream(uint32_t streamId, H2Connection::Impl* conn, uint32_t initLocalWindowSize, uint32_t initRemoteWindowSize)
 : streamId_(streamId), conn_(conn), flow_ctrl_([this] (uint32_t w) { sendWindowUpdate(w); })
 {
-    if (remoteWindowSize != 0) {
-        flow_ctrl_.initRemoteWindowSize(remoteWindowSize);
-    }
-    flow_ctrl_.setLocalWindowSize(1*1024*1024);
+    flow_ctrl_.initLocalWindowSize(initLocalWindowSize);
+    flow_ctrl_.initRemoteWindowSize(initRemoteWindowSize);
+    flow_ctrl_.setLocalWindowSizeStep(1*1024*1024);
     KM_SetObjKey("H2Stream_"<<streamId);
 }
 

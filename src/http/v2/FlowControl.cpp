@@ -31,13 +31,9 @@ FlowControl::FlowControl(UpdateCallback cb)
     
 }
 
-void FlowControl::setLocalWindowSize(uint32_t windowSize)
+void FlowControl::setLocalWindowSizeStep(uint32_t windowSize)
 {
-    initLocalWindowSize_ = windowSize;
-    localWindowSize_ += initLocalWindowSize_;
-    if (update_cb_) {
-        update_cb_(uint32_t(initLocalWindowSize_));
-    }
+    localWindowSizeStep_ = windowSize;
 }
 
 void FlowControl::increaseLocalWindowSize(uint32_t windowSize)
@@ -48,6 +44,11 @@ void FlowControl::increaseLocalWindowSize(uint32_t windowSize)
 void FlowControl::increaseRemoteWindowSize(uint32_t windowSize)
 {
     remoteWindowSize_ += windowSize;
+}
+
+void FlowControl::initLocalWindowSize(uint32_t windowSize)
+{
+    localWindowSize_ = windowSize;
 }
 
 void FlowControl::initRemoteWindowSize(uint32_t windowSize)
@@ -74,9 +75,9 @@ void FlowControl::notifyBytesReceived(size_t bytes)
         localWindowSize_ = 0;
     }
     if (localWindowSize_ < 16384) {
-        localWindowSize_ += initLocalWindowSize_;
+        localWindowSize_ += localWindowSizeStep_;
         if (update_cb_) {
-            update_cb_(uint32_t(initLocalWindowSize_));
+            update_cb_(uint32_t(localWindowSizeStep_));
         }
     }
 }

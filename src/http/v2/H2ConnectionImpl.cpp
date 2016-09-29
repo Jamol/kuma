@@ -41,7 +41,7 @@ namespace {
 H2Connection::Impl::Impl(EventLoop::Impl* loop)
 : TcpConnection(loop), frameParser_(this), flow_ctrl_([this] (uint32_t w) { sendWindowUpdate(0, w); })
 {
-    flow_ctrl_.setLocalWindowSize(H2_INITIAL_WINDOW_SIZE);
+    flow_ctrl_.initLocalWindowSize(H2_INITIAL_WINDOW_SIZE);
     cmpPreface_ = ClientConnectionPreface;
     KM_SetObjKey("H2Connection");
     KUMA_INFOXTRACE("H2Connection");
@@ -190,7 +190,7 @@ KMError H2Connection::Impl::sendH2Frame(H2Frame *frame)
             return KMError::BUFFER_TOO_SMALL;
         }*/
         flow_ctrl_.notifyBytesSent(frame->getPayloadLength());
-    } else if (frame->type() == H2FrameType::WINDOW_UPDATE) {
+    } else if (frame->type() == H2FrameType::WINDOW_UPDATE && frame->getStreamId() != 0) {
         WindowUpdateFrame *wu = dynamic_cast<WindowUpdateFrame*>(frame);
         flow_ctrl_.increaseLocalWindowSize(wu->getWindowSizeIncrement());
     }
@@ -237,7 +237,7 @@ KMError H2Connection::Impl::sendHeadersFrame(HeadersFrame *frame)
 
 H2StreamPtr H2Connection::Impl::createStream()
 {
-    H2StreamPtr stream(new H2Stream(nextStreamId_, this, initRemoteWindowSize_));
+    H2StreamPtr stream(new H2Stream(nextStreamId_, this, initLocalWindowSize_, initRemoteWindowSize_));
     nextStreamId_ += 2;
     addStream(stream);
     return stream;
@@ -245,7 +245,7 @@ H2StreamPtr H2Connection::Impl::createStream()
 
 H2StreamPtr H2Connection::Impl::createStream(uint32_t streamId)
 {
-    H2StreamPtr stream(new H2Stream(streamId, this, initRemoteWindowSize_));
+    H2StreamPtr stream(new H2Stream(streamId, this, initLocalWindowSize_, initRemoteWindowSize_));
     addStream(stream);
     return stream;
 }
@@ -349,7 +349,7 @@ void H2Connection::Impl::handlePushFrame(PushPromiseFrame *frame)
             return;
         }
     }
-    H2StreamPtr stream(new H2Stream(frame->getPromisedStreamId(), this, initLocalWindowSize_));
+    H2StreamPtr stream(new H2Stream(frame->getPromisedStreamId(), this, initLocalWindowSize_, initLocalWindowSize_));
     addStream(stream);
     stream->handlePushFrame(frame);
 }

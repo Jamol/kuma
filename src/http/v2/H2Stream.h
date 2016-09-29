@@ -42,7 +42,7 @@ public:
     using WriteCallback = std::function<void(void)>;
     
 public:
-    H2Stream(uint32_t streamId, H2Connection::Impl* conn, uint32_t remoteWindowSize);
+    H2Stream(uint32_t streamId, H2Connection::Impl* conn, uint32_t initLocalWindowSize, uint32_t initRemoteWindowSize);
     
     uint32_t getStreamId() { return streamId_; }
     
