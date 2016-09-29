@@ -165,11 +165,10 @@ void Http2Request::sendHeaders()
     HeaderVector headers;
     size_t headersSize = buildHeaders(headers);
     bool endStream = !has_content_length_ && !is_chunked_;
-    stream_->sendHeaders(conn_.get(), headers, headersSize, endStream);
+    stream_->sendHeaders(headers, headersSize, endStream);
     if (endStream) {
         setState(State::RECVING_RESPONSE);
     }
-    stream_->sendWindowUpdate(conn_.get(), H2_MAX_WINDOW_SIZE);
 }
 
 void Http2Request::onConnect(KMError err)
@@ -189,14 +188,14 @@ int Http2Request::sendData(const uint8_t* data, size_t len)
         if (has_content_length_ && body_bytes_sent_ + send_len > content_length_) {
             send_len = content_length_ - body_bytes_sent_;
         }
-        ret = stream_->sendData(conn_.get(), data, send_len, false);
+        ret = stream_->sendData(data, send_len, false);
         if (ret > 0) {
             body_bytes_sent_ += ret;
         }
     }
     bool endStream = (!data && !len) || (has_content_length_ && body_bytes_sent_ >= content_length_);
     if (endStream) {
-        stream_->sendData(conn_.get(), nullptr, 0, true);
+        stream_->sendData(nullptr, 0, true);
         setState(State::RECVING_RESPONSE);
     }
     return ret;
@@ -252,7 +251,7 @@ void Http2Request::onWrite()
 KMError Http2Request::close()
 {
     if (stream_) {
-        stream_->close(conn_.get());
+        stream_->close();
         stream_.reset();
     }
     conn_.reset();

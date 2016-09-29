@@ -168,6 +168,7 @@
     <ClCompile Include="..\..\src\http\HttpRequestImpl.cpp" />
     <ClCompile Include="..\..\src\http\HttpResponseImpl.cpp" />
     <ClCompile Include="..\..\src\http\Uri.cpp" />
+    <ClCompile Include="..\..\src\http\v2\FlowControl.cpp" />
     <ClCompile Include="..\..\src\http\v2\FrameParser.cpp" />
     <ClCompile Include="..\..\src\http\v2\H2ConnectionImpl.cpp" />
     <ClCompile Include="..\..\src\http\v2\H2ConnectionMgr.cpp" />
@@ -203,6 +204,7 @@
     <ClInclude Include="..\..\src\http\HttpRequestImpl.h" />
     <ClInclude Include="..\..\src\http\HttpResponseImpl.h" />
     <ClInclude Include="..\..\src\http\Uri.h" />
+    <ClInclude Include="..\..\src\http\v2\FlowControl.h" />
     <ClInclude Include="..\..\src\http\v2\FrameParser.h" />
     <ClInclude Include="..\..\src\http\v2\H2ConnectionImpl.h" />
     <ClInclude Include="..\..\src\http\v2\H2ConnectionMgr.h" />

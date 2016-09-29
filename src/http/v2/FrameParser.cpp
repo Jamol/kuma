@@ -149,7 +149,7 @@ bool FrameParser::handleFrame(const FrameHeader &hdr, const uint8_t *payload)
         if (err == H2Error::NOERR) {
             cb_->onFrame(frame);
         } else {
-            cb_->onFrameError(hdr, err);
+            cb_->onFrameError(hdr, err, false);
         }
       
         DESTROY_DETECTOR_CHECK(false);

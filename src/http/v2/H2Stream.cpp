@@ -26,14 +26,17 @@
 using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
-H2Stream::H2Stream(uint32_t streamId, uint32_t remoteWindowSize)
-: streamId_(streamId)
+H2Stream::H2Stream(uint32_t streamId, H2Connection::Impl* conn, uint32_t remoteWindowSize)
+: streamId_(streamId), conn_(conn), flow_ctrl_([this] (uint32_t w) { sendWindowUpdate(w); })
 {
-    remoteWindowSize_ = remoteWindowSize;
+    if (remoteWindowSize != 0) {
+        flow_ctrl_.initRemoteWindowSize(remoteWindowSize);
+    }
+    flow_ctrl_.setLocalWindowSize(1*1024*1024);
     KM_SetObjKey("H2Stream_"<<streamId);
 }
 
-KMError H2Stream::sendHeaders(H2Connection::Impl *conn, const HeaderVector &headers, size_t headersSize, bool endStream)
+KMError H2Stream::sendHeaders(const HeaderVector &headers, size_t headersSize, bool endStream)
 {
     HeadersFrame frame;
     frame.setStreamId(getStreamId());
@@ -42,7 +45,7 @@ KMError H2Stream::sendHeaders(H2Connection::Impl *conn, const HeaderVector &head
         frame.addFlags(H2_FRAME_FLAG_END_STREAM);
     }
     frame.setHeaders(std::move(headers), headersSize);
-    auto ret = conn->sendH2Frame(&frame);
+    auto ret = conn_->sendH2Frame(&frame);
     if (getState() == State::IDLE) {
         setState(State::OPEN);
     } else if (getState() == State::RESERVED_L) {
@@ -55,7 +58,7 @@ KMError H2Stream::sendHeaders(H2Connection::Impl *conn, const HeaderVector &head
     return ret;
 }
 
-int H2Stream::sendData(H2Connection::Impl *conn, const uint8_t *data, size_t len, bool endStream)
+int H2Stream::sendData(const uint8_t *data, size_t len, bool endStream)
 {
     if (getState() == State::CLOSED) {
         return -1;
@@ -63,25 +66,26 @@ int H2Stream::sendData(H2Connection::Impl *conn, const uint8_t *data, size_t len
     if (write_blocked_) {
         return 0;
     }
-    if (0 == remoteWindowSize_ && (!endStream || len != 0)) {
+    size_t remoteWindowSize = flow_ctrl_.getRemoteWindowSize();
+    if (0 == remoteWindowSize && (!endStream || len != 0)) {
         write_blocked_ = true;
         KUMA_INFOXTRACE("sendData, remote window size is 0");
         return 0;
     }
-    size_t send_len = remoteWindowSize_ < len ? remoteWindowSize_ : len;
+    size_t send_len = remoteWindowSize < len ? remoteWindowSize : len;
     DataFrame frame;
     frame.setStreamId(getStreamId());
     if (endStream) {
         frame.addFlags(H2_FRAME_FLAG_END_STREAM);
     }
     frame.setData(data, send_len);
-    auto ret = conn->sendH2Frame(&frame);
+    auto ret = conn_->sendH2Frame(&frame);
     //KUMA_INFOXTRACE("sendData, len="<<len<<", send_len="<<send_len<<", ret="<<int(ret)<<", win="<<remoteWindowSize_);
     if (KMError::NOERR == ret) {
         if (endStream) {
             endStreamSent();
         }
-        remoteWindowSize_ -= send_len;
+        flow_ctrl_.notifyBytesSent(send_len);
         return int(send_len);
     } else if (KMError::AGAIN == ret || KMError::BUFFER_TOO_SMALL == ret) {
         write_blocked_ = true;
@@ -91,18 +95,19 @@ int H2Stream::sendData(H2Connection::Impl *conn, const uint8_t *data, size_t len
     return -1;
 }
 
-KMError H2Stream::sendWindowUpdate(H2Connection::Impl *conn, uint32_t increment)
+KMError H2Stream::sendWindowUpdate(uint32_t increment)
 {
     WindowUpdateFrame frame;
     frame.setStreamId(getStreamId());
     frame.setWindowSizeIncrement(increment);
-    return conn->sendH2Frame(&frame);
+    return conn_->sendH2Frame(&frame);
 }
 
-void H2Stream::close(H2Connection::Impl *conn)
+void H2Stream::close()
 {
-    if (conn) {
-        conn->removeStream(getStreamId());
+    streamError(H2Error::STREAM_CLOSED);
+    if (conn_) {
+        conn_->removeStream(getStreamId());
     }
 }
 
@@ -124,6 +129,20 @@ void H2Stream::endStreamReceived()
     }
 }
 
+void H2Stream::sendRSTStream(H2Error err)
+{
+    RSTStreamFrame frame;
+    frame.setStreamId(streamId_);
+    frame.setErrorCode(uint32_t(err));
+    
+}
+
+void H2Stream::streamError(H2Error err)
+{
+    sendRSTStream(err);
+    setState(State::CLOSED);
+}
+
 void H2Stream::handleDataFrame(DataFrame *frame)
 {
     bool endStream = frame->getFlags() & H2_FRAME_FLAG_END_STREAM;
@@ -131,6 +150,7 @@ void H2Stream::handleDataFrame(DataFrame *frame)
         KUMA_INFOXTRACE("handleDataFrame, END_STREAM received");
         endStreamReceived();
     }
+    flow_ctrl_.notifyBytesReceived(frame->size());
     if (data_cb_) {
         data_cb_((uint8_t*)frame->data(), frame->size(), endStream);
     }
@@ -138,6 +158,16 @@ void H2Stream::handleDataFrame(DataFrame *frame)
 
 void H2Stream::handleHeadersFrame(HeadersFrame *frame)
 {
+    bool is_tailer = false;
+    if (headers_received_ && (getState() == State::OPEN || getState() == State::HALF_CLOSED_L)) {
+        // must be tailer
+        is_tailer = true;
+        tailers_received_ = true;
+        tailers_end_ = frame->hasEndHeaders();
+    } else {
+        headers_received_ = true;
+        headers_end_ = frame->hasEndHeaders();
+    }
     if (getState() == State::RESERVED_R) {
         setState(State::HALF_CLOSED_L);
     } else if (getState() == State::IDLE) {
@@ -148,9 +178,8 @@ void H2Stream::handleHeadersFrame(HeadersFrame *frame)
         KUMA_INFOXTRACE("handleHeadersFrame, END_STREAM received");
         endStreamReceived();
     }
-    bool endHeaders = frame->hasEndHeaders();
-    if (headers_cb_) {
-        headers_cb_(frame->getHeaders(), endHeaders, endStream);
+    if (!is_tailer && headers_cb_) {
+        headers_cb_(frame->getHeaders(), headers_end_, endStream);
     }
 }
 
@@ -168,11 +197,6 @@ void H2Stream::handleRSTStreamFrame(RSTStreamFrame *frame)
     }
 }
 
-void H2Stream::handleSettingsFrame(SettingsFrame *frame)
-{
-    
-}
-
 void H2Stream::handlePushFrame(PushPromiseFrame *frame)
 {
     KUMA_ASSERT(getState() == State::IDLE);
@@ -181,16 +205,46 @@ void H2Stream::handlePushFrame(PushPromiseFrame *frame)
 
 void H2Stream::handleWindowUpdateFrame(WindowUpdateFrame *frame)
 {
-    bool need_on_write = write_blocked_ && 0 == remoteWindowSize_;
-    remoteWindowSize_ = frame->getWindowSizeIncrement();
-    if (need_on_write) {
+    KUMA_INFOXTRACE("handleWindowUpdateFrame, streamId="<<frame->getStreamId()<<", size=" << frame->getWindowSizeIncrement()<<", old="<<flow_ctrl_.getRemoteWindowSize());
+    if (frame->getWindowSizeIncrement() == 0) {
+        // PROTOCOL_ERROR
+        streamError(H2Error::PROTOCOL_ERROR);
+        return;
+    }
+    bool need_on_write = 0 == flow_ctrl_.getRemoteWindowSize();
+    flow_ctrl_.increaseRemoteWindowSize(frame->getWindowSizeIncrement());
+    if (need_on_write && getState() != State::IDLE) {
         onWrite();
     }
 }
 
 void H2Stream::handleContinuationFrame(ContinuationFrame *frame)
 {
-    
+    if (getState() != State::OPEN || getState() != State::HALF_CLOSED_L) {
+        // invalid status
+        return;
+    }
+    if ((!headers_received_ || headers_end_) && (!tailers_received_ || tailers_end_)) {
+        // PROTOCOL_ERROR
+        return;
+    }
+    bool is_tailer = headers_end_;
+    bool endStream = frame->getFlags() & H2_FRAME_FLAG_END_STREAM;
+    if (endStream) {
+        KUMA_INFOXTRACE("handleContinuationFrame, END_STREAM received");
+        endStreamReceived();
+    }
+    bool endHeaders = frame->hasEndHeaders();
+    if (endHeaders) {
+        if (!is_tailer) {
+            headers_end_ = true;
+        } else {
+            tailers_end_ = true;
+        }
+    }
+    if (!is_tailer && headers_cb_) {
+        headers_cb_(frame->getHeaders(), headers_end_, endStream);
+    }
 }
 
 void H2Stream::onWrite()
@@ -201,5 +255,6 @@ void H2Stream::onWrite()
 
 void H2Stream::onError(int err)
 {
+    conn_ = nullptr;
     if (reset_cb_) reset_cb_(err);
 }

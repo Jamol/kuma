@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		6F66AC3D1C71B03F00BB37B9 /* TcpListenerImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F66AC3B1C71B03F00BB37B9 /* TcpListenerImpl.cpp */; };
 		6F6D14111D9A5AE7008B64E6 /* Http1xResponse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F6D140F1D9A5AE7008B64E6 /* Http1xResponse.cpp */; };
+		6F6D148D1D9D098C008B64E6 /* FlowControl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F6D148B1D9D098C008B64E6 /* FlowControl.cpp */; };
 		6F7D5FA71B33E9E6000FF2F8 /* libkuma.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F7D5F9B1B33E9E6000FF2F8 /* libkuma.a */; };
 		6F7D5FE41B33EC65000FF2F8 /* EventLoopImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7D5FD51B33EC65000FF2F8 /* EventLoopImpl.cpp */; };
 		6F7D5FE51B33EC65000FF2F8 /* kmapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7D5FD71B33EC65000FF2F8 /* kmapi.cpp */; };
@@ -70,6 +71,8 @@
 		6F66AC3C1C71B03F00BB37B9 /* TcpListenerImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TcpListenerImpl.h; path = ../../src/TcpListenerImpl.h; sourceTree = "<group>"; };
 		6F6D140F1D9A5AE7008B64E6 /* Http1xResponse.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Http1xResponse.cpp; sourceTree = "<group>"; };
 		6F6D14101D9A5AE7008B64E6 /* Http1xResponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Http1xResponse.h; sourceTree = "<group>"; };
+		6F6D148B1D9D098C008B64E6 /* FlowControl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FlowControl.cpp; sourceTree = "<group>"; };
+		6F6D148C1D9D098C008B64E6 /* FlowControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FlowControl.h; sourceTree = "<group>"; };
 		6F7D5F9B1B33E9E6000FF2F8 /* libkuma.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libkuma.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F7D5FA61B33E9E6000FF2F8 /* kumaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = kumaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F7D5FAC1B33E9E6000FF2F8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -232,6 +235,8 @@
 			isa = PBXGroup;
 			children = (
 				6F84E9831D5B031900AF8E3B /* hpack */,
+				6F6D148B1D9D098C008B64E6 /* FlowControl.cpp */,
+				6F6D148C1D9D098C008B64E6 /* FlowControl.h */,
 				6F84E96D1D5B031300AF8E3B /* FrameParser.cpp */,
 				6F84E96E1D5B031300AF8E3B /* FrameParser.h */,
 				6F84E96F1D5B031300AF8E3B /* H2ConnectionImpl.cpp */,
@@ -435,6 +440,7 @@
 				6F84E9891D5B032D00AF8E3B /* HPacker.cpp in Sources */,
 				6F84E98A1D5B032D00AF8E3B /* HPackTable.cpp in Sources */,
 				6F84E9821D5B031300AF8E3B /* H2Stream.cpp in Sources */,
+				6F6D148D1D9D098C008B64E6 /* FlowControl.cpp in Sources */,
 				6FECED1D1C2139CA00310F52 /* kmtrace.cpp in Sources */,
 				6FECED0E1C2139A400310F52 /* VPoll.cpp in Sources */,
 				6F84E97E1D5B031300AF8E3B /* H2ConnectionMgr.cpp in Sources */,

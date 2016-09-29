@@ -141,6 +141,9 @@
     <ClCompile Include="..\..\src\http\Http1xResponse.cpp">
       <Filter>Source Files\http</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\http\v2\FlowControl.cpp">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\util\kmqueue.h">
@@ -253,6 +256,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\http\Http1xResponse.h">
       <Filter>Header Files\http</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\FlowControl.h">
+      <Filter>Header Files\http\v2</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

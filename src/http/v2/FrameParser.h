@@ -35,7 +35,7 @@ class FrameCallback
 {
 public:
     virtual void onFrame(H2Frame *frame) = 0;
-    virtual void onFrameError(const FrameHeader &hdr, H2Error err) = 0;
+    virtual void onFrameError(const FrameHeader &hdr, H2Error err, bool stream) = 0;
 };
 
 class FrameParser : public DestroyDetector

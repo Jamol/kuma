@@ -276,14 +276,21 @@ public:
     
     size_t calcPayloadSize() { return bsize_;}
     
+    void setHeaders(HeaderVector h, size_t hsize) { headers_ = std::move(h); hsize_ = hsize; }
     bool hasEndHeaders() { return !!(hdr_.getFlags() & H2_FRAME_FLAG_END_HEADERS); }
     const uint8_t* getBlock() { return block_; }
     size_t getBlockSize() { return bsize_; }
     void setBlock(const uint8_t *block, uint32_t bsize) { block_ = block; bsize_ = bsize; }
     
+    HeaderVector& getHeaders() { return headers_; }
+    size_t getHeadersSize() { return hsize_; }
+    
 private:
     const uint8_t *block_ = nullptr;
     size_t bsize_ = 0;
+    
+    HeaderVector headers_;
+    size_t hsize_ = 0;
 };
 
 KUMA_NS_END

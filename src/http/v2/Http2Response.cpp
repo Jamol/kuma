@@ -34,17 +34,15 @@ Http2Response::Http2Response(EventLoop::Impl* loop, std::string ver)
 void Http2Response::cleanup()
 {
     if (stream_) {
-        stream_->close(conn_);
+        stream_->close();
         stream_.reset();
     }
-    conn_ = nullptr;
 }
 
 KMError Http2Response::attachStream(H2Connection::Impl* conn, uint32_t streamId)
 {
-    conn_ = conn;
-    //stream_ = conn_->createStream(streamId);
-    stream_ = conn_->getStream(streamId);
+    //stream_ = conn->createStream(streamId);
+    stream_ = conn->getStream(streamId);
     if (!stream_) {
         return KMError::INVALID_STATE;
     }
@@ -76,7 +74,7 @@ KMError Http2Response::sendResponse(int status_code, const std::string& desc, co
     HeaderVector headers;
     size_t headersSize = buildHeaders(status_code, headers);
     bool endStream = !has_content_length_ && !is_chunked_;
-    stream_->sendHeaders(conn_, headers, headersSize, endStream);
+    stream_->sendHeaders(headers, headersSize, endStream);
     if (endStream) {
         setState(State::COMPLETE);
         loop_->queueInEventLoop([this] { notifyComplete(); });
@@ -99,14 +97,14 @@ int Http2Response::sendData(const uint8_t* data, size_t len)
         if (has_content_length_ && body_bytes_sent_ + send_len > content_length_) {
             send_len = content_length_ - body_bytes_sent_;
         }
-        ret = stream_->sendData(conn_, data, send_len, false);
+        ret = stream_->sendData(data, send_len, false);
         if (ret > 0) {
             body_bytes_sent_ += ret;
         }
     }
     bool endStream = (!data && !len) || (has_content_length_ && body_bytes_sent_ >= content_length_);
     if (endStream) { // end stream
-        stream_->sendData(conn_, nullptr, 0, true);
+        stream_->sendData(nullptr, 0, true);
         setState(State::COMPLETE);
         loop_->queueInEventLoop([this] { notifyComplete(); });
     }

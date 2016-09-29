@@ -73,7 +73,7 @@ public:
     
 public:
     void onFrame(H2Frame *frame) override;
-    void onFrameError(const FrameHeader &hdr, H2Error err) override;
+    void onFrameError(const FrameHeader &hdr, H2Error err, bool stream) override;
     
 private:
     void onConnect(KMError err) override;
@@ -126,8 +126,13 @@ private:
     
     void onConnectError(KMError err);
     void notifyBlockedStreams();
-    void updateRemoteWindowSize(uint32_t streamId, uint32_t windowSize);
+    void sendWindowUpdate(uint32_t streamId, uint32_t windowSize);
     bool isControlFrame(H2Frame *frame);
+    
+    void applySettings(const ParamVector &params);
+    void sendGoaway(H2Error err);
+    void connectionError(H2Error err);
+    void streamError(uint32_t streamId, H2Error err);
     
 private:
     State state_ = State::IDLE;
@@ -148,11 +153,14 @@ private:
     
     std::string             cmpPreface_; // server only
     
-    uint32_t localWindowSize_ = H2_MAX_WINDOW_SIZE;
-    size_t remoteWindowSize_ = H2_DEFAULT_WINDOW_SIZE;
     uint32_t remoteFrameSize_ = 16384;
+    uint32_t initRemoteWindowSize_ = H2_DEFAULT_WINDOW_SIZE;
+    uint32_t initLocalWindowSize_ = 1*1024*1024; // initial local stream window size
+    
+    FlowControl flow_ctrl_;
     
     uint32_t nextStreamId_ = 0;
+    uint32_t lastStreamId_ = 0;
     
     bool prefaceReceived_ = false;
     bool registeredToLoop_ = false;

@@ -29,10 +29,9 @@
 
 #include "h2defs.h"
 #include "H2Frame.h"
+#include "FlowControl.h"
 
 KUMA_NS_BEGIN
-
-using H2ConnectionPtr = std::shared_ptr<H2Connection::Impl>;
 
 class H2Stream : public KMObject
 {
@@ -43,15 +42,15 @@ public:
     using WriteCallback = std::function<void(void)>;
     
 public:
-    H2Stream(uint32_t streamId, uint32_t remoteWindowSize);
+    H2Stream(uint32_t streamId, H2Connection::Impl* conn, uint32_t remoteWindowSize);
     
     uint32_t getStreamId() { return streamId_; }
     
-    KMError sendHeaders(H2Connection::Impl *conn, const HeaderVector &headers, size_t headersSize,bool endStream);
-    int sendData(H2Connection::Impl *conn, const uint8_t *data, size_t len, bool endStream = false);
-    KMError sendWindowUpdate(H2Connection::Impl *conn, uint32_t increment);
+    KMError sendHeaders(const HeaderVector &headers, size_t headersSize,bool endStream);
+    int sendData(const uint8_t *data, size_t len, bool endStream = false);
+    KMError sendWindowUpdate(uint32_t increment);
     
-    void close(H2Connection::Impl *conn);
+    void close();
     
     void setHeadersCallback(HeadersCallback cb) { headers_cb_ = std::move(cb); }
     void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
@@ -63,7 +62,6 @@ public:
     void handleHeadersFrame(HeadersFrame *frame);
     void handlePriorityFrame(PriorityFrame *frame);
     void handleRSTStreamFrame(RSTStreamFrame *frame);
-    void handleSettingsFrame(SettingsFrame *frame);
     void handlePushFrame(PushPromiseFrame *frame);
     void handleWindowUpdateFrame(WindowUpdateFrame *frame);
     void handleContinuationFrame(ContinuationFrame *frame);
@@ -85,9 +83,13 @@ private:
     
     void endStreamSent();
     void endStreamReceived();
+    
+    void sendRSTStream(H2Error err);
+    void streamError(H2Error err);
 
 private:
     uint32_t streamId_;
+    H2Connection::Impl * conn_;
     State state_ = State::IDLE;
     HeadersCallback headers_cb_;
     DataCallback data_cb_;
@@ -95,8 +97,12 @@ private:
     WriteCallback write_cb_;
     
     bool write_blocked_ { false };
+    bool headers_received_ { false };
+    bool headers_end_ { false };
+    bool tailers_received_ {false };
+    bool tailers_end_ {false };
     
-    size_t remoteWindowSize_ = H2_DEFAULT_WINDOW_SIZE;
+    FlowControl flow_ctrl_;
 };
 
 using H2StreamPtr = std::shared_ptr<H2Stream>;

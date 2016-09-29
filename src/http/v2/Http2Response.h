@@ -51,7 +51,6 @@ private:
     
 private:
     EventLoop::Impl*        loop_;
-    H2Connection::Impl*     conn_ { nullptr };
     H2StreamPtr             stream_;
 };
 
