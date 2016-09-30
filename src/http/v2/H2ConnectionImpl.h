@@ -38,6 +38,9 @@ using namespace hpack;
 
 KUMA_NS_BEGIN
 
+const uint32_t LOCAL_CONN_INITIAL_WINDOW_SIZE = 20*1024*1024;
+const uint32_t LOCAL_STREAM_INITIAL_WINDOW_SIZE = 6*1024*1024;
+
 class Http2Response;
 
 class H2Connection::Impl : public KMObject, public DestroyDetector, public FrameCallback, public TcpConnection, public EventLoop::Impl::Listener
@@ -126,10 +129,11 @@ private:
     
     void onConnectError(KMError err);
     void notifyBlockedStreams();
-    void sendWindowUpdate(uint32_t streamId, uint32_t windowSize);
+    void sendWindowUpdate(uint32_t streamId, uint32_t delta);
     bool isControlFrame(H2Frame *frame);
     
     void applySettings(const ParamVector &params);
+    void updateInitialWindowSize(uint32_t ws);
     void sendGoaway(H2Error err);
     void connectionError(H2Error err);
     void streamError(uint32_t streamId, H2Error err);
@@ -153,9 +157,9 @@ private:
     
     std::string             cmpPreface_; // server only
     
-    uint32_t remoteFrameSize_ = 16384;
+    uint32_t remoteFrameSize_ = H2_DEFAULT_FRAME_SIZE;
     uint32_t initRemoteWindowSize_ = H2_DEFAULT_WINDOW_SIZE;
-    uint32_t initLocalWindowSize_ = 1*1024*1024; // initial local stream window size
+    uint32_t initLocalWindowSize_ = LOCAL_STREAM_INITIAL_WINDOW_SIZE; // initial local stream window size
     
     FlowControl flow_ctrl_;
     

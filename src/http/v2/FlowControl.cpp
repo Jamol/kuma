@@ -35,21 +35,22 @@ FlowControl::FlowControl(uint32_t streamId, UpdateCallback cb)
 void FlowControl::setLocalWindowStep(uint32_t windowSize)
 {
     localWindowStep_ = windowSize;
+    if (minLocalWindowSize_ > localWindowStep_/2) {
+        minLocalWindowSize_ = localWindowStep_/2;
+    }
 }
 
-void FlowControl::setMinLocalWindowSize(uint32_t minSize)
+void FlowControl::setMinLocalWindowSize(uint32_t minWindowSize)
 {
-    minLocalWindowSize_ = minSize;
+    minLocalWindowSize_ = minWindowSize;
+    if (minLocalWindowSize_ > localWindowStep_/2) {
+        minLocalWindowSize_ = localWindowStep_/2;
+    }
 }
 
-void FlowControl::increaseLocalWindowSize(uint32_t windowSize)
+void FlowControl::updateRemoteWindowSize(ssize_t delta)
 {
-    localWindowSize_ += windowSize;
-}
-
-void FlowControl::increaseRemoteWindowSize(uint32_t windowSize)
-{
-    remoteWindowSize_ += windowSize;
+    remoteWindowSize_ += delta;
 }
 
 void FlowControl::initLocalWindowSize(uint32_t windowSize)
@@ -62,29 +63,34 @@ void FlowControl::initRemoteWindowSize(uint32_t windowSize)
     remoteWindowSize_ = windowSize;
 }
 
-void FlowControl::notifyBytesSent(size_t bytes)
+uint32_t FlowControl::localWindowSize()
+{
+    return localWindowSize_>0 ? uint32_t(localWindowSize_) : 0;
+}
+
+uint32_t FlowControl::remoteWindowSize()
+{
+    return remoteWindowSize_>0 ? uint32_t(remoteWindowSize_) : 0;
+}
+
+void FlowControl::bytesSent(size_t bytes)
 {
     bytesSent_ += bytes;
-    if (bytes < remoteWindowSize_) {
-        remoteWindowSize_ -= bytes;
-    } else {
-        remoteWindowSize_ = 0;
-        KUMA_INFOTRACE("FlowControl::notifyBytesSent, window size is 0, streamId="<<streamId_<<", bytesSent="<<bytesSent_);
+    remoteWindowSize_ -= bytes;
+    if (remoteWindowSize_ <= 0 && bytes + remoteWindowSize_ > 0) {
+        KUMA_INFOTRACE("FlowControl::bytesSent, streamId="<<streamId_<<", bytesSent="<<bytesSent_<<", window="<<remoteWindowSize_);
     }
 }
 
-void FlowControl::notifyBytesReceived(size_t bytes)
+void FlowControl::bytesReceived(size_t bytes)
 {
     bytesReceived_ += bytes;
-    if (bytes < localWindowSize_) {
-        localWindowSize_ -= bytes;
-    } else {
-        localWindowSize_ = 0;
-    }
-    if (localWindowSize_ < minLocalWindowSize_) {
-        localWindowSize_ += localWindowStep_;
+    localWindowSize_ -= bytes;
+    if (localWindowSize_ < ssize_t(minLocalWindowSize_)) {
+        auto delta = localWindowStep_ - localWindowSize_;
+        localWindowSize_ += delta;
         if (update_cb_) {
-            update_cb_(uint32_t(localWindowStep_));
+            update_cb_(uint32_t(delta));
         }
     }
 }

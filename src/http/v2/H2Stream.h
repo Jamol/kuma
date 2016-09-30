@@ -48,7 +48,7 @@ public:
     
     KMError sendHeaders(const HeaderVector &headers, size_t headersSize,bool endStream);
     int sendData(const uint8_t *data, size_t len, bool endStream = false);
-    KMError sendWindowUpdate(uint32_t increment);
+    KMError sendWindowUpdate(uint32_t delta);
     
     void close();
     
@@ -67,6 +67,7 @@ public:
     void handleContinuationFrame(ContinuationFrame *frame);
     void onWrite();
     void onError(int err);
+    void updateRemoteWindowSize(ssize_t delta);
     
 private:
     enum State {
