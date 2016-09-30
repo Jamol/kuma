@@ -67,7 +67,7 @@ public:
     void handleContinuationFrame(ContinuationFrame *frame);
     void onWrite();
     void onError(int err);
-    void updateRemoteWindowSize(ssize_t delta);
+    void updateRemoteWindowSize(long delta);
     
 private:
     enum State {

@@ -23,6 +23,8 @@
 #include "H2ConnectionImpl.h"
 #include "util/kmtrace.h"
 
+#include <algorithm>
+
 using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
@@ -258,7 +260,7 @@ void H2Stream::handleContinuationFrame(ContinuationFrame *frame)
     }
 }
 
-void H2Stream::updateRemoteWindowSize(ssize_t delta)
+void H2Stream::updateRemoteWindowSize(long delta)
 {
     flow_ctrl_.updateRemoteWindowSize(delta);
 }

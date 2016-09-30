@@ -796,7 +796,7 @@ void H2Connection::Impl::applySettings(const ParamVector &params)
 void H2Connection::Impl::updateInitialWindowSize(uint32_t ws)
 {
     if (ws != initRemoteWindowSize_) {
-        ssize_t delta = ws - initRemoteWindowSize_;
+        long delta = int32_t(ws - initRemoteWindowSize_);
         initRemoteWindowSize_ = ws;
         for (auto it : streams_) {
             it.second->updateRemoteWindowSize(delta);

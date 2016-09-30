@@ -48,7 +48,7 @@ void FlowControl::setMinLocalWindowSize(uint32_t minWindowSize)
     }
 }
 
-void FlowControl::updateRemoteWindowSize(ssize_t delta)
+void FlowControl::updateRemoteWindowSize(long delta)
 {
     remoteWindowSize_ += delta;
 }
@@ -86,7 +86,7 @@ void FlowControl::bytesReceived(size_t bytes)
 {
     bytesReceived_ += bytes;
     localWindowSize_ -= bytes;
-    if (localWindowSize_ < ssize_t(minLocalWindowSize_)) {
+    if (localWindowSize_ < long(minLocalWindowSize_)) {
         auto delta = localWindowStep_ - localWindowSize_;
         localWindowSize_ += delta;
         if (update_cb_) {

@@ -37,7 +37,7 @@ public:
     FlowControl(uint32_t streamId, UpdateCallback cb);
     void setLocalWindowStep(uint32_t windowSize);
     void setMinLocalWindowSize(uint32_t minWindowSize);
-    void updateRemoteWindowSize(ssize_t delta);
+    void updateRemoteWindowSize(long delta);
     void initLocalWindowSize(uint32_t windowSize);
     void initRemoteWindowSize(uint32_t windowSize);
     
@@ -50,11 +50,11 @@ public:
 private:
     uint32_t streamId_ = 0;
     size_t localWindowStep_ = H2_DEFAULT_WINDOW_SIZE;
-    ssize_t localWindowSize_ = H2_DEFAULT_WINDOW_SIZE;
+    long localWindowSize_ = H2_DEFAULT_WINDOW_SIZE;
     size_t minLocalWindowSize_ = 32768;
     size_t bytesReceived_ = 0;
     
-    ssize_t remoteWindowSize_ = H2_DEFAULT_WINDOW_SIZE;
+    long remoteWindowSize_ = H2_DEFAULT_WINDOW_SIZE;
     size_t bytesSent_ = 0;
     
     UpdateCallback update_cb_;

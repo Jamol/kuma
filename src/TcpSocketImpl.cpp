@@ -113,6 +113,7 @@ KMError TcpSocket::Impl::setSslFlags(uint32_t ssl_flags)
     ssl_flags_ = ssl_flags;
     return KMError::NOERR;
 #else
+    KUMA_ERRXTRACE("setSslFlags, OpenSSL is not enabled, please define KUMA_HAS_OPENSSL and recompile");
     return KMError::UNSUPPORT;
 #endif
 }
