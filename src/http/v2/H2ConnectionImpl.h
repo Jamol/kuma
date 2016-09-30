@@ -72,6 +72,9 @@ public:
     H2StreamPtr getStream(uint32_t streamId);
     void removeStream(uint32_t streamId);
     
+    uint32_t remoteWindowSize() { return flow_ctrl_.remoteWindowSize(); }
+    void appendBlockedStream(uint32_t streamId);
+    
     void loopStopped() override;
     
 public:
@@ -153,7 +156,7 @@ private:
     
     std::map<uint32_t, H2StreamPtr> streams_;
     std::map<uint32_t, H2StreamPtr> promisedStreams_;
-    std::vector<uint32_t>           blocked_streams_;
+    std::map<uint32_t, uint32_t>    blocked_streams_;
     
     std::string             cmpPreface_; // server only
     

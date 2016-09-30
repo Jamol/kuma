@@ -173,7 +173,7 @@ KMError H2Connection::Impl::close()
 KMError H2Connection::Impl::sendH2Frame(H2Frame *frame)
 {
     if (!sendBufferEmpty() && !isControlFrame(frame)) {
-        blocked_streams_.push_back(frame->getStreamId());
+        appendBlockedStream(frame->getStreamId());
         return KMError::AGAIN;
     }
     
@@ -188,7 +188,7 @@ KMError H2Connection::Impl::sendH2Frame(H2Frame *frame)
     } else if (frame->type() == H2FrameType::DATA) {
         if (flow_ctrl_.remoteWindowSize() < frame->getPayloadLength()) {
             KUMA_INFOXTRACE("sendH2Frame, BUFFER_TOO_SMALL, win="<<flow_ctrl_.remoteWindowSize()<<", len="<<frame->getPayloadLength());
-            blocked_streams_.push_back(frame->getStreamId());
+            appendBlockedStream(frame->getStreamId());
             return KMError::BUFFER_TOO_SMALL;
         }
         flow_ctrl_.bytesSent(frame->getPayloadLength());
@@ -593,6 +593,31 @@ void H2Connection::Impl::removeStream(uint32_t streamId)
     }
 }
 
+void H2Connection::Impl::appendBlockedStream(uint32_t streamId)
+{
+    blocked_streams_[streamId] = streamId;
+}
+
+void H2Connection::Impl::notifyBlockedStreams()
+{
+    if (!sendBufferEmpty() || remoteWindowSize() == 0) {
+        return;
+    }
+    auto streams = std::move(blocked_streams_);
+    auto it = streams.begin();
+    while (it != streams.end() && sendBufferEmpty() && remoteWindowSize() > 0) {
+        uint32_t streamId = it->second;
+        it = streams.erase(it);
+        auto stream = getStream(streamId);
+        if (stream) {
+            stream->onWrite();
+        }
+    }
+    if (!streams.empty()) {
+        blocked_streams_.insert(streams.begin(), streams.end());
+    }
+}
+
 void H2Connection::Impl::loopStopped()
 { // event loop exited
     registeredToLoop_ = false;
@@ -735,18 +760,6 @@ void H2Connection::Impl::onConnectError(KMError err)
     setState(State::IN_ERROR);
     auto connect_cb(std::move(connect_cb_));
     if (connect_cb) connect_cb(err);
-}
-
-void H2Connection::Impl::notifyBlockedStreams()
-{
-    while (!blocked_streams_.empty() && sendBufferEmpty()) {
-        uint32_t streamId = blocked_streams_.back();
-        blocked_streams_.pop_back();
-        auto stream = getStream(streamId);
-        if (stream) {
-            stream->onWrite();
-        }
-    }
 }
 
 void H2Connection::Impl::sendWindowUpdate(uint32_t streamId, uint32_t delta)

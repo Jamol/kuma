@@ -65,13 +65,18 @@ int H2Stream::sendData(const uint8_t *data, size_t len, bool endStream)
     if (write_blocked_) {
         return 0;
     }
-    size_t remoteWindowSize = flow_ctrl_.remoteWindowSize();
-    if (0 == remoteWindowSize && (!endStream || len != 0)) {
+    size_t streamWindowSize = flow_ctrl_.remoteWindowSize();
+    size_t connWindowSize = conn_->remoteWindowSize();
+    size_t windowSize = std::min(streamWindowSize, connWindowSize);
+    if (0 == windowSize && (!endStream || len != 0)) {
         write_blocked_ = true;
-        KUMA_INFOXTRACE("sendData, remote window size is 0");
+        KUMA_INFOXTRACE("sendData, remote window 0, cws="<<connWindowSize<<", sws="<<streamWindowSize);
+        if (connWindowSize == 0) {
+            conn_->appendBlockedStream(streamId_);
+        }
         return 0;
     }
-    size_t send_len = remoteWindowSize < len ? remoteWindowSize : len;
+    size_t send_len = windowSize < len ? windowSize : len;
     DataFrame frame;
     frame.setStreamId(getStreamId());
     if (endStream) {
@@ -79,12 +84,16 @@ int H2Stream::sendData(const uint8_t *data, size_t len, bool endStream)
     }
     frame.setData(data, send_len);
     auto ret = conn_->sendH2Frame(&frame);
-    //KUMA_INFOXTRACE("sendData, len="<<len<<", send_len="<<send_len<<", ret="<<int(ret)<<", win="<<remoteWindowSize_);
+    //KUMA_INFOXTRACE("sendData, len="<<len<<", send_len="<<send_len<<", ret="<<int(ret)<<", win="<<flow_ctrl_.remoteWindowSize());
     if (KMError::NOERR == ret) {
         if (endStream) {
             endStreamSent();
         }
         flow_ctrl_.bytesSent(send_len);
+        if (send_len < len) {
+            write_blocked_ = true;
+            conn_->appendBlockedStream(streamId_);
+        }
         return int(send_len);
     } else if (KMError::AGAIN == ret || KMError::BUFFER_TOO_SMALL == ret) {
         write_blocked_ = true;
