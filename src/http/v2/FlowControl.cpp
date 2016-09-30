@@ -20,20 +20,26 @@
  */
 
 #include "FlowControl.h"
+#include "util/kmtrace.h"
 
 using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
 //
-FlowControl::FlowControl(UpdateCallback cb)
-: update_cb_(std::move(cb))
+FlowControl::FlowControl(uint32_t streamId, UpdateCallback cb)
+: streamId_(streamId), update_cb_(std::move(cb))
 {
     
 }
 
-void FlowControl::setLocalWindowSizeStep(uint32_t windowSize)
+void FlowControl::setLocalWindowStep(uint32_t windowSize)
 {
-    localWindowSizeStep_ = windowSize;
+    localWindowStep_ = windowSize;
+}
+
+void FlowControl::setMinLocalWindowSize(uint32_t minSize)
+{
+    minLocalWindowSize_ = minSize;
 }
 
 void FlowControl::increaseLocalWindowSize(uint32_t windowSize)
@@ -63,6 +69,7 @@ void FlowControl::notifyBytesSent(size_t bytes)
         remoteWindowSize_ -= bytes;
     } else {
         remoteWindowSize_ = 0;
+        KUMA_INFOTRACE("FlowControl::notifyBytesSent, window size is 0, streamId="<<streamId_<<", bytesSent="<<bytesSent_);
     }
 }
 
@@ -74,10 +81,10 @@ void FlowControl::notifyBytesReceived(size_t bytes)
     } else {
         localWindowSize_ = 0;
     }
-    if (localWindowSize_ < 16384) {
-        localWindowSize_ += localWindowSizeStep_;
+    if (localWindowSize_ < minLocalWindowSize_) {
+        localWindowSize_ += localWindowStep_;
         if (update_cb_) {
-            update_cb_(uint32_t(localWindowSizeStep_));
+            update_cb_(uint32_t(localWindowStep_));
         }
     }
 }

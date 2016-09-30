@@ -37,11 +37,15 @@ namespace {
     static const std::string ClientConnectionPreface("PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n");
 }
 
+const uint32_t H2_INITIAL_WINDOW_SIZE = 10*1024*1024;//2147418112;//2147483647;
+
 //////////////////////////////////////////////////////////////////////////
 H2Connection::Impl::Impl(EventLoop::Impl* loop)
-: TcpConnection(loop), frameParser_(this), flow_ctrl_([this] (uint32_t w) { sendWindowUpdate(0, w); })
+: TcpConnection(loop), frameParser_(this), flow_ctrl_(0, [this] (uint32_t w) { sendWindowUpdate(0, w); })
 {
     flow_ctrl_.initLocalWindowSize(H2_INITIAL_WINDOW_SIZE);
+    flow_ctrl_.setMinLocalWindowSize(initLocalWindowSize_);
+    flow_ctrl_.setLocalWindowStep(H2_INITIAL_WINDOW_SIZE);
     cmpPreface_ = ClientConnectionPreface;
     KM_SetObjKey("H2Connection");
     KUMA_INFOXTRACE("H2Connection");
@@ -184,15 +188,15 @@ KMError H2Connection::Impl::sendH2Frame(H2Frame *frame)
         HeadersFrame *headers = dynamic_cast<HeadersFrame*>(frame);
         return sendHeadersFrame(headers);
     } else if (frame->type() == H2FrameType::DATA) {
-        /*if (flow_ctrl_.getRemoteWindowSize() < frame->getPayloadLength()) {
+        if (flow_ctrl_.getRemoteWindowSize() < frame->getPayloadLength()) {
             KUMA_INFOXTRACE("sendH2Frame, BUFFER_TOO_SMALL, win="<<flow_ctrl_.getRemoteWindowSize()<<", len="<<frame->getPayloadLength());
             blocked_streams_.push_back(frame->getStreamId());
             return KMError::BUFFER_TOO_SMALL;
-        }*/
+        }
         flow_ctrl_.notifyBytesSent(frame->getPayloadLength());
     } else if (frame->type() == H2FrameType::WINDOW_UPDATE && frame->getStreamId() != 0) {
-        WindowUpdateFrame *wu = dynamic_cast<WindowUpdateFrame*>(frame);
-        flow_ctrl_.increaseLocalWindowSize(wu->getWindowSizeIncrement());
+        //WindowUpdateFrame *wu = dynamic_cast<WindowUpdateFrame*>(frame);
+        //flow_ctrl_.increaseLocalWindowSize(wu->getWindowSizeIncrement());
     }
     
     size_t payloadSize = frame->calcPayloadSize();
@@ -410,13 +414,13 @@ void H2Connection::Impl::handleWindowUpdateFrame(WindowUpdateFrame *frame)
             connectionError(H2Error::PROTOCOL_ERROR);
             return;
         }
-        //bool need_notify = !flow_ctrl_.getRemoteWindowSize() && !blocked_streams_.empty();
+        bool need_notify = !blocked_streams_.empty();
         flow_ctrl_.increaseRemoteWindowSize(frame->getWindowSizeIncrement());
-        /*if (need_notify) {
+        if (need_notify) {
             notifyBlockedStreams();
-        }*/
+        }
     } else {
-        flow_ctrl_.increaseRemoteWindowSize(frame->getWindowSizeIncrement());
+        //flow_ctrl_.increaseRemoteWindowSize(frame->getWindowSizeIncrement());
         H2StreamPtr stream = getStream(frame->getStreamId());
         if (!stream && isServer()) {
             // new stream arrived on server side
