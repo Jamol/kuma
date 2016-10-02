@@ -179,7 +179,9 @@ KMError H2Connection::Impl::sendH2Frame(H2Frame *frame)
     
     if (isControlFrame(frame))
     {
-        KUMA_INFOXTRACE("sendH2Frame, type="<<frame->type()<<", streamId="<<frame->getStreamId());
+        KUMA_INFOXTRACE("sendH2Frame, type="<<frame->type()<<", streamId="<<frame->getStreamId()<<", flags="<<int(frame->getFlags()));
+    } else if (frame->getFlags() & H2_FRAME_FLAG_END_STREAM) {
+        KUMA_INFOXTRACE("sendH2Frame, end stream, type="<<frame->type()<<", streamId="<<frame->getStreamId());
     }
     
     if (frame->type() == H2FrameType::HEADERS) {

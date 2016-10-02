@@ -557,7 +557,7 @@ bool HttpParser::Impl::decodeUrl()
                 break;
                 
             default:
-                new_url = p_str[i++];
+                new_url.append(1, p_str[i++]);
                 break;
         }
     }
@@ -572,6 +572,7 @@ bool HttpParser::Impl::parseUrl()
     if(!uri.parse(url_)) {
         return false;
     }
+    url_path_ = uri.getPath();
     const std::string& query = uri.getQuery();
     std::string::size_type pos = 0;
     while (true) {

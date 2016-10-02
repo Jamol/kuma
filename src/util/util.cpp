@@ -650,7 +650,6 @@ std::string getCurrentModulePath()
 #endif
     auto pos = str_path.rfind(PATH_SEPARATOR, str_path.size());
     str_path.resize(pos);
-    str_path.append(1, PATH_SEPARATOR);
     return str_path;
 }
 

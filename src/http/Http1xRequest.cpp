@@ -147,9 +147,10 @@ int Http1xRequest::sendChunk(const uint8_t* data, size_t len)
     } else {
         std::stringstream ss;
         ss.setf(std::ios_base::hex, std::ios_base::basefield);
-        ss << len << "\r\n";
+        ss << len;
         std::string str;
         ss >> str;
+        str += "\r\n";
         iovec iovs[3];
         iovs[0].iov_base = (char*)str.c_str();
         iovs[0].iov_len = str.length();

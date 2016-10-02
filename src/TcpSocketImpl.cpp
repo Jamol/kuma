@@ -113,7 +113,7 @@ KMError TcpSocket::Impl::setSslFlags(uint32_t ssl_flags)
     ssl_flags_ = ssl_flags;
     return KMError::NOERR;
 #else
-    KUMA_ERRXTRACE("setSslFlags, OpenSSL is not enabled, please define KUMA_HAS_OPENSSL and recompile");
+    //KUMA_ERRXTRACE("setSslFlags, OpenSSL is not enabled, please define KUMA_HAS_OPENSSL and recompile");
     return KMError::UNSUPPORT;
 #endif
 }
@@ -488,7 +488,7 @@ int TcpSocket::Impl::send(const uint8_t* data, size_t length)
             loop_->updateFd(fd_, KUMA_EV_NETWORK);
         }
     }
-    //KUMA_INFOXTRACE("send, ret="<<ret<<", len="<<len);
+    //KUMA_INFOXTRACE("send, ret="<<ret<<", len="<<length);
     return ret;
 }
 

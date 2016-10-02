@@ -47,6 +47,9 @@ public:
     void bytesSent(size_t bytes);
     void bytesReceived(size_t bytes);
     
+    size_t bytesSent() { return bytesSent_; }
+    size_t bytesReceived() { return bytesReceived_; }
+    
 private:
     uint32_t streamId_ = 0;
     size_t localWindowStep_ = H2_DEFAULT_WINDOW_SIZE;

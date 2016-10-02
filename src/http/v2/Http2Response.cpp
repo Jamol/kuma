@@ -73,7 +73,7 @@ KMError Http2Response::sendResponse(int status_code, const std::string& desc, co
     setState(State::SENDING_HEADER);
     HeaderVector headers;
     size_t headersSize = buildHeaders(status_code, headers);
-    bool endStream = !has_content_length_ && !is_chunked_;
+    bool endStream = has_content_length_ && content_length_ == 0;
     stream_->sendHeaders(headers, headersSize, endStream);
     if (endStream) {
         setState(State::COMPLETE);
@@ -140,6 +140,7 @@ void Http2Response::onHeaders(const HeaderVector &headers, bool endheaders, bool
                 } else if (name == H2HeaderAuthority) {
                     http_parser_.addHeaderValue("host", value);
                 } else if (name == H2HeaderPath) {
+                    http_parser_.setUrl(value);
                     http_parser_.setUrlPath(std::move(value));
                 }
             } else {

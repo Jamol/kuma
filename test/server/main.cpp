@@ -3,6 +3,7 @@
 #include "TcpServer.h"
 #include "UdpServer.h"
 #include "util/AutoCleaner.h"
+#include "testutil.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,6 +22,7 @@ using namespace kuma;
 
 static bool g_exit = false;
 EventLoop main_loop(PollType::NONE);
+std::string www_path;
 
 #ifdef KUMA_OS_WIN
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
@@ -72,6 +74,17 @@ int main(int argc, char *argv[])
         printUsage();
         return -1;
     }
+    
+    www_path = ::getCurrentModulePath();
+    www_path += PATH_SEPARATOR;
+#if defined(KUMA_OS_WIN)
+    www_path += "../../../";
+#elif defined(KUMA_OS_MAC)
+    www_path += "../../../";
+#elif defined(KUMA_OS_LINUX)
+    www_path += "../../";
+#endif
+    www_path += "test/www";
     
     std::string listen_addr;
     

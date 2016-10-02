@@ -1,0 +1,42 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8">
+    <title>kuma test</title>
+</head>
+<body>
+    <h1>kuma test</h1>
+
+    <button type="button" onclick="testWebSocket()">test WebSocket</button>
+    <button type="button" onclick="testHttp()">test HTTP</button>
+
+    <script type='text/javascript' src='./scripts/kuma.js'></script>
+    <script type='text/javascript' src='./scripts/ws-test.js'></script>
+    <script type='text/javascript' src='./scripts/http-test.js'></script>
+
+    <script type="text/javascript">
+        function testWebSocket() {
+            var url = "";
+            if (location.protocol == "https:") {
+                url += "wss://";
+            } else {
+                url += "ws://";
+            }
+            url += location.hostname;
+            if (location.port) {
+                url += ":" + location.port;
+            }
+            url += "/";
+            kuma.testWebSocket(url);
+        }
+        function testHttp() {
+            var url = location.protocol + "//" + location.hostname;
+            if (location.port) {
+                url += ":" + location.port;
+            }
+            url += "/testdata";
+            kuma.testHttp(url);
+        }
+    </script>
+</body>
+</html>

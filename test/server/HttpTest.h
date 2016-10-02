@@ -5,6 +5,7 @@
 #include "TestLoop.h"
 
 #include <map>
+#include <string>
 
 using namespace kuma;
 
@@ -27,15 +28,25 @@ public:
     void onResponseComplete();
     
 private:
+    enum class State {
+        NONE,
+        SENDING_FILE,
+        SENDING_TEST_DATA,
+        COMPLETED
+    };
     void setupCallbacks();
     void cleanup();
+    void sendTestFile();
     void sendTestData();
+    void sendNormal();
     
 private:
     ObjectManager*  obj_mgr_;
     HttpResponse    http_;
     long            conn_id_;
+    State           state_ = State::NONE;
     bool            is_options_;
+    std::string     file_name_;
 };
 
 #endif

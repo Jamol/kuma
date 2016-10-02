@@ -76,9 +76,10 @@ bool OpenSslLib::doInit(const std::string &path)
         certs_path_ = path;
         if(certs_path_.empty()) {
             certs_path_ = getCurrentModulePath();
-        } else if(certs_path_.at(certs_path_.length() - 1) != PATH_SEPARATOR) {
-            certs_path_ += PATH_SEPARATOR;
         }
+    }
+    if(certs_path_.at(certs_path_.length() - 1) != PATH_SEPARATOR) {
+        certs_path_ += PATH_SEPARATOR;
     }
     
     if (CRYPTO_get_locking_callback() == NULL) {

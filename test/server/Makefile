@@ -38,6 +38,7 @@ SRCS =  \
     TcpServer.cpp\
     UdpServer.cpp\
     TcpTest.cpp\
+    testutil.cpp\
     HttpTest.cpp\
     WsTest.cpp\
     H2ConnTest.cpp \
