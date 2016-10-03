@@ -107,7 +107,15 @@ void HttpTest::onRequestComplete()
             state_ = State::SENDING_FILE;
         } else if (strcasecmp(http_.getPath(), "/testdata") == 0) {
             state_ = State::SENDING_TEST_DATA;
-            http_.addHeader("Content-Length", (uint32_t)256*1024*1024);
+            size_t contentLength = 256*1024*1024;
+            if (http_.getHeaderValue("User-Agent")) {
+                std::string userAgent = http_.getHeaderValue("User-Agent");
+                if (userAgent.find("kuma") == std::string::npos) {
+                    // maybe browser, reduce the content length to decrease memory consuming
+                    contentLength = 128*1024*1024;
+                }
+            }
+            http_.addHeader("Content-Length", (uint32_t)contentLength);
         } else {
             file += http_.getPath();
             state_ = State::SENDING_FILE;

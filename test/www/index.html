@@ -8,13 +8,23 @@
     <h1>kuma test</h1>
 
     <button type="button" onclick="testWebSocket()">test WebSocket</button>
+    &nbsp;&nbsp;&nbsp;&nbsp;
     <button type="button" onclick="testHttp()">test HTTP</button>
+    <br><br>
+    <label id="status"></label>
 
     <script type='text/javascript' src='./scripts/kuma.js'></script>
     <script type='text/javascript' src='./scripts/ws-test.js'></script>
     <script type='text/javascript' src='./scripts/http-test.js'></script>
 
     <script type="text/javascript">
+        function testProgress(bytesReceived, completed) {
+            var str = '' + bytesReceived + ' bytes received';
+            if (completed) {
+                str += ', test completed';
+            }
+            document.getElementById('status').innerHTML = str;
+        }
         function testWebSocket() {
             var url = "";
             if (location.protocol == "https:") {
@@ -27,7 +37,7 @@
                 url += ":" + location.port;
             }
             url += "/";
-            kuma.testWebSocket(url);
+            kuma.testWebSocket(url, testProgress);
         }
         function testHttp() {
             var url = location.protocol + "//" + location.hostname;
@@ -35,7 +45,7 @@
                 url += ":" + location.port;
             }
             url += "/testdata";
-            kuma.testHttp(url);
+            kuma.testHttp(url, testProgress);
         }
     </script>
 </body>

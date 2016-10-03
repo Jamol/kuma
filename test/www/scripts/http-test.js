@@ -2,7 +2,7 @@
 ; (function (window, kuma, undefined) {
     var exports = kuma;
 
-    function testHttp(url, options) {
+    function testHttp(url, progress) {
         var uid = kuma.allocUniqueId(),
             xhr = null,
             recvBytes = 0,
@@ -14,12 +14,14 @@
         xhr.ondata = function (d) {
             recvBytes += d.length;
             console.info("testHttp.ondata, uid=" + uid + ", len=" + d.length + ", total=" + recvBytes);
+            progress(recvBytes);
         }
         xhr.onsuccess = function (d) {
             if (d) {
                 recvBytes += d.length;
             }
             console.info("testHttp.onsuccess, uid=" + uid + ", total=" + recvBytes);
+            progress(recvBytes, true);
         }
         xhr.onerror = function(e) {
             console.info("testHttp.onerror, uid=" + uid + ", e=" + e);
@@ -95,7 +97,6 @@
 			}
 
 			function onSuccess() {
-                console.info("testHttp, test completed, uid=" + uid + ", total=" + offset);
 				if (self.ondata) {
 					onData();
 					if (self.onsuccess) {

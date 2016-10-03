@@ -167,8 +167,7 @@ int Http1xResponse::sendChunk(const uint8_t* data, size_t len)
         return 0;
     } else {
         std::stringstream ss;
-        ss.setf(std::ios_base::hex, std::ios_base::basefield);
-        ss << len;
+        ss << std::hex << len;
         std::string str;
         ss >> str;
         str += "\r\n";

@@ -1,14 +1,15 @@
 
 ; (function (window, kuma, undefined) {
     var exports = kuma;
-	function testWebSocket(url, options) {
+	function testWebSocket(url, progress) {
 	    var uid = kuma.allocUniqueId(),
             ws = null,
             testData = null,
             testLength = 1024,
-            testCount = 1000,
+            testCount = 10000,
             sendCount = 0,
             recvCount = 0,
+            recvBytes = 0,
             i
 	    ;
 
@@ -30,6 +31,7 @@
 		    }
 		    var d = new Uint8Array(evt.data);
             ++recvCount;
+            recvBytes += d.length;
             console.info("testWebSocket.onmessage, uid=" + uid + ", len=" + d.length + ", count=" + recvCount);
 		    if (d === null || d.length === 0) {
 		        return;
@@ -38,8 +40,10 @@
                 ws.close();
                 ws = null;
                 console.info("testWebSocket, test completed, uid=" + uid);
+                progress(recvBytes, true);
                 return;
             }
+            progress(recvBytes);
             sendTestData();
 		}
 
