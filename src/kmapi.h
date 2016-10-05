@@ -230,6 +230,9 @@ public:
     using EventCallback = std::function<void(KMError)>;
     using HttpEventCallback = std::function<void(void)>;
     
+    /* 
+     * @param ver, http version, "HTTP/2.0" for HTTP2
+     */
     HttpRequest(EventLoop* loop, const char* ver = "HTTP/1.1");
     ~HttpRequest();
     
@@ -266,6 +269,9 @@ public:
     using EventCallback = std::function<void(KMError)>;
     using HttpEventCallback = std::function<void(void)>;
     
+    /*
+     * @param ver, http version, "HTTP/2.0" for HTTP2
+     */
     HttpResponse(EventLoop* loop, const char* ver);
     ~HttpResponse();
     

@@ -4,13 +4,16 @@
 #include <sys/stat.h>
 
 #ifdef KUMA_OS_WIN
-#include <direct.h>
+# include <direct.h>
 #else
-#include <unistd.h>
-#include <libproc.h>
+# include <unistd.h>
+# ifdef KUMA_OS_MAC
+#  include <libproc.h>
+# endif
 #endif
 
 #include <errno.h>
+#include <string.h>
 
 #ifdef KUMA_OS_WIN
 typedef struct _stat _f_stat_t;
@@ -73,24 +76,28 @@ bool splitPath(const std::string &uri, std::string &path, std::string &name, std
 bool getCurrentPath(std::string &path)
 {
 #ifdef KUMA_OS_WIN
-    char tmp[1024] = {0};
-    if(!GetModuleFileName(NULL,tmp,sizeof(tmp))) {
-        return false;
-    }
-    std::string name, ext;
-    return splitPath(tmp, path, name, ext);
-#else
-    int ret;
-    pid_t pid;
-    char pathbuf[PROC_PIDPATHINFO_MAXSIZE];
-    
-    pid = getpid();
-    ret = proc_pidpath (pid, pathbuf, sizeof(pathbuf));
-    if(ret <= 0) {
+    char pathbuf[1024] = {0};
+    if(!GetModuleFileName(NULL, pathbuf, sizeof(pathbuf))) {
         return false;
     }
     std::string name, ext;
     return splitPath(pathbuf, path, name, ext);
+#elif defined(KUMA_OS_MAC)
+    char pathbuf[PROC_PIDPATHINFO_MAXSIZE];
+    if(proc_pidpath(getpid(), pathbuf, sizeof(pathbuf)) <= 0) {
+        return false;
+    }
+    std::string name, ext;
+    return splitPath(pathbuf, path, name, ext);
+#elif defined(KUMA_OS_LINUX)
+    char pathbuf[1024] = {0};
+    if (readlink("/proc/self/exe", pathbuf, sizeof(pathbuf)) < 0) {
+        return false;
+    }
+    std::string name, ext;
+    return splitPath(pathbuf, path, name, ext);
+#else
+    return false;
 #endif
 #if 0//MACOS
     char path[1024];
