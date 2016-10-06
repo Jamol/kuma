@@ -39,7 +39,7 @@ public:
     KMError connect(const std::string &host, uint16_t port);
     KMError attachFd(SOCKET_FD fd, const uint8_t* data=nullptr, size_t size=0);
     KMError attachSocket(TcpSocket::Impl &&tcp);
-    int send(const uint8_t* data, size_t len);
+    int send(const void* data, size_t len);
     int send(iovec* iovs, int count);
     KMError close();
     

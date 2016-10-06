@@ -39,7 +39,7 @@ public:
     ~Http1xRequest();
     
     KMError setSslFlags(uint32_t ssl_flags) override { return TcpConnection::setSslFlags(ssl_flags); }
-    int sendData(const uint8_t* data, size_t len) override;
+    int sendData(const void* data, size_t len) override;
     void reset() override; // reset for connection reuse
     KMError close() override;
     
@@ -58,12 +58,12 @@ private:
     KMError sendRequest() override;
     void checkHeaders() override;
     void buildRequest();
-    int sendChunk(const uint8_t* data, size_t len);
+    int sendChunk(const void* data, size_t len);
     void cleanup();
     void sendRequestHeader();
     bool isVersion2() override { return false; }
     
-    void onHttpData(const char* data, size_t len);
+    void onHttpData(void* data, size_t len);
     void onHttpEvent(HttpEvent ev);
     
 private:

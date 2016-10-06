@@ -109,7 +109,7 @@ KMError Http1xRequest::sendRequest()
     }
 }
 
-int Http1xRequest::sendData(const uint8_t* data, size_t len)
+int Http1xRequest::sendData(const void* data, size_t len)
 {
     if(!sendBufferEmpty() || getState() != State::SENDING_BODY) {
         return 0;
@@ -132,11 +132,11 @@ int Http1xRequest::sendData(const uint8_t* data, size_t len)
     return ret;
 }
 
-int Http1xRequest::sendChunk(const uint8_t* data, size_t len)
+int Http1xRequest::sendChunk(const void* data, size_t len)
 {
     if(nullptr == data && 0 == len) { // chunk end
         static const std::string _chunk_end_token_ = "0\r\n\r\n";
-        int ret = TcpConnection::send((uint8_t*)_chunk_end_token_.c_str(), (uint32_t)_chunk_end_token_.length());
+        int ret = TcpConnection::send(_chunk_end_token_.c_str(), _chunk_end_token_.length());
         if(ret < 0) {
             setState(State::IN_ERROR);
             return ret;
@@ -185,7 +185,7 @@ KMError Http1xRequest::close()
 void Http1xRequest::sendRequestHeader()
 {
     body_bytes_sent_ = 0;
-    http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
+    http_parser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     buildRequest();
     setState(State::SENDING_HEADER);
@@ -270,9 +270,9 @@ void Http1xRequest::onError(KMError err)
     }
 }
 
-void Http1xRequest::onHttpData(const char* data, size_t len)
+void Http1xRequest::onHttpData(void* data, size_t len)
 {
-    if(data_cb_) data_cb_((uint8_t*)data, len);
+    if(data_cb_) data_cb_(data, len);
 }
 
 void Http1xRequest::onHttpEvent(HttpEvent ev)

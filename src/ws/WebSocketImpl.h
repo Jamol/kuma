@@ -47,7 +47,7 @@ public:
     KMError connect(const std::string& ws_url, EventCallback cb);
     KMError attachFd(SOCKET_FD fd, const uint8_t* init_data = nullptr, size_t init_len = 0);
     KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser);
-    int send(const uint8_t* data, size_t len);
+    int send(const void* data, size_t len);
     KMError close();
     
     void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
@@ -70,7 +70,7 @@ private:
     
     void sendUpgradeRequest();
     void sendUpgradeResponse();
-    void onWsData(uint8_t* data, size_t len);
+    void onWsData(void* data, size_t len);
     void onWsHandshake(KMError err);
     void onStateOpen();
     

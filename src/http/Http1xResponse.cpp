@@ -57,7 +57,7 @@ KMError Http1xResponse::attachFd(SOCKET_FD fd, uint8_t* init_data, size_t init_l
 {
     setState(State::RECVING_REQUEST);
     http_parser_.reset();
-    http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
+    http_parser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     return TcpConnection::attachFd(fd);
 }
@@ -67,7 +67,7 @@ KMError Http1xResponse::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& p
     setState(State::RECVING_REQUEST);
     http_parser_.reset();
     http_parser_ = std::move(parser);
-    http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
+    http_parser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
 
     auto ret = TcpConnection::attachSocket(std::move(tcp));
@@ -128,7 +128,7 @@ KMError Http1xResponse::sendResponse(int status_code, const std::string& desc, c
     return KMError::NOERR;
 }
 
-int Http1xResponse::sendData(const uint8_t* data, size_t len)
+int Http1xResponse::sendData(const void* data, size_t len)
 {
     if(!sendBufferEmpty() || getState() != State::SENDING_BODY) {
         return 0;
@@ -152,11 +152,11 @@ int Http1xResponse::sendData(const uint8_t* data, size_t len)
     return ret;
 }
 
-int Http1xResponse::sendChunk(const uint8_t* data, size_t len)
+int Http1xResponse::sendChunk(const void* data, size_t len)
 {
     if(nullptr == data && 0 == len) { // chunk end
         static const std::string _chunk_end_token_ = "0\r\n\r\n";
-        int ret = TcpConnection::send((uint8_t*)_chunk_end_token_.c_str(), (uint32_t)_chunk_end_token_.length());
+        int ret = TcpConnection::send(_chunk_end_token_.c_str(), _chunk_end_token_.length());
         if(ret < 0) {
             setState(State::IN_ERROR);
             return ret;
@@ -250,7 +250,7 @@ void Http1xResponse::onError(KMError err)
     }
 }
 
-void Http1xResponse::onHttpData(const char* data, size_t len)
+void Http1xResponse::onHttpData(void* data, size_t len)
 {
     if(data_cb_) data_cb_((uint8_t*)data, len);
 }

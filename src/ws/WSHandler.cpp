@@ -38,7 +38,7 @@ using namespace kuma;
 //////////////////////////////////////////////////////////////////////////
 WSHandler::WSHandler()
 {
-    http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
+    http_parser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
 }
 
@@ -51,7 +51,7 @@ void WSHandler::setHttpParser(HttpParser::Impl&& parser)
 {
     http_parser_.reset();
     http_parser_ = std::move(parser);
-    http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
+    http_parser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     if(http_parser_.paused()) {
         http_parser_.resume();
@@ -122,7 +122,7 @@ const std::string WSHandler::getOrigin()
     return http_parser_.getHeaderValue("Origin");
 }
 
-void WSHandler::onHttpData(const char* data, size_t len)
+void WSHandler::onHttpData(void* data, size_t len)
 {
     KUMA_ERRTRACE("WSHandler::onHttpData, len="<<len);
 }
@@ -153,8 +153,7 @@ void WSHandler::onHttpEvent(HttpEvent ev)
 
 void WSHandler::handleRequest()
 {
-    if(!is_equal(http_parser_.getHeaderValue("Upgrade"), "WebSocket") ||
-       !is_equal(http_parser_.getHeaderValue("Connection"), "Upgrade")) {
+    if(!http_parser_.isUpgradeTo("WebSocket")) {
         state_ = STATE_ERROR;
         KUMA_INFOTRACE("WSHandler::handleRequest, not WebSocket request");
         if(handshake_cb_) handshake_cb_(KMError::INVALID_PROTO);
@@ -173,9 +172,7 @@ void WSHandler::handleRequest()
 
 void WSHandler::handleResponse()
 {
-    if(101 == http_parser_.getStatusCode() &&
-       is_equal(http_parser_.getHeaderValue("Upgrade"), "WebSocket") &&
-       is_equal(http_parser_.getHeaderValue("Connection"), "Upgrade")) {
+    if(http_parser_.isUpgradeTo("WebSocket")) {
         state_ = STATE_OPEN;
         if(handshake_cb_) handshake_cb_(KMError::NOERR);
     } else {

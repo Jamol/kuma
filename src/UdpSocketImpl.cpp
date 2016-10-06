@@ -284,7 +284,7 @@ KMError UdpSocket::Impl::mcastLeave(const char* mcast_addr, uint16_t mcast_port)
     return KMError::NOERR;
 }
 
-int UdpSocket::Impl::send(const uint8_t* data, size_t length, const char* host, uint16_t port)
+int UdpSocket::Impl::send(const void* data, size_t length, const char* host, uint16_t port)
 {
     if(INVALID_FD == fd_) {
         KUMA_ERRXTRACE("send, invalid fd");
@@ -304,7 +304,7 @@ int UdpSocket::Impl::send(const uint8_t* data, size_t length, const char* host, 
     else
         addr_len = sizeof(sockaddr_in6);
 #endif
-    int ret = (int)::sendto(fd_, (char*)data, length, 0, (struct sockaddr*)&ss_addr, addr_len);
+    int ret = (int)::sendto(fd_, (const char*)data, length, 0, (struct sockaddr*)&ss_addr, addr_len);
     if(0 == ret) {
         KUMA_ERRXTRACE("send, peer closed, err="<<getLastError()<<", host="<<host<<", port="<<port);
         ret = -1;
@@ -404,7 +404,7 @@ int UdpSocket::Impl::send(iovec* iovs, int count, const char* host, uint16_t por
     return ret;
 }
 
-int UdpSocket::Impl::receive(uint8_t* data, size_t length, char* ip, size_t ip_len, uint16_t& port)
+int UdpSocket::Impl::receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port)
 {
     if(INVALID_FD == fd_) {
         KUMA_ERRXTRACE("receive, invalid fd");

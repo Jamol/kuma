@@ -37,9 +37,9 @@ KUMA_NS_BEGIN
 class HttpParser::Impl : public DestroyDetector
 {
 public:
-    typedef std::function<void(const char*, size_t)> DataCallback;
-    typedef std::function<void(HttpEvent)> EventCallback;
-    typedef std::function<void(const std::string&, const std::string&)> EnumrateCallback;
+    using DataCallback = HttpParser::DataCallback;
+    using EventCallback = HttpParser::EventCallback;
+    using EnumrateCallback = std::function<void(const std::string&, const std::string&)>;
     
     Impl() = default;
     Impl(const Impl& other);
@@ -49,7 +49,7 @@ public:
     Impl& operator=(Impl&& other);
     
     // return bytes parsed
-    int parse(const char* data, size_t len);
+    int parse(char* data, size_t len);
     void pause();
     void resume();
     // true - http completed
@@ -61,6 +61,7 @@ public:
     bool complete() const;
     bool error() const;
     bool paused() const { return paused_; }
+    bool isUpgradeTo(const std::string& proto) const;
     
     int getStatusCode() const { return status_code_; }
     const std::string& getLocation() const { return getHeaderValue("Location"); }
@@ -84,7 +85,7 @@ public:
     void setVersion(std::string ver);
     void setHeaders(HeaderVector & headers);
     void setHeaders(HeaderVector && headers);
-    void addParamValue(const std::string name, const std::string value);
+    void addParamValue(std::string name, std::string value);
     void addHeaderValue(std::string name, std::string value);
     
 private:
@@ -113,11 +114,11 @@ private:
     }ChunkReadState;
     
 private:
-    ParseState parseHttp(const char*& cur_pos, const char* end);
+    ParseState parseHttp(char*& cur_pos, char* end);
     bool parseStartLine(const char* line, const char* line_end);
     bool parseHeaderLine(const char* line, const char* line_end);
-    ParseState parseChunk(const char*& cur_pos, const char* end);
-    bool getLine(const char*& cur_pos, const char* end, const char*& line, const char*& line_end);
+    ParseState parseChunk(char*& cur_pos, char* end);
+    bool getLine(char*& cur_pos, char* end, const char*& line, const char*& line_end);
     
     bool decodeUrl();
     bool parseUrl();

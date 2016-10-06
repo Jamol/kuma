@@ -49,7 +49,7 @@ public:
     virtual void addHeader(std::string name, std::string value);
     virtual void addHeader(std::string name, uint32_t value);
     KMError sendResponse(int status_code, const std::string& desc);
-    virtual int sendData(const uint8_t* data, size_t len) = 0;
+    virtual int sendData(const void* data, size_t len) = 0;
     virtual void reset();
     virtual KMError close() = 0;
     

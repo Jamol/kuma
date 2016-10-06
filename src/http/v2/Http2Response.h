@@ -36,12 +36,12 @@ public:
     KMError attachStream(H2Connection::Impl* conn, uint32_t streamId) override;
     void addHeader(std::string name, std::string value) override;
     KMError sendResponse(int status_code, const std::string& desc, const std::string& ver) override;
-    int sendData(const uint8_t* data, size_t len) override;
+    int sendData(const void* data, size_t len) override;
     KMError close() override;
     
 protected:
     void onHeaders(const HeaderVector &headers, bool endheaders, bool endSteam);
-    void onData(uint8_t *data, size_t len, bool endSteam);
+    void onData(void *data, size_t len, bool endSteam);
     void onRSTStream(int err);
     void onWrite();
     

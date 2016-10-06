@@ -33,7 +33,7 @@ ProtoDemuxer::~ProtoDemuxer()
 
 KMError ProtoDemuxer::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
 {
-    http_parser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
+    http_parser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     
     tcp_.setWriteCallback([this] (KMError err) { onSend(err); });
@@ -50,7 +50,7 @@ int ProtoDemuxer::close()
     return 0;
 }
 
-void ProtoDemuxer::onHttpData(const char* data, size_t len)
+void ProtoDemuxer::onHttpData(void* data, size_t len)
 {
     printf("ProtoDemuxer::onHttpData, len=%zu\n", len);
 }
@@ -93,29 +93,10 @@ bool ProtoDemuxer::checkHttp2()
 
 void ProtoDemuxer::demuxHttp()
 {
-    bool hasUpgrade = false;
-    bool hasH2Settings = false;
-    const char *szConn = http_parser_.getHeaderValue("Connection");
-    if (szConn) {
-        std::stringstream ss(szConn);
-        std::string item;
-        while (getline(ss, item, ',')) {
-            trim_left(item);
-            trim_right(item);
-            if (item == "Upgrade") {
-                hasUpgrade = true;
-            } else if (item == "HTTP2-Settings") {
-                hasH2Settings = true;
-            }
-        }
-    }
-    
-    if (hasUpgrade) {
-        if (strcasecmp(http_parser_.getHeaderValue("Upgrade"), "WebSocket") == 0) {
-            loop_->addWebSocket(std::move(tcp_), std::move(http_parser_));
-        } else if (hasH2Settings && strcasecmp(http_parser_.getHeaderValue("Upgrade"), "h2c") == 0) {
-            loop_->addH2Conn(std::move(tcp_), std::move(http_parser_));
-        }
+    if (http_parser_.isUpgradeTo("WebSocket")) {
+        loop_->addWebSocket(std::move(tcp_), std::move(http_parser_));
+    } else if (http_parser_.isUpgradeTo("h2c")) {
+        loop_->addH2Conn(std::move(tcp_), std::move(http_parser_));
     } else {
         loop_->addHttp(std::move(tcp_), std::move(http_parser_));
     }

@@ -217,22 +217,22 @@ bool TimerManager::list_empty(TimerNode* head)
 
 void TimerManager::set_tv0_bitmap(int idx)
 {
-    unsigned char a = idx/(sizeof(tv0_bitmap_[0])*8);
-    unsigned char b = idx%(sizeof(tv0_bitmap_[0])*8);
+    unsigned char a = (unsigned char)(idx/(sizeof(tv0_bitmap_[0])*8));
+    unsigned char b = (unsigned char)(idx%(sizeof(tv0_bitmap_[0])*8));
     tv0_bitmap_[a] |= 1 << b;
 }
 
 void TimerManager::clear_tv0_bitmap(int idx)
 {
-    unsigned char a = idx/(sizeof(tv0_bitmap_[0])*8);
-    unsigned char b = idx%(sizeof(tv0_bitmap_[0])*8);
+    unsigned char a = (unsigned char)(idx/(sizeof(tv0_bitmap_[0])*8));
+    unsigned char b = (unsigned char)(idx%(sizeof(tv0_bitmap_[0])*8));
     tv0_bitmap_[a] &= ~(1 << b);
 }
 
 int TimerManager::find_first_set_in_bitmap(int idx)
 {
-    unsigned char a = idx/(sizeof(tv0_bitmap_[0])*8);
-    unsigned char b = idx%(sizeof(tv0_bitmap_[0])*8);
+    unsigned char a = (unsigned char)(idx/(sizeof(tv0_bitmap_[0])*8));
+    unsigned char b = (unsigned char)(idx%(sizeof(tv0_bitmap_[0])*8));
     int pos = -1;
     pos = find_first_set(tv0_bitmap_[a] >> b);
     if(-1 == pos) {

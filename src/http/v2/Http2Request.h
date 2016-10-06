@@ -38,7 +38,7 @@ public:
     
     KMError setSslFlags(uint32_t ssl_flags) override;
     void addHeader(std::string name, std::string value) override;
-    int sendData(const uint8_t* data, size_t len) override;
+    int sendData(const void* data, size_t len) override;
     KMError close() override;
     
     int getStatusCode() const override { return status_code_; }
@@ -48,7 +48,7 @@ public:
     
 public:
     void onHeaders(const HeaderVector &headers, bool endHeaders, bool endSteam);
-    void onData(uint8_t *data, size_t len, bool endSteam);
+    void onData(void *data, size_t len, bool endSteam);
     void onRSTStream(int err);
     void onWrite();
     

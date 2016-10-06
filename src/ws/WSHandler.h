@@ -50,8 +50,8 @@ public:
         WS_ERROR_CLOSED,
         WS_ERROR_DESTROYED
     }WSError;
-    typedef std::function<void(uint8_t*, size_t)> DataCallback;
-    typedef std::function<void(KMError)> HandshakeCallback;
+    using DataCallback = std::function<void(void*, size_t)>;
+    using HandshakeCallback = std::function<void(KMError)>;
     
     WSHandler();
     ~WSHandler() = default;
@@ -122,7 +122,7 @@ private:
     static WSError handleDataMask(FrameHeader& hdr, uint8_t* data, size_t len);
     WSError decodeFrame(uint8_t* data, size_t len);
     
-    void onHttpData(const char* data, size_t len);
+    void onHttpData(void* data, size_t len);
     void onHttpEvent(HttpEvent ev);
     
     void handleRequest();

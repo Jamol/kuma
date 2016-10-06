@@ -200,7 +200,7 @@ KMError TcpSocket::getAlpnSelected(char *buf, size_t len)
 #endif
 }
 
-int TcpSocket::send(const uint8_t* data, size_t length)
+int TcpSocket::send(const void* data, size_t length)
 {
     return pimpl_->send(data, length);
 }
@@ -210,7 +210,7 @@ int TcpSocket::send(iovec* iovs, int count)
     return pimpl_->send(iovs, count);
 }
 
-int TcpSocket::receive(uint8_t* data, size_t length)
+int TcpSocket::receive(void* data, size_t length)
 {
     return pimpl_->receive(data, length);
 }
@@ -313,7 +313,7 @@ KMError UdpSocket::bind(const char* bind_host, uint16_t bind_port, uint32_t udp_
     return pimpl_->bind(bind_host, bind_port, udp_flags);
 }
 
-int UdpSocket::send(const uint8_t* data, size_t length, const char* host, uint16_t port)
+int UdpSocket::send(const void* data, size_t length, const char* host, uint16_t port)
 {
     return pimpl_->send(data, length, host, port);
 }
@@ -323,7 +323,7 @@ int UdpSocket::send(iovec* iovs, int count, const char* host, uint16_t port)
     return pimpl_->send(iovs, count, host, port);
 }
 
-int UdpSocket::receive(uint8_t* data, size_t length, char* ip, size_t ip_len, uint16_t& port)
+int UdpSocket::receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port)
 {
     return pimpl_->receive(data, length, ip, ip_len, port);
 }
@@ -399,7 +399,7 @@ HttpParser::~HttpParser()
 }
 
 // return bytes parsed
-int HttpParser::parse(const char* data, size_t len)
+int HttpParser::parse(char* data, size_t len)
 {
     return pimpl_->parse(data, len);
 }
@@ -447,6 +447,11 @@ bool HttpParser::error() const
 bool HttpParser::paused() const
 {
     return pimpl_->paused();
+}
+
+bool HttpParser::isUpgradeTo(const char* proto) const
+{
+    return pimpl_->isUpgradeTo(proto);
 }
 
 int HttpParser::getStatusCode() const
@@ -548,7 +553,7 @@ KMError HttpRequest::sendRequest(const char* method, const char* url)
     return pimpl_->sendRequest(method, url);
 }
 
-int HttpRequest::sendData(const uint8_t* data, size_t len)
+int HttpRequest::sendData(const void* data, size_t len)
 {
     return pimpl_->sendData(data, len);
 }
@@ -661,7 +666,7 @@ KMError HttpResponse::sendResponse(int status_code, const char* desc)
     return pimpl_->sendResponse(status_code, desc);
 }
 
-int HttpResponse::sendData(const uint8_t* data, size_t len)
+int HttpResponse::sendData(const void* data, size_t len)
 {
     return pimpl_->sendData(data, len);
 }
@@ -796,7 +801,7 @@ KMError WebSocket::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
     return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move((*parser.pimpl())));
 }
 
-int WebSocket::send(const uint8_t* data, size_t len)
+int WebSocket::send(const void* data, size_t len)
 {
     return pimpl_->send(data, len);
 }

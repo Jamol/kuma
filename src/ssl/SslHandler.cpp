@@ -254,7 +254,7 @@ SslHandler::SslState SslHandler::sslAccept()
     return SSL_HANDSHAKE;
 }
 
-int SslHandler::send(const uint8_t* data, size_t size)
+int SslHandler::send(const void* data, size_t size)
 {
     if(NULL == ssl_) {
         KUMA_ERRXTRACE("send, ssl is NULL");
@@ -265,7 +265,7 @@ int SslHandler::send(const uint8_t* data, size_t size)
     
     // loop send until read/write want since we enabled partial write
     while (offset < size) {
-        int ret = SSL_write(ssl_, data + offset, (int)(size - offset));
+        int ret = SSL_write(ssl_, (const char*)data + offset, (int)(size - offset));
         int ssl_err = SSL_get_error(ssl_, ret);
         switch (ssl_err)
         {
@@ -324,7 +324,7 @@ int SslHandler::send(const iovec* iovs, int count)
     return bytes_sent;
 }
 
-int SslHandler::receive(uint8_t* data, size_t size)
+int SslHandler::receive(void* data, size_t size)
 {
     if(NULL == ssl_) {
         KUMA_ERRXTRACE("receive, ssl is NULL");

@@ -150,6 +150,22 @@ bool HttpParser::Impl::error() const
     return HTTP_READ_ERROR == read_state_;
 }
 
+bool HttpParser::Impl::isUpgradeTo(const std::string& proto) const
+{
+    if (!is_equal(getHeaderValue("Upgrade"), proto) ||
+        !contains_token(getHeaderValue("Connection"), "Upgrade", ',')) {
+        return false;
+    }
+    if (!isRequest() && 101 != getStatusCode()) {
+        return false;
+    }
+    if (isRequest() && is_equal(proto, "h2c") &&
+        !contains_token(getHeaderValue("Connection"), "HTTP2-Settings", ',')) {
+        return false;
+    }
+    return true;
+}
+
 void HttpParser::Impl::pause() {
     paused_ = true;
 }
@@ -187,7 +203,7 @@ bool HttpParser::Impl::hasBody()
     }
 }
 
-int HttpParser::Impl::parse(const char* data, size_t len)
+int HttpParser::Impl::parse(char* data, size_t len)
 {
     if(HTTP_READ_DONE == read_state_ || HTTP_READ_ERROR == read_state_) {
         KUMA_WARNTRACE("HttpParser::parse, invalid state="<<read_state_);
@@ -199,8 +215,8 @@ int HttpParser::Impl::parse(const char* data, size_t len)
         if(data_cb_) data_cb_(data, len);
         return (int)len;
     }
-    const char* pos = data;
-    const char* end = data + len;
+    char* pos = data;
+    char* end = data + len;
     ParseState parse_state = parseHttp(pos, end);
     int parsed_len = (int)(pos - data);
     if(PARSE_STATE_DESTROYED == parse_state) {
@@ -235,7 +251,7 @@ KMError HttpParser::Impl::saveData(const char* cur_pos, const char* end)
     return KMError::NOERR;
 }
 
-HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(const char*& cur_pos, const char* end)
+HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(char*& cur_pos, char* end)
 {
     const char* line = nullptr;
     const char* line_end = nullptr;
@@ -300,7 +316,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(const char*& cur_pos, c
             size_t cur_len = end - cur_pos;
             if(has_content_length_ && (content_length_ - total_bytes_read_) <= cur_len)
             {// data enough
-                const char* notify_data = cur_pos;
+                char* notify_data = cur_pos;
                 size_t notify_len = content_length_ - total_bytes_read_;
                 cur_pos += notify_len;
                 total_bytes_read_ = content_length_;
@@ -313,7 +329,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(const char*& cur_pos, c
             }
             else
             {// need more data, or read untill EOF
-                const char* notify_data = cur_pos;
+                char* notify_data = cur_pos;
                 total_bytes_read_ += cur_len;
                 cur_pos = end;
                 if(data_cb_) data_cb_(notify_data, cur_len);
@@ -389,7 +405,7 @@ bool HttpParser::Impl::parseHeaderLine(const char* line, const char* line_end)
     return true;
 }
 
-HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(const char*& cur_pos, const char* end)
+HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(char*& cur_pos, char* end)
 {
     const char* p_line = nullptr;
     const char* p_end = nullptr;
@@ -431,7 +447,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(const char*& cur_pos, 
             {
                 size_t cur_len = end - cur_pos;
                 if(chunk_size_ - chunk_bytes_read_ <= cur_len) {// data enough
-                    const char* notify_data = cur_pos;
+                    char* notify_data = cur_pos;
                     size_t notify_len = chunk_size_ - chunk_bytes_read_;
                     total_bytes_read_ += notify_len;
                     chunk_bytes_read_ = chunk_size_ = 0; // reset
@@ -441,7 +457,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(const char*& cur_pos, 
                     if(data_cb_) data_cb_(notify_data, notify_len);
                     DESTROY_DETECTOR_CHECK(PARSE_STATE_DESTROYED);
                 } else {// need more data
-                    const char* notify_data = cur_pos;
+                    char* notify_data = cur_pos;
                     total_bytes_read_ += cur_len;
                     chunk_bytes_read_ += cur_len;
                     cur_pos += cur_len;
@@ -596,7 +612,7 @@ bool HttpParser::Impl::parseUrl()
     return true;
 }
 
-void HttpParser::Impl::addParamValue(const std::string name, const std::string value)
+void HttpParser::Impl::addParamValue(std::string name, std::string value)
 {
     if(!name.empty()) {
         param_map_[std::move(name)] = std::move(value);
@@ -680,15 +696,15 @@ void HttpParser::Impl::setHeaders(HeaderVector && headers)
     }
 }
 
-bool HttpParser::Impl::getLine(const char*& cur_pos, const char* end, const char*& line, const char*& line_end)
+bool HttpParser::Impl::getLine(char*& cur_pos, char* end, const char*& line, const char*& line_end)
 {
-    const char* lf = std::find(cur_pos, end, LF);
+    char* lf = std::find(cur_pos, end, LF);
     if(lf == end) {
         return false;
     }
     line = cur_pos;
     line_end = lf;
-    cur_pos = line_end + 1;
+    cur_pos = lf + 1;
     if(line != line_end && *(line_end - 1) == CR) {
         --line_end;
     }

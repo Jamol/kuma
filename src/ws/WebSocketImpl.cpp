@@ -86,7 +86,7 @@ KMError WebSocket::Impl::connect_i(const std::string& ws_url)
 
 KMError WebSocket::Impl::attachFd(SOCKET_FD fd, const uint8_t* init_data, size_t init_len)
 {
-    ws_handler_.setDataCallback([this] (uint8_t* data, size_t len) { onWsData(data, len); });
+    ws_handler_.setDataCallback([this] (void* data, size_t len) { onWsData(data, len); });
     ws_handler_.setHandshakeCallback([this] (KMError err) { onWsHandshake(err); });
     setState(State::UPGRADING);
     return TcpConnection::attachFd(fd, init_data, init_len);
@@ -94,7 +94,7 @@ KMError WebSocket::Impl::attachFd(SOCKET_FD fd, const uint8_t* init_data, size_t
 
 KMError WebSocket::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser)
 {
-    ws_handler_.setDataCallback([this] (uint8_t* data, size_t len) { onWsData(data, len); });
+    ws_handler_.setDataCallback([this] (void* data, size_t len) { onWsData(data, len); });
     ws_handler_.setHandshakeCallback([this] (KMError err) { onWsHandshake(err); });
     setState(State::UPGRADING);
 
@@ -104,7 +104,7 @@ KMError WebSocket::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& 
     return ret;
 }
 
-int WebSocket::Impl::send(const uint8_t* data, size_t len)
+int WebSocket::Impl::send(const void* data, size_t len)
 {
     if(getState() != State::OPEN) {
         return -1;
@@ -163,7 +163,7 @@ void WebSocket::Impl::onConnect(KMError err)
         if(connect_cb_) connect_cb_(err);
         return ;
     }
-    ws_handler_.setDataCallback([this] (uint8_t* data, size_t len) { onWsData(data, len); });
+    ws_handler_.setDataCallback([this] (void* data, size_t len) { onWsData(data, len); });
     ws_handler_.setHandshakeCallback([this] (KMError err) { onWsHandshake(err); });
     body_bytes_sent_ = 0;
     sendUpgradeRequest();
@@ -217,7 +217,7 @@ void WebSocket::Impl::onStateOpen()
     }
 }
 
-void WebSocket::Impl::onWsData(uint8_t* data, size_t len)
+void WebSocket::Impl::onWsData(void* data, size_t len)
 {
     if(data_cb_) data_cb_(data, len);
 }

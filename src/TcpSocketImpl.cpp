@@ -443,7 +443,7 @@ bool TcpSocket::Impl::isReady()
         ;
 }
 
-int TcpSocket::Impl::send(const uint8_t* data, size_t length)
+int TcpSocket::Impl::send(const void* data, size_t length)
 {
     if(!isReady()) {
         KUMA_WARNXTRACE("send, invalid state="<<getState());
@@ -461,7 +461,7 @@ int TcpSocket::Impl::send(const uint8_t* data, size_t length)
     } else 
 #endif
     {
-        ret = (int)::send(fd_, (char*)data, length, 0);
+        ret = (int)::send(fd_, (const char*)data, length, 0);
         if(0 == ret) {
             KUMA_WARNXTRACE("send, peer closed, err="<<getLastError());
             ret = -1;
@@ -562,7 +562,7 @@ int TcpSocket::Impl::send(iovec* iovs, int count)
     return ret<0?ret:bytes_sent;
 }
 
-int TcpSocket::Impl::receive(uint8_t* data, size_t length)
+int TcpSocket::Impl::receive(void* data, size_t length)
 {
     if(!isReady()) {
         return 0;

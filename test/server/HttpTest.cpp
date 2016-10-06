@@ -22,7 +22,7 @@ void HttpTest::setupCallbacks()
     http_.setWriteCallback([this] (KMError err) { onSend(err); });
     http_.setErrorCallback([this] (KMError err) { onClose(err); });
     
-    http_.setDataCallback([this] (uint8_t* data, size_t len) { onHttpData(data, len); });
+    http_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
     http_.setHeaderCompleteCallback([this] () { onHeaderComplete(); });
     http_.setRequestCompleteCallback([this] () { onRequestComplete(); });
     http_.setResponseCompleteCallback([this] () { onResponseComplete(); });
@@ -64,24 +64,24 @@ void HttpTest::onSend(KMError err)
 
 void HttpTest::onClose(KMError err)
 {
-    printf("HttpTest::onClose, err=%d\n", err);
+    printf("HttpTest_%ld::onClose, err=%d\n", conn_id_, err);
     http_.close();
     obj_mgr_->removeObject(conn_id_);
 }
 
-void HttpTest::onHttpData(uint8_t* data, size_t len)
+void HttpTest::onHttpData(void* data, size_t len)
 {
-    printf("HttpTest::onHttpData, len=%zu\n", len);
+    printf("HttpTest_%ld::onHttpData, len=%zu\n", conn_id_, len);
 }
 
 void HttpTest::onHeaderComplete()
 {
-    printf("HttpTest::onHeaderComplete\n");
+    printf("HttpTest_%ld::onHeaderComplete\n", conn_id_);
 }
 
 void HttpTest::onRequestComplete()
 {
-    printf("HttpTest::onRequestComplete\n");
+    printf("HttpTest_%ld::onRequestComplete\n", conn_id_);
     if (strcasecmp(http_.getMethod(), "OPTIONS") == 0) {
         http_.addHeader("Content-Length", (uint32_t)0);
         is_options_ = true;
@@ -96,7 +96,7 @@ void HttpTest::onRequestComplete()
     if (hdr) {
         http_.addHeader("Access-Control-Allow-Methods", hdr);
     }
-    printf("path: %s\n", http_.getPath());
+    printf("HttpTest_%ld, path: %s\n", conn_id_, http_.getPath());
     int status = 200;
     std::string desc("OK");
     if (!is_options_) {
@@ -140,7 +140,7 @@ void HttpTest::onRequestComplete()
 
 void HttpTest::onResponseComplete()
 {
-    printf("HttpTest::onResponseComplete\n");
+    printf("HttpTest_%ld::onResponseComplete\n", conn_id_);
     http_.reset();
 }
 

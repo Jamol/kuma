@@ -84,7 +84,7 @@ KMError TcpConnection::attachSocket(TcpSocket::Impl &&tcp)
     return tcp_.attach(std::move(tcp));
 }
 
-int TcpConnection::send(const uint8_t* data, size_t len)
+int TcpConnection::send(const void* data, size_t len)
 {
     if(!sendBufferEmpty()) {
         // try to send buffered data
@@ -97,7 +97,7 @@ int TcpConnection::send(const uint8_t* data, size_t len)
     }
     int ret = tcp_.send(data, len);
     if (ret >= 0 && ret < len) {
-        send_buffer_.assign(data + ret, data + len);
+        send_buffer_.assign((const uint8_t*)data + ret, (const uint8_t*)data + len);
         send_offset_ = 0;
     }
     return int(len);

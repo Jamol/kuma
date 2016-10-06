@@ -151,7 +151,7 @@ void Http2Request::sendHeaders()
     stream_->setHeadersCallback([this] (const HeaderVector &headers, bool endHeaders, bool endSteam) {
         onHeaders(headers, endHeaders, endSteam);
     });
-    stream_->setDataCallback([this] (uint8_t *data, size_t len, bool endSteam) {
+    stream_->setDataCallback([this] (void *data, size_t len, bool endSteam) {
         onData(data, len, endSteam);
     });
     stream_->setRSTStreamCallback([this] (int err) {
@@ -180,7 +180,7 @@ void Http2Request::onConnect(KMError err)
     sendHeaders();
 }
 
-int Http2Request::sendData(const uint8_t* data, size_t len)
+int Http2Request::sendData(const void* data, size_t len)
 {
     int ret = 0;
     if (data && len) {
@@ -224,7 +224,7 @@ void Http2Request::onHeaders(const HeaderVector &headers, bool endHeaders, bool 
     }
 }
 
-void Http2Request::onData(uint8_t *data, size_t len, bool endSteam)
+void Http2Request::onData(void *data, size_t len, bool endSteam)
 {
     DESTROY_DETECTOR_SETUP();
     if (data_cb_ && len > 0) data_cb_(data, len);

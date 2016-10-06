@@ -22,7 +22,7 @@ public:
     void onSend(KMError err);
     void onClose(KMError err);
     
-    void onHttpData(uint8_t*, size_t);
+    void onHttpData(void*, size_t);
     void onHeaderComplete();
     void onRequestComplete();
     void onResponseComplete();

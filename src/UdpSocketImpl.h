@@ -45,9 +45,9 @@ public:
     ~Impl();
     
     KMError bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags);
-    int send(const uint8_t* data, size_t length, const char* host, uint16_t port);
+    int send(const void* data, size_t length, const char* host, uint16_t port);
     int send(iovec* iovs, int count, const char* host, uint16_t port);
-    int receive(uint8_t* data, size_t length, char* ip, size_t ip_len, uint16_t& port);
+    int receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port);
     KMError close();
     
     KMError mcastJoin(const char* mcast_addr, uint16_t mcast_port);

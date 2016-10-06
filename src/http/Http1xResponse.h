@@ -43,7 +43,7 @@ public:
     KMError attachFd(SOCKET_FD fd, uint8_t* init_data = nullptr, size_t init_len = 0) override;
     KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser) override;
     KMError sendResponse(int status_code, const std::string& desc, const std::string& ver) override;
-    int sendData(const uint8_t* data, size_t len) override;
+    int sendData(const void* data, size_t len) override;
     void reset() override; // reset for connection reuse
     KMError close() override;
 
@@ -53,14 +53,14 @@ protected:
     void onError(KMError err) override;
     
     // callbacks of HttpParser
-    void onHttpData(const char* data, size_t len);
+    void onHttpData(void* data, size_t len);
     void onHttpEvent(HttpEvent ev);
     
     bool isVersion2() override { return false; }
     
 private:
     void buildResponse(int status_code, const std::string& desc, const std::string& ver);
-    int sendChunk(const uint8_t* data, size_t len);
+    int sendChunk(const void* data, size_t len);
     void cleanup();
 };
 

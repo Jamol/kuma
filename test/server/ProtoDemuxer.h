@@ -22,7 +22,7 @@ public:
     void onReceive(KMError err);
     void onClose(KMError err);
     
-    void onHttpData(const char*, size_t);
+    void onHttpData(void*, size_t);
     void onHttpEvent(HttpEvent ev);
     
 private:

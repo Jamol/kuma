@@ -20,7 +20,7 @@ public:
     void onSend(KMError err);
     void onClose(KMError err);
     
-    void onData(uint8_t*, size_t);
+    void onData(void*, size_t);
     
 private:
     void cleanup();

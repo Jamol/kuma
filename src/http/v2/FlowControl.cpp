@@ -76,7 +76,7 @@ uint32_t FlowControl::remoteWindowSize()
 void FlowControl::bytesSent(size_t bytes)
 {
     bytesSent_ += bytes;
-    remoteWindowSize_ -= bytes;
+    remoteWindowSize_ -= (long)bytes;
     if (remoteWindowSize_ <= 0 && bytes + remoteWindowSize_ > 0) {
         KUMA_INFOTRACE("FlowControl::bytesSent, streamId="<<streamId_<<", bytesSent="<<bytesSent_<<", window="<<remoteWindowSize_);
     }
@@ -85,10 +85,10 @@ void FlowControl::bytesSent(size_t bytes)
 void FlowControl::bytesReceived(size_t bytes)
 {
     bytesReceived_ += bytes;
-    localWindowSize_ -= bytes;
+    localWindowSize_ -= (long)bytes;
     if (localWindowSize_ < long(minLocalWindowSize_)) {
         auto delta = localWindowStep_ - localWindowSize_;
-        localWindowSize_ += delta;
+        localWindowSize_ += (long)delta;
         if (update_cb_) {
             update_cb_(uint32_t(delta));
         }

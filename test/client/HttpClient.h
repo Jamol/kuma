@@ -18,7 +18,7 @@ public:
     void startRequest(std::string& url);
     int close();
 
-    void onData(uint8_t* data, size_t len);
+    void onData(void* data, size_t len);
     void onSend(KMError err);
     void onClose(KMError err);
     void onHeaderComplete();

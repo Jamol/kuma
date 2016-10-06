@@ -42,11 +42,14 @@
 # ifdef KUMA_OS_MAC
 #  include "CoreFoundation/CoreFoundation.h"
 #  include <mach-o/dyld.h>
+#  include <libproc.h>
 # endif
 #endif
 
 #include <chrono>
 #include <random>
+#include <string>
+#include <sstream>
 
 #include "kmobject.h"
 #include "kmtrace.h"
@@ -588,6 +591,21 @@ std::string& trim_right(std::string& str)
     return str;
 }
 
+bool contains_token(const std::string& str, const std::string& token, char delim)
+{
+    std::stringstream ss;
+    ss.str(str);
+    std::string item;
+    while (std::getline(ss, item, delim)) {
+        trim_left(item);
+        trim_right(item);
+        if (is_equal(token, item)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 std::string getExecutablePath()
 {
     std::string str_path;
@@ -596,6 +614,13 @@ std::string getExecutablePath()
     GetModuleFileName(NULL, c_path, sizeof(c_path));
     str_path = c_path;
 #elif defined(KUMA_OS_MAC)
+# if 1
+    char c_path[PROC_PIDPATHINFO_MAXSIZE];
+    if(proc_pidpath(getpid(), c_path, sizeof(c_path)) <= 0) {
+        return "./";
+    }
+    str_path = c_path;
+# else
     char c_path[PATH_MAX] = {0};
     uint32_t size = sizeof(c_path);
     CFBundleRef cf_bundle = CFBundleGetMainBundle();
@@ -616,12 +641,15 @@ std::string getExecutablePath()
         _NSGetExecutablePath(c_path, &size);
     }
     str_path = c_path;
-#else
-    char buf[32];
-    snprintf(buf, sizeof(buf), "/proc/%u/exe", getpid());
+# endif
+#elif defined(KUMA_OS_LINUX)
     char c_path[1024] = {0};
-    readlink(buf, c_path, sizeof(c_path));
+    if (readlink("/proc/self/exe", c_path, sizeof(c_path)) < 0) {
+        return "./";
+    }
     str_path = c_path;
+#else
+    return "./";
 #endif
     if(str_path.empty()) {
         return "./";

@@ -88,7 +88,7 @@ private:
     void onError(KMError err) override;
     
 private:
-    void onHttpData(const char* data, size_t len);
+    void onHttpData(void* data, size_t len);
     void onHttpEvent(HttpEvent ev);
     
 private:

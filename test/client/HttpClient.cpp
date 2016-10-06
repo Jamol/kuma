@@ -12,7 +12,7 @@ HttpClient::HttpClient(TestLoop* loop, long conn_id)
 
 void HttpClient::startRequest(std::string& url)
 {
-    http_request_.setDataCallback([this] (uint8_t* data, size_t len) { onData(data, len); });
+    http_request_.setDataCallback([this] (void* data, size_t len) { onData(data, len); });
     http_request_.setWriteCallback([this] (KMError err) { onSend(err); });
     http_request_.setErrorCallback([this] (KMError err) { onClose(err); });
     http_request_.setHeaderCompleteCallback([this] { onHeaderComplete(); });
@@ -26,11 +26,11 @@ int HttpClient::close()
     return 0;
 }
 
-void HttpClient::onData(uint8_t* data, size_t len)
+void HttpClient::onData(void* data, size_t len)
 {
     std::string str((char*)data, len);
     total_bytes_read_ += len;
-    printf("HttpClient::onData, len=%zu, total=%zu\n", len, total_bytes_read_);
+    printf("HttpClient_%ld::onData, len=%zu, total=%zu\n", conn_id_, len, total_bytes_read_);
 }
 
 void HttpClient::onSend(KMError err)
@@ -40,18 +40,18 @@ void HttpClient::onSend(KMError err)
 
 void HttpClient::onClose(KMError err)
 {
-    printf("HttpClient::onClose, err=%d\n", err);
+    printf("HttpClient_%ld::onClose, err=%d\n", conn_id_, err);
     http_request_.close();
     loop_->removeObject(conn_id_);
 }
 
 void HttpClient::onHeaderComplete()
 {
-    printf("HttpClient::onHeaderComplete\n");
+    printf("HttpClient_%ld::onHeaderComplete\n", conn_id_);
 }
 
 void HttpClient::onRequestComplete()
 {
-    printf("HttpClient::onRequestComplete\n");
+    printf("HttpClient_%ld::onRequestComplete, total=%zu\n", conn_id_, total_bytes_read_);
     http_request_.close();
 }

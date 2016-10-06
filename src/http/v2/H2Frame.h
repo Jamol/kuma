@@ -99,12 +99,12 @@ public:
     
     size_t calcPayloadSize() { return size_; }
     
-    const uint8_t* data() { return data_; }
+    const void* data() { return data_; }
     size_t size() { return size_; }
-    void setData(const uint8_t *data, size_t len) { data_ = data; size_ = len;}
+    void setData(const void *data, size_t len) { data_ = data; size_ = len;}
     
 private:
-    const uint8_t *data_ = nullptr;
+    const void *data_ = nullptr;
     size_t size_ = 0;
 };
 

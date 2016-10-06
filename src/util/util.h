@@ -76,6 +76,7 @@ char* trim_right(char* str);
 char* trim_right(char* str, char* str_end);
 std::string& trim_left(std::string& str);
 std::string& trim_right(std::string& str);
+bool contains_token(const std::string& str, const std::string& token, char delim);
 std::string getExecutablePath();
 std::string getCurrentModulePath();
 

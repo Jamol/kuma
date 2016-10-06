@@ -71,11 +71,11 @@ bool OpenSslLib::init(const char* path)
 bool OpenSslLib::doInit(const std::string &path)
 {
     if(path.empty()) {
-        certs_path_ = getCurrentModulePath();
+        certs_path_ = getExecutablePath();
     } else {
         certs_path_ = path;
         if(certs_path_.empty()) {
-            certs_path_ = getCurrentModulePath();
+            certs_path_ = getExecutablePath();
         }
     }
     if(certs_path_.at(certs_path_.length() - 1) != PATH_SEPARATOR) {

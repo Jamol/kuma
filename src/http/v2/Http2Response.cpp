@@ -49,7 +49,7 @@ KMError Http2Response::attachStream(H2Connection::Impl* conn, uint32_t streamId)
     stream_->setHeadersCallback([this] (const HeaderVector &headers, bool endHeaders, bool endSteam) {
         onHeaders(headers, endHeaders, endSteam);
     });
-    stream_->setDataCallback([this] (uint8_t *data, size_t len, bool endSteam) {
+    stream_->setDataCallback([this] (void *data, size_t len, bool endSteam) {
         onData(data, len, endSteam);
     });
     stream_->setRSTStreamCallback([this] (int err) {
@@ -85,7 +85,7 @@ KMError Http2Response::sendResponse(int status_code, const std::string& desc, co
     return KMError::NOERR;
 }
 
-int Http2Response::sendData(const uint8_t* data, size_t len)
+int Http2Response::sendData(const void* data, size_t len)
 {
     if (getState() != State::SENDING_BODY) {
         return 0;
@@ -159,7 +159,7 @@ void Http2Response::onHeaders(const HeaderVector &headers, bool endheaders, bool
     }
 }
 
-void Http2Response::onData(uint8_t *data, size_t len, bool endSteam)
+void Http2Response::onData(void *data, size_t len, bool endSteam)
 {
     DESTROY_DETECTOR_SETUP();
     if (data_cb_ && len > 0) data_cb_(data, len);

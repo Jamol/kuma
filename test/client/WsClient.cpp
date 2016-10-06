@@ -22,12 +22,12 @@ WsClient::WsClient(TestLoop* loop, long conn_id)
 
 void WsClient::startRequest(std::string& url)
 {
-    ws_.setDataCallback([this] (uint8_t* data, size_t len) { onData(data, len); });
+    ws_.setDataCallback([this] (void* data, size_t len) { onData(data, len); });
     ws_.setWriteCallback([this] (KMError err) { onSend(err); });
     ws_.setErrorCallback([this] (KMError err) { onClose(err); });
     //timer_.schedule(1000, [this] { onTimer(); }, true);
-    ws_.setProtocol("kuma");
-    ws_.setOrigin("www.kuma.com");
+    ws_.setProtocol("jws");
+    ws_.setOrigin("www.jamol.cn");
     ws_.connect(url.c_str(), [this] (KMError err) { onConnect(err); });
 }
 
@@ -62,13 +62,13 @@ void WsClient::onSend(KMError err)
     //printf("Client::onSend\n");
 }
 
-void WsClient::onData(uint8_t* data, size_t len)
+void WsClient::onData(void* data, size_t len)
 {
     uint32_t index = 0;
     if(len >= 4) {
         index = ntohl(*(uint32_t*)data);
     }
-    if(index % 10000 == 0) {
+    if(index % 1000 == 0) {
         printf("WsClient::onReceive, bytes_read=%zu, index=%d\n", len, index);
     }
     if(index < max_send_count_) {

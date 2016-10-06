@@ -86,9 +86,9 @@ public:
     KMError detachFd(SOCKET_FD &fd);
     KMError startSslHandshake(SslRole ssl_role);
     KMError getAlpnSelected(char *buf, size_t len);
-    int send(const uint8_t* data, size_t length);
+    int send(const void* data, size_t length);
     int send(iovec* iovs, int count);
-    int receive(uint8_t* data, size_t length);
+    int receive(void* data, size_t length);
     KMError close();
     
     KMError pause();
@@ -141,9 +141,9 @@ public:
     ~UdpSocket();
     
     KMError bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags=0);
-    int send(const uint8_t* data, size_t length, const char* host, uint16_t port);
+    int send(const void* data, size_t length, const char* host, uint16_t port);
     int send(iovec* iovs, int count, const char* host, uint16_t port);
-    int receive(uint8_t* data, size_t length, char* ip, size_t ip_len, uint16_t& port);
+    int receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port);
     KMError close();
     
     KMError mcastJoin(const char* mcast_addr, uint16_t mcast_port);
@@ -180,7 +180,7 @@ private:
 class KUMA_API HttpParser
 {
 public:
-    using DataCallback = std::function<void(const char*, size_t)>;
+    using DataCallback = std::function<void(void*, size_t)>;
     using EventCallback = std::function<void(HttpEvent)>;
     using EnumrateCallback = std::function<void(const char*, const char*)>;
     
@@ -188,7 +188,7 @@ public:
     ~HttpParser();
     
     // return bytes parsed
-    int parse(const char* data, size_t len);
+    int parse(char* data, size_t len);
     void pause();
     void resume();
     
@@ -201,6 +201,7 @@ public:
     bool complete() const;
     bool error() const;
     bool paused() const;
+    bool isUpgradeTo(const char* proto) const;
     
     int getStatusCode() const;
     const char* getUrl() const;
@@ -226,7 +227,7 @@ private:
 class KUMA_API HttpRequest
 {
 public:
-    using DataCallback = std::function<void(uint8_t*, size_t)>;
+    using DataCallback = std::function<void(void*, size_t)>;
     using EventCallback = std::function<void(KMError)>;
     using HttpEventCallback = std::function<void(void)>;
     
@@ -240,7 +241,7 @@ public:
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
     KMError sendRequest(const char* method, const char* url);
-    int sendData(const uint8_t* data, size_t len);
+    int sendData(const void* data, size_t len);
     void reset(); // reset for connection reuse
     KMError close();
     
@@ -265,7 +266,7 @@ private:
 class KUMA_API HttpResponse
 {
 public:
-    using DataCallback = std::function<void(uint8_t*, size_t)>;
+    using DataCallback = std::function<void(void*, size_t)>;
     using EventCallback = std::function<void(KMError)>;
     using HttpEventCallback = std::function<void(void)>;
     
@@ -281,7 +282,7 @@ public:
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
     KMError sendResponse(int status_code, const char* desc = nullptr);
-    int sendData(const uint8_t* data, size_t len);
+    int sendData(const void* data, size_t len);
     void reset(); // reset for connection reuse
     KMError close();
     
@@ -309,7 +310,7 @@ private:
 class KUMA_API WebSocket
 {
 public:
-    using DataCallback = std::function<void(uint8_t*, size_t)>;
+    using DataCallback = std::function<void(void*, size_t)>;
     using EventCallback = std::function<void(KMError)>;
     
     WebSocket(EventLoop* loop);
@@ -323,7 +324,7 @@ public:
     KMError connect(const char* ws_url, EventCallback cb);
     KMError attachFd(SOCKET_FD fd, const uint8_t* init_data=nullptr, size_t init_len=0);
     KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser);
-    int send(const uint8_t* data, size_t len);
+    int send(const void* data, size_t len);
     KMError close();
     
     void setDataCallback(DataCallback cb);

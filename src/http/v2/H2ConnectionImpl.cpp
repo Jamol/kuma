@@ -22,6 +22,7 @@
 #include "H2ConnectionImpl.h"
 #include "util/kmtrace.h"
 #include "util/base64.h"
+#include "util/util.h"
 #include "H2ConnectionMgr.h"
 #include "Http2Response.h"
 
@@ -94,7 +95,7 @@ KMError H2Connection::Impl::connect(const std::string &host, uint16_t port, Conn
 KMError H2Connection::Impl::connect_i(const std::string &host, uint16_t port)
 {
     nextStreamId_ = 1;
-    httpParser_.setDataCallback([this] (const char* data, size_t len) { onHttpData(data, len); });
+    httpParser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
     httpParser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     setState(State::CONNECTING);
     
@@ -172,13 +173,13 @@ KMError H2Connection::Impl::close()
 
 KMError H2Connection::Impl::sendH2Frame(H2Frame *frame)
 {
-    if (!sendBufferEmpty() && !isControlFrame(frame)) {
+    if (!sendBufferEmpty() && !isControlFrame(frame) && 
+        !(frame->getFlags() & H2_FRAME_FLAG_END_STREAM)) {
         appendBlockedStream(frame->getStreamId());
         return KMError::AGAIN;
     }
     
-    if (isControlFrame(frame))
-    {
+    if (isControlFrame(frame)) {
         KUMA_INFOXTRACE("sendH2Frame, type="<<frame->type()<<", streamId="<<frame->getStreamId()<<", flags="<<int(frame->getFlags()));
     } else if (frame->getFlags() & H2_FRAME_FLAG_END_STREAM) {
         KUMA_INFOXTRACE("sendH2Frame, end stream, type="<<frame->type()<<", streamId="<<frame->getStreamId());
@@ -202,9 +203,11 @@ KMError H2Connection::Impl::sendH2Frame(H2Frame *frame)
     size_t payloadSize = frame->calcPayloadSize();
     size_t frameSize = payloadSize + H2_FRAME_HEADER_SIZE;
     size_t buffSize = 0;
-    if (!sendBufferEmpty() && send_offset_) {
+    if (!sendBufferEmpty()) {
         buffSize = send_buffer_.size() - send_offset_;
-        memmove(&send_buffer_[0], &send_buffer_[0] + send_offset_, buffSize);
+        if (send_offset_) {
+            memmove(&send_buffer_[0], &send_buffer_[0] + send_offset_, buffSize);
+        }
     }
     if (buffSize + frameSize != send_buffer_.size()) {
         send_buffer_.resize(buffSize + frameSize);
@@ -256,7 +259,6 @@ H2StreamPtr H2Connection::Impl::createStream(uint32_t streamId)
 
 void H2Connection::Impl::handleDataFrame(DataFrame *frame)
 {
-    //KUMA_INFOXTRACE("handleDataFrame, streamId="<<frame->getStreamId()<<", size="<<frame->size()<<", flags="<<int(frame->getFlags()));
     flow_ctrl_.bytesReceived(frame->getPayloadLength());
     H2StreamPtr stream = getStream(frame->getStreamId());
     if (stream) {
@@ -835,7 +837,7 @@ void H2Connection::Impl::streamError(uint32_t streamId, H2Error err)
     frame.setErrorCode(uint32_t(err));
 }
 
-void H2Connection::Impl::onHttpData(const char* data, size_t len)
+void H2Connection::Impl::onHttpData(void* data, size_t len)
 {
     KUMA_ERRXTRACE("onHttpData, len="<<len);
 }
@@ -845,8 +847,7 @@ void H2Connection::Impl::onHttpEvent(HttpEvent ev)
     KUMA_INFOXTRACE("onHttpEvent, ev="<<int(ev));
     switch (ev) {
         case HttpEvent::HEADER_COMPLETE:
-            if(101 != httpParser_.getStatusCode() ||
-               !is_equal(httpParser_.getHeaderValue("Connection"), "Upgrade")) {
+            if(!httpParser_.isUpgradeTo("h2c")) {
                 KUMA_ERRXTRACE("onHttpEvent, not HTTP2 upgrade response");
             }
             break;
@@ -868,22 +869,7 @@ void H2Connection::Impl::onHttpEvent(HttpEvent ev)
 
 KMError H2Connection::Impl::handleUpgradeRequest()
 {
-    bool hasUpgrade = false;
-    bool hasH2Settings = false;
-    std::stringstream ss(httpParser_.getHeaderValue("Connection"));
-    std::string item;
-    while (getline(ss, item, ',')) {
-        trim_left(item);
-        trim_right(item);
-        if (item == "Upgrade") {
-            hasUpgrade = true;
-        } else if (item == "HTTP2-Settings") {
-            hasH2Settings = true;
-        }
-    }
-
-    if(!hasUpgrade || !hasH2Settings  ||
-       !is_equal(httpParser_.getHeaderValue("Upgrade"), "h2c")) {
+    if(!httpParser_.isUpgradeTo("h2c")) {
         setState(State::IN_ERROR);
         KUMA_ERRXTRACE("handleRequest, not HTTP2 request");
         return KMError::INVALID_PROTO;
@@ -895,8 +881,7 @@ KMError H2Connection::Impl::handleUpgradeRequest()
 
 KMError H2Connection::Impl::handleUpgradeResponse()
 {
-    if(101 == httpParser_.getStatusCode() &&
-       is_equal(httpParser_.getHeaderValue("Connection"), "Upgrade")) {
+    if(httpParser_.isUpgradeTo("h2c")) {
         sendPreface();
         return KMError::NOERR;
     } else {

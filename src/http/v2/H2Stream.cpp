@@ -59,7 +59,7 @@ KMError H2Stream::sendHeaders(const HeaderVector &headers, size_t headersSize, b
     return ret;
 }
 
-int H2Stream::sendData(const uint8_t *data, size_t len, bool endStream)
+int H2Stream::sendData(const void *data, size_t len, bool endStream)
 {
     if (getState() == State::CLOSED) {
         return -1;
@@ -165,7 +165,7 @@ void H2Stream::handleDataFrame(DataFrame *frame)
     }
     flow_ctrl_.bytesReceived(frame->size());
     if (data_cb_) {
-        data_cb_((uint8_t*)frame->data(), frame->size(), endStream);
+        data_cb_((void*)frame->data(), frame->size(), endStream);
     }
 }
 
