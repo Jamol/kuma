@@ -78,7 +78,7 @@ void FlowControl::bytesSent(size_t bytes)
     bytesSent_ += bytes;
     remoteWindowSize_ -= (long)bytes;
     if (remoteWindowSize_ <= 0 && bytes + remoteWindowSize_ > 0) {
-        KUMA_INFOTRACE("FlowControl::bytesSent, streamId="<<streamId_<<", bytesSent="<<bytesSent_<<", window="<<remoteWindowSize_);
+        //KUMA_INFOTRACE("FlowControl::bytesSent, streamId="<<streamId_<<", bytesSent="<<bytesSent_<<", window="<<remoteWindowSize_);
     }
 }
 

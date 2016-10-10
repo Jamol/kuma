@@ -61,7 +61,7 @@ KMError H2Stream::sendHeaders(const HeaderVector &headers, size_t headersSize, b
 
 int H2Stream::sendData(const void *data, size_t len, bool endStream)
 {
-    if (getState() == State::CLOSED) {
+    if (getState() == State::HALF_CLOSED_L || getState() == State::CLOSED) {
         return -1;
     }
     if (write_blocked_) {

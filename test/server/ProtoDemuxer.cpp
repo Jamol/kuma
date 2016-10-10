@@ -62,8 +62,6 @@ void ProtoDemuxer::onHttpEvent(HttpEvent ev)
         case HttpEvent::HEADER_COMPLETE:
         {
             http_parser_.pause();
-            demuxHttp();
-            loop_->removeObject(conn_id_);
             break;
         }
         case HttpEvent::HTTP_ERROR:
@@ -83,7 +81,7 @@ bool ProtoDemuxer::checkHttp2()
         char buf[64];
         auto ret = tcp_.getAlpnSelected(buf, sizeof(buf));
         if (ret == KMError::NOERR && strcmp("h2", buf) == 0) { // HTTP/2.0
-            loop_->addH2Conn(std::move(tcp_), std::move(http_parser_));
+            loop_->addH2Conn(std::move(tcp_), std::move(http_parser_), nullptr, 0);
             loop_->removeObject(conn_id_);
             return true;
         }
@@ -91,14 +89,14 @@ bool ProtoDemuxer::checkHttp2()
     return false;
 }
 
-void ProtoDemuxer::demuxHttp()
+void ProtoDemuxer::demuxHttp(void *init_data, size_t init_len)
 {
     if (http_parser_.isUpgradeTo("WebSocket")) {
-        loop_->addWebSocket(std::move(tcp_), std::move(http_parser_));
+        loop_->addWebSocket(std::move(tcp_), std::move(http_parser_), init_data, init_len);
     } else if (http_parser_.isUpgradeTo("h2c")) {
-        loop_->addH2Conn(std::move(tcp_), std::move(http_parser_));
+        loop_->addH2Conn(std::move(tcp_), std::move(http_parser_), init_data, init_len);
     } else {
-        loop_->addHttp(std::move(tcp_), std::move(http_parser_));
+        loop_->addHttp(std::move(tcp_), std::move(http_parser_), init_data, init_len);
     }
 }
 
@@ -126,8 +124,10 @@ void ProtoDemuxer::onReceive(KMError err)
         DESTROY_DETECTOR_SETUP();
         int bytes_used = http_parser_.parse(buf, bytes_read);
         DESTROY_DETECTOR_CHECK_VOID();
-        if(bytes_used != bytes_read) {
-            printf("ProtoDemuxer::onReceive, bytes_used=%u, bytes_read=%un", bytes_used, bytes_read);
+        if (http_parser_.headerComplete()) {
+            demuxHttp(buf + bytes_used, bytes_read - bytes_used);
+            loop_->removeObject(conn_id_);
+            break;
         }
     } while(true);
 }

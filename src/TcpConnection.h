@@ -37,15 +37,17 @@ public:
     uint32_t getSslFlags() const { return tcp_.getSslFlags(); }
     bool sslEnabled() const { return tcp_.sslEnabled(); }
     KMError connect(const std::string &host, uint16_t port);
-    KMError attachFd(SOCKET_FD fd, const uint8_t* data=nullptr, size_t size=0);
-    KMError attachSocket(TcpSocket::Impl &&tcp);
+    KMError attachFd(SOCKET_FD fd, const void* init_data, size_t init_len);
+    KMError attachSocket(TcpSocket::Impl &&tcp, const void* init_data, size_t init_len);
     int send(const void* data, size_t len);
     int send(iovec* iovs, int count);
     KMError close();
     
+    EventLoop::Impl* getEventLoop() { return tcp_.getEventLoop(); }
+    
 protected:
     // subclass should install destroy detector in this interface or implement delayed destroy
-    // otherwise invalid memory accessing will happen on onReceive
+    // otherwise invalid memory accessing may happen on onReceive
     virtual KMError handleInputData(uint8_t *src, size_t len) = 0;
     virtual void onConnect(KMError err) {};
     virtual void onWrite() = 0;
@@ -53,7 +55,6 @@ protected:
     bool isServer() { return isServer_; }
     bool sendBufferEmpty() { return send_buffer_.empty(); }
     KMError sendBufferedData();
-    EventLoop::Impl* getEventLoop() { return loop_; }
     
 private:
     void onSend(KMError err);
@@ -63,6 +64,7 @@ private:
 private:
     void cleanup();
     void setupCallbacks();
+    void saveInitData(const void* init_data, size_t init_len);
     
 protected:
     TcpSocket::Impl tcp_;
@@ -72,8 +74,6 @@ protected:
     size_t send_offset_{ 0 };
     
 private:
-    EventLoop::Impl*        loop_;
-    
     std::vector<uint8_t>    initData_;
     
     bool                    isServer_{ false };

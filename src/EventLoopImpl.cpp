@@ -73,10 +73,10 @@ bool EventLoop::Impl::isPollLT() const
 
 KMError EventLoop::Impl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
 {
-    if(isInEventLoopThread()) {
+    if(inSameThread()) {
         return poll_->registerFd(fd, events, std::move(cb));
     }
-    return runInEventLoop([=] () mutable {
+    return async([=] () mutable {
         auto ret = poll_->registerFd(fd, events, cb);
         if(ret != KMError::NOERR) {
             return ;
@@ -86,10 +86,10 @@ KMError EventLoop::Impl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb
 
 KMError EventLoop::Impl::updateFd(SOCKET_FD fd, uint32_t events)
 {
-    if(isInEventLoopThread()) {
+    if(inSameThread()) {
         return poll_->updateFd(fd, events);
     }
-    return runInEventLoop([=] {
+    return async([=] {
         auto ret = poll_->updateFd(fd, events);
         if(ret != KMError::NOERR) {
             return ;
@@ -99,14 +99,14 @@ KMError EventLoop::Impl::updateFd(SOCKET_FD fd, uint32_t events)
 
 KMError EventLoop::Impl::unregisterFd(SOCKET_FD fd, bool close_fd)
 {
-    if(isInEventLoopThread()) {
+    if(inSameThread()) {
         auto ret = poll_->unregisterFd(fd);
         if(close_fd) {
             closeFd(fd);
         }
         return ret;
     } else {
-        auto ret = runInEventLoopSync([=] {
+        auto ret = sync([=] {
             poll_->unregisterFd(fd);
             if(close_fd) {
                 closeFd(fd);
@@ -134,14 +134,28 @@ void EventLoop::Impl::removeListener(Listener *l)
     }
 }
 
-void EventLoop::Impl::loopOnce(uint32_t max_wait_ms)
+void EventLoop::Impl::processCallbacks()
 {
-    LoopCallback cb;
+    /*LoopCallback cb;
     while (cb_queue_.dequeue(cb)) {
         if(cb) {
             cb();
         }
+    }*/
+    CallbackQueue queue;
+    cb_mutex_.lock();
+    std::swap(queue, cb_queue_);
+    cb_mutex_.unlock();
+    while (!queue.empty()) {
+        auto cb(std::move(queue.front()));
+        queue.pop_front();
+        if(cb) cb();
     }
+}
+
+void EventLoop::Impl::loopOnce(uint32_t max_wait_ms)
+{
+    processCallbacks();
     unsigned long wait_ms = max_wait_ms;
     timer_mgr_->checkExpire(&wait_ms);
     if(wait_ms > max_wait_ms) {
@@ -155,10 +169,16 @@ void EventLoop::Impl::loop(uint32_t max_wait_ms)
     while (!stop_loop_) {
         loopOnce(max_wait_ms);
     }
-    LoopCallback cb;
-    while (cb_queue_.dequeue(cb)) {
-        if (cb) {
-            cb();
+    {
+        CallbackQueue queue;
+        cb_mutex_.lock();
+        stop_loop_ = true;
+        std::swap(queue, cb_queue_);
+        cb_mutex_.unlock();
+        while (!queue.empty()) {
+            auto cb(std::move(queue.front()));
+            queue.pop_front();
+            if(cb) cb();
         }
     }
     for (auto l : listeners_) {
@@ -180,20 +200,27 @@ void EventLoop::Impl::stop()
     poll_->notify();
 }
 
-KMError EventLoop::Impl::runInEventLoop(LoopCallback cb)
+KMError EventLoop::Impl::async(LoopCallback cb)
 {
-    if(isInEventLoopThread()) {
+    if(inSameThread()) {
         cb();
     } else {
-        cb_queue_.enqueue(std::move(cb));
+        //cb_queue_.enqueue(std::move(cb));
+        {
+            CallbackGuard g(cb_mutex_);
+            if (stop_loop_) {
+                return KMError::INVALID_STATE;
+            }
+            cb_queue_.push_back(std::move(cb));
+        }
         poll_->notify();
     }
     return KMError::NOERR;
 }
 
-KMError EventLoop::Impl::runInEventLoopSync(LoopCallback cb)
+KMError EventLoop::Impl::sync(LoopCallback cb)
 {
-    if(isInEventLoopThread()) {
+    if(inSameThread()) {
         cb();
     } else {
         std::mutex m;
@@ -206,7 +233,14 @@ KMError EventLoop::Impl::runInEventLoopSync(LoopCallback cb)
             lk.unlock();
             cv.notify_one();
         });
-        cb_queue_.enqueue(std::move(cb_sync));
+        //cb_queue_.enqueue(std::move(cb_sync));
+        {
+            CallbackGuard g(cb_mutex_);
+            if (stop_loop_) {
+                return KMError::INVALID_STATE;
+            }
+            cb_queue_.push_back(std::move(cb_sync));
+        }
         poll_->notify();
         std::unique_lock<std::mutex> lk(m);
         cv.wait(lk, [&ready] { return ready; });
@@ -214,10 +248,17 @@ KMError EventLoop::Impl::runInEventLoopSync(LoopCallback cb)
     return KMError::NOERR;
 }
 
-KMError EventLoop::Impl::queueInEventLoop(LoopCallback cb)
+KMError EventLoop::Impl::queue(LoopCallback cb)
 {
-    cb_queue_.enqueue(std::move(cb));
-    if(!isInEventLoopThread()) {
+    //cb_queue_.enqueue(std::move(cb));
+    {
+        CallbackGuard g(cb_mutex_);
+        if (stop_loop_) {
+            return KMError::INVALID_STATE;
+        }
+        cb_queue_.push_back(std::move(cb));
+    }
+    if(!inSameThread()) {
         poll_->notify();
     }
     return KMError::NOERR;

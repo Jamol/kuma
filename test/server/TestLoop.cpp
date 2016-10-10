@@ -44,7 +44,7 @@ void TestLoop::stop()
 {
     //cleanup();
     if(loop_) {
-        loop_->runInEventLoop([this] { cleanup(); });
+        loop_->async([this] { cleanup(); });
         loop_->stop();
     }
     if(thread_.joinable()) {
@@ -67,7 +67,7 @@ void TestLoop::run()
 
 void TestLoop::addFd(SOCKET_FD fd, Proto proto)
 {
-    loop_->runInEventLoop([=] {
+    loop_->async([=] {
         switch (proto) {
             case PROTO_TCP:
             {
@@ -83,7 +83,7 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
                 long conn_id = loopPool_->getConnId();
                 HttpTest* http = new HttpTest(this, conn_id, "HTTP/1.1");
                 addObject(conn_id, http);
-                http->attachFd(fd, proto==PROTO_HTTPS?SSL_ENABLE:0);
+                http->attachFd(fd, proto==PROTO_HTTPS?SSL_ENABLE:0, nullptr, 0);
                 break;
             }
             case PROTO_WS:
@@ -92,7 +92,7 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
                 long conn_id = loopPool_->getConnId();
                 WsTest* ws = new WsTest(this, conn_id);
                 addObject(conn_id, ws);
-                ws->attachFd(fd, proto==PROTO_WSS?SSL_ENABLE:0);
+                ws->attachFd(fd, proto==PROTO_WSS?SSL_ENABLE:0, nullptr, 0);
                 break;
             }
             case PROTO_AUTO:
@@ -115,20 +115,20 @@ void TestLoop::addFd(SOCKET_FD fd, Proto proto)
 # define strcasecmp _stricmp
 #endif
 
-void TestLoop::addHttp(TcpSocket&& tcp, HttpParser&& parser)
+void TestLoop::addHttp(TcpSocket&& tcp, HttpParser&& parser, void *init, size_t len)
 {
     long conn_id = loopPool_->getConnId();
     HttpTest* http = new HttpTest(this, conn_id, "HTTP/1.1");
     addObject(conn_id, http);
-    http->attachSocket(std::move(tcp), std::move(parser));
+    http->attachSocket(std::move(tcp), std::move(parser), init, len);
 }
 
-void TestLoop::addH2Conn(TcpSocket&& tcp, HttpParser&& parser)
+void TestLoop::addH2Conn(TcpSocket&& tcp, HttpParser&& parser, void *init, size_t len)
 {
     long conn_id = loopPool_->getConnId();
     H2ConnTest *h2conn = new H2ConnTest(this, conn_id);
     addObject(conn_id, h2conn);
-    h2conn->attachSocket(std::move(tcp), std::move(parser));
+    h2conn->attachSocket(std::move(tcp), std::move(parser), init, len);
 }
 
 void TestLoop::addHttp2(H2Connection* conn, uint32_t streamId)
@@ -139,12 +139,12 @@ void TestLoop::addHttp2(H2Connection* conn, uint32_t streamId)
     http->attachStream(conn, streamId);
 }
 
-void TestLoop::addWebSocket(TcpSocket&& tcp, HttpParser&& parser)
+void TestLoop::addWebSocket(TcpSocket&& tcp, HttpParser&& parser, void *init, size_t len)
 {
     long conn_id = loopPool_->getConnId();
     WsTest* ws = new WsTest(this, conn_id);
     addObject(conn_id, ws);
-    ws->attachSocket(std::move(tcp), std::move(parser));
+    ws->attachSocket(std::move(tcp), std::move(parser), init, len);
 }
 
 void TestLoop::addObject(long conn_id, TestObject* obj)

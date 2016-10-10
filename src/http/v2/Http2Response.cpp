@@ -77,10 +77,10 @@ KMError Http2Response::sendResponse(int status_code, const std::string& desc, co
     stream_->sendHeaders(headers, headersSize, endStream);
     if (endStream) {
         setState(State::COMPLETE);
-        loop_->queueInEventLoop([this] { notifyComplete(); });
+        loop_->queue([this] { notifyComplete(); });
     } else {
         setState(State::SENDING_BODY);
-        loop_->queueInEventLoop([this] { if (write_cb_) write_cb_(KMError::NOERR); });
+        loop_->queue([this] { if (write_cb_) write_cb_(KMError::NOERR); });
     }
     return KMError::NOERR;
 }
@@ -106,7 +106,7 @@ int Http2Response::sendData(const void* data, size_t len)
     if (endStream) { // end stream
         stream_->sendData(nullptr, 0, true);
         setState(State::COMPLETE);
-        loop_->queueInEventLoop([this] { notifyComplete(); });
+        loop_->queue([this] { notifyComplete(); });
     }
     return ret;
 }
@@ -165,9 +165,9 @@ void Http2Response::onData(void *data, size_t len, bool endSteam)
     if (data_cb_ && len > 0) data_cb_(data, len);
     DESTROY_DETECTOR_CHECK_VOID();
     
-    if (endSteam && response_cb_) {
-        setState(State::COMPLETE);
-        response_cb_();
+    if (endSteam) {
+        setState(State::WAIT_FOR_RESPONSE);
+        if (request_cb_) request_cb_();
     }
 }
 

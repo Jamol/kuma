@@ -54,11 +54,18 @@ public:
     
 private:
     void onConnect(KMError err);
+    void onError(KMError err);
     
     KMError sendRequest() override;
     void checkHeaders() override;
+    
+    //{ in H2Connection thread
     size_t buildHeaders(HeaderVector &headers);
-    void sendHeaders();
+    KMError sendRequest_i();
+    KMError sendHeaders();
+    int sendData_i(const void* data, size_t len, bool newData=false);
+    void close_i();
+    //}
     
 private:
     EventLoop::Impl* loop_;
@@ -67,6 +74,9 @@ private:
     
     int status_code_ = 0;
     HeaderMap rsp_headers_;
+    
+    bool write_blocked_ { false };
+    std::list<iovec> data_list_;
     
     std::string connKey_;
 };

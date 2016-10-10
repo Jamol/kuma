@@ -49,10 +49,10 @@ public:
     
     void addFd(SOCKET_FD fd, Proto proto);
     
-    void addHttp(TcpSocket&& tcp, HttpParser&& parser);
+    void addHttp(TcpSocket&& tcp, HttpParser&& parser, void *init, size_t len);
     void addHttp2(H2Connection* conn, uint32_t streamId);
-    void addH2Conn(TcpSocket&& tcp, HttpParser&& parser);
-    void addWebSocket(TcpSocket&& tcp, HttpParser&& parser);
+    void addH2Conn(TcpSocket&& tcp, HttpParser&& parser, void *init, size_t len);
+    void addWebSocket(TcpSocket&& tcp, HttpParser&& parser, void *init, size_t len);
     
     void addObject(long conn_id, TestObject* obj) override;
     void removeObject(long conn_id) override;

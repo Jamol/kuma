@@ -14,7 +14,7 @@ class WsClient : public TestObject
 public:
     WsClient(TestLoop* loop, long conn_id);
     
-    void startRequest(std::string& url);
+    void startRequest(const std::string& url);
     int close();
     
     void onData(void*, size_t);

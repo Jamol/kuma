@@ -194,7 +194,7 @@ WSHandler::WSError WSHandler::handleData(uint8_t* data, size_t len)
         if(state_ == STATE_ERROR) {
             return WS_ERROR_HANDSHAKE;
         }
-        if(bytes_used < len && state_ == STATE_OPEN) {
+        if(bytes_used < (int)len && state_ == STATE_OPEN) {
             return decodeFrame(data + bytes_used, len - bytes_used);
         }
     } else {

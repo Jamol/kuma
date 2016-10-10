@@ -37,7 +37,10 @@ Http2Request::Http2Request(EventLoop::Impl* loop, std::string ver)
 
 Http2Request::~Http2Request()
 {
-    
+    for (auto iov : data_list_) {
+        delete [] (uint8_t*)iov.iov_base;
+    }
+    data_list_.clear();
 }
 
 KMError Http2Request::setSslFlags(uint32_t ssl_flags)
@@ -72,20 +75,32 @@ KMError Http2Request::sendRequest()
     } else {
         key = uri_.getHost() + ":" + std::to_string(port);
     }
+    setState(State::CONNECTING);
     auto &connMgr = H2ConnectionMgr::getRequestConnMgr(ssl_flags != SSL_NONE);
-    conn_ = connMgr.getConnection(key);
+    conn_ = connMgr.getConnection(key, uri_.getHost(), port, ssl_flags, loop_);
     if (!conn_) {
-        conn_.reset(new H2Connection::Impl(loop_));
-        conn_->setConnectionKey(key);
-        conn_->setSslFlags(ssl_flags);
-        connMgr.addConnection(key, conn_);
-        setState(State::CONNECTING);
-        return conn_->connect(uri_.getHost(), port, [this] (KMError err) { onConnect(err); });
-    } else if (!conn_->isReady()) {
+        KUMA_ERRXTRACE("sendRequest, failed to get H2Connection, key="<<key);
+        return KMError::INVALID_PARAM;
+    } else if (conn_->isInSameThread()) {
+        return sendRequest_i();
+    } else if (!conn_->async([this] { auto err = sendRequest_i(); if (err != KMError::NOERR) { onError(err); }})) {
+        KUMA_ERRXTRACE("sendRequest, failed to run in H2Connection, key="<<key);
         return KMError::INVALID_STATE;
     }
-    sendHeaders();
     return KMError::NOERR;
+}
+
+KMError Http2Request::sendRequest_i()
+{
+    if (!conn_) {
+        return KMError::INVALID_STATE;
+    }
+    if (!conn_->isReady()) {
+        conn_->addConnectListener(getObjId(), [this] (KMError err) { onConnect(err); });
+        return KMError::NOERR;
+    } else {
+        return sendHeaders();
+    }
 }
 
 const std::string& Http2Request::getHeaderValue(std::string name) const
@@ -145,7 +160,7 @@ size_t Http2Request::buildHeaders(HeaderVector &headers)
     return headers_size;
 }
 
-void Http2Request::sendHeaders()
+KMError Http2Request::sendHeaders()
 {
     stream_ = conn_->createStream();
     stream_->setHeadersCallback([this] (const HeaderVector &headers, bool endHeaders, bool endSteam) {
@@ -165,23 +180,64 @@ void Http2Request::sendHeaders()
     HeaderVector headers;
     size_t headersSize = buildHeaders(headers);
     bool endStream = !has_content_length_ && !is_chunked_;
-    stream_->sendHeaders(headers, headersSize, endStream);
-    if (endStream) {
-        setState(State::RECVING_RESPONSE);
+    auto ret = stream_->sendHeaders(headers, headersSize, endStream);
+    if (ret == KMError::NOERR) {
+        if (endStream) {
+            setState(State::RECVING_RESPONSE);
+        } else {
+            setState(State::SENDING_BODY);
+            onWrite(); // should queue in event loop rather than call onWrite directly?
+        }
     }
+    return ret;
 }
 
 void Http2Request::onConnect(KMError err)
 {
     if(err != KMError::NOERR) {
-        if(error_cb_) error_cb_(err);
+        onError(err);
         return ;
     }
     sendHeaders();
 }
 
+void Http2Request::onError(KMError err)
+{
+    if(error_cb_) error_cb_(err);
+}
+
 int Http2Request::sendData(const void* data, size_t len)
 {
+    if (!conn_) {
+        return -1;
+    }
+    if (getState() != State::SENDING_BODY) {
+        return 0;
+    }
+    if (write_blocked_) {
+        return 0;
+    }
+    if (conn_->isInSameThread()) {
+        return sendData_i(data, len);
+    } else {
+        uint8_t *d = nullptr;
+        if (data && len) {
+            d = new uint8_t[len];
+            memcpy(d, data, len);
+        }
+        conn_->async([=] { sendData_i(d, len, true); });
+        return int(len);
+    }
+}
+
+int Http2Request::sendData_i(const void* data, size_t len, bool newData)
+{
+    if (getState() != State::SENDING_BODY) {
+        if (newData && len > 0) {
+            delete [] (uint8_t*)data;
+        }
+        return 0;
+    }
     int ret = 0;
     if (data && len) {
         size_t send_len = len;
@@ -197,6 +253,18 @@ int Http2Request::sendData(const void* data, size_t len)
     if (endStream) {
         stream_->sendData(nullptr, 0, true);
         setState(State::RECVING_RESPONSE);
+    }
+    if (newData && len > 0) {
+        if (ret == 0) {// write blocked
+            write_blocked_ = true;
+            iovec iov;
+            iov.iov_base = (char*) data;
+            iov.iov_len = len;
+            data_list_.push_back(iov);
+            ret = int(len);
+        } else {
+            delete [] (uint8_t*)data;
+        }
     }
     return ret;
 }
@@ -238,22 +306,44 @@ void Http2Request::onData(void *data, size_t len, bool endSteam)
 
 void Http2Request::onRSTStream(int err)
 {
-    if (error_cb_) {
-        error_cb_(KMError::FAILED);
-    }
+    onError(KMError::FAILED);
 }
 
 void Http2Request::onWrite()
 {
+    while (!data_list_.empty()) {
+        auto iov = data_list_.front();
+        int ret = sendData_i(iov.iov_base, iov.iov_len);
+        if (ret > 0) {
+            data_list_.pop_front();
+            delete [] (uint8_t*)iov.iov_base;
+        } else if (ret == 0) {
+            return;
+        } else {
+            onError(KMError::FAILED);
+            return;
+        }
+    }
+    write_blocked_ = false;
     if(write_cb_) write_cb_(KMError::NOERR);
 }
 
 KMError Http2Request::close()
 {
+    if (conn_) {
+        conn_->sync([this] { close_i(); });
+    }
+    conn_.reset();
+    return KMError::NOERR;
+}
+
+void Http2Request::close_i()
+{
+    if (getState() == State::CONNECTING && conn_) {
+        conn_->removeConnectListener(getObjId());
+    }
     if (stream_) {
         stream_->close();
         stream_.reset();
     }
-    conn_.reset();
-    return KMError::NOERR;
 }

@@ -114,7 +114,7 @@ bool TimerManager::scheduleTimer(Timer::Impl* timer, uint32_t delay_ms, TimerMod
         long diff = long(now_tick - last_tick_);
         if(last_remain_ms_ == -1 || (diff >= 0 && delay_ms < last_remain_ms_ - diff)) {
             // need update poll wait time
-            need_notify = !loop_->isInEventLoopThread();
+            need_notify = !loop_->inSameThread();
         }
     }
     if(need_notify) {

@@ -40,6 +40,7 @@ public:
     void addConnection(const std::string &key, H2ConnectionPtr &conn);
     void addConnection(const std::string &key, H2ConnectionPtr &&conn);
     H2ConnectionPtr getConnection(const std::string &key);
+    H2ConnectionPtr getConnection(const std::string &key, const std::string &host, uint16_t port, uint32_t ssl_flags, EventLoop::Impl* loop);
     void removeConnection(const std::string key);
     
 public:

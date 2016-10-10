@@ -40,7 +40,8 @@ namespace {
 
 //////////////////////////////////////////////////////////////////////////
 H2Connection::Impl::Impl(EventLoop::Impl* loop)
-: TcpConnection(loop), frameParser_(this), flow_ctrl_(0, [this] (uint32_t w) { sendWindowUpdate(0, w); })
+: TcpConnection(loop), loop_(loop), thread_id_(loop->threadId()), frameParser_(this)
+, flow_ctrl_(0, [this] (uint32_t w) { sendWindowUpdate(0, w); })
 {
     flow_ctrl_.initLocalWindowSize(LOCAL_CONN_INITIAL_WINDOW_SIZE);
     flow_ctrl_.setMinLocalWindowSize(initLocalWindowSize_);
@@ -53,21 +54,23 @@ H2Connection::Impl::Impl(EventLoop::Impl* loop)
 H2Connection::Impl::~Impl()
 {
     KUMA_INFOXTRACE("~H2Connection");
+    if (registeredToLoop_) {
+        tcp_.getEventLoop()->sync([this] { cleanup(); });
+    }
 }
 
 void H2Connection::Impl::cleanup()
 {
+    setState(State::CLOSED);
     if (registeredToLoop_) {
         registeredToLoop_ = false;
         tcp_.getEventLoop()->removeListener(this);
     }
     tcp_.close();
-    if (!key_.empty()) {
-        auto &connMgr = H2ConnectionMgr::getRequestConnMgr(sslEnabled());
-        std::string key(std::move(key_));
-        // will destroy self when calling from loop stop
-        connMgr.removeConnection(key);
-    }
+    loop_mutex_.lock();
+    loop_ = nullptr;
+    loop_mutex_.unlock();
+    removeSelf();
 }
 
 void H2Connection::Impl::setConnectionKey(const std::string &key)
@@ -78,13 +81,12 @@ void H2Connection::Impl::setConnectionKey(const std::string &key)
     }
 }
 
-KMError H2Connection::Impl::connect(const std::string &host, uint16_t port, ConnectCallback cb)
+KMError H2Connection::Impl::connect(const std::string &host, uint16_t port)
 {
     if(getState() != State::IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
         return KMError::INVALID_STATE;
     }
-    connect_cb_ = std::move(cb);
     
     // add to EventLoop to get notification when loop exit
     tcp_.getEventLoop()->addListener(this);
@@ -112,11 +114,11 @@ KMError H2Connection::Impl::connect_i(const std::string &host, uint16_t port)
     return TcpConnection::connect(host.c_str(), port);
 }
 
-KMError H2Connection::Impl::attachFd(SOCKET_FD fd, const uint8_t* data, size_t size)
+KMError H2Connection::Impl::attachFd(SOCKET_FD fd, const void* init_data, size_t init_len)
 {
     nextStreamId_ = 2;
     
-    auto ret = TcpConnection::attachFd(fd, data, size);
+    auto ret = TcpConnection::attachFd(fd, init_data, init_len);
     if (ret == KMError::NOERR) {
         if (sslEnabled()) {
             // waiting for client preface
@@ -130,7 +132,7 @@ KMError H2Connection::Impl::attachFd(SOCKET_FD fd, const uint8_t* data, size_t s
     return ret;
 }
 
-KMError H2Connection::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser)
+KMError H2Connection::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len)
 {
     KUMA_ASSERT(parser.isRequest());
     httpParser_ = std::move(parser);
@@ -141,7 +143,7 @@ KMError H2Connection::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl
         setState(State::UPGRADING);
     }
     
-    auto ret = TcpConnection::attachSocket(std::move(tcp));
+    auto ret = TcpConnection::attachSocket(std::move(tcp), init_data, init_len);
     if (ret != KMError::NOERR) {
         return ret;
     }
@@ -228,15 +230,28 @@ KMError H2Connection::Impl::sendHeadersFrame(HeadersFrame *frame)
     size_t len1 = H2_FRAME_HEADER_SIZE + (frame->hasPriority()?H2_PRIORITY_PAYLOAD_SIZE:0);
     auto &headers = frame->getHeaders();
     size_t hdrSize = frame->getHeadersSize();
-    send_buffer_.resize(len1 + hdrSize * 3 / 2);
-    int ret = hpEncoder_.encode(headers, &send_buffer_[0] + len1, send_buffer_.size() - len1);
+    
+    size_t hpackSize = hdrSize * 3 / 2;
+    size_t frameSize = len1 + hpackSize;
+    size_t buffSize = 0;
+    if (!sendBufferEmpty()) {
+        buffSize = send_buffer_.size() - send_offset_;
+        if (send_offset_) {
+            memmove(&send_buffer_[0], &send_buffer_[0] + send_offset_, buffSize);
+        }
+    }
+    if (buffSize + frameSize != send_buffer_.size()) {
+        send_buffer_.resize(buffSize + frameSize);
+    }
+    
+    int ret = hpEncoder_.encode(headers, &send_buffer_[0] + buffSize + len1, hpackSize);
     if (ret < 0) {
         return KMError::FAILED;
     }
     size_t bsize = ret;
-    ret = frame->encode(&send_buffer_[0], len1, bsize);
-    KUMA_ASSERT(ret == len1);
-    size_t total_len = len1 + bsize;
+    ret = frame->encode(&send_buffer_[0] + buffSize, len1, bsize);
+    KUMA_ASSERT(ret == (int)len1);
+    size_t total_len = buffSize + len1 + bsize;
     send_buffer_.resize(total_len);
     send_offset_ = 0;
     return sendBufferedData();
@@ -422,7 +437,6 @@ void H2Connection::Impl::handleWindowUpdateFrame(WindowUpdateFrame *frame)
             notifyBlockedStreams();
         }
     } else {
-        //flow_ctrl_.increaseRemoteWindowSize(frame->getWindowSizeIncrement());
         H2StreamPtr stream = getStream(frame->getStreamId());
         if (!stream && isServer()) {
             // new stream arrived on server side
@@ -474,9 +488,9 @@ KMError H2Connection::Impl::handleInputData(uint8_t *buf, size_t len)
         if (isServer()) {
             size_t cmpSize = std::min(cmpPreface_.size(), len);
             if (memcmp(cmpPreface_.c_str(), buf, cmpSize) != 0) {
-                cleanup();
-                setState(State::CLOSED);
                 KUMA_ERRXTRACE("handleInputData, invalid protocol");
+                setState(State::CLOSED);
+                cleanup();
                 return KMError::INVALID_PROTO;
             }
             cmpPreface_ = cmpPreface_.substr(cmpSize);
@@ -504,8 +518,9 @@ KMError H2Connection::Impl::parseInputData(const uint8_t *buf, size_t len)
         return KMError::INVALID_STATE;
     }
     if(parseState == FrameParser::ParseState::FAILURE) {
-        cleanup();
+        KUMA_ERRXTRACE("parseInputData, failed, len="<<len<<", state="<<getState());
         setState(State::CLOSED);
+        cleanup();
         return KMError::FAILED;
     }
     return KMError::NOERR;
@@ -597,6 +612,16 @@ void H2Connection::Impl::removeStream(uint32_t streamId)
     }
 }
 
+void H2Connection::Impl::addConnectListener(long uid, ConnectCallback cb)
+{
+    connect_listeners_[uid] = std::move(cb);
+}
+
+void H2Connection::Impl::removeConnectListener(long uid)
+{
+    connect_listeners_.erase(uid);
+}
+
 void H2Connection::Impl::appendBlockedStream(uint32_t streamId)
 {
     blocked_streams_[streamId] = streamId;
@@ -624,8 +649,35 @@ void H2Connection::Impl::notifyBlockedStreams()
 
 void H2Connection::Impl::loopStopped()
 { // event loop exited
+    KUMA_INFOXTRACE("loopStopped");
     registeredToLoop_ = false;
     cleanup();
+}
+
+bool H2Connection::Impl::sync(LoopCallback cb)
+{
+    if (isInSameThread()) {
+        cb();
+        return true;
+    }
+    std::lock_guard<std::recursive_mutex> g(loop_mutex_);
+    if (!loop_) {
+        return false;
+    }
+    return loop_->sync(std::move(cb)) == KMError::NOERR;
+}
+
+bool H2Connection::Impl::async(LoopCallback cb)
+{
+    if (isInSameThread()) {
+        cb();
+        return true;
+    }
+    std::lock_guard<std::recursive_mutex> g(loop_mutex_);
+    if (!loop_) {
+        return false;
+    }
+    return loop_->async(std::move(cb)) == KMError::NOERR;
 }
 
 std::string H2Connection::Impl::buildUpgradeRequest()
@@ -752,18 +804,19 @@ void H2Connection::Impl::onWrite()
 void H2Connection::Impl::onError(KMError err)
 {
     KUMA_INFOXTRACE("onError, err="<<int(err));
+    auto error_cb(std::move(error_cb_));
+    setState(State::IN_ERROR);
     cleanup();
-    if (error_cb_) {
-        error_cb_(int(err));
+    if (error_cb) {
+        error_cb(int(err));
     }
 }
 
 void H2Connection::Impl::onConnectError(KMError err)
 {
-    cleanup();
     setState(State::IN_ERROR);
-    auto connect_cb(std::move(connect_cb_));
-    if (connect_cb) connect_cb(err);
+    cleanup();
+    notifyListeners(err);
 }
 
 void H2Connection::Impl::sendWindowUpdate(uint32_t streamId, uint32_t delta)
@@ -896,8 +949,27 @@ void H2Connection::Impl::onStateOpen()
 {
     KUMA_INFOXTRACE("onStateOpen");
     setState(State::OPEN);
-    if (!isServer() && connect_cb_) {
-        auto connect_cb(std::move(connect_cb_));
-        connect_cb(KMError::NOERR);
+    if (!isServer()) {
+        notifyListeners(KMError::NOERR);
+    }
+}
+
+void H2Connection::Impl::notifyListeners(KMError err)
+{
+    auto listeners(std::move(connect_listeners_));
+    for (auto it : listeners) {
+        if (it.second) {
+            it.second(err);
+        }
+    }
+}
+
+void H2Connection::Impl::removeSelf()
+{
+    if (!key_.empty()) {
+        auto &connMgr = H2ConnectionMgr::getRequestConnMgr(sslEnabled());
+        std::string key(std::move(key_));
+        // will destroy self when calling from loop stop
+        connMgr.removeConnection(key);
     }
 }

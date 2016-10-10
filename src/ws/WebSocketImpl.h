@@ -45,8 +45,8 @@ public:
     void setOrigin(const std::string& origin);
     const std::string& getOrigin() const { return origin_; }
     KMError connect(const std::string& ws_url, EventCallback cb);
-    KMError attachFd(SOCKET_FD fd, const uint8_t* init_data = nullptr, size_t init_len = 0);
-    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser);
+    KMError attachFd(SOCKET_FD fd, const void* init_data, size_t init_len);
+    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len);
     int send(const void* data, size_t len);
     KMError close();
     

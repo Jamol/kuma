@@ -28,7 +28,7 @@ using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
 TcpConnection::TcpConnection(EventLoop::Impl* loop)
-: loop_(loop), tcp_(loop)
+: tcp_(loop)
 {
     
 }
@@ -65,21 +65,27 @@ KMError TcpConnection::connect(const std::string &host, uint16_t port)
     return tcp_.connect(host.c_str(), port, [this] (KMError err) { onConnect(err); });
 }
 
-KMError TcpConnection::attachFd(SOCKET_FD fd, const uint8_t* data, size_t size)
+void TcpConnection::saveInitData(const void* init_data, size_t init_len)
+{
+    if(init_data && init_len > 0) {
+        initData_.assign((const char*)init_data, (const char*)init_data + init_len);
+    }
+}
+
+KMError TcpConnection::attachFd(SOCKET_FD fd, const void* init_data, size_t init_len)
 {
     isServer_ = true;
-    if(data && size > 0) {
-        initData_.assign(data, data + size);
-    }
     setupCallbacks();
+    saveInitData(init_data, init_len);
     
     return tcp_.attachFd(fd);
 }
 
-KMError TcpConnection::attachSocket(TcpSocket::Impl &&tcp)
+KMError TcpConnection::attachSocket(TcpSocket::Impl &&tcp, const void* init_data, size_t init_len)
 {
     isServer_ = true;
     setupCallbacks();
+    saveInitData(init_data, init_len);
     
     return tcp_.attach(std::move(tcp));
 }

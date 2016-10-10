@@ -45,13 +45,14 @@ public:
     bool init();
     void stop();
     
-    void startTest(std::string& addr_url, std::string& bind_addr);
+    void startTest(const std::string& addr_url, const std::string& bind_addr);
     
     void addObject(long conn_id, TestObject* obj) override;
     void removeObject(long conn_id) override;
     EventLoop* getEventLoop() override { return loop_.get(); }
     
 private:
+    void startTest_i(const std::string& addr_url, const std::string& bind_addr);
     void cleanup();
     void run();
     

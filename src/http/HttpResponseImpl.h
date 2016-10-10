@@ -43,8 +43,8 @@ public:
     virtual ~Impl();
     
     virtual KMError setSslFlags(uint32_t ssl_flags) { return KMError::UNSUPPORT; }
-    virtual KMError attachFd(SOCKET_FD fd, uint8_t* init_data=nullptr, size_t init_len=0) { return KMError::UNSUPPORT; }
-    virtual KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser) { return KMError::UNSUPPORT; }
+    virtual KMError attachFd(SOCKET_FD fd, const void* init_data, size_t init_len) { return KMError::UNSUPPORT; }
+    virtual KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len) { return KMError::UNSUPPORT; }
     virtual KMError attachStream(H2Connection::Impl* conn, uint32_t streamId) { return KMError::UNSUPPORT; }
     virtual void addHeader(std::string name, std::string value);
     virtual void addHeader(std::string name, uint32_t value);

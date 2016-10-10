@@ -53,13 +53,16 @@ public:
     Impl(EventLoop::Impl* loop);
 	~Impl();
     
-    KMError connect(const std::string &host, uint16_t port, ConnectCallback cb);
-    KMError attachFd(SOCKET_FD fd, const uint8_t* data=nullptr, size_t size=0);
-    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser);
+    //KMError connect(const std::string &host, uint16_t port, ConnectCallback cb);
+    KMError connect(const std::string &host, uint16_t port);
+    KMError attachFd(SOCKET_FD fd, const void* init_data, size_t init_len);
+    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len);
     KMError attachStream(uint32_t streamId, HttpResponse::Impl* rsp);
     KMError close();
     void setAcceptCallback(AcceptCallback cb) { accept_cb_ = std::move(cb); }
     void setErrorCallback(ErrorCallback cb) { error_cb_ = std::move(cb); }
+    void addConnectListener(long uid, ConnectCallback cb);
+    void removeConnectListener(long uid);
     
     KMError sendH2Frame(H2Frame *frame);
     
@@ -76,6 +79,10 @@ public:
     void appendBlockedStream(uint32_t streamId);
     
     void loopStopped() override;
+    
+    bool sync(LoopCallback cb);
+    bool async(LoopCallback cb);
+    bool isInSameThread() const { return std::this_thread::get_id() == thread_id_; }
     
 public:
     void onFrame(H2Frame *frame) override;
@@ -141,11 +148,19 @@ private:
     void connectionError(H2Error err);
     void streamError(uint32_t streamId, H2Error err);
     
+    void notifyListeners(KMError err);
+    void removeSelf();
+    
 private:
     State state_ = State::IDLE;
-    ConnectCallback connect_cb_; // client only
     AcceptCallback accept_cb_; // server only
     ErrorCallback error_cb_;
+    
+    EventLoop::Impl* loop_;
+    std::recursive_mutex loop_mutex_;
+    std::thread::id thread_id_;
+    
+    std::map<long, ConnectCallback> connect_listeners_;
     
     std::string key_;
     

@@ -15,7 +15,7 @@ class HttpClient : public TestObject
 public:
     HttpClient(TestLoop* loop, long conn_id);
     
-    void startRequest(std::string& url);
+    void startRequest(const std::string& url);
     int close();
 
     void onData(void* data, size_t len);
@@ -30,7 +30,7 @@ private:
 private:
     TestLoop*   loop_;
     HttpRequest http_request_;
-    size_t      total_bytes_read_;
+    size_t      total_bytes_read_ = 0;
     long        conn_id_;
 };
 

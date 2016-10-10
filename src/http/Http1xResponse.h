@@ -40,8 +40,8 @@ public:
     ~Http1xResponse();
     
     KMError setSslFlags(uint32_t ssl_flags) override;
-    KMError attachFd(SOCKET_FD fd, uint8_t* init_data = nullptr, size_t init_len = 0) override;
-    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser) override;
+    KMError attachFd(SOCKET_FD fd, const void* init_data, size_t init_len) override;
+    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len) override;
     KMError sendResponse(int status_code, const std::string& desc, const std::string& ver) override;
     int sendData(const void* data, size_t len) override;
     void reset() override; // reset for connection reuse

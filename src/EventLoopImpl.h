@@ -67,24 +67,30 @@ public:
     bool isPollLT() const; // level trigger
     
 public:
-    bool isInEventLoopThread() const { return std::this_thread::get_id() == thread_id_; }
-    KMError runInEventLoop(LoopCallback cb);
-    KMError runInEventLoopSync(LoopCallback cb);
-    KMError queueInEventLoop(LoopCallback cb);
+    bool inSameThread() const { return std::this_thread::get_id() == thread_id_; }
+    std::thread::id threadId() const { return thread_id_; }
+    KMError sync(LoopCallback cb);
+    KMError async(LoopCallback cb);
+    KMError queue(LoopCallback cb);
     void loopOnce(uint32_t max_wait_ms);
     void loop(uint32_t max_wait_ms = -1);
     void notify();
     void stop();
     bool stopped() const { return stop_loop_; }
+    void processCallbacks();
     
 private:
-    using CallbackQueue = KM_QueueMT<LoopCallback, std::mutex>;
+    //using CallbackQueue = KM_QueueMT<LoopCallback, std::mutex>;
+    using CallbackQueue = std::list<LoopCallback>;
+    using CallBackMutex = std::mutex;
+    using CallbackGuard = std::lock_guard<CallBackMutex>;
     
     IOPoll*         poll_;
     bool            stop_loop_{ false };
     std::thread::id thread_id_;
     
     CallbackQueue   cb_queue_;
+    CallBackMutex   cb_mutex_;
     
     TimerManagerPtr timer_mgr_;
     

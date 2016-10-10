@@ -26,6 +26,8 @@ public:
         return objKey_;
     }
     
+    long getObjId() const { return objId_; }
+    
 private:
     static std::atomic<long> objIdSeed_;
     

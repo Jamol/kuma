@@ -33,6 +33,7 @@
 
 KUMA_NS_BEGIN
 
+// H2Stream works on H2Connection thread
 class H2Stream : public KMObject
 {
 public:

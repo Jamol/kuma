@@ -140,7 +140,7 @@ KMError TcpListener::Impl::stopListen(const char* host, uint16_t port)
 {
     KUMA_INFOXTRACE("stopListen");
     stopped_ = true;
-    loop_->runInEventLoopSync([this] {
+    loop_->sync([this] {
         cleanup();
     });
     return KMError::NOERR;
@@ -167,7 +167,7 @@ KMError TcpListener::Impl::close()
 {
     KUMA_INFOXTRACE("close");
     stopped_ = true;
-    loop_->runInEventLoopSync([this] {
+    loop_->sync([this] {
         cleanup();
     });
     return KMError::NOERR;

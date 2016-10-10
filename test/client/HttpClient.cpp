@@ -1,23 +1,30 @@
 #include "HttpClient.h"
 
+#include <string.h> // for memset
+#include <atomic>
+
 extern std::string getHttpVersion();
 HttpClient::HttpClient(TestLoop* loop, long conn_id)
 : loop_(loop)
 , http_request_(loop->getEventLoop(), getHttpVersion().c_str())
-, total_bytes_read_(0)
 , conn_id_(conn_id)
 {
     
 }
 
-void HttpClient::startRequest(std::string& url)
+void HttpClient::startRequest(const std::string& url)
 {
     http_request_.setDataCallback([this] (void* data, size_t len) { onData(data, len); });
     http_request_.setWriteCallback([this] (KMError err) { onSend(err); });
     http_request_.setErrorCallback([this] (KMError err) { onClose(err); });
     http_request_.setHeaderCompleteCallback([this] { onHeaderComplete(); });
     http_request_.setResponseCompleteCallback([this] { onRequestComplete(); });
-    http_request_.sendRequest("GET", url.c_str());
+    if (url.find("/testdata") != std::string::npos) {
+        http_request_.addHeader("Content-Length", 128*1024*1024);
+        http_request_.sendRequest("POST", url.c_str());
+    } else {
+        http_request_.sendRequest("GET", url.c_str());
+    }
 }
 
 int HttpClient::close()
@@ -28,14 +35,23 @@ int HttpClient::close()
 
 void HttpClient::onData(void* data, size_t len)
 {
-    std::string str((char*)data, len);
     total_bytes_read_ += len;
-    printf("HttpClient_%ld::onData, len=%zu, total=%zu\n", conn_id_, len, total_bytes_read_);
+    //printf("HttpClient_%ld::onData, len=%zu, total=%zu\n", conn_id_, len, total_bytes_read_);
 }
 
 void HttpClient::onSend(KMError err)
 {
-    
+    uint8_t buf[16*1024];
+    memset(buf, 'a', sizeof(buf));
+    while (true) {
+        int ret = http_request_.sendData(buf, sizeof(buf));
+        if (ret < 0) {
+            break;
+        } else if (ret < sizeof(buf)) {
+            // should buffer remain data
+            break;
+        }
+    }
 }
 
 void HttpClient::onClose(KMError err)
@@ -52,6 +68,7 @@ void HttpClient::onHeaderComplete()
 
 void HttpClient::onRequestComplete()
 {
-    printf("HttpClient_%ld::onRequestComplete, total=%zu\n", conn_id_, total_bytes_read_);
+    static std::atomic_int req_count{0};
+    printf("HttpClient_%ld::onRequestComplete, total=%zu, count=%d\n", conn_id_, total_bytes_read_, ++req_count);
     http_request_.close();
 }

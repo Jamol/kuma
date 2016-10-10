@@ -11,22 +11,22 @@ WsTest::WsTest(TestLoop* loop, long conn_id)
     
 }
 
-KMError WsTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
+KMError WsTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags, void *init, size_t len)
 {
     ws_.setWriteCallback([this] (KMError err) { onSend(err); });
     ws_.setErrorCallback([this] (KMError err) { onClose(err); });
     ws_.setDataCallback([this] (void* data, size_t len) { onData(data, len); });
     ws_.setSslFlags(ssl_flags);
-    return ws_.attachFd(fd);
+    return ws_.attachFd(fd, init, len);
 }
 
-KMError WsTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
+KMError WsTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser, void *init, size_t len)
 {
     ws_.setWriteCallback([this] (KMError err) { onSend(err); });
     ws_.setErrorCallback([this] (KMError err) { onClose(err); });
     ws_.setDataCallback([this] (void* data, size_t len) { onData(data, len); });
     
-    return ws_.attachSocket(std::move(tcp), std::move(parser));
+    return ws_.attachSocket(std::move(tcp), std::move(parser), init, len);
 }
 
 int WsTest::close()

@@ -102,19 +102,19 @@ EventLoop::Impl* EventLoop::pimpl()
     return pimpl_;
 }
 
-KMError EventLoop::runInEventLoop(LoopCallback cb)
+KMError EventLoop::async(LoopCallback cb)
 {
-    return pimpl_->runInEventLoop(std::move(cb));
+    return pimpl_->async(std::move(cb));
 }
 
-KMError EventLoop::runInEventLoopSync(LoopCallback cb)
+KMError EventLoop::sync(LoopCallback cb)
 {
-    return pimpl_->runInEventLoopSync(std::move(cb));
+    return pimpl_->sync(std::move(cb));
 }
 
-KMError EventLoop::queueInEventLoop(LoopCallback cb)
+KMError EventLoop::queue(LoopCallback cb)
 {
-    return pimpl_->runInEventLoopSync(std::move(cb));
+    return pimpl_->queue(std::move(cb));
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -641,14 +641,14 @@ KMError HttpResponse::setSslFlags(uint32_t ssl_flags)
     return pimpl_->setSslFlags(ssl_flags);
 }
 
-KMError HttpResponse::attachFd(SOCKET_FD fd, uint8_t* init_data, size_t init_len)
+KMError HttpResponse::attachFd(SOCKET_FD fd, const void* init_data, size_t init_len)
 {
     return pimpl_->attachFd(fd, init_data, init_len);
 }
 
-KMError HttpResponse::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
+KMError HttpResponse::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const void* init_data, size_t init_len)
 {
-    return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move(*parser.pimpl()));
+    return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move(*parser.pimpl()), init_data, init_len);
 }
 
 void HttpResponse::addHeader(const char* name, const char* value)
@@ -791,14 +791,14 @@ KMError WebSocket::connect(const char* ws_url, EventCallback cb)
     return pimpl_->connect(ws_url, std::move(cb));
 }
 
-KMError WebSocket::attachFd(SOCKET_FD fd, const uint8_t* init_data, size_t init_len)
+KMError WebSocket::attachFd(SOCKET_FD fd, const void* init_data, size_t init_len)
 {
     return pimpl_->attachFd(fd, init_data, init_len);
 }
 
-KMError WebSocket::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
+KMError WebSocket::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const void* init_data, size_t init_len)
 {
-    return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move((*parser.pimpl())));
+    return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move((*parser.pimpl())), init_data, init_len);
 }
 
 int WebSocket::send(const void* data, size_t len)
@@ -853,14 +853,14 @@ KMError H2Connection::connect(const char* host, uint16_t port, ConnectCallback c
     return pimpl_->connect(host, port, cb);
 }
 */
-KMError H2Connection::attachFd(SOCKET_FD fd, const uint8_t* data, size_t size)
+KMError H2Connection::attachFd(SOCKET_FD fd, const void* init_data, size_t init_len)
 {
-    return pimpl_->attachFd(fd, data, size);
+    return pimpl_->attachFd(fd, init_data, init_len);
 }
 
-KMError H2Connection::attachSocket(TcpSocket &&tcp, HttpParser &&parser)
+KMError H2Connection::attachSocket(TcpSocket &&tcp, HttpParser &&parser, const void* init_data, size_t init_len)
 {
-    return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move(*parser.pimpl()));
+    return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move(*parser.pimpl()), init_data, init_len);
 }
 
 KMError H2Connection::attachStream(uint32_t streamId, HttpResponse* rsp)

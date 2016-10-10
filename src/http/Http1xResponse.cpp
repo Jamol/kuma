@@ -53,16 +53,16 @@ KMError Http1xResponse::setSslFlags(uint32_t ssl_flags)
     return TcpConnection::setSslFlags(ssl_flags);
 }
 
-KMError Http1xResponse::attachFd(SOCKET_FD fd, uint8_t* init_data, size_t init_len)
+KMError Http1xResponse::attachFd(SOCKET_FD fd, const void* init_data, size_t init_len)
 {
     setState(State::RECVING_REQUEST);
     http_parser_.reset();
     http_parser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
-    return TcpConnection::attachFd(fd);
+    return TcpConnection::attachFd(fd, init_data, init_len);
 }
 
-KMError Http1xResponse::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser)
+KMError Http1xResponse::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len)
 {
     setState(State::RECVING_REQUEST);
     http_parser_.reset();
@@ -70,7 +70,7 @@ KMError Http1xResponse::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& p
     http_parser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
 
-    auto ret = TcpConnection::attachSocket(std::move(tcp));
+    auto ret = TcpConnection::attachSocket(std::move(tcp), init_data, init_len);
     if(ret == KMError::NOERR && http_parser_.paused()) {
         http_parser_.resume();
     }
@@ -119,10 +119,10 @@ KMError Http1xResponse::sendResponse(int status_code, const std::string& desc, c
     } else if (sendBufferEmpty()) {
         if(has_content_length_ && 0 == content_length_ && !is_chunked_) {
             setState(State::COMPLETE);
-            getEventLoop()->queueInEventLoop([this] { notifyComplete(); });
+            getEventLoop()->queue([this] { notifyComplete(); });
         } else {
             setState(State::SENDING_BODY);
-            getEventLoop()->queueInEventLoop([this] { if (write_cb_) write_cb_(KMError::NOERR); });
+            getEventLoop()->queue([this] { if (write_cb_) write_cb_(KMError::NOERR); });
         }
     }
     return KMError::NOERR;
@@ -146,7 +146,7 @@ int Http1xResponse::sendData(const void* data, size_t len)
         body_bytes_sent_ += ret;
         if (has_content_length_ && body_bytes_sent_ >= content_length_ && sendBufferEmpty()) {
             setState(State::COMPLETE);
-            getEventLoop()->queueInEventLoop([this] { notifyComplete(); });
+            getEventLoop()->queue([this] { notifyComplete(); });
         }
     }
     return ret;
@@ -162,7 +162,7 @@ int Http1xResponse::sendChunk(const void* data, size_t len)
             return ret;
         } else if(sendBufferEmpty()) { // should always empty
             setState(State::COMPLETE);
-            getEventLoop()->queueInEventLoop([this] { notifyComplete(); });
+            getEventLoop()->queue([this] { notifyComplete(); });
         }
         return 0;
     } else {

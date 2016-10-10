@@ -28,7 +28,7 @@ public:
 private:
     void cleanup();
     bool checkHttp2();
-    void demuxHttp();
+    void demuxHttp(void *init_data, size_t len);
     
 private:
     TestLoop*       loop_;

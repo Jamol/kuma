@@ -447,7 +447,7 @@ int UdpSocket::Impl::receive(void* data, size_t length, char* ip, size_t ip_len,
 KMError UdpSocket::Impl::close()
 {
     KUMA_INFOXTRACE("close");
-    loop_->runInEventLoopSync([this] {
+    loop_->sync([this] {
         cleanup();
     });
     return KMError::NOERR;

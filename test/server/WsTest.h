@@ -13,8 +13,8 @@ class WsTest : public TestObject
 public:
     WsTest(TestLoop* loop, long conn_id);
 
-    KMError attachFd(SOCKET_FD fd, uint32_t ssl_flags);
-    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser);
+    KMError attachFd(SOCKET_FD fd, uint32_t ssl_flags, void *init, size_t len);
+    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, void *init, size_t len);
     int close();
     
     void onSend(KMError err);

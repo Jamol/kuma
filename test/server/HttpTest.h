@@ -14,8 +14,8 @@ class HttpTest : public TestObject
 public:
     HttpTest(ObjectManager* obj_mgr, long conn_id, const char* ver);
 
-    KMError attachFd(SOCKET_FD fd, uint32_t ssl_flags);
-    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser);
+    KMError attachFd(SOCKET_FD fd, uint32_t ssl_flags, void *init, size_t len);
+    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, void *init, size_t len);
     KMError attachStream(H2Connection* conn, uint32_t streamId);
     int close();
     
@@ -45,7 +45,8 @@ private:
     HttpResponse    http_;
     long            conn_id_;
     State           state_ = State::NONE;
-    bool            is_options_;
+    bool            is_options_ = false;
+    size_t          total_bytes_read_ = 0;
     std::string     file_name_;
 };
 

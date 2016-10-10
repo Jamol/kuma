@@ -44,7 +44,7 @@ void TestLoop::stop()
 {
     //cleanup();
     if(loop_) {
-        loop_->runInEventLoopSync([this] { cleanup(); });
+        loop_->async([this] { cleanup(); });
         loop_->stop();
     }
     if(thread_.joinable()) {
@@ -65,7 +65,14 @@ void TestLoop::run()
     loop_->loop();
 }
 
-void TestLoop::startTest(std::string& addr_url, std::string& bind_addr)
+void TestLoop::startTest(const std::string& addr_url, const std::string& bind_addr)
+{
+    loop_->async([=] {
+        startTest_i(addr_url, bind_addr);
+    });
+}
+
+void TestLoop::startTest_i(const std::string& addr_url, const std::string& bind_addr)
 {
     char proto[16] = {0};
     char host[64] = {0};
@@ -100,15 +107,9 @@ void TestLoop::startTest(std::string& addr_url, std::string& bind_addr)
         udp_client->startSend(host, port);
     } else if(strcmp(proto, "http") == 0 || strcmp(proto, "https") == 0) {
         long conn_id = server_->getConnId();
-#if 1
         HttpClient* http_client = new HttpClient(this, conn_id);
         addObject(conn_id, http_client);
         http_client->startRequest(addr_url);
-#else
-        H2ConnTest *h2conn = new H2ConnTest(loop_, conn_id, this);
-        addObject(conn_id, h2conn);
-        h2conn->connect(host, port);
-#endif
     } else if(strcmp(proto, "ws") == 0 || strcmp(proto, "wss") == 0) {
         long conn_id = server_->getConnId();
         WsClient* ws_client = new WsClient(this, conn_id);

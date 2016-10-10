@@ -19,7 +19,7 @@ public:
     H2ConnTest(TestLoop* loop, long conn_id);
     ~H2ConnTest();
     
-    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser);
+    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, void *init, size_t len);
     int close() override;
     
 private:

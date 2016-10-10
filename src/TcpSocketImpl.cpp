@@ -610,7 +610,7 @@ KMError TcpSocket::Impl::close()
 {
     KUMA_INFOXTRACE("close, state="<<getState());
     if (loop_ && !loop_->stopped()) {
-        loop_->runInEventLoopSync([this] {
+        loop_->sync([this] {
             cleanup();
         });
     } else {

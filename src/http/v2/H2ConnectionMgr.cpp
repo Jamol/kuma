@@ -48,6 +48,23 @@ H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &key)
     return it != connMap_.end() ? it->second : nullptr;
 }
 
+H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &key, const std::string &host, uint16_t port, uint32_t ssl_flags, EventLoop::Impl* loop)
+{
+    std::lock_guard<std::mutex> g(connMutex_);
+    auto it = connMap_.find(key);
+    if (it != connMap_.end()) {
+        return it->second;
+    }
+    H2ConnectionPtr conn(new H2Connection::Impl(loop));
+    conn->setConnectionKey(key);
+    conn->setSslFlags(ssl_flags);
+    if (conn->connect(host, port) != KMError::NOERR) {
+        return H2ConnectionPtr();
+    }
+    connMap_[key] = conn;
+    return conn;
+}
+
 void H2ConnectionMgr::removeConnection(const std::string key)
 {
     std::lock_guard<std::mutex> g(connMutex_);

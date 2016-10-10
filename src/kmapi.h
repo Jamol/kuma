@@ -53,10 +53,27 @@ public:
     bool isPollLT() const; // level trigger
     
 public:
-    bool isInEventLoopThread() const;
-    KMError runInEventLoop(LoopCallback cb);
-    KMError runInEventLoopSync(LoopCallback cb);
-    KMError queueInEventLoop(LoopCallback cb);
+    bool inSameThread() const;
+    
+    /* run the cb in loop thread and wait untill cb is executed.
+     * cb will execute at once if called on loop thread
+     *
+     * @param cb callback to be executed. it will always be executed when call success
+     */
+    KMError sync(LoopCallback cb);
+    
+    /* run the cb in loop thread.
+     * cb will execute at once if called on loop thread
+     *
+     * @param cb callback to be executed. it will always be executed when call success
+     */
+    KMError async(LoopCallback cb);
+    
+    /* run the cb in loop thread at next time.
+     *
+     * @param cb callback to be executed. it will always be executed when call success
+     */
+    KMError queue(LoopCallback cb);
     void loopOnce(uint32_t max_wait_ms);
     void loop(uint32_t max_wait_ms = -1);
     void stop();
@@ -277,8 +294,8 @@ public:
     ~HttpResponse();
     
     KMError setSslFlags(uint32_t ssl_flags);
-    KMError attachFd(SOCKET_FD fd, uint8_t* init_data=nullptr, size_t init_len=0);
-    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser);
+    KMError attachFd(SOCKET_FD fd, const void* init_data=nullptr, size_t init_len=0);
+    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const void* init_data=nullptr, size_t init_len=0);
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
     KMError sendResponse(int status_code, const char* desc = nullptr);
@@ -322,8 +339,8 @@ public:
     void setOrigin(const char* origin);
     const char* getOrigin() const;
     KMError connect(const char* ws_url, EventCallback cb);
-    KMError attachFd(SOCKET_FD fd, const uint8_t* init_data=nullptr, size_t init_len=0);
-    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser);
+    KMError attachFd(SOCKET_FD fd, const void* init_data=nullptr, size_t init_len=0);
+    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const void* init_data=nullptr, size_t init_len=0);
     int send(const void* data, size_t len);
     KMError close();
     
@@ -348,8 +365,8 @@ public:
     ~H2Connection();
     
     KMError setSslFlags(uint32_t ssl_flags);
-    KMError attachFd(SOCKET_FD fd, const uint8_t* data=nullptr, size_t size=0);
-    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser);
+    KMError attachFd(SOCKET_FD fd, const void* init_data=nullptr, size_t init_len=0);
+    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const void* init_data=nullptr, size_t init_len=0);
     KMError attachStream(uint32_t streamId, HttpResponse* rsp);
     KMError close();
     void setAcceptCallback(AcceptCallback cb);

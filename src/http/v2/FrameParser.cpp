@@ -56,7 +56,6 @@ FrameParser::ParseState FrameParser::parseInputData(const uint8_t *data, size_t 
             sz -= H2_FRAME_HEADER_SIZE - hdr_used_;
             ptr += H2_FRAME_HEADER_SIZE - hdr_used_;
             hdr_used_ = 0;
-            
             payload_.clear();
             payload_used_ = 0;
             read_state_ = ReadState::READ_PAYLOAD;
@@ -139,6 +138,10 @@ bool FrameParser::handleFrame(const FrameHeader &hdr, const uint8_t *payload)
             
         case H2FrameType::CONTINUATION:
             frame = &continuationFrame_;
+            break;
+            
+        default:
+            KUMA_WARNTRACE("FrameParser::handleFrame, invalid frame, type="<<frame->type());
             break;
     }
     

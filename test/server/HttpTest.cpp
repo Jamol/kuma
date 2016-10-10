@@ -12,7 +12,6 @@ HttpTest::HttpTest(ObjectManager* obj_mgr, long conn_id, const char* ver)
 : obj_mgr_(obj_mgr)
 , http_(obj_mgr->getEventLoop(), ver)
 , conn_id_(conn_id)
-, is_options_(false)
 {
     
 }
@@ -28,17 +27,17 @@ void HttpTest::setupCallbacks()
     http_.setResponseCompleteCallback([this] () { onResponseComplete(); });
 }
 
-KMError HttpTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
+KMError HttpTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags, void *init, size_t len)
 {
     setupCallbacks();
     http_.setSslFlags(ssl_flags);
-    return http_.attachFd(fd);
+    return http_.attachFd(fd, init, len);
 }
 
-KMError HttpTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser)
+KMError HttpTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser, void *init, size_t len)
 {
     setupCallbacks();
-    return http_.attachSocket(std::move(tcp), std::move(parser));
+    return http_.attachSocket(std::move(tcp), std::move(parser), init, len);
 }
 
 KMError HttpTest::attachStream(H2Connection* conn, uint32_t streamId)
@@ -71,7 +70,8 @@ void HttpTest::onClose(KMError err)
 
 void HttpTest::onHttpData(void* data, size_t len)
 {
-    printf("HttpTest_%ld::onHttpData, len=%zu\n", conn_id_, len);
+    total_bytes_read_ += len;
+    //printf("HttpClient_%ld::onHttpData, len=%zu, total=%zu\n", conn_id_, len, total_bytes_read_);
 }
 
 void HttpTest::onHeaderComplete()
@@ -81,7 +81,7 @@ void HttpTest::onHeaderComplete()
 
 void HttpTest::onRequestComplete()
 {
-    printf("HttpTest_%ld::onRequestComplete\n", conn_id_);
+    printf("HttpTest_%ld::onRequestComplete, total=%zu\n", conn_id_, total_bytes_read_);
     if (strcasecmp(http_.getMethod(), "OPTIONS") == 0) {
         http_.addHeader("Content-Length", (uint32_t)0);
         is_options_ = true;
