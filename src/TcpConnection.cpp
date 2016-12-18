@@ -102,11 +102,14 @@ int TcpConnection::send(const void* data, size_t len)
         }
     }
     int ret = tcp_.send(data, len);
-    if (ret >= 0 && ret < len) {
-        send_buffer_.assign((const uint8_t*)data + ret, (const uint8_t*)data + len);
-        send_offset_ = 0;
+    if (ret > 0) {
+        if (ret < len) {
+            send_buffer_.assign((const uint8_t*)data + ret, (const uint8_t*)data + len);
+            send_offset_ = 0;
+        }
+        return int(len);
     }
-    return int(len);
+    return ret;
 }
 
 int TcpConnection::send(iovec* iovs, int count)
