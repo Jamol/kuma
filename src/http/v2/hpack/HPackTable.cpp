@@ -27,7 +27,8 @@ using namespace hpack;
 
 HPackTable::HPackTable() {
     for (int i = 0; i < HPACK_STATIC_TABLE_SIZE; ++i) {
-        indexMap_.emplace(hpackStaticTable[i].first, std::make_pair(-1, i));
+        std::string str = hpackStaticTable[i].first + hpackStaticTable[i].second;
+        indexMap_.emplace(std::move(str), std::make_pair(-1, i));
     }
 }
 

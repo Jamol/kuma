@@ -119,7 +119,9 @@ KMError Http1xResponse::sendResponse(int status_code, const std::string& desc, c
     } else if (sendBufferEmpty()) {
         if(has_content_length_ && 0 == content_length_ && !is_chunked_) {
             setState(State::COMPLETE);
-            getEventLoop()->queue([this] { notifyComplete(); });
+            // on loop test, the new request will arrived before notifyComplete()
+            //getEventLoop()->queue([this] { notifyComplete(); });
+            notifyComplete();
         } else {
             setState(State::SENDING_BODY);
             getEventLoop()->queue([this] { if (write_cb_) write_cb_(KMError::NOERR); });
@@ -146,7 +148,9 @@ int Http1xResponse::sendData(const void* data, size_t len)
         body_bytes_sent_ += ret;
         if (has_content_length_ && body_bytes_sent_ >= content_length_ && sendBufferEmpty()) {
             setState(State::COMPLETE);
-            getEventLoop()->queue([this] { notifyComplete(); });
+            // on loop test, the new request will arrived before notifyComplete()
+            //getEventLoop()->queue([this] { notifyComplete(); });
+            notifyComplete();
         }
     }
     return ret;
@@ -162,7 +166,9 @@ int Http1xResponse::sendChunk(const void* data, size_t len)
             return ret;
         } else if(sendBufferEmpty()) { // should always empty
             setState(State::COMPLETE);
-            getEventLoop()->queue([this] { notifyComplete(); });
+            // on loop test, the new request will arrived before notifyComplete()
+            //getEventLoop()->queue([this] { notifyComplete(); });
+            notifyComplete();
         }
         return 0;
     } else {

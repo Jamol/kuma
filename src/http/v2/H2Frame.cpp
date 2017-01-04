@@ -349,7 +349,7 @@ int PushPromiseFrame::encode(uint8_t *dst, size_t len)
     }
     ptr += ret;
     
-    if (len < calcPayloadSize()) {
+    if (len - ret < calcPayloadSize()) {
         return -1;
     }
     
@@ -404,7 +404,7 @@ int PingFrame::encode(uint8_t *dst, size_t len)
     }
     ptr += ret;
     
-    if (len < H2_PING_PAYLOAD_SIZE) {
+    if (len - ret < H2_PING_PAYLOAD_SIZE) {
         return -1;
     }
     
@@ -445,7 +445,7 @@ int GoawayFrame::encode(uint8_t *dst, size_t len)
     }
     ptr += ret;
     
-    if (len < calcPayloadSize()) {
+    if (len - ret < calcPayloadSize()) {
         return -1;
     }
     
@@ -495,7 +495,7 @@ int WindowUpdateFrame::encode(uint8_t *dst, size_t len)
     }
     ptr += ret;
     
-    if (len < calcPayloadSize()) {
+    if (len - ret < calcPayloadSize()) {
         return -1;
     }
     
@@ -525,7 +525,7 @@ int ContinuationFrame::encode(uint8_t *dst, size_t len)
     }
     ptr += ret;
     
-    if (len < calcPayloadSize()) {
+    if (len - ret < calcPayloadSize()) {
         return -1;
     }
     
