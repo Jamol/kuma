@@ -888,6 +888,7 @@ void H2Connection::Impl::streamError(uint32_t streamId, H2Error err)
     RSTStreamFrame frame;
     frame.setStreamId(streamId);
     frame.setErrorCode(uint32_t(err));
+    sendH2Frame(&frame);
 }
 
 void H2Connection::Impl::onHttpData(void* data, size_t len)

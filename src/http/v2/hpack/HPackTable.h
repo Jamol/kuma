@@ -49,9 +49,9 @@ public:
     
 private:
     int getDynamicIndex(int idxSeq);
-    void updateIndex(const std::string &name, int idxSeq);
-    void removeIndex(const std::string &name);
-    bool getIndex(const std::string &name, int &indexD, int &indexS);
+    void updateIndex(const std::string &key, int idxSeq);
+    void removeIndex(const std::string &key);
+    bool getIndex(const std::string &key, int &indexD, int &indexS);
     void evictTableBySize(size_t size);
     
 private:
@@ -65,7 +65,7 @@ private:
     
     bool isEncoder_ = false;
     int indexSequence_ = 0;
-    IndexMap indexMap_; // <header name, <dynamic index sequence, static index>>
+    IndexMap indexMap_; // <key(header name[ + value]), <dynamic index sequence, static index>>
 };
 
 } // namespace hpack

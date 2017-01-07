@@ -27,8 +27,8 @@ using namespace hpack;
 
 HPackTable::HPackTable() {
     for (int i = 0; i < HPACK_STATIC_TABLE_SIZE; ++i) {
-        std::string str = hpackStaticTable[i].first + hpackStaticTable[i].second;
-        indexMap_.emplace(std::move(str), std::make_pair(-1, i));
+        std::string key = hpackStaticTable[i].first + hpackStaticTable[i].second;
+        indexMap_.emplace(std::move(key), std::make_pair(-1, i));
     }
 }
 
@@ -73,7 +73,8 @@ bool HPackTable::addHeader(const std::string &name, const std::string &value)
     dynamicTable_.push_front(std::make_pair(name, value));
     tableSize_ += entrySize;
     if (isEncoder_) {
-        updateIndex(name, ++indexSequence_);
+        std::string key = name + value;
+        updateIndex(key, ++indexSequence_);
     }
     return true;
 }
@@ -102,7 +103,8 @@ void HPackTable::evictTableBySize(size_t size)
         uint32_t entrySize = uint32_t(entry.first.length() + entry.second.length() + TABLE_ENTRY_SIZE_EXTRA);
         tableSize_ -= tableSize_ > entrySize ? entrySize : tableSize_;
         if (isEncoder_) {
-            removeIndex(entry.first);
+            std::string key = entry.first + entry.second;
+            removeIndex(key);
         }
         dynamicTable_.pop_back();
         evicted += entrySize;
@@ -114,19 +116,19 @@ int HPackTable::getDynamicIndex(int idxSeq)
     return -1 == idxSeq ? -1 : indexSequence_ - idxSeq;
 }
 
-void HPackTable::updateIndex(const std::string &name, int idxSeq)
+void HPackTable::updateIndex(const std::string &key, int idxSeq)
 {
-    auto it = indexMap_.find(name);
+    auto it = indexMap_.find(key);
     if (it != indexMap_.end()) {
         it->second.first = idxSeq;
     } else {
-        indexMap_.emplace(name, std::make_pair(idxSeq, -1));
+        indexMap_.emplace(key, std::make_pair(idxSeq, -1));
     }
 }
 
-void HPackTable::removeIndex(const std::string &name)
+void HPackTable::removeIndex(const std::string &key)
 {
-    auto it = indexMap_.find(name);
+    auto it = indexMap_.find(key);
     if (it != indexMap_.end()) {
         int idx = getDynamicIndex(it->second.first);
         if (idx == dynamicTable_.size() - 1) {
@@ -139,11 +141,11 @@ void HPackTable::removeIndex(const std::string &name)
     }
 }
 
-bool HPackTable::getIndex(const std::string &name, int &indexD, int &indexS)
+bool HPackTable::getIndex(const std::string &key, int &indexD, int &indexS)
 {
     indexD = -1;
     indexS = -1;
-    auto it = indexMap_.find(name);
+    auto it = indexMap_.find(key);
     if (it != indexMap_.end()) {
         indexD = getDynamicIndex(it->second.first);
         indexS = it->second.second;
@@ -156,7 +158,11 @@ int HPackTable::getIndex(const std::string &name, const std::string &value, bool
 {
     int index = -1, indexD = -1, indexS = -1;
     valueIndexed = false;
-    getIndex(name, indexD, indexS);
+    
+    std::string key = name + value;
+    if (!getIndex(key, indexD, indexS)) {
+        getIndex(name, indexD, indexS);
+    }
     if (indexD != -1 && indexD < dynamicTable_.size() && name == dynamicTable_[indexD].first) {
         index = indexD + HPACK_DYNAMIC_START_INDEX;
         valueIndexed = dynamicTable_[indexD].second == value;

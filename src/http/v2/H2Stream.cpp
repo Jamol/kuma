@@ -147,7 +147,7 @@ void H2Stream::sendRSTStream(H2Error err)
     RSTStreamFrame frame;
     frame.setStreamId(streamId_);
     frame.setErrorCode(uint32_t(err));
-    
+    conn_->sendH2Frame(&frame);
 }
 
 void H2Stream::streamError(H2Error err)
