@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6F3730821E2F6AEB00479457 /* HttpMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F3730801E2F6AEB00479457 /* HttpMessage.cpp */; };
 		6F66AC3D1C71B03F00BB37B9 /* TcpListenerImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F66AC3B1C71B03F00BB37B9 /* TcpListenerImpl.cpp */; };
 		6F6D14111D9A5AE7008B64E6 /* Http1xResponse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F6D140F1D9A5AE7008B64E6 /* Http1xResponse.cpp */; };
 		6F6D148D1D9D098C008B64E6 /* FlowControl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F6D148B1D9D098C008B64E6 /* FlowControl.cpp */; };
@@ -67,6 +68,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		6F3730801E2F6AEB00479457 /* HttpMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpMessage.cpp; sourceTree = "<group>"; };
+		6F3730811E2F6AEB00479457 /* HttpMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpMessage.h; sourceTree = "<group>"; };
 		6F66AC3B1C71B03F00BB37B9 /* TcpListenerImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = TcpListenerImpl.cpp; path = ../../src/TcpListenerImpl.cpp; sourceTree = "<group>"; };
 		6F66AC3C1C71B03F00BB37B9 /* TcpListenerImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TcpListenerImpl.h; path = ../../src/TcpListenerImpl.h; sourceTree = "<group>"; };
 		6F6D140F1D9A5AE7008B64E6 /* Http1xResponse.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Http1xResponse.cpp; sourceTree = "<group>"; };
@@ -277,6 +280,8 @@
 				6F91F1741D782EF8004A95B9 /* Http1xRequest.h */,
 				6F6D140F1D9A5AE7008B64E6 /* Http1xResponse.cpp */,
 				6F6D14101D9A5AE7008B64E6 /* Http1xResponse.h */,
+				6F3730801E2F6AEB00479457 /* HttpMessage.cpp */,
+				6F3730811E2F6AEB00479457 /* HttpMessage.h */,
 				6FECECF91C2138E700310F52 /* HttpParserImpl.cpp */,
 				6FECECFA1C2138E700310F52 /* HttpParserImpl.h */,
 				6FECECFB1C2138E700310F52 /* HttpRequestImpl.cpp */,
@@ -455,6 +460,7 @@
 				6FECED141C2139B100310F52 /* SslHandler.cpp in Sources */,
 				6FECED1C1C2139CA00310F52 /* base64.cpp in Sources */,
 				6F84E9811D5B031300AF8E3B /* Http2Response.cpp in Sources */,
+				6F3730821E2F6AEB00479457 /* HttpMessage.cpp in Sources */,
 				6F7D5FE51B33EC65000FF2F8 /* kmapi.cpp in Sources */,
 				6F7D5FE41B33EC65000FF2F8 /* EventLoopImpl.cpp in Sources */,
 				6F6D14111D9A5AE7008B64E6 /* Http1xResponse.cpp in Sources */,

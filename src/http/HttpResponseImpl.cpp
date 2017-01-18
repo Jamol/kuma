@@ -43,22 +43,6 @@ HttpResponse::Impl::~Impl()
     
 }
 
-void HttpResponse::Impl::addHeader(std::string name, std::string value)
-{
-    if(!name.empty()) {
-        if (is_equal("Content-Length", name)) {
-            has_content_length_ = true;
-            content_length_ = atol(value.c_str());
-        } else if (is_equal("Transfer-Encoding", name) && is_equal("chunked", value)) {
-            if (isVersion2()) {
-                return; // omit chunked
-            }
-            is_chunked_ = true;
-        }
-        header_map_[std::move(name)] = std::move(value);
-    }
-}
-
 void HttpResponse::Impl::addHeader(std::string name, uint32_t value)
 {
     addHeader(std::move(name), std::to_string(value));
@@ -69,18 +53,13 @@ KMError HttpResponse::Impl::sendResponse(int status_code, const std::string& des
     if (getState() != State::WAIT_FOR_RESPONSE) {
         return KMError::INVALID_STATE;
     }
-    body_bytes_sent_ = 0;
+    checkHeaders();
     return sendResponse(status_code, desc, version_);
 }
 
 void HttpResponse::Impl::reset()
 {
-    http_parser_.reset();
-    header_map_.clear();
-    has_content_length_ = false;
-    content_length_ = 0;
-    is_chunked_ = false;
-    body_bytes_sent_ = 0;
+    
 }
 
 void HttpResponse::Impl::notifyComplete()

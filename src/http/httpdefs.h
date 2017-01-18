@@ -31,6 +31,11 @@ const std::string VersionHTTP1_1 = "HTTP/1.1";
 const std::string EmptyString = "";
 const std::string UserAgent = "kuma 1.0";
 
+const std::string strContentType = "Content-Type";
+const std::string strContentLength = "Content-Length";
+const std::string strTransferEncoding = "Transfer-Encoding";
+const std::string strChunked = "chunked";
+
 using KeyValuePair = std::pair<std::string, std::string>;
 using HeaderVector = std::vector<KeyValuePair>;
 

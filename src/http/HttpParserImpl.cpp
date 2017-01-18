@@ -36,8 +36,6 @@ namespace {
 
 }
 
-static const std::string str_empty = "";
-
 //////////////////////////////////////////////////////////////////////////
 // HttpParserImpl
 HttpParser::Impl::Impl(const Impl& other)
@@ -516,15 +514,15 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(char*& cur_pos, char* 
 void HttpParser::Impl::onHeaderComplete()
 {
     header_complete_ = true;
-    auto it = header_map_.find("Content-Length");
+    auto it = header_map_.find(strContentLength);
     if(it != header_map_.end()) {
         content_length_ = std::stoi(it->second);
         has_content_length_ = true;
         KUMA_INFOTRACE("HttpParser::onHeaderComplete, Content-Length="<<content_length_);
     }
-    it = header_map_.find("Transfer-Encoding");
+    it = header_map_.find(strTransferEncoding);
     if(it != header_map_.end()) {
-        is_chunked_ = is_equal("chunked", it->second);
+        is_chunked_ = is_equal(strChunked, it->second);
         KUMA_INFOTRACE("HttpParser::onHeaderComplete, Transfer-Encoding="<<it->second);
     }
     it = header_map_.find("Upgrade");
@@ -636,7 +634,7 @@ const std::string& HttpParser::Impl::getParamValue(const std::string& name) cons
     if (it != param_map_.end()) {
         return (*it).second;
     }
-    return str_empty;
+    return EmptyString;
 }
 
 const std::string& HttpParser::Impl::getHeaderValue(const std::string& name) const
@@ -645,7 +643,7 @@ const std::string& HttpParser::Impl::getHeaderValue(const std::string& name) con
     if (it != header_map_.end()) {
         return (*it).second;
     }
-    return str_empty;
+    return EmptyString;
 }
 
 void HttpParser::Impl::forEachParam(EnumrateCallback cb)

@@ -45,22 +45,27 @@ void Http1xRequest::cleanup()
     TcpConnection::close();
 }
 
+void Http1xRequest::addHeader(std::string name, std::string value)
+{
+    http_message_.addHeader(std::move(name), std::move(value));
+}
+
 void Http1xRequest::checkHeaders()
 {
-    if(header_map_.find("Accept") == header_map_.end()) {
+    if(!http_message_.hasHeader("Accept")) {
         addHeader("Accept", "*/*");
     }
-    if(header_map_.find("Content-Type") == header_map_.end()) {
-        addHeader("Content-Type", "application/octet-stream");
+    if(!http_message_.hasHeader(strContentType)) {
+        addHeader(strContentType, "application/octet-stream");
     }
-    if(header_map_.find("User-Agent") == header_map_.end()) {
+    if(!http_message_.hasHeader("User-Agent")) {
         addHeader("User-Agent", UserAgent);
     }
     addHeader("Host", uri_.getHost());
-    if(header_map_.find("Cache-Control") == header_map_.end()) {
+    if(!http_message_.hasHeader("Cache-Control")) {
         addHeader("Cache-Control", "no-cache");
     }
-    if(header_map_.find("Pragma") == header_map_.end()) {
+    if(!http_message_.hasHeader("Pragma")) {
         addHeader("Pragma", "no-cache");
     }
 }
@@ -68,7 +73,6 @@ void Http1xRequest::checkHeaders()
 void Http1xRequest::buildRequest()
 {
     std::stringstream ss;
-    ss << method_ << " ";
     ss << uri_.getPath();
     if(!uri_.getQuery().empty()) {
         ss << "?" << uri_.getQuery();
@@ -76,15 +80,10 @@ void Http1xRequest::buildRequest()
     if(!uri_.getFragment().empty()) {
         ss << "#" << uri_.getFragment();
     }
-    ss << " ";
-    ss << version_ << "\r\n";
-    for (auto &kv : header_map_) {
-        ss << kv.first << ": " << kv.second << "\r\n";
-    }
-    ss << "\r\n";
-    std::string str(ss.str());
+    auto url(ss.str());
+    auto req = http_message_.buildMessageHeader(method_, url, version_);
     send_offset_ = 0;
-    send_buffer_.assign(str.begin(), str.end());
+    send_buffer_.assign(req.begin(), req.end());
 }
 
 KMError Http1xRequest::sendRequest()
@@ -114,60 +113,21 @@ int Http1xRequest::sendData(const void* data, size_t len)
     if(!sendBufferEmpty() || getState() != State::SENDING_BODY) {
         return 0;
     }
-    if(is_chunked_) {
-        return sendChunk(data, len);
-    }
-    if(!data || 0 == len) {
-        return 0;
-    }
-    int ret = TcpConnection::send(data, len);
-    if(ret < 0) {
-        setState(State::IN_ERROR);
-    } else if(ret > 0) {
-        body_bytes_sent_ += ret;
-        if (body_bytes_sent_ >= content_length_ && sendBufferEmpty()) {
+    auto ret = http_message_.sendData(data, len);
+    if (ret >= 0) {
+        if (http_message_.isCompleted() && sendBufferEmpty()) {
             setState(State::RECVING_RESPONSE);
         }
+    } else if(ret < 0) {
+        setState(State::IN_ERROR);
     }
     return ret;
-}
-
-int Http1xRequest::sendChunk(const void* data, size_t len)
-{
-    if(nullptr == data && 0 == len) { // chunk end
-        static const std::string _chunk_end_token_ = "0\r\n\r\n";
-        int ret = TcpConnection::send(_chunk_end_token_.c_str(), _chunk_end_token_.length());
-        if(ret < 0) {
-            setState(State::IN_ERROR);
-            return ret;
-        } else if(sendBufferEmpty()) { // should always empty
-            setState(State::RECVING_RESPONSE);
-        }
-        return 0;
-    } else {
-        std::stringstream ss;
-        ss << std::hex << len;
-        std::string str;
-        ss >> str;
-        str += "\r\n";
-        iovec iovs[3];
-        iovs[0].iov_base = (char*)str.c_str();
-        iovs[0].iov_len = str.length();
-        iovs[1].iov_base = (char*)data;
-        iovs[1].iov_len = len;
-        iovs[2].iov_base = (char*)"\r\n";
-        iovs[2].iov_len = 2;
-        int ret = TcpConnection::send(iovs, 3);
-        if(ret < 0) {
-            return ret;
-        }
-        return (int)len;
-    }
 }
 
 void Http1xRequest::reset()
 {
     HttpRequest::Impl::reset();
+    http_message_.reset();
     http_parser_.reset();
     if (getState() == State::COMPLETE) {
         setState(State::WAIT_FOR_REUSE);
@@ -184,7 +144,6 @@ KMError Http1xRequest::close()
 
 void Http1xRequest::sendRequestHeader()
 {
-    body_bytes_sent_ = 0;
     http_parser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     buildRequest();
@@ -196,7 +155,7 @@ void Http1xRequest::sendRequestHeader()
         if(error_cb_) error_cb_(KMError::SOCK_ERROR);
         return;
     } else if (sendBufferEmpty()) {
-        if(!is_chunked_ && 0 == content_length_) {
+        if(!http_message_.hasBody()) {
             setState(State::RECVING_RESPONSE);
         } else {
             setState(State::SENDING_BODY);
@@ -233,14 +192,14 @@ KMError Http1xRequest::handleInputData(uint8_t *src, size_t len)
 void Http1xRequest::onWrite()
 {
     if (getState() == State::SENDING_HEADER) {
-        if(!is_chunked_ && 0 == content_length_) {
+        if(!http_message_.hasBody()) {
             setState(State::RECVING_RESPONSE);
             return;
         } else {
             setState(State::SENDING_BODY);
         }
     } else if (getState() == State::SENDING_BODY) {
-        if (!is_chunked_ && body_bytes_sent_ >= content_length_) {
+        if (http_message_.isCompleted()) {
             setState(State::RECVING_RESPONSE);
             return;
         }

@@ -24,6 +24,7 @@ LOCAL_SRC_FILES := \
     poll/SelectPoll.cpp \
     poll/Notifier.cpp \
     http/Uri.cpp \
+    http/HttpMessage.cpp \
     http/HttpParserImpl.cpp \
     http/HttpRequestImpl.cpp \
     http/Http1xRequest.cpp \

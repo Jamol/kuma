@@ -36,22 +36,6 @@ HttpRequest::Impl::Impl(std::string ver)
     
 }
 
-void HttpRequest::Impl::addHeader(std::string name, std::string value)
-{
-    if(!name.empty()) {
-        if (is_equal("Content-Length", name)) {
-            has_content_length_ = true;
-            content_length_ = atol(value.c_str());
-        } else if (is_equal("Transfer-Encoding", name) && is_equal("chunked", value)) {
-            if (isVersion2()) {
-                return; // omit chunked
-            }
-            is_chunked_ = true;
-        }
-        header_map_[std::move(name)] = std::move(value);
-    }
-}
-
 void HttpRequest::Impl::addHeader(std::string name, uint32_t value)
 {
     addHeader(std::move(name), std::to_string(value));
@@ -73,9 +57,5 @@ KMError HttpRequest::Impl::sendRequest(std::string method, std::string url)
 
 void HttpRequest::Impl::reset()
 {
-    header_map_.clear();
-    has_content_length_ = false;
-    content_length_ = 0;
-    is_chunked_ = false;
-    body_bytes_sent_ = 0;
+    
 }

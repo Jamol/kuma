@@ -43,7 +43,7 @@ public:
     virtual ~Impl() = default;
     
     virtual KMError setSslFlags(uint32_t ssl_flags) = 0;
-    virtual void addHeader(std::string name, std::string value);
+    virtual void addHeader(std::string name, std::string value) = 0;
     virtual void addHeader(std::string name, uint32_t value);
     KMError sendRequest(std::string method, std::string url);
     virtual int sendData(const void* data, size_t len) = 0;
@@ -83,16 +83,10 @@ protected:
 protected:
     State                   state_ = State::IDLE;
     
-    HeaderMap               header_map_;
     std::string             method_;
     std::string             url_;
     std::string             version_;
     Uri                     uri_;
-    
-    bool                    has_content_length_ = false;
-    size_t                  content_length_ = 0;
-    bool                    is_chunked_ = false;
-    size_t                  body_bytes_sent_ = 0;
     
     DataCallback            data_cb_;
     EventCallback           write_cb_;

@@ -30,6 +30,7 @@
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
 #include "HttpResponseImpl.h"
+#include "HttpMessage.h"
 
 KUMA_NS_BEGIN
 
@@ -42,11 +43,25 @@ public:
     KMError setSslFlags(uint32_t ssl_flags) override;
     KMError attachFd(SOCKET_FD fd, const void* init_data, size_t init_len) override;
     KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len) override;
+    void addHeader(std::string name, std::string value) override;
     KMError sendResponse(int status_code, const std::string& desc, const std::string& ver) override;
     int sendData(const void* data, size_t len) override;
     void reset() override; // reset for connection reuse
     KMError close() override;
-
+    
+    const std::string& getMethod() const override { return http_parser_.getMethod(); }
+    const std::string& getPath() const override { return http_parser_.getUrlPath(); }
+    const std::string& getVersion() const override { return http_parser_.getVersion(); }
+    const std::string& getParamValue(std::string name) const override {
+        return http_parser_.getParamValue(std::move(name));
+    }
+    const std::string& getHeaderValue(std::string name) const override {
+        return http_parser_.getHeaderValue(std::move(name));
+    }
+    void forEachHeader(HttpParser::Impl::EnumrateCallback&& cb) override {
+        return http_parser_.forEachHeader(std::move(cb));
+    }
+    
 protected:
     KMError handleInputData(uint8_t *src, size_t len) override;
     void onWrite() override;
@@ -58,10 +73,14 @@ protected:
     
     bool isVersion2() override { return false; }
     
-private:
+protected:
+    void checkHeaders() override;
     void buildResponse(int status_code, const std::string& desc, const std::string& ver);
-    int sendChunk(const void* data, size_t len);
     void cleanup();
+    
+protected:
+    HttpParser::Impl        http_parser_;
+    HttpMessage             http_message_;
 };
 
 KUMA_NS_END

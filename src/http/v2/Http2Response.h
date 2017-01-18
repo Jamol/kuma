@@ -39,6 +39,13 @@ public:
     int sendData(const void* data, size_t len) override;
     KMError close() override;
     
+    const std::string& getMethod() const override { return req_method_; }
+    const std::string& getPath() const override { return req_path_; }
+    const std::string& getVersion() const override { return VersionHTTP2_0; }
+    const std::string& getParamValue(std::string name) const override;
+    const std::string& getHeaderValue(std::string name) const override;
+    void forEachHeader(HttpParser::Impl::EnumrateCallback&& cb) override;
+    
 protected:
     void onHeaders(const HeaderVector &headers, bool endheaders, bool endSteam);
     void onData(void *data, size_t len, bool endSteam);
@@ -47,11 +54,24 @@ protected:
     
 private:
     void cleanup();
+    void checkHeaders() override;
     size_t buildHeaders(int status_code, HeaderVector &headers);
     
 private:
     EventLoop::Impl*        loop_;
     H2StreamPtr             stream_;
+    
+    // response
+    HeaderMap               rsp_headers_;
+    bool                    is_chunked_ = false;
+    bool                    has_content_length_ = false;
+    size_t                  content_length_ = 0;
+    size_t                  body_bytes_sent_ = 0;
+    
+    // request
+    HeaderMap               req_headers_;
+    std::string             req_method_;
+    std::string             req_path_;
 };
 
 KUMA_NS_END

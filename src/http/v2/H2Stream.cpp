@@ -69,7 +69,7 @@ int H2Stream::sendData(const void *data, size_t len, bool endStream)
     }
     size_t streamWindowSize = flow_ctrl_.remoteWindowSize();
     size_t connWindowSize = conn_->remoteWindowSize();
-    size_t windowSize = std::min(streamWindowSize, connWindowSize);
+    size_t windowSize = std::min<size_t>(streamWindowSize, connWindowSize);
     if (0 == windowSize && (!endStream || len != 0)) {
         write_blocked_ = true;
         KUMA_INFOXTRACE("sendData, remote window 0, cws="<<connWindowSize<<", sws="<<streamWindowSize);

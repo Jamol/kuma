@@ -72,6 +72,14 @@ private:
     H2ConnectionPtr conn_;
     H2StreamPtr stream_;
     
+    // request
+    HeaderMap req_headers;
+    bool has_content_length_ = false;
+    bool is_chunked_ = false;
+    size_t content_length_ = 0;
+    size_t body_bytes_sent_ = 0;
+    
+    // response
     int status_code_ = 0;
     HeaderMap rsp_headers_;
     

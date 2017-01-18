@@ -28,9 +28,15 @@
 #include "evdefs.h"
 #include "OpenSslLib.h"
 
+#ifndef KUMA_OS_WIN
 struct iovec;
+#endif
 
 KUMA_NS_BEGIN
+
+#ifdef KUMA_OS_WIN
+struct iovec;
+#endif
 
 class SslHandler
 {

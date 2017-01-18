@@ -486,7 +486,7 @@ KMError H2Connection::Impl::handleInputData(uint8_t *buf, size_t len)
     
     if (getState() == State::HANDSHAKE) {
         if (isServer()) {
-            size_t cmpSize = std::min(cmpPreface_.size(), len);
+            size_t cmpSize = std::min<size_t>(cmpPreface_.size(), len);
             if (memcmp(cmpPreface_.c_str(), buf, cmpSize) != 0) {
                 KUMA_ERRXTRACE("handleInputData, invalid protocol");
                 setState(State::CLOSED);

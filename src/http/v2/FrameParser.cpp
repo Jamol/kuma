@@ -76,7 +76,7 @@ FrameParser::ParseState FrameParser::parseInputData(const uint8_t *data, size_t 
                     return ParseState::INCOMPLETE;
                 }
             } else {
-                size_t copy_len = std::min(sz, hdr_.getLength() - payload_used_);
+                size_t copy_len = std::min<size_t>(sz, hdr_.getLength() - payload_used_);
                 memcpy(&payload_[payload_used_], ptr, copy_len);
                 payload_used_ += copy_len;
                 if (payload_used_ < hdr_.getLength()) {

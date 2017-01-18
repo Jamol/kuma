@@ -46,19 +46,19 @@ public:
     virtual KMError attachFd(SOCKET_FD fd, const void* init_data, size_t init_len) { return KMError::UNSUPPORT; }
     virtual KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len) { return KMError::UNSUPPORT; }
     virtual KMError attachStream(H2Connection::Impl* conn, uint32_t streamId) { return KMError::UNSUPPORT; }
-    virtual void addHeader(std::string name, std::string value);
+    virtual void addHeader(std::string name, std::string value) = 0;
     virtual void addHeader(std::string name, uint32_t value);
     KMError sendResponse(int status_code, const std::string& desc);
     virtual int sendData(const void* data, size_t len) = 0;
     virtual void reset();
     virtual KMError close() = 0;
     
-    const std::string& getMethod() const { return http_parser_.getMethod(); }
-    const std::string& getPath() const { return http_parser_.getUrlPath(); }
-    const std::string& getVersion() const { return http_parser_.getVersion(); }
-    const std::string& getParamValue(std::string name) const { return http_parser_.getParamValue(std::move(name)); }
-    const std::string& getHeaderValue(std::string name) const { return http_parser_.getHeaderValue(std::move(name)); }
-    void forEachHeader(HttpParser::Impl::EnumrateCallback&& cb) { return http_parser_.forEachHeader(std::move(cb)); }
+    virtual const std::string& getMethod() const = 0;
+    virtual const std::string& getPath() const = 0;
+    virtual const std::string& getVersion() const = 0;
+    virtual const std::string& getParamValue(std::string name) const = 0;
+    virtual const std::string& getHeaderValue(std::string name) const = 0;
+    virtual void forEachHeader(HttpParser::Impl::EnumrateCallback&& cb) = 0;
     
     void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
     void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
@@ -69,6 +69,7 @@ public:
     
 protected:
     virtual KMError sendResponse(int status_code, const std::string& desc, const std::string& ver) = 0;
+    virtual void checkHeaders() = 0;
     virtual bool isVersion2() { return true; }
     
     enum State {
@@ -87,16 +88,9 @@ protected:
     void notifyComplete();
     
 protected:
-    HttpParser::Impl        http_parser_;
     State                   state_ = State::IDLE;
     
     std::string             version_;
-    HeaderMap               header_map_;
-    
-    bool                    is_chunked_ = false;
-    bool                    has_content_length_ = false;
-    size_t                  content_length_ = 0;
-    size_t                  body_bytes_sent_ = 0;
     
     DataCallback            data_cb_;
     EventCallback           write_cb_;

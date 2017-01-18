@@ -51,7 +51,16 @@ KMError Http2Request::setSslFlags(uint32_t ssl_flags)
 void Http2Request::addHeader(std::string name, std::string value)
 {
     transform(name.begin(), name.end(), name.begin(), ::tolower);
-    HttpRequest::Impl::addHeader(std::move(name), std::move(value));
+    if(!name.empty()) {
+        if (is_equal("content-length", name)) {
+            has_content_length_ = true;
+            content_length_ = atol(value.c_str());
+        } else if (is_equal("Transfer-Encoding", name) && is_equal("chunked", value)) {
+            is_chunked_ = true;
+            return; // omit chunked
+        }
+        req_headers[std::move(name)] = std::move(value);
+    }
 }
 
 KMError Http2Request::sendRequest()
@@ -118,19 +127,19 @@ void Http2Request::forEachHeader(EnumrateCallback cb)
 
 void Http2Request::checkHeaders()
 {
-    if(header_map_.find("accept") == header_map_.end()) {
+    if(req_headers.find("accept") == req_headers.end()) {
         addHeader("accept", "*/*");
     }
-    if(header_map_.find("content-type") == header_map_.end()) {
+    if(req_headers.find("content-type") == req_headers.end()) {
         addHeader("content-type", "application/octet-stream");
     }
-    if(header_map_.find("user-agent") == header_map_.end()) {
+    if(req_headers.find("user-agent") == req_headers.end()) {
         addHeader("user-agent", UserAgent);
     }
-    if(header_map_.find("cache-control") == header_map_.end()) {
+    if(req_headers.find("cache-control") == req_headers.end()) {
         addHeader("cache-control", "no-cache");
     }
-    if(header_map_.find("pragma") == header_map_.end()) {
+    if(req_headers.find("pragma") == req_headers.end()) {
         addHeader("pragma", "no-cache");
     }
 }
@@ -153,7 +162,7 @@ size_t Http2Request::buildHeaders(HeaderVector &headers)
     headers_size += H2HeaderPath.size() + path.size();
     headers.emplace_back(std::make_pair(H2HeaderAuthority, uri_.getHost()));
     headers_size += H2HeaderAuthority.size() + uri_.getHost().size();
-    for (auto it : header_map_) {
+    for (auto it : req_headers) {
         headers.emplace_back(std::make_pair(it.first, it.second));
         headers_size += it.first.size() + it.second.size();
     }

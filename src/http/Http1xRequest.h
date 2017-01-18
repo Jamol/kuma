@@ -27,6 +27,7 @@
 #include "TcpConnection.h"
 #include "Uri.h"
 #include "HttpRequestImpl.h"
+#include "HttpMessage.h"
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
 
@@ -39,6 +40,7 @@ public:
     ~Http1xRequest();
     
     KMError setSslFlags(uint32_t ssl_flags) override { return TcpConnection::setSslFlags(ssl_flags); }
+    void addHeader(std::string name, std::string value) override;
     int sendData(const void* data, size_t len) override;
     void reset() override; // reset for connection reuse
     KMError close() override;
@@ -58,7 +60,6 @@ private:
     KMError sendRequest() override;
     void checkHeaders() override;
     void buildRequest();
-    int sendChunk(const void* data, size_t len);
     void cleanup();
     void sendRequestHeader();
     bool isVersion2() override { return false; }
@@ -68,6 +69,7 @@ private:
     
 private:
     HttpParser::Impl        http_parser_;
+    HttpMessage             http_message_;
 };
 
 KUMA_NS_END

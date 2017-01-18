@@ -64,7 +64,16 @@ KMError Http2Response::attachStream(H2Connection::Impl* conn, uint32_t streamId)
 void Http2Response::addHeader(std::string name, std::string value)
 {
     transform(name.begin(), name.end(), name.begin(), ::tolower);
-    HttpResponse::Impl::addHeader(std::move(name), std::move(value));
+    if(!name.empty()) {
+        if (is_equal("content-length", name)) {
+            has_content_length_ = true;
+            content_length_ = atol(value.c_str());
+        } else if (is_equal("transfer-encoding", name) && is_equal("chunked", value)) {
+            is_chunked_ = true;
+            return; // omit chunked
+        }
+        rsp_headers_.emplace(std::move(name), std::move(value));
+    }
 }
 
 KMError Http2Response::sendResponse(int status_code, const std::string& desc, const std::string& ver)
@@ -111,17 +120,40 @@ int Http2Response::sendData(const void* data, size_t len)
     return ret;
 }
 
+void Http2Response::checkHeaders()
+{
+    
+}
+
 size_t Http2Response::buildHeaders(int status_code, HeaderVector &headers)
 {
     size_t headers_size = 0;
     std::string str_status_code = std::to_string(status_code);
     headers.emplace_back(std::make_pair(H2HeaderStatus, str_status_code));
     headers_size += H2HeaderMethod.size() + str_status_code.size();
-    for (auto it : header_map_) {
+    for (auto it : rsp_headers_) {
         headers.emplace_back(std::make_pair(it.first, it.second));
         headers_size += it.first.size() + it.second.size();
     }
     return headers_size;
+}
+
+const std::string& Http2Response::getParamValue(std::string name) const {
+    return EmptyString;
+}
+
+const std::string& Http2Response::getHeaderValue(std::string name) const {
+    auto it = req_headers_.find(name);
+    if (it != req_headers_.end()) {
+        return (*it).second;
+    }
+    return EmptyString;
+}
+
+void Http2Response::forEachHeader(HttpParser::Impl::EnumrateCallback&& cb) {
+    for (auto &kv : req_headers_) {
+        cb(kv.first, kv.second);
+    }
 }
 
 void Http2Response::onHeaders(const HeaderVector &headers, bool endheaders, bool endSteam)
@@ -136,15 +168,14 @@ void Http2Response::onHeaders(const HeaderVector &headers, bool endheaders, bool
         if (!name.empty()) {
             if (name[0] == ':') { // pseudo header
                 if (name == H2HeaderMethod) {
-                    http_parser_.setMethod(value);
+                    req_method_ = std::move(value);
                 } else if (name == H2HeaderAuthority) {
-                    http_parser_.addHeaderValue("host", value);
+                    req_headers_["host"] = std::move(value);
                 } else if (name == H2HeaderPath) {
-                    http_parser_.setUrl(value);
-                    http_parser_.setUrlPath(std::move(value));
+                    req_path_ = std::move(value);
                 }
             } else {
-                http_parser_.addHeaderValue(std::move(name), std::move(value));
+                req_headers_[std::move(name)] = std::move(value);
             }
         }
     }

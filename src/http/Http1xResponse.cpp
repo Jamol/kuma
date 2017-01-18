@@ -27,10 +27,6 @@
 
 using namespace kuma;
 
-static const std::string str_content_type = "Content-Type";
-static const std::string str_content_length = "Content-Length";
-static const std::string str_transfer_encoding = "Transfer-Encoding";
-static const std::string str_chunked = "chunked";
 //////////////////////////////////////////////////////////////////////////
 Http1xResponse::Http1xResponse(EventLoop::Impl* loop, std::string ver)
 : HttpResponse::Impl(std::move(ver)), TcpConnection(loop)
@@ -77,20 +73,23 @@ KMError Http1xResponse::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& p
     return ret;
 }
 
+void Http1xResponse::addHeader(std::string name, std::string value)
+{
+    http_message_.addHeader(std::move(name), std::move(value));
+}
+
+void Http1xResponse::checkHeaders()
+{
+    if(!http_message_.hasHeader(strContentType)) {
+        addHeader(strContentType, "application/octet-stream");
+    }
+}
+
 void Http1xResponse::buildResponse(int status_code, const std::string& desc, const std::string& ver)
 {
-    std::stringstream ss;
-    ss << (!ver.empty()?ver:VersionHTTP1_1) << " " << status_code << " " << desc << "\r\n";
-    if(header_map_.find(str_content_type) == header_map_.end()) {
-        ss << "Content-Type: application/octet-stream\r\n";
-    }
-    for (auto &kv : header_map_) {
-        ss << kv.first << ": " << kv.second << "\r\n";
-    }
-    ss << "\r\n";
-    std::string str(ss.str());
+    auto rsp = http_message_.buildMessageHeader(status_code, desc, ver);
     send_offset_ = 0;
-    send_buffer_.assign(str.begin(), str.end());
+    send_buffer_.assign(rsp.begin(), rsp.end());
 }
 
 KMError Http1xResponse::sendResponse(int status_code, const std::string& desc, const std::string& ver)
@@ -99,16 +98,6 @@ KMError Http1xResponse::sendResponse(int status_code, const std::string& desc, c
     if (getState() != State::WAIT_FOR_RESPONSE) {
         return KMError::INVALID_STATE;
     }
-    auto it = header_map_.find(str_content_length);
-    if(it != header_map_.end()) {
-        has_content_length_ = true;
-        content_length_ = std::stoi(it->second);
-    }
-    it = header_map_.find(str_transfer_encoding);
-    if(it != header_map_.end() && is_equal(str_chunked, it->second)) {
-        is_chunked_ = true;
-    }
-    body_bytes_sent_ = 0;
     buildResponse(status_code, desc, ver);
     setState(State::SENDING_HEADER);
     auto ret = sendBufferedData();
@@ -117,7 +106,7 @@ KMError Http1xResponse::sendResponse(int status_code, const std::string& desc, c
         setState(State::IN_ERROR);
         return KMError::SOCK_ERROR;
     } else if (sendBufferEmpty()) {
-        if(has_content_length_ && 0 == content_length_ && !is_chunked_) {
+        if(!http_message_.hasBody()) {
             setState(State::COMPLETE);
             // on loop test, the new request will arrived before notifyComplete()
             //getEventLoop()->queue([this] { notifyComplete(); });
@@ -135,18 +124,11 @@ int Http1xResponse::sendData(const void* data, size_t len)
     if(!sendBufferEmpty() || getState() != State::SENDING_BODY) {
         return 0;
     }
-    if(is_chunked_) {
-        return sendChunk(data, len);
-    }
-    if(!data || 0 == len) {
-        return 0;
-    }
-    int ret = TcpConnection::send(data, len);
+    int ret = http_message_.sendData(data, len);
     if(ret < 0) {
         setState(State::IN_ERROR);
-    } else if(ret > 0) {
-        body_bytes_sent_ += ret;
-        if (has_content_length_ && body_bytes_sent_ >= content_length_ && sendBufferEmpty()) {
+    } else if(ret >= 0) {
+        if (http_message_.isCompleted() && sendBufferEmpty()) {
             setState(State::COMPLETE);
             // on loop test, the new request will arrived before notifyComplete()
             //getEventLoop()->queue([this] { notifyComplete(); });
@@ -156,42 +138,6 @@ int Http1xResponse::sendData(const void* data, size_t len)
     return ret;
 }
 
-int Http1xResponse::sendChunk(const void* data, size_t len)
-{
-    if(nullptr == data && 0 == len) { // chunk end
-        static const std::string _chunk_end_token_ = "0\r\n\r\n";
-        int ret = TcpConnection::send(_chunk_end_token_.c_str(), _chunk_end_token_.length());
-        if(ret < 0) {
-            setState(State::IN_ERROR);
-            return ret;
-        } else if(sendBufferEmpty()) { // should always empty
-            setState(State::COMPLETE);
-            // on loop test, the new request will arrived before notifyComplete()
-            //getEventLoop()->queue([this] { notifyComplete(); });
-            notifyComplete();
-        }
-        return 0;
-    } else {
-        std::stringstream ss;
-        ss << std::hex << len;
-        std::string str;
-        ss >> str;
-        str += "\r\n";
-        iovec iovs[3];
-        iovs[0].iov_base = (char*)str.c_str();
-        iovs[0].iov_len = str.length();
-        iovs[1].iov_base = (char*)data;
-        iovs[1].iov_len = len;
-        iovs[2].iov_base = (char*)"\r\n";
-        iovs[2].iov_len = 2;
-        int ret = TcpConnection::send(iovs, 3);
-        if(ret < 0) {
-            return ret;
-        }
-        return (int)len;
-    }
-}
-
 void Http1xResponse::reset()
 {
     // reset TcpConnection
@@ -199,6 +145,7 @@ void Http1xResponse::reset()
     send_offset_ = 0;
     
     HttpResponse::Impl::reset();
+    http_message_.reset();
     setState(State::RECVING_REQUEST);
 }
 
@@ -227,7 +174,7 @@ KMError Http1xResponse::handleInputData(uint8_t *src, size_t len)
 void Http1xResponse::onWrite()
 {
     if (getState() == State::SENDING_HEADER) {
-        if(has_content_length_ && 0 == content_length_ && !is_chunked_) {
+        if(!http_message_.hasBody()) {
             setState(State::COMPLETE);
             notifyComplete();
             return;
@@ -235,7 +182,7 @@ void Http1xResponse::onWrite()
             setState(State::SENDING_BODY);
         }
     } else if (getState() == State::SENDING_BODY) {
-        if(!is_chunked_ && has_content_length_ && body_bytes_sent_ >= content_length_) {
+        if(http_message_.isCompleted()) {
             setState(State::COMPLETE);
             notifyComplete();
             return ;
