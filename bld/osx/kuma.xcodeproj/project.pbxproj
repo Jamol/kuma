@@ -20,6 +20,8 @@
 		6F2D40471B194AE200E24928 /* TimerManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2D40451B194AE200E24928 /* TimerManager.cpp */; };
 		6F2D40481B194AE200E24928 /* TimerManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2D40461B194AE200E24928 /* TimerManager.h */; };
 		6F37307F1E2F35B500479457 /* HttpMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F37307E1E2F35B500479457 /* HttpMessage.cpp */; };
+		6F3731F51E37242200479457 /* HttpHeader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F3731F31E37242200479457 /* HttpHeader.cpp */; };
+		6F3731F61E37242200479457 /* HttpHeader.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F3731F41E37242200479457 /* HttpHeader.h */; };
 		6F472B311D43B53500D01201 /* TcpConnection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F472B2F1D43B53500D01201 /* TcpConnection.cpp */; };
 		6F472B321D43B53500D01201 /* TcpConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F472B301D43B53500D01201 /* TcpConnection.h */; };
 		6F4D603D1B9FCA61009132AF /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F4D603C1B9FCA61009132AF /* CoreFoundation.framework */; };
@@ -104,6 +106,8 @@
 		6F2D40461B194AE200E24928 /* TimerManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimerManager.h; sourceTree = "<group>"; };
 		6F37307D1E2F359C00479457 /* HttpMessage.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HttpMessage.h; sourceTree = "<group>"; };
 		6F37307E1E2F35B500479457 /* HttpMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpMessage.cpp; sourceTree = "<group>"; };
+		6F3731F31E37242200479457 /* HttpHeader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpHeader.cpp; sourceTree = "<group>"; };
+		6F3731F41E37242200479457 /* HttpHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpHeader.h; sourceTree = "<group>"; };
 		6F472B2F1D43B53500D01201 /* TcpConnection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TcpConnection.cpp; sourceTree = "<group>"; };
 		6F472B301D43B53500D01201 /* TcpConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpConnection.h; sourceTree = "<group>"; };
 		6F4D603C1B9FCA61009132AF /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
@@ -344,6 +348,8 @@
 				6FBB2C9F1D139C560024550F /* HttpResponseImpl.h */,
 				6FBB2CA01D139C560024550F /* Uri.cpp */,
 				6FBB2CA11D139C560024550F /* Uri.h */,
+				6F3731F31E37242200479457 /* HttpHeader.cpp */,
+				6F3731F41E37242200479457 /* HttpHeader.h */,
 				6F37307D1E2F359C00479457 /* HttpMessage.h */,
 				6F37307E1E2F35B500479457 /* HttpMessage.cpp */,
 			);
@@ -389,6 +395,7 @@
 				6FBB2CBD1D139C990024550F /* WebSocketImpl.h in Headers */,
 				6F5C79E21D59CC8700FF8C83 /* DestroyDetector.h in Headers */,
 				6FE0EF181D40986D006136B7 /* StaticTable.h in Headers */,
+				6F3731F61E37242200479457 /* HttpHeader.h in Headers */,
 				6F7512941D76C237000BE6EC /* SocketNotifier.h in Headers */,
 				6FE0EF011D409863006136B7 /* FrameParser.h in Headers */,
 				6F75128F1D76BD46000BE6EC /* PipeNotifier.h in Headers */,
@@ -486,6 +493,7 @@
 				6FBB2C931D139C430024550F /* VPoll.cpp in Sources */,
 				6FF212931B181103006603BB /* kmapi.cpp in Sources */,
 				6FBB2CBC1D139C990024550F /* WebSocketImpl.cpp in Sources */,
+				6F3731F51E37242200479457 /* HttpHeader.cpp in Sources */,
 				6FF211031B130A2F006603BB /* TcpListenerImpl.cpp in Sources */,
 				6FE0EF0B1D409863006136B7 /* Http2Response.cpp in Sources */,
 				6F37307F1E2F35B500479457 /* HttpMessage.cpp in Sources */,

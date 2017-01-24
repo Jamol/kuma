@@ -65,14 +65,11 @@ void Http2Response::addHeader(std::string name, std::string value)
 {
     transform(name.begin(), name.end(), name.begin(), ::tolower);
     if(!name.empty()) {
-        if (is_equal("content-length", name)) {
-            has_content_length_ = true;
-            content_length_ = atol(value.c_str());
-        } else if (is_equal("transfer-encoding", name) && is_equal("chunked", value)) {
+        if (is_equal("transfer-encoding", name) && is_equal("chunked", value)) {
             is_chunked_ = true;
             return; // omit chunked
         }
-        rsp_headers_.emplace(std::move(name), std::move(value));
+        HttpHeader::addHeader(std::move(name), std::move(value));
     }
 }
 
@@ -131,7 +128,7 @@ size_t Http2Response::buildHeaders(int status_code, HeaderVector &headers)
     std::string str_status_code = std::to_string(status_code);
     headers.emplace_back(std::make_pair(H2HeaderStatus, str_status_code));
     headers_size += H2HeaderMethod.size() + str_status_code.size();
-    for (auto it : rsp_headers_) {
+    for (auto it : header_map_) {
         headers.emplace_back(std::make_pair(it.first, it.second));
         headers_size += it.first.size() + it.second.size();
     }

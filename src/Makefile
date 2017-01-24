@@ -41,6 +41,7 @@ SRCS =  \
     poll/SelectPoll.cpp \
     poll/Notifier.cpp \
     http/Uri.cpp \
+    http/HttpHeader.cpp \
     http/HttpMessage.cpp \
     http/HttpParserImpl.cpp \
     http/HttpRequestImpl.cpp \

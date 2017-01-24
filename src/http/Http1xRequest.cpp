@@ -81,7 +81,7 @@ void Http1xRequest::buildRequest()
         ss << "#" << uri_.getFragment();
     }
     auto url(ss.str());
-    auto req = http_message_.buildMessageHeader(method_, url, version_);
+    auto req = http_message_.buildHeader(method_, url, version_);
     send_offset_ = 0;
     send_buffer_.assign(req.begin(), req.end());
 }

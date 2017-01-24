@@ -24,74 +24,6 @@
 
 using namespace kuma;
 
-void HttpMessage::addHeader(std::string name, std::string value)
-{
-    if(!name.empty()) {
-        header_map_.emplace(std::move(name), std::move(value));
-    }
-}
-
-void HttpMessage::addHeader(std::string name, uint32_t value)
-{
-    addHeader(std::move(name), std::to_string(value));
-}
-
-bool HttpMessage::hasHeader(const std::string &name) const
-{
-    return header_map_.find(name) != header_map_.end();
-}
-
-void HttpMessage::processHeaders()
-{
-    auto it = header_map_.find(strContentLength);
-    if (it != header_map_.end()) {
-        has_content_length_ = true;
-        content_length_ = std::stol(it->second);
-    } else {
-        has_content_length_ = false;
-        content_length_ = 0;
-    }
-    
-    it = header_map_.find(strTransferEncoding);
-    if (it != header_map_.end()) {
-        is_chunked_ = is_equal(strChunked, it->second);
-    } else {
-        is_chunked_ = false;
-    }
-    
-    has_body_ = is_chunked_ || (has_content_length_ && content_length_ > 0);
-}
-
-std::string HttpMessage::buildMessageHeader(const std::string &method, const std::string &url, const std::string &ver)
-{
-    processHeaders();
-    std::string req = method + " " + url + " " + (!ver.empty()?ver:VersionHTTP1_1);
-    req += "\r\n";
-    for (auto &kv : header_map_) {
-        req += kv.first + ": " + kv.second + "\r\n";
-    }
-    req += "\r\n";
-    return req;
-}
-
-std::string HttpMessage::buildMessageHeader(int status_code, const std::string &desc, const std::string &ver)
-{
-    processHeaders();
-    std::string rsp = (!ver.empty()?ver:VersionHTTP1_1) + " " + std::to_string(status_code);
-    if (!desc.empty()) {
-        rsp += " " + desc;
-    }
-    rsp += "\r\n";
-    for (auto &kv : header_map_) {
-        rsp += kv.first + ": " + kv.second + "\r\n";
-    }
-    rsp += "\r\n";
-
-    has_body_ = has_body_ || !((100 <= status_code && status_code <= 199) ||
-                               204 == status_code || 304 == status_code);
-    return rsp;
-}
-
 int HttpMessage::sendData(const void* data, size_t len)
 {
     if(is_chunked_) {
@@ -144,11 +76,7 @@ int HttpMessage::sendChunk(const void* data, size_t len)
 
 void HttpMessage::reset()
 {
-    header_map_.clear();
-    has_content_length_ = false;
-    content_length_ = 0;
-    is_chunked_ = false;
+    HttpHeader::reset();
     body_bytes_sent_ = 0;
     completed_ = false;
-    has_body_ = false;
 }

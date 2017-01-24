@@ -52,14 +52,11 @@ void Http2Request::addHeader(std::string name, std::string value)
 {
     transform(name.begin(), name.end(), name.begin(), ::tolower);
     if(!name.empty()) {
-        if (is_equal("content-length", name)) {
-            has_content_length_ = true;
-            content_length_ = atol(value.c_str());
-        } else if (is_equal("Transfer-Encoding", name) && is_equal("chunked", value)) {
+        if (is_equal("Transfer-Encoding", name) && is_equal("chunked", value)) {
             is_chunked_ = true;
             return; // omit chunked
         }
-        req_headers[std::move(name)] = std::move(value);
+        HttpHeader::addHeader(std::move(name), std::move(value));
     }
 }
 
@@ -127,19 +124,19 @@ void Http2Request::forEachHeader(EnumrateCallback cb)
 
 void Http2Request::checkHeaders()
 {
-    if(req_headers.find("accept") == req_headers.end()) {
+    if(!hasHeader("accept")) {
         addHeader("accept", "*/*");
     }
-    if(req_headers.find("content-type") == req_headers.end()) {
+    if(!hasHeader("content-type")) {
         addHeader("content-type", "application/octet-stream");
     }
-    if(req_headers.find("user-agent") == req_headers.end()) {
+    if(!hasHeader("user-agent")) {
         addHeader("user-agent", UserAgent);
     }
-    if(req_headers.find("cache-control") == req_headers.end()) {
+    if(!hasHeader("cache-control")) {
         addHeader("cache-control", "no-cache");
     }
-    if(req_headers.find("pragma") == req_headers.end()) {
+    if(!hasHeader("pragma")) {
         addHeader("pragma", "no-cache");
     }
 }
@@ -162,7 +159,7 @@ size_t Http2Request::buildHeaders(HeaderVector &headers)
     headers_size += H2HeaderPath.size() + path.size();
     headers.emplace_back(std::make_pair(H2HeaderAuthority, uri_.getHost()));
     headers_size += H2HeaderAuthority.size() + uri_.getHost().size();
-    for (auto it : req_headers) {
+    for (auto it : header_map_) {
         headers.emplace_back(std::make_pair(it.first, it.second));
         headers_size += it.first.size() + it.second.size();
     }

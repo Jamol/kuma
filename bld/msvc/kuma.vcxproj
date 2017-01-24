@@ -165,6 +165,7 @@
     <ClCompile Include="..\..\src\EventLoopImpl.cpp" />
     <ClCompile Include="..\..\src\http\Http1xRequest.cpp" />
     <ClCompile Include="..\..\src\http\Http1xResponse.cpp" />
+    <ClCompile Include="..\..\src\http\HttpHeader.cpp" />
     <ClCompile Include="..\..\src\http\HttpMessage.cpp" />
     <ClCompile Include="..\..\src\http\HttpParserImpl.cpp" />
     <ClCompile Include="..\..\src\http\HttpRequestImpl.cpp" />
@@ -202,6 +203,7 @@
     <ClInclude Include="..\..\src\EventLoopImpl.h" />
     <ClInclude Include="..\..\src\http\Http1xRequest.h" />
     <ClInclude Include="..\..\src\http\Http1xResponse.h" />
+    <ClInclude Include="..\..\src\http\HttpHeader.h" />
     <ClInclude Include="..\..\src\http\HttpMessage.h" />
     <ClInclude Include="..\..\src\http\HttpParserImpl.h" />
     <ClInclude Include="..\..\src\http\HttpRequestImpl.h" />

@@ -25,12 +25,13 @@
 #include "kmdefs.h"
 #include "H2ConnectionImpl.h"
 #include "http/HttpRequestImpl.h"
+#include "http/HttpHeader.h"
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
 
 KUMA_NS_BEGIN
 
-class Http2Request : public KMObject, public DestroyDetector, public HttpRequest::Impl
+class Http2Request : public KMObject, public DestroyDetector, public HttpRequest::Impl, public HttpHeader
 {
 public:
     Http2Request(EventLoop::Impl* loop, std::string ver);
@@ -73,10 +74,6 @@ private:
     H2StreamPtr stream_;
     
     // request
-    HeaderMap req_headers;
-    bool has_content_length_ = false;
-    bool is_chunked_ = false;
-    size_t content_length_ = 0;
     size_t body_bytes_sent_ = 0;
     
     // response

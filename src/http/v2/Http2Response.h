@@ -25,10 +25,11 @@
 #include "kmdefs.h"
 #include "H2ConnectionImpl.h"
 #include "http/HttpResponseImpl.h"
+#include "http/HttpHeader.h"
 
 KUMA_NS_BEGIN
 
-class Http2Response : public KMObject, public HttpResponse::Impl, public DestroyDetector
+class Http2Response : public KMObject, public HttpResponse::Impl, public HttpHeader, public DestroyDetector
 {
 public:
     Http2Response(EventLoop::Impl* loop, std::string ver);
@@ -62,10 +63,6 @@ private:
     H2StreamPtr             stream_;
     
     // response
-    HeaderMap               rsp_headers_;
-    bool                    is_chunked_ = false;
-    bool                    has_content_length_ = false;
-    size_t                  content_length_ = 0;
     size_t                  body_bytes_sent_ = 0;
     
     // request

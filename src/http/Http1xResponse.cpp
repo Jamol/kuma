@@ -87,7 +87,7 @@ void Http1xResponse::checkHeaders()
 
 void Http1xResponse::buildResponse(int status_code, const std::string& desc, const std::string& ver)
 {
-    auto rsp = http_message_.buildMessageHeader(status_code, desc, ver);
+    auto rsp = http_message_.buildHeader(status_code, desc, ver);
     send_offset_ = 0;
     send_buffer_.assign(rsp.begin(), rsp.end());
 }
