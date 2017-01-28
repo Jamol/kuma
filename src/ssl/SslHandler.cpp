@@ -96,7 +96,7 @@ void SslHandler::cleanup()
 KMError SslHandler::setAlpnProtocols(const AlpnProtos &protocols)
 {
 #if OPENSSL_VERSION_NUMBER >= 0x1000200fL && !defined(OPENSSL_NO_TLSEXT)
-    if (ssl_ && SSL_set_alpn_protos(ssl_, &protocols[0], (unsigned int)protocols.size()) == 1) {
+    if (ssl_ && SSL_set_alpn_protos(ssl_, &protocols[0], (unsigned int)protocols.size()) == 0) {
         return KMError::NOERR;
     }
     return KMError::SSL_FAILED;
@@ -124,7 +124,7 @@ KMError SslHandler::getAlpnSelected(std::string &proto)
 KMError SslHandler::setServerName(const std::string &serverName)
 {
 #if OPENSSL_VERSION_NUMBER >= 0x1000105fL && !defined(OPENSSL_NO_TLSEXT)
-    if (ssl_ && SSL_set_tlsext_host_name(ssl_, serverName.c_str()) == 1) {
+    if (ssl_ && SSL_set_tlsext_host_name(ssl_, serverName.c_str()) == 0) {
         return KMError::NOERR;
     }
     return KMError::SSL_FAILED;

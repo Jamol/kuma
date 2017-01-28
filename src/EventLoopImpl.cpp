@@ -258,7 +258,8 @@ KMError EventLoop::Impl::queue(LoopCallback cb)
         }
         cb_queue_.push_back(std::move(cb));
     }
-    if(!inSameThread()) {
+    //if(!inSameThread())
+    {
         poll_->notify();
     }
     return KMError::NOERR;

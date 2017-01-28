@@ -48,8 +48,17 @@ H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &key)
     return it != connMap_.end() ? it->second : nullptr;
 }
 
-H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &key, const std::string &host, uint16_t port, uint32_t ssl_flags, EventLoop::Impl* loop)
+H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &host, uint16_t port, uint32_t ssl_flags, EventLoop::Impl* loop)
 {
+    std::string key;
+    char ip_buf[128];
+    if (km_resolve_2_ip(host.c_str(), ip_buf, sizeof(ip_buf)) == 0) {
+        std::stringstream ss;
+        ss << ip_buf << ":" << port;
+        key = ss.str();
+    } else {
+        key = host + ":" + std::to_string(port);
+    }
     std::lock_guard<std::mutex> g(connMutex_);
     auto it = connMap_.find(key);
     if (it != connMap_.end()) {

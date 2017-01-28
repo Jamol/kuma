@@ -69,6 +69,7 @@ public:
     bool isReady() { return getState() == State::OPEN; }
     
     void setConnectionKey(const std::string &key);
+    std::string getConnectionKey() const { return key_; }
     
     H2StreamPtr createStream();
     H2StreamPtr createStream(uint32_t streamId);

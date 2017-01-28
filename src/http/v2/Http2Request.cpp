@@ -72,25 +72,17 @@ KMError Http2Request::sendRequest()
     if(!str_port.empty()) {
         port = std::stoi(str_port);
     }
-    std::string key;
-    char ip_buf[128];
-    if (km_resolve_2_ip(uri_.getHost().c_str(), ip_buf, sizeof(ip_buf)) == 0) {
-        std::stringstream ss;
-        ss << ip_buf << ":" << port;
-        key = ss.str();
-    } else {
-        key = uri_.getHost() + ":" + std::to_string(port);
-    }
+    
     setState(State::CONNECTING);
     auto &connMgr = H2ConnectionMgr::getRequestConnMgr(ssl_flags != SSL_NONE);
-    conn_ = connMgr.getConnection(key, uri_.getHost(), port, ssl_flags, loop_);
+    conn_ = connMgr.getConnection(uri_.getHost(), port, ssl_flags, loop_);
     if (!conn_) {
-        KUMA_ERRXTRACE("sendRequest, failed to get H2Connection, key="<<key);
+        KUMA_ERRXTRACE("sendRequest, failed to get H2Connection");
         return KMError::INVALID_PARAM;
     } else if (conn_->isInSameThread()) {
         return sendRequest_i();
     } else if (!conn_->async([this] { auto err = sendRequest_i(); if (err != KMError::NOERR) { onError(err); }})) {
-        KUMA_ERRXTRACE("sendRequest, failed to run in H2Connection, key="<<key);
+        KUMA_ERRXTRACE("sendRequest, failed to run in H2Connection, key="<<conn_->getConnectionKey());
         return KMError::INVALID_STATE;
     }
     return KMError::NOERR;
@@ -245,8 +237,8 @@ int Http2Request::sendData_i(const void* data, size_t len, bool newData)
         return 0;
     }
     int ret = 0;
+    size_t send_len = len;
     if (data && len) {
-        size_t send_len = len;
         if (has_content_length_ && body_bytes_sent_ + send_len > content_length_) {
             send_len = content_length_ - body_bytes_sent_;
         }
@@ -265,7 +257,7 @@ int Http2Request::sendData_i(const void* data, size_t len, bool newData)
             write_blocked_ = true;
             iovec iov;
             iov.iov_base = (char*) data;
-            iov.iov_len = len;
+            iov.iov_len = send_len;
             data_list_.push_back(iov);
             ret = int(len);
         } else {
