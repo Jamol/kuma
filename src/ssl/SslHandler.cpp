@@ -124,7 +124,7 @@ KMError SslHandler::getAlpnSelected(std::string &proto)
 KMError SslHandler::setServerName(const std::string &serverName)
 {
 #if OPENSSL_VERSION_NUMBER >= 0x1000105fL && !defined(OPENSSL_NO_TLSEXT)
-    if (ssl_ && SSL_set_tlsext_host_name(ssl_, serverName.c_str()) == 0) {
+    if (ssl_ && SSL_set_tlsext_host_name(ssl_, serverName.c_str())) {
         return KMError::NOERR;
     }
     return KMError::SSL_FAILED;
