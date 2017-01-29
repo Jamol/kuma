@@ -819,12 +819,12 @@ void H2Connection::Impl::onConnectError(KMError err)
     notifyListeners(err);
 }
 
-void H2Connection::Impl::sendWindowUpdate(uint32_t streamId, uint32_t delta)
+KMError H2Connection::Impl::sendWindowUpdate(uint32_t streamId, uint32_t delta)
 {
     WindowUpdateFrame frame;
     frame.setStreamId(streamId);
     frame.setWindowSizeIncrement(delta);
-    sendH2Frame(&frame);
+    return sendH2Frame(&frame);
 }
 
 bool H2Connection::Impl::isControlFrame(H2Frame *frame)

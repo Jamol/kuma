@@ -21,6 +21,9 @@
 
 KUMA_NS_BEGIN
 
+///
+// enqueue on a thread and dequene on another thread
+///
 template <class E>
 class KM_Queue
 {
@@ -66,8 +69,24 @@ public:
         return true;
     }
     
+    E& front() {
+        if(empty()) {
+            static E E_empty = E();
+            return E_empty;
+        }
+        return head_->next_->element_;
+    }
+    
+    void pop_front() {
+        if(!empty()) {
+            TLNode* node_to_delete = head_;
+            head_ = head_->next_;
+            delete node_to_delete;
+        }
+    }
+    
     bool empty()
-    {
+    {// correct on producer side
         return nullptr == head_->next_;
     }
 

@@ -28,6 +28,7 @@
 #include "http/HttpHeader.h"
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
+#include "util/kmqueue.h"
 
 KUMA_NS_BEGIN
 
@@ -64,7 +65,8 @@ private:
     size_t buildHeaders(HeaderVector &headers);
     KMError sendRequest_i();
     KMError sendHeaders();
-    int sendData_i(const void* data, size_t len, bool newData=false);
+    int sendData_i(const void* data, size_t len);
+    int sendData_i();
     void close_i();
     //}
     
@@ -81,7 +83,7 @@ private:
     HeaderMap rsp_headers_;
     
     bool write_blocked_ { false };
-    std::list<iovec> data_list_;
+    KM_Queue<iovec> data_queue_;
     
     std::string connKey_;
 };

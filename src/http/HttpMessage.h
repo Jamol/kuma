@@ -38,6 +38,8 @@ public:
     bool isCompleted() const { return !hasBody() || completed_; }
     void reset() override;
     
+    void setSender(MessageSender sender) { sender_ = std::move(sender); }
+    
 protected:
     int sendChunk(const void* data, size_t len);
     

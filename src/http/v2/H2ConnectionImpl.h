@@ -140,7 +140,7 @@ private:
     
     void onConnectError(KMError err);
     void notifyBlockedStreams();
-    void sendWindowUpdate(uint32_t streamId, uint32_t delta);
+    KMError sendWindowUpdate(uint32_t streamId, uint32_t delta);
     bool isControlFrame(H2Frame *frame);
     
     void applySettings(const ParamVector &params);

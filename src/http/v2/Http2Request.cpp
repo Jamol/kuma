@@ -37,10 +37,10 @@ Http2Request::Http2Request(EventLoop::Impl* loop, std::string ver)
 
 Http2Request::~Http2Request()
 {
-    for (auto iov : data_list_) {
+    iovec iov;
+    while (data_queue_.dequeue(iov)) {
         delete [] (uint8_t*)iov.iov_base;
     }
-    data_list_.clear();
 }
 
 KMError Http2Request::setSslFlags(uint32_t ssl_flags)
@@ -135,6 +135,7 @@ void Http2Request::checkHeaders()
 
 size_t Http2Request::buildHeaders(HeaderVector &headers)
 {
+    HttpHeader::processHeader();
     size_t headers_size = 0;
     headers.emplace_back(std::make_pair(H2HeaderMethod, method_));
     headers_size += H2HeaderMethod.size() + method_.size();
@@ -215,25 +216,26 @@ int Http2Request::sendData(const void* data, size_t len)
     if (write_blocked_) {
         return 0;
     }
-    if (conn_->isInSameThread()) {
-        return sendData_i(data, len);
+    if (conn_->isInSameThread() && data_queue_.empty()) {
+        return sendData_i(data, len); // return the bytes sent directly
     } else {
         uint8_t *d = nullptr;
         if (data && len) {
             d = new uint8_t[len];
             memcpy(d, data, len);
         }
-        conn_->async([=] { sendData_i(d, len, true); });
+        iovec iov;
+        iov.iov_base = (char*)d;
+        iov.iov_len = len;
+        data_queue_.enqueue(iov);
+        conn_->async([=] { sendData_i(); });
         return int(len);
     }
 }
 
-int Http2Request::sendData_i(const void* data, size_t len, bool newData)
+int Http2Request::sendData_i(const void* data, size_t len)
 {
     if (getState() != State::SENDING_BODY) {
-        if (newData && len > 0) {
-            delete [] (uint8_t*)data;
-        }
         return 0;
     }
     int ret = 0;
@@ -252,19 +254,30 @@ int Http2Request::sendData_i(const void* data, size_t len, bool newData)
         stream_->sendData(nullptr, 0, true);
         setState(State::RECVING_RESPONSE);
     }
-    if (newData && len > 0) {
-        if (ret == 0) {// write blocked
-            write_blocked_ = true;
-            iovec iov;
-            iov.iov_base = (char*) data;
-            iov.iov_len = send_len;
-            data_list_.push_back(iov);
-            ret = int(len);
-        } else {
-            delete [] (uint8_t*)data;
-        }
+    if (ret == 0) {
+        write_blocked_ = true;
     }
     return ret;
+}
+
+int Http2Request::sendData_i()
+{
+    int bytes_sent = 0;
+    while (!data_queue_.empty()) {
+        auto &iov = data_queue_.front();
+        int ret = sendData_i(iov.iov_base, iov.iov_len);
+        if (ret > 0) {
+            bytes_sent += ret;
+            data_queue_.pop_front();
+            delete [] (uint8_t*)iov.iov_base;
+        } else if (ret == 0) {
+            break;
+        } else {
+            onError(KMError::FAILED);
+            return -1;
+        }
+    }
+    return bytes_sent;
 }
 
 void Http2Request::onHeaders(const HeaderVector &headers, bool endHeaders, bool endSteam)
@@ -309,18 +322,8 @@ void Http2Request::onRSTStream(int err)
 
 void Http2Request::onWrite()
 {
-    while (!data_list_.empty()) {
-        auto iov = data_list_.front();
-        int ret = sendData_i(iov.iov_base, iov.iov_len);
-        if (ret > 0) {
-            data_list_.pop_front();
-            delete [] (uint8_t*)iov.iov_base;
-        } else if (ret == 0) {
-            return;
-        } else {
-            onError(KMError::FAILED);
-            return;
-        }
+    if (sendData_i() < 0 || !data_queue_.empty()) {
+        return;
     }
     write_blocked_ = false;
     if(write_cb_) write_cb_(KMError::NOERR);

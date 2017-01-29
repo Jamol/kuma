@@ -41,7 +41,8 @@ public:
     virtual void reset();
     
 protected:
-    void processHeaders();
+    void processHeader();
+    void processHeader(int status_code);
     
 protected:
     HeaderMap               header_map_;

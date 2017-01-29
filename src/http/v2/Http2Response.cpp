@@ -124,6 +124,7 @@ void Http2Response::checkHeaders()
 
 size_t Http2Response::buildHeaders(int status_code, HeaderVector &headers)
 {
+    HttpHeader::processHeader(status_code);
     size_t headers_size = 0;
     std::string str_status_code = std::to_string(status_code);
     headers.emplace_back(std::make_pair(H2HeaderStatus, str_status_code));

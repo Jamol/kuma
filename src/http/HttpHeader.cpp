@@ -41,7 +41,7 @@ bool HttpHeader::hasHeader(const std::string &name) const
     return header_map_.find(name) != header_map_.end();
 }
 
-void HttpHeader::processHeaders()
+void HttpHeader::processHeader()
 {
     auto it = header_map_.find(strContentLength);
     if (it != header_map_.end()) {
@@ -62,9 +62,16 @@ void HttpHeader::processHeaders()
     has_body_ = is_chunked_ || (has_content_length_ && content_length_ > 0);
 }
 
+void HttpHeader::processHeader(int status_code)
+{
+    processHeader();
+    has_body_ = has_body_ || !((100 <= status_code && status_code <= 199) ||
+                               204 == status_code || 304 == status_code);
+}
+
 std::string HttpHeader::buildHeader(const std::string &method, const std::string &url, const std::string &ver)
 {
-    processHeaders();
+    processHeader();
     std::string req = method + " " + url + " " + (!ver.empty()?ver:VersionHTTP1_1);
     req += "\r\n";
     for (auto &kv : header_map_) {
@@ -76,7 +83,7 @@ std::string HttpHeader::buildHeader(const std::string &method, const std::string
 
 std::string HttpHeader::buildHeader(int status_code, const std::string &desc, const std::string &ver)
 {
-    processHeaders();
+    processHeader(status_code);
     std::string rsp = (!ver.empty()?ver:VersionHTTP1_1) + " " + std::to_string(status_code);
     if (!desc.empty()) {
         rsp += " " + desc;
@@ -86,9 +93,6 @@ std::string HttpHeader::buildHeader(int status_code, const std::string &desc, co
         rsp += kv.first + ": " + kv.second + "\r\n";
     }
     rsp += "\r\n";
-
-    has_body_ = has_body_ || !((100 <= status_code && status_code <= 199) ||
-                               204 == status_code || 304 == status_code);
     return rsp;
 }
 
