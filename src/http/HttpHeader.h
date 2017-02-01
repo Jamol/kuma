@@ -35,6 +35,7 @@ public:
     void addHeader(std::string name, std::string value);
     void addHeader(std::string name, uint32_t value);
     bool hasHeader(const std::string &name) const;
+    const std::string& getHeader(const std::string &name) const;
     std::string buildHeader(const std::string &method, const std::string &url, const std::string &ver);
     std::string buildHeader(int status_code, const std::string &desc, const std::string &ver);
     bool hasBody() const { return has_body_; }
@@ -54,4 +55,4 @@ protected:
 
 KUMA_NS_END
 
-#endif /* __HttpMessage_H__ */
+#endif /* __HttpHeader_H__ */

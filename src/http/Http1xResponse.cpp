@@ -34,6 +34,9 @@ Http1xResponse::Http1xResponse(EventLoop::Impl* loop, std::string ver)
     http_message_.setSender([this] (const void* data, size_t len) -> int {
         return TcpConnection::send(data, len);
     });
+    http_message_.setVSender([this] (iovec* iovs, int count) -> int {
+        return TcpConnection::send(iovs, count);
+    });
     KM_SetObjKey("Http1xResponse");
 }
 

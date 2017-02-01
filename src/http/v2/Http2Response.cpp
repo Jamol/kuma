@@ -80,15 +80,17 @@ KMError Http2Response::sendResponse(int status_code, const std::string& desc, co
     HeaderVector headers;
     size_t headersSize = buildHeaders(status_code, headers);
     bool endStream = has_content_length_ && content_length_ == 0;
-    stream_->sendHeaders(headers, headersSize, endStream);
-    if (endStream) {
-        setState(State::COMPLETE);
-        loop_->queue([this] { notifyComplete(); });
-    } else {
-        setState(State::SENDING_BODY);
-        loop_->queue([this] { if (write_cb_) write_cb_(KMError::NOERR); });
+    auto ret = stream_->sendHeaders(headers, headersSize, endStream);
+    if (ret == KMError::NOERR) {
+        if (endStream) {
+            setState(State::COMPLETE);
+            loop_->queue([this] { notifyComplete(); });
+        } else {
+            setState(State::SENDING_BODY);
+            loop_->queue([this] { if (write_cb_) write_cb_(KMError::NOERR); });
+        }
     }
-    return KMError::NOERR;
+    return ret;
 }
 
 int Http2Response::sendData(const void* data, size_t len)
@@ -128,7 +130,7 @@ size_t Http2Response::buildHeaders(int status_code, HeaderVector &headers)
     size_t headers_size = 0;
     std::string str_status_code = std::to_string(status_code);
     headers.emplace_back(std::make_pair(H2HeaderStatus, str_status_code));
-    headers_size += H2HeaderMethod.size() + str_status_code.size();
+    headers_size += H2HeaderStatus.size() + str_status_code.size();
     for (auto it : header_map_) {
         headers.emplace_back(std::make_pair(it.first, it.second));
         headers_size += it.first.size() + it.second.size();
@@ -154,7 +156,7 @@ void Http2Response::forEachHeader(HttpParser::Impl::EnumrateCallback&& cb) {
     }
 }
 
-void Http2Response::onHeaders(const HeaderVector &headers, bool endheaders, bool endSteam)
+void Http2Response::onHeaders(const HeaderVector &headers, bool endHeaders, bool endSteam)
 {
     if (headers.empty()) {
         return;
@@ -177,7 +179,7 @@ void Http2Response::onHeaders(const HeaderVector &headers, bool endheaders, bool
             }
         }
     }
-    if (endheaders) {
+    if (endHeaders) {
         DESTROY_DETECTOR_SETUP();
         if (header_cb_) header_cb_();
         DESTROY_DETECTOR_CHECK_VOID();

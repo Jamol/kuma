@@ -112,16 +112,14 @@ HttpParser::Impl::~Impl()
 
 void HttpParser::Impl::reset()
 {
+    HttpHeader::reset();
     read_state_ = HTTP_READ_LINE;
     
     status_code_ = 0;
     header_complete_ = false;
     upgrade_ = false;
     paused_ = false;
-    content_length_ = 0;
-    has_content_length_ = false;
-    
-    is_chunked_ = false;
+
     chunk_state_ = CHUNK_READ_SIZE;
     chunk_size_ = 0;
     chunk_bytes_read_ = 0;
@@ -135,7 +133,6 @@ void HttpParser::Impl::reset()
     url_path_ = "";
     
     param_map_.clear();
-    header_map_.clear();
 }
 
 bool HttpParser::Impl::complete() const
@@ -187,18 +184,7 @@ bool HttpParser::Impl::readEOF()
 
 bool HttpParser::Impl::hasBody()
 {
-    if(content_length_ > 0 || is_chunked_) {
-        return true;
-    }
-    if(has_content_length_ && 0 == content_length_) {
-        return false;
-    }
-    if(is_request_) {
-        return false;
-    } else { // read untill EOF
-        return !((100 <= status_code_ && status_code_ <= 199) ||
-                 204 == status_code_ || 304 == status_code_);
-    }
+    return HttpHeader::hasBody();
 }
 
 int HttpParser::Impl::parse(char* data, size_t len)
@@ -513,19 +499,19 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(char*& cur_pos, char* 
 
 void HttpParser::Impl::onHeaderComplete()
 {
+    if (isRequest()) {
+        HttpHeader::processHeader();
+    } else {
+        HttpHeader::processHeader(status_code_);
+    }
     header_complete_ = true;
-    auto it = header_map_.find(strContentLength);
-    if(it != header_map_.end()) {
-        content_length_ = std::stoi(it->second);
-        has_content_length_ = true;
+    if(has_content_length_) {
         KUMA_INFOTRACE("HttpParser::onHeaderComplete, Content-Length="<<content_length_);
     }
-    it = header_map_.find(strTransferEncoding);
-    if(it != header_map_.end()) {
-        is_chunked_ = is_equal(strChunked, it->second);
-        KUMA_INFOTRACE("HttpParser::onHeaderComplete, Transfer-Encoding="<<it->second);
+    if(is_chunked_) {
+        KUMA_INFOTRACE("HttpParser::onHeaderComplete, Transfer-Encoding=chunked");
     }
-    it = header_map_.find("Upgrade");
+    auto it = header_map_.find("Upgrade");
     if(it != header_map_.end()) {
         upgrade_ = true;
         KUMA_INFOTRACE("HttpParser::onHeaderComplete, Upgrade="<<it->second);
@@ -624,7 +610,7 @@ void HttpParser::Impl::addHeaderValue(std::string name, std::string value)
     trim_left(value);
     trim_right(value);
     if(!name.empty()) {
-        header_map_[std::move(name)] = std::move(value);
+        HttpHeader::addHeader(std::move(name), std::move(value));
     }
 }
 
@@ -639,11 +625,7 @@ const std::string& HttpParser::Impl::getParamValue(const std::string& name) cons
 
 const std::string& HttpParser::Impl::getHeaderValue(const std::string& name) const
 {
-    auto it = header_map_.find(name);
-    if (it != header_map_.end()) {
-        return (*it).second;
-    }
-    return EmptyString;
+    return HttpHeader::getHeader(name);
 }
 
 void HttpParser::Impl::forEachParam(EnumrateCallback cb)

@@ -41,6 +41,15 @@ bool HttpHeader::hasHeader(const std::string &name) const
     return header_map_.find(name) != header_map_.end();
 }
 
+const std::string& HttpHeader::getHeader(const std::string &name) const
+{
+    auto it = header_map_.find(name);
+    if (it != header_map_.end()) {
+        return (*it).second;
+    }
+    return EmptyString;
+}
+
 void HttpHeader::processHeader()
 {
     auto it = header_map_.find(strContentLength);

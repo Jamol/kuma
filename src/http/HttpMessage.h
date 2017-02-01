@@ -33,12 +33,14 @@ class HttpMessage : public HttpHeader
 {
 public:
     using MessageSender = std::function<int(const void*, size_t)>;
+    using MessageVSender = std::function<int(iovec*, int)>;
     
     int sendData(const void* data, size_t len);
     bool isCompleted() const { return !hasBody() || completed_; }
     void reset() override;
     
     void setSender(MessageSender sender) { sender_ = std::move(sender); }
+    void setVSender(MessageVSender sender) { vsender_ = std::move(sender); }
     
 protected:
     int sendChunk(const void* data, size_t len);
@@ -48,6 +50,7 @@ protected:
     size_t                  body_bytes_sent_ = 0;
     
     MessageSender           sender_;
+    MessageVSender          vsender_;
 };
 
 KUMA_NS_END

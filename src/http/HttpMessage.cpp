@@ -65,7 +65,7 @@ int HttpMessage::sendChunk(const void* data, size_t len)
         iovs[1].iov_len = len;
         iovs[2].iov_base = (char*)"\r\n";
         iovs[2].iov_len = 2;
-        int ret = sender_(iovs, 3);
+        int ret = vsender_(iovs, 3);
         if(ret > 0) {
             body_bytes_sent_ += ret;
             return int(len);

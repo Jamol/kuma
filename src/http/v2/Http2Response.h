@@ -48,7 +48,7 @@ public:
     void forEachHeader(HttpParser::Impl::EnumrateCallback&& cb) override;
     
 protected:
-    void onHeaders(const HeaderVector &headers, bool endheaders, bool endSteam);
+    void onHeaders(const HeaderVector &headers, bool endHeaders, bool endSteam);
     void onData(void *data, size_t len, bool endSteam);
     void onRSTStream(int err);
     void onWrite();

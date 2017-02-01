@@ -27,6 +27,7 @@
 #include "httpdefs.h"
 #include "util/util.h"
 #include "util/DestroyDetector.h"
+#include "HttpHeader.h"
 #include <string>
 #include <map>
 #include <vector>
@@ -34,7 +35,7 @@
 
 KUMA_NS_BEGIN
 
-class HttpParser::Impl : public DestroyDetector
+class HttpParser::Impl : public DestroyDetector, public HttpHeader
 {
 public:
     using DataCallback = HttpParser::DataCallback;
@@ -145,10 +146,6 @@ private:
     bool                upgrade_{ false };
     bool                paused_{ false };
     
-    bool                has_content_length_{ false };
-    size_t              content_length_{ 0 };
-    
-    bool                is_chunked_{ false };
     int                 chunk_state_{ CHUNK_READ_SIZE };
     size_t              chunk_size_{ 0 };
     size_t              chunk_bytes_read_{ 0 };
@@ -161,7 +158,6 @@ private:
     std::string         version_;
     std::string         url_path_;
     HeaderMap           param_map_;
-    HeaderMap           header_map_;
     
     // response
     int                 status_code_{ 0 };
