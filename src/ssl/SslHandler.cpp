@@ -310,7 +310,7 @@ int SslHandler::send(const void* data, size_t size)
 int SslHandler::send(const iovec* iovs, int count)
 {
     uint32_t bytes_sent = 0;
-    for (uint32_t i=0; i < count; ++i) {
+    for (int i=0; i < count; ++i) {
         int ret = SslHandler::send((const uint8_t*)iovs[i].iov_base, uint32_t(iovs[i].iov_len));
         if(ret < 0) {
             return ret;

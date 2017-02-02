@@ -528,7 +528,7 @@ void HttpParser::Impl::onComplete()
 bool HttpParser::Impl::decodeUrl()
 {
     std::string new_url;
-    int i = 0;
+    size_t i = 0;
     auto len = url_.length();
     const char * p_str = url_.c_str();
     while (i < len)

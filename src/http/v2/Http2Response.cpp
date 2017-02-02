@@ -161,8 +161,7 @@ void Http2Response::onHeaders(const HeaderVector &headers, bool endHeaders, bool
     if (headers.empty()) {
         return;
     }
-    for (int i=0; i<headers.size(); ++i) {
-        auto &kv = headers[i];
+    for (auto &kv : headers) {
         auto &name = kv.first;
         auto &value = kv.second;
         if (!name.empty()) {

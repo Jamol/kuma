@@ -151,6 +151,7 @@ void Http1xResponse::reset()
     send_offset_ = 0;
     
     HttpResponse::Impl::reset();
+    http_parser_.reset();
     http_message_.reset();
     setState(State::RECVING_REQUEST);
 }
