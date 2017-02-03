@@ -2,6 +2,7 @@
 a test client for kuma library
 
 # usage
+```
   client [option] tcp://127.0.0.1:52328
                   udp://127.0.0.1:52328
                   mcast//224.0.0.1:52328
@@ -18,7 +19,12 @@ a test client for kuma library
     -t ms           #data sending interval
     -v              #print version
     --http2         #test http2, only valid for http/https
+```
 
 # examples
+```
   $ client https://www.google.com --http2
   $ client ws://127.0.0.1:8443 -c 100 -t 1000
+```
+
+
