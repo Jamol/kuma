@@ -121,8 +121,8 @@ extern "C" {
 
 #if !(defined(VMS) || defined(__VMS)) /* VMS uses logical names instead */
 #if defined(HEADER_CRYPTLIB_H) && !defined(OPENSSLDIR)
-#define ENGINESDIR "/Users/folkib/work/opensource/openssl-1.0.2h/bin/osx-x86_64/lib/engines"
-#define OPENSSLDIR "/Users/folkib/work/opensource/openssl-1.0.2h/bin/osx-x86_64"
+#define ENGINESDIR "/Users/xxx/work/opensource/openssl/bin/osx-x86_64/lib/engines"
+#define OPENSSLDIR "/Users/xxx/work/opensource/openssl/bin/osx-x86_64"
 #endif
 #endif
 

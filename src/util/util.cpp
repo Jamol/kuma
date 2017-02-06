@@ -42,7 +42,9 @@
 # ifdef KUMA_OS_MAC
 #  include "CoreFoundation/CoreFoundation.h"
 #  include <mach-o/dyld.h>
-#  include <libproc.h>
+#  ifndef KUMA_OS_IOS
+#   include <libproc.h>
+#  endif
 # endif
 #endif
 
@@ -614,7 +616,7 @@ std::string getExecutablePath()
     GetModuleFileName(NULL, c_path, sizeof(c_path));
     str_path = c_path;
 #elif defined(KUMA_OS_MAC)
-# if 1
+# ifndef KUMA_OS_IOS
     char c_path[PROC_PIDPATHINFO_MAXSIZE];
     if(proc_pidpath(getpid(), c_path, sizeof(c_path)) <= 0) {
         return "./";
