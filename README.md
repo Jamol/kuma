@@ -117,10 +117,11 @@ int main(int argc, char *argv[])
     });
     
     TcpListener server(&main_loop);
-    server.setAcceptCallback([] (SOCKET_FD fd, const char* ip, uint16_t port) -> bool {
+    server.setAcceptCallback([&ws] (SOCKET_FD fd, const char* ip, uint16_t port) -> bool {
         printf("server.onAccept, ip=%s\n", ip);
         ws.setSslFlags(SSL_ENABLE);
         ws.attachFd(fd, nullptr, 0);
+        return true;
     });
     server.setErrorCallback([] (KMError err) {
         printf("server.onError, err=%d\n", err);
