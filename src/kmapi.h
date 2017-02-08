@@ -327,7 +327,7 @@ private:
 class KUMA_API WebSocket
 {
 public:
-    using DataCallback = std::function<void(void*, size_t)>;
+    using DataCallback = std::function<void(void*, size_t, bool/*fin*/)>;
     using EventCallback = std::function<void(KMError)>;
     
     WebSocket(EventLoop* loop);
@@ -341,7 +341,7 @@ public:
     KMError connect(const char* ws_url, EventCallback cb);
     KMError attachFd(SOCKET_FD fd, const void* init_data=nullptr, size_t init_len=0);
     KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const void* init_data=nullptr, size_t init_len=0);
-    int send(const void* data, size_t len);
+    int send(const void* data, size_t len, bool is_text, bool fin=true);
     KMError close();
     
     void setDataCallback(DataCallback cb);

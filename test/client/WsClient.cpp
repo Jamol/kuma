@@ -22,7 +22,9 @@ WsClient::WsClient(TestLoop* loop, long conn_id)
 
 void WsClient::startRequest(const std::string& url)
 {
-    ws_.setDataCallback([this] (void* data, size_t len) { onData(data, len); });
+    ws_.setDataCallback([this] (void* data, size_t len, bool fin) {
+        onData(data, len);
+    });
     ws_.setWriteCallback([this] (KMError err) { onSend(err); });
     ws_.setErrorCallback([this] (KMError err) { onClose(err); });
     //timer_.schedule(1000, [this] { onTimer(); }, true);
@@ -42,7 +44,7 @@ void WsClient::sendData()
 {
     uint8_t buf[1024];
     *(uint32_t*)buf = htonl(++index_);
-    ws_.send(buf, sizeof(buf));
+    ws_.send(buf, sizeof(buf), false);
     // should buffer remain data if send length < sizeof(buf)
 }
 

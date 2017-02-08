@@ -190,57 +190,62 @@ WSHandler::WSError WSHandler::handleData(uint8_t* data, size_t len)
     if(state_ == STATE_HANDSHAKE) {
         DESTROY_DETECTOR_SETUP();
         int bytes_used = http_parser_.parse((char*)data, len);
-        DESTROY_DETECTOR_CHECK(WS_ERROR_DESTROYED);
+        DESTROY_DETECTOR_CHECK(WSError::DESTROYED);
         if(state_ == STATE_ERROR) {
-            return WS_ERROR_HANDSHAKE;
+            return WSError::HANDSHAKE;
         }
         if(bytes_used < (int)len && state_ == STATE_OPEN) {
             return decodeFrame(data + bytes_used, len - bytes_used);
         }
     } else {
-        return WS_ERROR_INVALID_STATE;
+        return WSError::INVALID_STATE;
     }
-    return WS_ERROR_NOERR;
+    return WSError::NOERR;
 }
 
-int WSHandler::encodeFrameHeader(WSOpcode opcode, size_t frame_len, uint8_t frame_hdr[10])
+int WSHandler::encodeFrameHeader(WSOpcode opcode, bool fin, uint8_t (*mask_key)[WS_MASK_KEY_SIZE], size_t plen, uint8_t hdr_buf[14])
 {
-    uint8_t first_byte = 0x80 | opcode;
-    uint8_t second_byte = 0x00;
+    uint8_t first_byte = fin ? 0x80 : 0x00;
+    first_byte |= opcode;
+    uint8_t second_byte = mask_key?0x80:0x00;
     uint8_t hdr_len = 2;
     
-    if(frame_len <= 125)
+    if(plen <= 125)
     {//0 byte
-        second_byte = (uint8_t)frame_len;
+        second_byte |= (uint8_t)plen;
     }
-    else if(frame_len <= 0xFFFF)
+    else if(plen <= 0xFFFF)
     {//2 bytes
         hdr_len += 2;
-        second_byte = 126;
+        second_byte |= 126;
     }
     else
     {//8 bytes
         hdr_len += 8;
-        second_byte = 127;
+        second_byte |= 127;
     }
     
-    frame_hdr[0] = first_byte;
-    frame_hdr[1] = second_byte;
-    if(126 == second_byte)
+    hdr_buf[0] = first_byte;
+    hdr_buf[1] = second_byte;
+    if(126 == (second_byte & 0x7F))
     {
-        frame_hdr[2] = (unsigned char)(frame_len >> 8);
-        frame_hdr[3] = (unsigned char)frame_len;
+        hdr_buf[2] = (unsigned char)(plen >> 8);
+        hdr_buf[3] = (unsigned char)plen;
     }
-    else if(127 == second_byte)
+    else if(127 == (second_byte & 0x7F))
     {
-        frame_hdr[2] = 0;
-        frame_hdr[3] = 0;
-        frame_hdr[4] = 0;
-        frame_hdr[5] = 0;
-        frame_hdr[6] = (unsigned char)(frame_len >> 24);
-        frame_hdr[7] = (unsigned char)(frame_len >> 16);
-        frame_hdr[8] = (unsigned char)(frame_len >> 8);
-        frame_hdr[9] = (unsigned char)frame_len;
+        hdr_buf[2] = 0;
+        hdr_buf[3] = 0;
+        hdr_buf[4] = 0;
+        hdr_buf[5] = 0;
+        hdr_buf[6] = (unsigned char)(plen >> 24);
+        hdr_buf[7] = (unsigned char)(plen >> 16);
+        hdr_buf[8] = (unsigned char)(plen >> 8);
+        hdr_buf[9] = (unsigned char)plen;
+    }
+    if (mask_key) {
+        memcpy(hdr_buf + hdr_len, *mask_key, WS_MASK_KEY_SIZE);
+        hdr_len += WS_MASK_KEY_SIZE;
     }
     return hdr_len;
 }
@@ -255,27 +260,42 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
     {
         switch(ctx_.state)
         {
-            case FRAME_DECODE_STATE_HDR1:
+            case DecodeState::HDR1:
+            {
                 b = data[pos++];
                 ctx_.hdr.fin = b >> 7;
                 ctx_.hdr.opcode = b & 0x0F;
                 if(b & 0x70) { // reserved bits are not 0
-                    ctx_.state = FRAME_DECODE_STATE_ERROR;
-                    return WS_ERROR_INVALID_FRAME;
+                    ctx_.state = DecodeState::ERROR;
+                    return WSError::INVALID_FRAME;
                 }
-                opcode_ = ctx_.hdr.opcode;
-                ctx_.state = FRAME_DECODE_STATE_HDR2;
+                if (!ctx_.hdr.fin && isControlFrame(ctx_.hdr.opcode)) {
+                    // Control frames MUST NOT be fragmented
+                    ctx_.state = DecodeState::ERROR;
+                    return WSError::PROTOCOL_ERROR;
+                }
+                // TODO: check interleaved fragments of different messages
+                ctx_.state = DecodeState::HDR2;
                 break;
-            case FRAME_DECODE_STATE_HDR2:
+            }
+            case DecodeState::HDR2:
+            {
                 b = data[pos++];
                 ctx_.hdr.mask = b >> 7;
                 ctx_.hdr.plen = b & 0x7F;
                 ctx_.hdr.xpl.xpl64 = 0;
                 ctx_.pos = 0;
                 ctx_.buf.clear();
-                ctx_.state = FRAME_DECODE_STATE_HDREX;
+                if (isControlFrame(ctx_.hdr.opcode) && ctx_.hdr.plen > 125) {
+                    // the payload length of control frames MUST <= 125
+                    ctx_.state = DecodeState::ERROR;
+                    return WSError::PROTOCOL_ERROR;
+                }
+                ctx_.state = DecodeState::HDREX;
                 break;
-            case FRAME_DECODE_STATE_HDREX:
+            }
+            case DecodeState::HDREX:
+            {
                 if(126 == ctx_.hdr.plen) {
                     uint32_t expect_len = 2;
                     if(len-pos+ctx_.pos >= expect_len) {
@@ -285,15 +305,15 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                         ctx_.pos = 0;
                         if(ctx_.hdr.xpl.xpl16 < 126)
                         {// invalid ex payload length
-                            ctx_.state = FRAME_DECODE_STATE_ERROR;
-                            return WS_ERROR_INVALID_LENGTH;
+                            ctx_.state = DecodeState::ERROR;
+                            return WSError::INVALID_LENGTH;
                         }
                         ctx_.hdr.length = ctx_.hdr.xpl.xpl16;
-                        ctx_.state = FRAME_DECODE_STATE_MASKEY;
+                        ctx_.state = DecodeState::MASKEY;
                     } else {
                         ctx_.hdr.xpl.xpl16 |= data[pos++]<<8;
                         ++ctx_.pos;
-                        return WS_ERROR_NEED_MORE_DATA;
+                        return WSError::NEED_MORE_DATA;
                     }
                 } else if(127 == ctx_.hdr.plen) {
                     uint32_t expect_len = 8;
@@ -304,29 +324,36 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                         ctx_.pos = 0;
                         if((ctx_.hdr.xpl.xpl64>>63) != 0)
                         {// invalid ex payload length
-                            ctx_.state = FRAME_DECODE_STATE_ERROR;
-                            return WS_ERROR_INVALID_LENGTH;
+                            ctx_.state = DecodeState::ERROR;
+                            return WSError::INVALID_LENGTH;
                         }
                         ctx_.hdr.length = (uint32_t)ctx_.hdr.xpl.xpl64;
                         if(ctx_.hdr.length > WS_MAX_FRAME_DATA_LENGTH)
                         {// invalid ex payload length
-                            ctx_.state = FRAME_DECODE_STATE_ERROR;
-                            return WS_ERROR_INVALID_LENGTH;
+                            ctx_.state = DecodeState::ERROR;
+                            return WSError::INVALID_LENGTH;
                         }
-                        ctx_.state = FRAME_DECODE_STATE_MASKEY;
+                        ctx_.state = DecodeState::MASKEY;
                     } else {
                         for (; pos<len; ++pos, ++ctx_.pos) {
                             ctx_.hdr.xpl.xpl64 |= data[pos] << ((expect_len-ctx_.pos-1) << 3);
                         }
-                        return WS_ERROR_NEED_MORE_DATA;
+                        return WSError::NEED_MORE_DATA;
                     }
                 } else {
                     ctx_.hdr.length = ctx_.hdr.plen;
-                    ctx_.state = FRAME_DECODE_STATE_MASKEY;
+                    ctx_.state = DecodeState::MASKEY;
                 }
                 break;
-            case FRAME_DECODE_STATE_MASKEY:
+            }
+            case DecodeState::MASKEY:
+            {
                 if(ctx_.hdr.mask) {
+                    if (WSMode::CLIENT == mode_) {
+                        // server MUST NOT mask any frames
+                        ctx_.state = DecodeState::ERROR;
+                        return WSError::PROTOCOL_ERROR;
+                    }
                     uint32_t expect_len = 4;
                     if(len-pos+ctx_.pos >= expect_len)
                     {
@@ -337,68 +364,80 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                         memcpy(ctx_.hdr.maskey+ctx_.pos, data+pos, len-pos);
                         ctx_.pos += uint8_t(len-pos);
                         pos = len;
-                        return WS_ERROR_NEED_MORE_DATA;
+                        return WSError::NEED_MORE_DATA;
                     }
+                } else if (WSMode::SERVER == mode_ && ctx_.hdr.length > 0) {
+                    // client MUST mask all frames
+                    ctx_.state = DecodeState::ERROR;
+                    return WSError::PROTOCOL_ERROR;
                 }
                 ctx_.buf.clear();
-                ctx_.state = FRAME_DECODE_STATE_DATA;
-                if(WS_OPCODE_CLOSE == ctx_.hdr.opcode && 0 == ctx_.hdr.length) {
-                    // connection closed
-                    ctx_.state = FRAME_DECODE_STATE_CLOSED;
-                    return WS_ERROR_CLOSED;
-                }
+                ctx_.state = DecodeState::DATA;
                 break;
-            case FRAME_DECODE_STATE_DATA:
-                if(WS_OPCODE_CLOSE == ctx_.hdr.opcode) {
-                    // connection closed
-                    ctx_.state = FRAME_DECODE_STATE_CLOSED;
-                    return WS_ERROR_CLOSED;
-                }
-                if(ctx_.buf.empty() && len-pos >= ctx_.hdr.length) {
-                    uint8_t* notify_data = data + pos;
-                    uint32_t notify_len = ctx_.hdr.length;
-                    pos += notify_len;
-                    handleDataMask(ctx_.hdr, notify_data, notify_len);
-                    DESTROY_DETECTOR_SETUP();
-                    if(data_cb_) data_cb_(notify_data, notify_len);
-                    DESTROY_DETECTOR_CHECK(WS_ERROR_DESTROYED);
-                    ctx_.reset();
-                } else if(len-pos+ctx_.buf.size() >= ctx_.hdr.length) {
-                    auto buf_size = ctx_.buf.size();
-                    auto read_len = ctx_.hdr.length - buf_size;
-                    ctx_.buf.reserve(ctx_.hdr.length);
-                    ctx_.buf.insert(ctx_.buf.end(), data + pos, data + pos + read_len);
-                    uint8_t* notify_data = &ctx_.buf[0];
-                    uint32_t notify_len = ctx_.hdr.length;
-                    pos += read_len;
-                    handleDataMask(ctx_.hdr, notify_data, notify_len);
-                    DESTROY_DETECTOR_SETUP();
-                    if(data_cb_) data_cb_(notify_data, notify_len);
-                    DESTROY_DETECTOR_CHECK(WS_ERROR_DESTROYED);
-                    ctx_.reset();
-                } else {
+            }
+            case DecodeState::DATA:
+            {
+                if (len-pos+ctx_.buf.size() < ctx_.hdr.length) {
                     auto buf_size = ctx_.buf.size();
                     auto read_len = len - pos;
                     ctx_.buf.reserve(buf_size + read_len);
                     ctx_.buf.insert(ctx_.buf.end(), data + pos, data + len);
-                    return WS_ERROR_NEED_MORE_DATA;
+                    return WSError::NEED_MORE_DATA;
                 }
+
+                uint8_t* notify_data = nullptr;
+                uint32_t notify_len = 0;
+                if(ctx_.buf.empty()) {
+                    notify_data = data + pos;
+                    notify_len = ctx_.hdr.length;
+                    pos += notify_len;
+                } else {
+                    auto buf_size = ctx_.buf.size();
+                    auto read_len = ctx_.hdr.length - buf_size;
+                    ctx_.buf.reserve(ctx_.hdr.length);
+                    ctx_.buf.insert(ctx_.buf.end(), data + pos, data + pos + read_len);
+                    notify_data = &ctx_.buf[0];
+                    notify_len = ctx_.hdr.length;
+                    pos += read_len;
+                }
+                handleDataMask(ctx_.hdr, notify_data, notify_len);
+                auto err = handleFrame(ctx_.hdr, notify_data, notify_len);
+                if (err != WSError::NOERR) {
+                    return err;
+                }
+                if (WS_OPCODE_CLOSE == ctx_.hdr.opcode) {
+                    ctx_.state = DecodeState::CLOSED;
+                    return WSError::CLOSED;
+                }
+                ctx_.reset();
                 break;
+            }
             default:
-                return WS_ERROR_INVALID_FRAME;
+                return WSError::INVALID_FRAME;
         }
     }
-    return ctx_.state == FRAME_DECODE_STATE_HDR1 ? WS_ERROR_NOERR : WS_ERROR_NEED_MORE_DATA;
+    return ctx_.state == DecodeState::HDR1 ? WSError::NOERR : WSError::NEED_MORE_DATA;
 }
 
-WSHandler::WSError WSHandler::handleDataMask(FrameHeader& hdr, uint8_t* data, size_t len)
+WSHandler::WSError WSHandler::handleFrame(const FrameHeader &hdr, void* payload, size_t len)
 {
-    if(0 == hdr.mask) return WS_ERROR_NOERR;
-    if(nullptr == data || 0 == len) return WS_ERROR_INVALID_FRAME;
+    DESTROY_DETECTOR_SETUP();
+    if(frame_cb_) frame_cb_(hdr.opcode, hdr.fin, payload, len);
+    DESTROY_DETECTOR_CHECK(WSError::DESTROYED);
+    return WSError::NOERR;
+}
+
+void WSHandler::handleDataMask(const FrameHeader& hdr, uint8_t* data, size_t len)
+{
+    if(0 == hdr.mask) return ;
+    handleDataMask(hdr.maskey, data, len);
+}
+
+void WSHandler::handleDataMask(const uint8_t mask_key[WS_MASK_KEY_SIZE], uint8_t* data, size_t len)
+{
+    if(nullptr == data || 0 == len) return ;
     
     for(size_t i=0; i < len; ++i) {
-        data[i] = data[i] ^ hdr.maskey[i%4];
+        data[i] = data[i] ^ mask_key[i%4];
     }
-    
-    return WS_ERROR_NOERR;
 }

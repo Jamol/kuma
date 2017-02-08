@@ -29,58 +29,72 @@
 
 KUMA_NS_BEGIN
 
+#define WS_MASK_KEY_SIZE    4
+#define WS_MAX_HEADER_SIZE  14
 class WSHandler : public DestroyDetector
 {
 public:
     typedef enum{
+        WS_OPCODE_CONTINUE  = 0,
         WS_OPCODE_TEXT      = 1,
         WS_OPCODE_BINARY    = 2,
         WS_OPCODE_CLOSE     = 8,
         WS_OPCODE_PING      = 9,
         WS_OPCODE_PONG      = 10
     }WSOpcode;
-    typedef enum{
-        WS_ERROR_NOERR,
-        WS_ERROR_NEED_MORE_DATA,
-        WS_ERROR_HANDSHAKE,
-        WS_ERROR_INVALID_PARAM,
-        WS_ERROR_INVALID_STATE,
-        WS_ERROR_INVALID_FRAME,
-        WS_ERROR_INVALID_LENGTH,
-        WS_ERROR_CLOSED,
-        WS_ERROR_DESTROYED
-    }WSError;
-    using DataCallback = std::function<void(void*, size_t)>;
+    enum class WSError : int {
+        NOERR,
+        NEED_MORE_DATA,
+        HANDSHAKE,
+        INVALID_PARAM,
+        INVALID_STATE,
+        INVALID_FRAME,
+        INVALID_LENGTH,
+        PROTOCOL_ERROR,
+        CLOSED,
+        DESTROYED
+    };
+    enum class WSMode {
+        CLIENT,
+        SERVER
+    };
+    using FrameCallback = std::function<void(uint8_t/*opcode*/, bool/*fin*/, void*, size_t)>;
     using HandshakeCallback = std::function<void(KMError)>;
     
     WSHandler();
     ~WSHandler() = default;
     
+    void setMode(WSMode mode) { mode_ = mode; }
+    WSMode getMode() { return mode_; }
     void setHttpParser(HttpParser::Impl&& parser);
     std::string buildUpgradeRequest(const std::string& path, const std::string& host,
                              const std::string& proto, const std::string& origin);
     std::string buildUpgradeResponse();
     
     WSError handleData(uint8_t* data, size_t len);
-    int encodeFrameHeader(WSOpcode opcode, size_t frame_len, uint8_t frame_hdr[10]);
-    uint8_t getOpcode() { return opcode_; }
+    static int encodeFrameHeader(WSOpcode opcode, bool fin, uint8_t (*mask_key)[WS_MASK_KEY_SIZE], size_t plen, uint8_t hdr_buf[14]);
     
     const std::string getProtocol();
     const std::string getOrigin();
     
-    void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
+    void setFrameCallback(FrameCallback cb) { frame_cb_ = std::move(cb); }
     void setHandshakeCallback(HandshakeCallback cb) { handshake_cb_ = std::move(cb); }
     
+    static void handleDataMask(const uint8_t mask_key[WS_MASK_KEY_SIZE], uint8_t* data, size_t len);
+    static bool isControlFrame(uint8_t opcode) {
+        return opcode == WS_OPCODE_PING || opcode == WS_OPCODE_PONG || opcode == WS_OPCODE_CLOSE;
+    }
+    
 private:
-    typedef enum {
-        FRAME_DECODE_STATE_HDR1,
-        FRAME_DECODE_STATE_HDR2,
-        FRAME_DECODE_STATE_HDREX,
-        FRAME_DECODE_STATE_MASKEY,
-        FRAME_DECODE_STATE_DATA,
-        FRAME_DECODE_STATE_CLOSED,
-        FRAME_DECODE_STATE_ERROR,
-    }DecodeState;
+    enum class DecodeState {
+        HDR1,
+        HDR2,
+        HDREX,
+        MASKEY,
+        DATA,
+        CLOSED,
+        ERROR,
+    };
     
     typedef struct FrameHeader {
         uint8_t fin:1;
@@ -94,32 +108,25 @@ private:
             uint16_t xpl16;
             uint64_t xpl64;
         }xpl;
-        uint8_t maskey[4];
-        uint32_t length;
+        uint8_t maskey[WS_MASK_KEY_SIZE];
+        uint32_t length = 0;
     }FrameHeader;
     typedef struct DecodeContext{
-        DecodeContext()
-        : hdr()
-        , state(FRAME_DECODE_STATE_HDR1)
-        , pos(0)
-        {
-            
-        }
         void reset()
         {
             memset(&hdr, 0, sizeof(hdr));
-            state = FRAME_DECODE_STATE_HDR1;
+            state = DecodeState::HDR1;
             buf.clear();
             pos = 0;
         }
         FrameHeader hdr;
-        DecodeState state;
+        DecodeState state{ DecodeState::HDR1 };
         std::vector<uint8_t> buf;
-        uint8_t pos;
+        uint8_t pos = 0;
     }DecodeContext;
     void cleanup();
     
-    static WSError handleDataMask(FrameHeader& hdr, uint8_t* data, size_t len);
+    void handleDataMask(const FrameHeader& hdr, uint8_t* data, size_t len);
     WSError decodeFrame(uint8_t* data, size_t len);
     
     void onHttpData(void* data, size_t len);
@@ -127,6 +134,7 @@ private:
     
     void handleRequest();
     void handleResponse();
+    WSError handleFrame(const FrameHeader &hdr, void* payload, size_t len);
     
 private:
     typedef enum {
@@ -136,12 +144,12 @@ private:
         STATE_DESTROY
     }State;
     State                   state_{ STATE_HANDSHAKE };
+    WSMode                  mode_ = WSMode::CLIENT;
     DecodeContext           ctx_;
-    uint8_t                 opcode_{ WS_OPCODE_BINARY };
     
     HttpParser::Impl        http_parser_;
     
-    DataCallback            data_cb_;
+    FrameCallback           frame_cb_;
     HandshakeCallback       handshake_cb_;
 };
 

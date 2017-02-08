@@ -47,7 +47,7 @@ public:
     KMError connect(const std::string& ws_url, EventCallback cb);
     KMError attachFd(SOCKET_FD fd, const void* init_data, size_t init_len);
     KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len);
-    int send(const void* data, size_t len);
+    int send(const void* data, size_t len, bool is_text, bool fin);
     KMError close();
     
     void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
@@ -67,12 +67,17 @@ private:
     State getState() { return state_; }
     KMError connect_i(const std::string& ws_url);
     void cleanup();
+    void setupWsHandler();
     
     void sendUpgradeRequest();
     void sendUpgradeResponse();
-    void onWsData(void* data, size_t len);
+    void onWsFrame(uint8_t opcode, bool fin, void* payload, size_t plen);
     void onWsHandshake(KMError err);
     void onStateOpen();
+    KMError sendWsFrame(WSHandler::WSOpcode opcode, bool fin, uint8_t *payload, size_t plen);
+    KMError sendCloseFrame(uint16_t statusCode);
+    KMError sendPingFrame(uint8_t *payload, size_t plen);
+    KMError sendPongFrame(uint8_t *payload, size_t plen);
     
     void onConnect(KMError err) override;
     KMError handleInputData(uint8_t *src, size_t len) override;
@@ -83,6 +88,7 @@ private:
     State                   state_ = State::IDLE;
     WSHandler               ws_handler_;
     Uri                     uri_;
+    bool                    fragmented_ = false;
     
     size_t                  body_bytes_sent_ = 0;
     

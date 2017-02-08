@@ -343,7 +343,7 @@ int SslHandler::receive(void* data, size_t size)
             break;
         case SSL_ERROR_ZERO_RETURN:
             ret = -1;
-            KUMA_INFOXTRACE("receive, SSL_ERROR_ZERO_RETURN");
+            KUMA_INFOXTRACE("receive, SSL_ERROR_ZERO_RETURN, len="<<size);
             break;
         case SSL_ERROR_SYSCALL:
             if(errno == EAGAIN || errno == EINTR) {

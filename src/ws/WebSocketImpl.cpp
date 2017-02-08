@@ -31,6 +31,7 @@ using namespace kuma;
 WebSocket::Impl::Impl(EventLoop::Impl* loop)
 : TcpConnection(loop)
 {
+    setupWsHandler();
     KM_SetObjKey("WebSocket");
 }
 
@@ -42,6 +43,16 @@ WebSocket::Impl::~Impl()
 void WebSocket::Impl::cleanup()
 {
     TcpConnection::close();
+}
+
+void WebSocket::Impl::setupWsHandler()
+{
+    ws_handler_.setFrameCallback([this] (uint8_t opcode, bool fin, void* data, size_t len) {
+        onWsFrame(opcode, fin, data, len);
+    });
+    ws_handler_.setHandshakeCallback([this] (KMError err) {
+        onWsHandshake(err);
+    });
 }
 
 void WebSocket::Impl::setProtocol(const std::string& proto)
@@ -60,6 +71,7 @@ KMError WebSocket::Impl::connect(const std::string& ws_url, EventCallback cb)
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
         return KMError::INVALID_STATE;
     }
+    ws_handler_.setMode(WSHandler::WSMode::CLIENT);
     connect_cb_ = std::move(cb);
     return connect_i(ws_url);
 }
@@ -86,16 +98,14 @@ KMError WebSocket::Impl::connect_i(const std::string& ws_url)
 
 KMError WebSocket::Impl::attachFd(SOCKET_FD fd, const void* init_data, size_t init_len)
 {
-    ws_handler_.setDataCallback([this] (void* data, size_t len) { onWsData(data, len); });
-    ws_handler_.setHandshakeCallback([this] (KMError err) { onWsHandshake(err); });
+    ws_handler_.setMode(WSHandler::WSMode::SERVER);
     setState(State::UPGRADING);
     return TcpConnection::attachFd(fd, init_data, init_len);
 }
 
 KMError WebSocket::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len)
 {
-    ws_handler_.setDataCallback([this] (void* data, size_t len) { onWsData(data, len); });
-    ws_handler_.setHandshakeCallback([this] (KMError err) { onWsHandshake(err); });
+    ws_handler_.setMode(WSHandler::WSMode::SERVER);
     setState(State::UPGRADING);
 
     auto ret = TcpConnection::attachSocket(std::move(tcp), init_data, init_len);
@@ -104,7 +114,7 @@ KMError WebSocket::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& 
     return ret;
 }
 
-int WebSocket::Impl::send(const void* data, size_t len)
+int WebSocket::Impl::send(const void* data, size_t len, bool is_text, bool fin)
 {
     if(getState() != State::OPEN) {
         return -1;
@@ -112,24 +122,31 @@ int WebSocket::Impl::send(const void* data, size_t len)
     if(!sendBufferEmpty()) {
         return 0;
     }
-    uint8_t hdr[10];
     WSHandler::WSOpcode opcode = WSHandler::WSOpcode::WS_OPCODE_BINARY;
-    if(ws_handler_.getOpcode() == WSHandler::WSOpcode::WS_OPCODE_TEXT) {
+    if(is_text) {
         opcode = WSHandler::WSOpcode::WS_OPCODE_TEXT;
     }
-    int hdr_len = ws_handler_.encodeFrameHeader(opcode, len, hdr);
-    iovec iovs[2];
-    iovs[0].iov_base = (char*)hdr;
-    iovs[0].iov_len = hdr_len;
-    iovs[1].iov_base = (char*)data;
-    iovs[1].iov_len = len;
-    int ret = TcpConnection::send(iovs, 2);
-    return ret < 0 ? ret : (int)len;
+    if (fin) {
+        if (fragmented_) {
+            fragmented_ = false;
+            opcode = WSHandler::WSOpcode::WS_OPCODE_CONTINUE;
+        }
+    } else {
+        if (fragmented_) {
+            opcode = WSHandler::WSOpcode::WS_OPCODE_CONTINUE;
+        }
+        fragmented_ = true;
+    }
+    auto ret = sendWsFrame(opcode, fin, (uint8_t*)data, len);
+    return ret == KMError::NOERR ? (int)len : -1;
 }
 
 KMError WebSocket::Impl::close()
 {
     KUMA_INFOXTRACE("close");
+    if (getState() == State::OPEN) {
+        sendCloseFrame(1000);
+    }
     cleanup();
     setState(State::CLOSED);
     return KMError::NOERR;
@@ -144,11 +161,9 @@ KMError WebSocket::Impl::handleInputData(uint8_t *src, size_t len)
         if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
             return KMError::INVALID_STATE;
         }
-        if(err != WSHandler::WSError::WS_ERROR_NOERR &&
-           err != WSHandler::WSError::WS_ERROR_NEED_MORE_DATA) {
-            cleanup();
-            setState(State::CLOSED);
-            if(error_cb_) error_cb_(KMError::FAILED);
+        if(err != WSHandler::WSError::NOERR &&
+           err != WSHandler::WSError::NEED_MORE_DATA) {
+            onError(KMError::FAILED);
             return KMError::FAILED;
         }
     } else {
@@ -163,8 +178,6 @@ void WebSocket::Impl::onConnect(KMError err)
         if(connect_cb_) connect_cb_(err);
         return ;
     }
-    ws_handler_.setDataCallback([this] (void* data, size_t len) { onWsData(data, len); });
-    ws_handler_.setHandshakeCallback([this] (KMError err) { onWsHandshake(err); });
     body_bytes_sent_ = 0;
     sendUpgradeRequest();
 }
@@ -217,9 +230,28 @@ void WebSocket::Impl::onStateOpen()
     }
 }
 
-void WebSocket::Impl::onWsData(void* data, size_t len)
+void WebSocket::Impl::onWsFrame(uint8_t opcode, bool fin, void* payload, size_t plen)
 {
-    if(data_cb_) data_cb_(data, len);
+    if (WSHandler::isControlFrame(opcode)) {
+        if (WSHandler::WSOpcode::WS_OPCODE_CLOSE == opcode) {
+            uint16_t statusCode = 0;
+            if (payload && plen >= 2) {
+                const uint8_t *ptr = (uint8_t*)payload;
+                statusCode = (ptr[0] << 8) | ptr[1];
+                KUMA_INFOXTRACE("onWsFrame, close-frame, statusCode="<<statusCode<<", len="<<(plen-2));
+            } else {
+                KUMA_INFOXTRACE("onWsFrame, close-frame received");
+            }
+            sendCloseFrame(statusCode);
+            cleanup();
+            setState(State::CLOSED);
+            if(error_cb_) error_cb_(KMError::FAILED);
+        } else if (WSHandler::WSOpcode::WS_OPCODE_PING == opcode) {
+            sendPongFrame((uint8_t*)payload, plen);
+        }
+    } else {
+        if(data_cb_) data_cb_(payload, plen, fin);
+    }
 }
 
 void WebSocket::Impl::onWsHandshake(KMError err)
@@ -234,4 +266,47 @@ void WebSocket::Impl::onWsHandshake(KMError err)
         setState(State::IN_ERROR);
         if(error_cb_) error_cb_(KMError::FAILED);
     }
+}
+
+KMError WebSocket::Impl::sendWsFrame(WSHandler::WSOpcode opcode, bool fin, uint8_t *payload, size_t plen)
+{
+    uint8_t hdr_buf[WS_MAX_HEADER_SIZE];
+    int hdr_len = 0;
+    if (ws_handler_.getMode() == WSHandler::WSMode::CLIENT && plen > 0) {
+        uint8_t mask_key[WS_MASK_KEY_SIZE];
+        generateRandomBytes(mask_key, WS_MASK_KEY_SIZE);
+        WSHandler::handleDataMask(mask_key, payload, plen);
+        hdr_len = ws_handler_.encodeFrameHeader(opcode, fin, &mask_key, plen, hdr_buf);
+    } else {
+        hdr_len = ws_handler_.encodeFrameHeader(opcode, fin, nullptr, plen, hdr_buf);
+    }
+    iovec iovs[2];
+    iovs[0].iov_base = (char*)hdr_buf;
+    iovs[0].iov_len = hdr_len;
+    iovs[1].iov_base = (char*)payload;
+    iovs[1].iov_len = plen;
+    auto ret = TcpConnection::send(iovs, 2);
+    return ret < 0 ? KMError::SOCK_ERROR : KMError::NOERR;
+}
+
+KMError WebSocket::Impl::sendCloseFrame(uint16_t statusCode)
+{
+    if (statusCode != 0) {
+        uint8_t payload[2];
+        payload[0] = statusCode >> 8;
+        payload[1] = statusCode & 0xFF;
+        return sendWsFrame(WSHandler::WSOpcode::WS_OPCODE_CLOSE, true, payload, 2);
+    } else {
+        return sendWsFrame(WSHandler::WSOpcode::WS_OPCODE_CLOSE, true, nullptr, 0);
+    }
+}
+
+KMError WebSocket::Impl::sendPingFrame(uint8_t *payload, size_t plen)
+{
+    return sendWsFrame(WSHandler::WSOpcode::WS_OPCODE_PING, true, payload, plen);
+}
+
+KMError WebSocket::Impl::sendPongFrame(uint8_t *payload, size_t plen)
+{
+    return sendWsFrame(WSHandler::WSOpcode::WS_OPCODE_PONG, true, payload, plen);
 }

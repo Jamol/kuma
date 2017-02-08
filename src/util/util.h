@@ -104,6 +104,8 @@ inline void encode_u16(uint8_t *dst, uint32_t u) {
     dst[0] = u >> 8, dst[1] = u;
 }
 
+int generateRandomBytes(uint8_t *buf, int len);
+
 extern "C" {
     KUMA_API int km_resolve_2_ip(const char* host_name, char *ip_buf, int ip_buf_len, int ipv = 0);
     KUMA_API int km_parse_address(const char* addr,

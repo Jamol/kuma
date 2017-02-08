@@ -801,9 +801,9 @@ KMError WebSocket::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const void
     return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move((*parser.pimpl())), init_data, init_len);
 }
 
-int WebSocket::send(const void* data, size_t len)
+int WebSocket::send(const void* data, size_t len, bool is_text, bool fin)
 {
-    return pimpl_->send(data, len);
+    return pimpl_->send(data, len, is_text, fin);
 }
 
 KMError WebSocket::close()
