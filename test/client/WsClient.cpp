@@ -22,7 +22,7 @@ WsClient::WsClient(TestLoop* loop, long conn_id)
 
 void WsClient::startRequest(const std::string& url)
 {
-    ws_.setDataCallback([this] (void* data, size_t len, bool fin) {
+    ws_.setDataCallback([this] (void* data, size_t len, bool is_text, bool fin) {
         onData(data, len);
     });
     ws_.setWriteCallback([this] (KMError err) { onSend(err); });

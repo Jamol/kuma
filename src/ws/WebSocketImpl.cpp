@@ -250,7 +250,8 @@ void WebSocket::Impl::onWsFrame(uint8_t opcode, bool fin, void* payload, size_t 
             sendPongFrame((uint8_t*)payload, plen);
         }
     } else {
-        if(data_cb_) data_cb_(payload, plen, fin);
+        bool is_text = WSHandler::WSOpcode::WS_OPCODE_TEXT == opcode;
+        if(data_cb_) data_cb_(payload, plen, is_text, fin);
     }
 }
 

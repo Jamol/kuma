@@ -10,7 +10,7 @@ WsTest::WsTest(TestLoop* loop, long conn_id)
 {
     ws_.setWriteCallback([this] (KMError err) { onSend(err); });
     ws_.setErrorCallback([this] (KMError err) { onClose(err); });
-    ws_.setDataCallback([this] (void* data, size_t len, bool fin) {
+    ws_.setDataCallback([this] (void* data, size_t len, bool is_text, bool fin) {
         onData(data, len);
     });
 }
