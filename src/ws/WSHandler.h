@@ -93,7 +93,7 @@ private:
         MASKEY,
         DATA,
         CLOSED,
-        ERROR,
+        IN_ERROR,
     };
     
     typedef struct FrameHeader {

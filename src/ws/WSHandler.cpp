@@ -266,12 +266,12 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                 ctx_.hdr.fin = b >> 7;
                 ctx_.hdr.opcode = b & 0x0F;
                 if(b & 0x70) { // reserved bits are not 0
-                    ctx_.state = DecodeState::ERROR;
+                    ctx_.state = DecodeState::IN_ERROR;
                     return WSError::INVALID_FRAME;
                 }
                 if (!ctx_.hdr.fin && isControlFrame(ctx_.hdr.opcode)) {
                     // Control frames MUST NOT be fragmented
-                    ctx_.state = DecodeState::ERROR;
+                    ctx_.state = DecodeState::IN_ERROR;
                     return WSError::PROTOCOL_ERROR;
                 }
                 // TODO: check interleaved fragments of different messages
@@ -288,7 +288,7 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                 ctx_.buf.clear();
                 if (isControlFrame(ctx_.hdr.opcode) && ctx_.hdr.plen > 125) {
                     // the payload length of control frames MUST <= 125
-                    ctx_.state = DecodeState::ERROR;
+                    ctx_.state = DecodeState::IN_ERROR;
                     return WSError::PROTOCOL_ERROR;
                 }
                 ctx_.state = DecodeState::HDREX;
@@ -305,7 +305,7 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                         ctx_.pos = 0;
                         if(ctx_.hdr.xpl.xpl16 < 126)
                         {// invalid ex payload length
-                            ctx_.state = DecodeState::ERROR;
+                            ctx_.state = DecodeState::IN_ERROR;
                             return WSError::INVALID_LENGTH;
                         }
                         ctx_.hdr.length = ctx_.hdr.xpl.xpl16;
@@ -324,13 +324,13 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                         ctx_.pos = 0;
                         if((ctx_.hdr.xpl.xpl64>>63) != 0)
                         {// invalid ex payload length
-                            ctx_.state = DecodeState::ERROR;
+                            ctx_.state = DecodeState::IN_ERROR;
                             return WSError::INVALID_LENGTH;
                         }
                         ctx_.hdr.length = (uint32_t)ctx_.hdr.xpl.xpl64;
                         if(ctx_.hdr.length > WS_MAX_FRAME_DATA_LENGTH)
                         {// invalid ex payload length
-                            ctx_.state = DecodeState::ERROR;
+                            ctx_.state = DecodeState::IN_ERROR;
                             return WSError::INVALID_LENGTH;
                         }
                         ctx_.state = DecodeState::MASKEY;
@@ -351,7 +351,7 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                 if(ctx_.hdr.mask) {
                     if (WSMode::CLIENT == mode_) {
                         // server MUST NOT mask any frames
-                        ctx_.state = DecodeState::ERROR;
+                        ctx_.state = DecodeState::IN_ERROR;
                         return WSError::PROTOCOL_ERROR;
                     }
                     uint32_t expect_len = 4;
@@ -368,7 +368,7 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                     }
                 } else if (WSMode::SERVER == mode_ && ctx_.hdr.length > 0) {
                     // client MUST mask all frames
-                    ctx_.state = DecodeState::ERROR;
+                    ctx_.state = DecodeState::IN_ERROR;
                     return WSError::PROTOCOL_ERROR;
                 }
                 ctx_.buf.clear();

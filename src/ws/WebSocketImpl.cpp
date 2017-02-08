@@ -238,7 +238,7 @@ void WebSocket::Impl::onWsFrame(uint8_t opcode, bool fin, void* payload, size_t 
             if (payload && plen >= 2) {
                 const uint8_t *ptr = (uint8_t*)payload;
                 statusCode = (ptr[0] << 8) | ptr[1];
-                KUMA_INFOXTRACE("onWsFrame, close-frame, statusCode="<<statusCode<<", len="<<(plen-2));
+                KUMA_INFOXTRACE("onWsFrame, close-frame, statusCode="<<statusCode<<", plen="<<(plen-2));
             } else {
                 KUMA_INFOXTRACE("onWsFrame, close-frame received");
             }
@@ -281,11 +281,16 @@ KMError WebSocket::Impl::sendWsFrame(WSHandler::WSOpcode opcode, bool fin, uint8
         hdr_len = ws_handler_.encodeFrameHeader(opcode, fin, nullptr, plen, hdr_buf);
     }
     iovec iovs[2];
+    int cnt = 0;
     iovs[0].iov_base = (char*)hdr_buf;
     iovs[0].iov_len = hdr_len;
-    iovs[1].iov_base = (char*)payload;
-    iovs[1].iov_len = plen;
-    auto ret = TcpConnection::send(iovs, 2);
+    ++cnt;
+    if (plen > 0) {
+        iovs[1].iov_base = (char*)payload;
+        iovs[1].iov_len = plen;
+        ++cnt;
+    }
+    auto ret = TcpConnection::send(iovs, cnt);
     return ret < 0 ? KMError::SOCK_ERROR : KMError::NOERR;
 }
 
