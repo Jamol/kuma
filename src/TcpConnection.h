@@ -43,7 +43,7 @@ public:
     int send(iovec* iovs, int count);
     KMError close();
     
-    EventLoop::Impl* getEventLoop() { return tcp_.getEventLoop(); }
+    EventLoop::Impl* eventLoop() { return tcp_.eventLoop(); }
     
 protected:
     // subclass should install destroy detector in this interface or implement delayed destroy

@@ -37,10 +37,12 @@ void Http2Response::cleanup()
         stream_->close();
         stream_.reset();
     }
+    loop_token_.reset();
 }
 
 KMError Http2Response::attachStream(H2Connection::Impl* conn, uint32_t streamId)
 {
+    loop_token_.eventLoop(conn->eventLoop());
     //stream_ = conn->createStream(streamId);
     stream_ = conn->getStream(streamId);
     if (!stream_) {
@@ -84,10 +86,10 @@ KMError Http2Response::sendResponse(int status_code, const std::string& desc, co
     if (ret == KMError::NOERR) {
         if (endStream) {
             setState(State::COMPLETE);
-            loop_->queue([this] { notifyComplete(); });
+            loop_->queue([this] { notifyComplete(); }, &loop_token_);
         } else {
             setState(State::SENDING_BODY);
-            loop_->queue([this] { if (write_cb_) write_cb_(KMError::NOERR); });
+            loop_->queue([this] { if (write_cb_) write_cb_(KMError::NOERR); }, &loop_token_);
         }
     }
     return ret;
@@ -114,7 +116,7 @@ int Http2Response::sendData(const void* data, size_t len)
     if (endStream) { // end stream
         stream_->sendData(nullptr, 0, true);
         setState(State::COMPLETE);
-        loop_->queue([this] { notifyComplete(); });
+        loop_->queue([this] { notifyComplete(); }, &loop_token_);
     }
     return ret;
 }

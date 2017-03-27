@@ -43,7 +43,7 @@ const uint32_t LOCAL_STREAM_INITIAL_WINDOW_SIZE = 6*1024*1024;
 
 class Http2Response;
 
-class H2Connection::Impl : public KMObject, public DestroyDetector, public FrameCallback, public TcpConnection, public EventLoop::Impl::Listener
+class H2Connection::Impl : public KMObject, public DestroyDetector, public FrameCallback, public TcpConnection
 {
 public:
     using ConnectCallback = std::function<void(KMError)>;
@@ -79,10 +79,10 @@ public:
     uint32_t remoteWindowSize() { return flow_ctrl_.remoteWindowSize(); }
     void appendBlockedStream(uint32_t streamId);
     
-    void loopStopped() override;
+    void onLoopActivity(LoopActivity acti);
     
-    bool sync(LoopCallback cb);
-    bool async(LoopCallback cb);
+    bool sync(EventLoop::Task task);
+    bool async(EventLoop::Task task, EventLoopToken *token=nullptr);
     bool isInSameThread() const { return std::this_thread::get_id() == thread_id_; }
     
 public:
@@ -152,7 +152,7 @@ private:
     void notifyListeners(KMError err);
     void removeSelf();
     
-private:
+protected:
     State state_ = State::IDLE;
     AcceptCallback accept_cb_; // server only
     ErrorCallback error_cb_;
@@ -186,7 +186,7 @@ private:
     uint32_t lastStreamId_ = 0;
     
     bool prefaceReceived_ = false;
-    bool registeredToLoop_ = false;
+    EventLoopToken loop_token_;
 };
 
 using H2ConnectionPtr = std::shared_ptr<H2Connection::Impl>;

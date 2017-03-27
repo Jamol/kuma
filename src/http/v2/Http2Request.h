@@ -54,7 +54,7 @@ public:
     void onRSTStream(int err);
     void onWrite();
     
-private:
+protected:
     void onConnect(KMError err);
     void onError(KMError err);
     
@@ -68,9 +68,12 @@ private:
     int sendData_i(const void* data, size_t len);
     int sendData_i();
     void close_i();
+    void onLoopActivity(LoopActivity acti);
     //}
     
-private:
+    void cleanup();
+    
+protected:
     EventLoop::Impl* loop_;
     H2ConnectionPtr conn_;
     H2StreamPtr stream_;
@@ -85,7 +88,8 @@ private:
     bool write_blocked_ { false };
     KM_Queue<iovec> data_queue_;
     
-    std::string connKey_;
+    std::recursive_mutex loop_mutex_;
+    EventLoopToken loop_token_;
 };
 
 KUMA_NS_END

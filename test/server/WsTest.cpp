@@ -5,7 +5,7 @@
 
 WsTest::WsTest(TestLoop* loop, long conn_id)
 : loop_(loop)
-, ws_(loop->getEventLoop())
+, ws_(loop->eventLoop())
 , conn_id_(conn_id)
 {
     ws_.setWriteCallback([this] (KMError err) { onSend(err); });

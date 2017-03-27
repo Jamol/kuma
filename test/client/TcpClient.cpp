@@ -8,8 +8,8 @@
 
 TcpClient::TcpClient(TestLoop* loop, long conn_id)
 : loop_(loop)
-, tcp_(loop->getEventLoop())
-, timer_(loop->getEventLoop())
+, tcp_(loop->eventLoop())
+, timer_(loop->eventLoop())
 , conn_id_(conn_id)
 , index_(0)
 , max_send_count_(200000)

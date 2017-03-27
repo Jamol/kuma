@@ -31,6 +31,7 @@ using namespace kuma;
 Http1xResponse::Http1xResponse(EventLoop::Impl* loop, std::string ver)
 : HttpResponse::Impl(std::move(ver)), TcpConnection(loop)
 {
+    loop_token_.eventLoop(loop);
     http_message_.setSender([this] (const void* data, size_t len) -> int {
         return TcpConnection::send(data, len);
     });
@@ -48,6 +49,7 @@ Http1xResponse::~Http1xResponse()
 void Http1xResponse::cleanup()
 {
     TcpConnection::close();
+    loop_token_.reset();
 }
 
 KMError Http1xResponse::setSslFlags(uint32_t ssl_flags)
@@ -114,12 +116,10 @@ KMError Http1xResponse::sendResponse(int status_code, const std::string& desc, c
     } else if (sendBufferEmpty()) {
         if(!http_message_.hasBody()) {
             setState(State::COMPLETE);
-            // on loop test, the new request will arrived before notifyComplete()
-            //getEventLoop()->queue([this] { notifyComplete(); });
-            notifyComplete();
+            eventLoop()->queue([this] { notifyComplete(); }, &loop_token_);
         } else {
             setState(State::SENDING_BODY);
-            getEventLoop()->queue([this] { if (write_cb_) write_cb_(KMError::NOERR); });
+            eventLoop()->queue([this] { if (write_cb_) write_cb_(KMError::NOERR); }, &loop_token_);
         }
     }
     return KMError::NOERR;
@@ -136,9 +136,7 @@ int Http1xResponse::sendData(const void* data, size_t len)
     } else if(ret >= 0) {
         if (http_message_.isCompleted() && sendBufferEmpty()) {
             setState(State::COMPLETE);
-            // on loop test, the new request will arrived before notifyComplete()
-            //getEventLoop()->queue([this] { notifyComplete(); });
-            notifyComplete();
+            eventLoop()->queue([this] { notifyComplete(); }, &loop_token_);
         }
     }
     return ret;

@@ -6,7 +6,7 @@
 extern std::string getHttpVersion();
 HttpClient::HttpClient(TestLoop* loop, long conn_id)
 : loop_(loop)
-, http_request_(loop->getEventLoop(), getHttpVersion().c_str())
+, http_request_(loop->eventLoop(), getHttpVersion().c_str())
 , conn_id_(conn_id)
 {
     

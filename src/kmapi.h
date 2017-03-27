@@ -34,8 +34,30 @@
 
 KUMA_NS_BEGIN
 
+class EventLoopToken;
 class KUMA_API EventLoop
 {
+public:
+    using Task = std::function<void(void)>;
+    
+    class Token {
+    public:
+        Token();
+        Token(Token &&other);
+        Token(const Token &other) = delete;
+        ~Token();
+        
+        Token& operator=(Token &&other);
+        Token& operator=(const Token &other) = delete;
+        
+        void reset();
+        
+        EventLoopToken* pimpl();
+        
+    private:
+        EventLoopToken* pimpl_;
+    };
+    
 public:
     EventLoop(PollType poll_type = PollType::NONE);
     ~EventLoop();
@@ -55,25 +77,44 @@ public:
 public:
     bool inSameThread() const;
     
-    /* run the cb in loop thread and wait untill cb is executed.
-     * cb will execute at once if called on loop thread
-     *
-     * @param cb callback to be executed. it will always be executed when call success
+    /* create a token, it can be used to cancel the tasks that are scheduled with it
+     * if caller can guarantee the resources used by tasks are valid when task running,
+     * then token is no need, otherwise the caller should cancel the tasks queued in loop
+     * before the resources are unavailable
      */
-    KMError sync(LoopCallback cb);
+    Token createToken();
     
-    /* run the cb in loop thread.
-     * cb will execute at once if called on loop thread
+    /* run the task in loop thread and wait untill task is executed.
+     * the task will be executed at once if called on loop thread
+     * token is always unnecessary for sync task
      *
-     * @param cb callback to be executed. it will always be executed when call success
+     * @param task the task to be executed. it will always be executed when call success
      */
-    KMError async(LoopCallback cb);
+    KMError sync(Task task);
     
-    /* run the cb in loop thread at next time.
+    /* run the task in loop thread.
+     * the task will be executed at once if called on loop thread
      *
-     * @param cb callback to be executed. it will always be executed when call success
+     * @param task the task to be executed. it will always be executed when call success
+     * @param token to be used to cancel the task. If token is null, the caller should
+     *              make sure the resources referenced by task are valid when task running
      */
-    KMError queue(LoopCallback cb);
+    KMError async(Task task, Token *token=nullptr);
+    
+    /* run the task in loop thread at next time.
+     *
+     * @param task the task to be executed. it will always be executed when call success
+     * @param token to be used to cancel the task. If token is null, the caller should
+     *              make sure the resources referenced by task are valid when task running
+     */
+    KMError queue(Task task, Token *token=nullptr);
+    
+    /* cancel the tasks that are scheduled with token. you cannot cancel the task that is running
+     *
+     * @param token token of the tasks
+     */
+    void cancel(Token *token);
+    
     void loopOnce(uint32_t max_wait_ms);
     void loop(uint32_t max_wait_ms = -1);
     void stop();
@@ -82,7 +123,7 @@ public:
     Impl* pimpl();
 
 private:
-    Impl*  pimpl_;
+    Impl* pimpl_;
 };
 
 class KUMA_API TcpSocket

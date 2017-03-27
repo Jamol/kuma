@@ -31,6 +31,7 @@
 #include "util/DestroyDetector.h"
 #include "HttpResponseImpl.h"
 #include "HttpMessage.h"
+#include "EventLoopImpl.h"
 
 KUMA_NS_BEGIN
 
@@ -81,6 +82,7 @@ protected:
 protected:
     HttpParser::Impl        http_parser_;
     HttpMessage             http_message_;
+    EventLoopToken          loop_token_;
 };
 
 KUMA_NS_END

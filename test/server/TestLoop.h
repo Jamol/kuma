@@ -35,7 +35,7 @@ public:
     virtual ~ObjectManager() {}
     virtual void addObject(long conn_id, TestObject* obj) = 0;
     virtual void removeObject(long conn_id) = 0;
-    virtual EventLoop* getEventLoop() = 0;
+    virtual EventLoop* eventLoop() = 0;
 };
 
 class LoopPool;
@@ -57,7 +57,7 @@ public:
     void addObject(long conn_id, TestObject* obj) override;
     void removeObject(long conn_id) override;
     
-    EventLoop* getEventLoop() override { return loop_.get(); }
+    EventLoop* eventLoop() override { return loop_.get(); }
     
 private:
     void cleanup();

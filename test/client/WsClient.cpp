@@ -10,9 +10,9 @@ uint32_t getSendInterval();
 
 WsClient::WsClient(TestLoop* loop, long conn_id)
 : loop_(loop)
-, ws_(loop->getEventLoop())
+, ws_(loop->eventLoop())
 , timed_sending_(false)
-, timer_(loop->getEventLoop())
+, timer_(loop->eventLoop())
 , conn_id_(conn_id)
 , index_(0)
 , max_send_count_(200000)

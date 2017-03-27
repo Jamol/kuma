@@ -119,43 +119,64 @@ KMError EventLoop::Impl::unregisterFd(SOCKET_FD fd, bool close_fd)
     }
 }
 
-void EventLoop::Impl::addListener(Listener *l)
+KMError EventLoop::Impl::appendObserver(ObserverCallback cb, EventLoopToken *token)
 {
-    listeners_.push_back(l);
+    if (token && token->eventLoop() != this) {
+        return KMError::INVALID_PARAM;
+    }
+    LockGuard g(obs_mutex_);
+    if (stop_loop_) {
+        return KMError::INVALID_STATE;
+    }
+    auto obs_node = obs_queue_.enqueue(std::move(cb));
+    if (token) {
+        token->obs_token_ = obs_node;
+        token->observed = true;
+    }
+    return KMError::NOERR;
 }
 
-void EventLoop::Impl::removeListener(Listener *l)
+KMError EventLoop::Impl::removeObserver(EventLoopToken *token)
 {
-    for (auto it = listeners_.begin(); it != listeners_.end(); ++it) {
-        if (*it == l) {
-            listeners_.erase(it);
-            break;
+    if (token) {
+        if (token->eventLoop() != this) {
+            return KMError::INVALID_STATE;
         }
+        auto node = token->obs_token_.lock();
+        if (node) {
+            LockGuard g(obs_mutex_);
+            obs_queue_.remove(node);
+        }
+        token->obs_token_.reset();
+        token->observed = false;
     }
+    return KMError::NOERR;
 }
 
-void EventLoop::Impl::processCallbacks()
+void EventLoop::Impl::processTasks()
 {
-    /*LoopCallback cb;
-    while (cb_queue_.dequeue(cb)) {
-        if(cb) {
-            cb();
+    task_mutex_.lock();
+    while (auto node = task_queue_.front_node()) {
+        task_queue_.pop_front();
+        node->element_.state = TaskSlot::State::RUNNING;
+        task_mutex_.unlock();
+        task_run_mutex_.lock();
+        if (node->element_.state != TaskSlot::State::INACTIVE) {
+            node->element_();
+            node->element_.state = TaskSlot::State::INACTIVE;
         }
-    }*/
-    CallbackQueue queue;
-    cb_mutex_.lock();
-    std::swap(queue, cb_queue_);
-    cb_mutex_.unlock();
-    while (!queue.empty()) {
-        auto cb(std::move(queue.front()));
-        queue.pop_front();
-        if(cb) cb();
+        task_run_mutex_.unlock();
+        task_mutex_.lock();
+        if (node->element_.token) {
+            node->element_.token->removeTaskNode(node);
+        }
     }
+    task_mutex_.unlock();
 }
 
 void EventLoop::Impl::loopOnce(uint32_t max_wait_ms)
 {
-    processCallbacks();
+    processTasks();
     unsigned long wait_ms = max_wait_ms;
     timer_mgr_->checkExpire(&wait_ms);
     if(wait_ms > max_wait_ms) {
@@ -169,22 +190,15 @@ void EventLoop::Impl::loop(uint32_t max_wait_ms)
     while (!stop_loop_) {
         loopOnce(max_wait_ms);
     }
+    processTasks();
+    
     {
-        CallbackQueue queue;
-        cb_mutex_.lock();
-        stop_loop_ = true;
-        std::swap(queue, cb_queue_);
-        cb_mutex_.unlock();
-        while (!queue.empty()) {
-            auto cb(std::move(queue.front()));
-            queue.pop_front();
-            if(cb) cb();
+        LockGuard g(obs_mutex_);
+        ObserverCallback cb;
+        while (obs_queue_.dequeue(cb)) {
+            cb(LoopActivity::EXIT);
         }
     }
-    for (auto l : listeners_) {
-        l->loopStopped();
-    }
-    listeners_.clear();
     KUMA_INFOXTRACE("loop, stopped");
 }
 
@@ -200,71 +214,153 @@ void EventLoop::Impl::stop()
     poll_->notify();
 }
 
-KMError EventLoop::Impl::async(LoopCallback cb)
+KMError EventLoop::Impl::appendTask(Task task, EventLoopToken *token)
 {
-    if(inSameThread()) {
-        cb();
-    } else {
-        //cb_queue_.enqueue(std::move(cb));
-        {
-            CallbackGuard g(cb_mutex_);
-            if (stop_loop_) {
-                return KMError::INVALID_STATE;
-            }
-            cb_queue_.push_back(std::move(cb));
-        }
-        poll_->notify();
+    if (token && token->eventLoop() != this) {
+        return KMError::INVALID_PARAM;
+    }
+    auto node = std::make_shared<TaskQueue::DLNode>(std::move(task), token);
+    LockGuard g(task_mutex_);
+    if (stop_loop_) {
+        return KMError::INVALID_STATE;
+    }
+    task_queue_.enqueue(node);
+    if (token) {
+        token->appendTaskNode(node);
     }
     return KMError::NOERR;
 }
 
-KMError EventLoop::Impl::sync(LoopCallback cb)
+KMError EventLoop::Impl::removeTask(EventLoopToken *token)
+{
+    if (!token || token->eventLoop() != this) {
+        return KMError::INVALID_PARAM;
+    }
+    bool is_running = false;
+    {
+        LockGuard g(task_mutex_);
+        for (auto &node : token->node_queue_) {
+            if (node->element_.state == TaskSlot::State::RUNNING) {
+                is_running = true;
+                node->element_.state = TaskSlot::State::INACTIVE;
+            }
+            task_queue_.remove(node);
+        }
+        token->node_queue_.clear();
+    }
+    if (is_running && !inSameThread()) {
+        // wait for end of running
+        task_run_mutex_.lock();
+        task_run_mutex_.unlock();
+    }
+    return KMError::NOERR;
+}
+
+KMError EventLoop::Impl::sync(Task task)
 {
     if(inSameThread()) {
-        cb();
+        task();
     } else {
         std::mutex m;
         std::condition_variable cv;
         bool ready = false;
-        LoopCallback cb_sync([&] {
-            cb();
+        Task task_sync([&] {
+            task();
             std::unique_lock<std::mutex> lk(m);
             ready = true;
             lk.unlock();
             cv.notify_one();
         });
-        //cb_queue_.enqueue(std::move(cb_sync));
-        {
-            CallbackGuard g(cb_mutex_);
-            if (stop_loop_) {
-                return KMError::INVALID_STATE;
-            }
-            cb_queue_.push_back(std::move(cb_sync));
+        auto ret = queue(std::move(task_sync));
+        if (ret != KMError::NOERR) {
+            return ret;
         }
-        poll_->notify();
         std::unique_lock<std::mutex> lk(m);
         cv.wait(lk, [&ready] { return ready; });
     }
     return KMError::NOERR;
 }
 
-KMError EventLoop::Impl::queue(LoopCallback cb)
+KMError EventLoop::Impl::async(Task task, EventLoopToken *token)
 {
-    //cb_queue_.enqueue(std::move(cb));
-    {
-        CallbackGuard g(cb_mutex_);
-        if (stop_loop_) {
-            return KMError::INVALID_STATE;
-        }
-        cb_queue_.push_back(std::move(cb));
+    if(inSameThread()) {
+        task();
+        return KMError::NOERR;
+    } else {
+        return queue(std::move(task), token);
     }
-    //if(!inSameThread())
-    {
-        poll_->notify();
+}
+
+KMError EventLoop::Impl::queue(Task task, EventLoopToken *token)
+{
+    auto ret = appendTask(std::move(task), token);
+    if (ret != KMError::NOERR) {
+        return ret;
     }
+    poll_->notify();
     return KMError::NOERR;
 }
 
+/////////////////////////////////////////////////////////////////
+// EventLoopToken
+EventLoopToken::EventLoopToken()
+{
+    
+}
+
+EventLoopToken::~EventLoopToken()
+{
+    reset();
+}
+
+void EventLoopToken::eventLoop(EventLoop::Impl *loop)
+{
+    loop_ = loop;
+}
+
+EventLoop::Impl* EventLoopToken::eventLoop()
+{
+    return loop_;
+}
+
+void EventLoopToken::appendTaskNode(TaskNodePtr &node)
+{
+    node_queue_.emplace_back(node);
+}
+
+void EventLoopToken::removeTaskNode(TaskNodePtr &node)
+{
+    for (auto it = node_queue_.begin(); it != node_queue_.end(); ++it) {
+        if (*it == node) {
+            node_queue_.erase(it);
+            break;
+        }
+    }
+}
+
+bool EventLoopToken::expired()
+{
+    return !loop_ || (observed && obs_token_.expired());
+}
+
+void EventLoopToken::reset()
+{
+    if (loop_) {
+        if (!node_queue_.empty()) {
+            loop_->removeTask(this);
+        }
+        if (!obs_token_.expired()) {
+            loop_->removeObserver(this);
+            obs_token_.reset();
+        }
+        loop_ = nullptr;
+    } else {
+        node_queue_.clear();
+    }
+}
+
+/////////////////////////////////////////////////////////////////
+//
 IOPoll* createEPoll();
 IOPoll* createVPoll();
 IOPoll* createKQueue();

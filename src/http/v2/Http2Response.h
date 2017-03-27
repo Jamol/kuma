@@ -69,6 +69,8 @@ private:
     HeaderMap               req_headers_;
     std::string             req_method_;
     std::string             req_path_;
+    
+    EventLoopToken          loop_token_;
 };
 
 KUMA_NS_END

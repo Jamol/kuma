@@ -10,7 +10,7 @@ extern std::string www_path;
 
 HttpTest::HttpTest(ObjectManager* obj_mgr, long conn_id, const char* ver)
 : obj_mgr_(obj_mgr)
-, http_(obj_mgr->getEventLoop(), ver)
+, http_(obj_mgr->eventLoop(), ver)
 , conn_id_(conn_id)
 {
     

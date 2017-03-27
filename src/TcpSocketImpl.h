@@ -80,7 +80,7 @@ public:
     void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
     
     SOCKET_FD getFd() const { return fd_; }
-    EventLoop::Impl* getEventLoop() { return loop_; }
+    EventLoop::Impl* eventLoop() { return loop_; }
     
 private:
     KMError connect_i(const char* addr, uint16_t port, uint32_t timeout_ms);

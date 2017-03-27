@@ -37,10 +37,22 @@ Http2Request::Http2Request(EventLoop::Impl* loop, std::string ver)
 
 Http2Request::~Http2Request()
 {
+    cleanup();
     iovec iov;
     while (data_queue_.dequeue(iov)) {
         delete [] (uint8_t*)iov.iov_base;
     }
+}
+
+void Http2Request::cleanup()
+{
+    loop_mutex_.lock();
+    if (conn_ && !loop_token_.expired()) {
+        conn_->sync([this] { close_i(); });
+    }
+    loop_token_.reset();
+    loop_mutex_.unlock();
+    conn_.reset();
 }
 
 KMError Http2Request::setSslFlags(uint32_t ssl_flags)
@@ -76,14 +88,27 @@ KMError Http2Request::sendRequest()
     setState(State::CONNECTING);
     auto &connMgr = H2ConnectionMgr::getRequestConnMgr(ssl_flags != SSL_NONE);
     conn_ = connMgr.getConnection(uri_.getHost(), port, ssl_flags, loop_);
-    if (!conn_) {
+    if (!conn_ || !conn_->eventLoop()) {
         KUMA_ERRXTRACE("sendRequest, failed to get H2Connection");
         return KMError::INVALID_PARAM;
-    } else if (conn_->isInSameThread()) {
-        return sendRequest_i();
-    } else if (!conn_->async([this] { auto err = sendRequest_i(); if (err != KMError::NOERR) { onError(err); }})) {
-        KUMA_ERRXTRACE("sendRequest, failed to run in H2Connection, key="<<conn_->getConnectionKey());
-        return KMError::INVALID_STATE;
+    } else {
+        auto conn_loop = conn_->eventLoop();
+        loop_token_.eventLoop(conn_loop);
+        conn_loop->appendObserver([this] (LoopActivity acti) {
+            onLoopActivity(acti);
+        }, &loop_token_);
+        if (conn_->isInSameThread()) {
+            return sendRequest_i();
+        } else if (!conn_->async([this] {
+                                        auto err = sendRequest_i();
+                                        if (err != KMError::NOERR)
+                                        {
+                                            onError(err);
+                                        }
+                                    }, &loop_token_)) {
+            KUMA_ERRXTRACE("sendRequest, failed to run in H2Connection, key="<<conn_->getConnectionKey());
+            return KMError::INVALID_STATE;
+        }
     }
     return KMError::NOERR;
 }
@@ -228,7 +253,9 @@ int Http2Request::sendData(const void* data, size_t len)
         iov.iov_base = (char*)d;
         iov.iov_len = len;
         data_queue_.enqueue(iov);
-        conn_->async([=] { sendData_i(); });
+        if (data_queue_.size() <= 1) {
+            conn_->async([=] { sendData_i(); }, &loop_token_);
+        }
         return int(len);
     }
 }
@@ -331,10 +358,7 @@ void Http2Request::onWrite()
 
 KMError Http2Request::close()
 {
-    if (conn_) {
-        conn_->sync([this] { close_i(); });
-    }
-    conn_.reset();
+    cleanup();
     return KMError::NOERR;
 }
 
@@ -346,5 +370,16 @@ void Http2Request::close_i()
     if (stream_) {
         stream_->close();
         stream_.reset();
+    }
+}
+
+void Http2Request::onLoopActivity(LoopActivity acti)
+{
+    if (acti == LoopActivity::EXIT) {
+        KUMA_INFOXTRACE("loop exit");
+        loop_mutex_.lock();
+        loop_token_.reset();
+        loop_mutex_.unlock();
+        close_i();
     }
 }

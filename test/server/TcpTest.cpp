@@ -3,7 +3,7 @@
 
 TcpTest::TcpTest(TestLoop* loop, long conn_id)
 : loop_(loop)
-, tcp_(loop->getEventLoop())
+, tcp_(loop->eventLoop())
 , conn_id_(conn_id)
 {
     

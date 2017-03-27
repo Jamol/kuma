@@ -21,7 +21,7 @@ std::string& trim_right(std::string& str);
 ProtoDemuxer::ProtoDemuxer(TestLoop* loop, long conn_id)
 : loop_(loop)
 , conn_id_(conn_id)
-, tcp_(loop->getEventLoop())
+, tcp_(loop->eventLoop())
 {
     
 }

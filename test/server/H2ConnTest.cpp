@@ -3,7 +3,7 @@
 
 H2ConnTest::H2ConnTest(TestLoop* loop, long conn_id)
 : loop_(loop)
-, conn_(loop->getEventLoop())
+, conn_(loop->eventLoop())
 , conn_id_(conn_id)
 {
     

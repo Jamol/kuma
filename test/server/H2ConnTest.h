@@ -29,7 +29,7 @@ private:
     
     void addObject(long conn_id, TestObject* obj) override;
     void removeObject(long conn_id) override;
-    EventLoop* getEventLoop() override { return loop_->getEventLoop(); }
+    EventLoop* eventLoop() override { return loop_->eventLoop(); }
     
 private:
     TestLoop*   loop_;

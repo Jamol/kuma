@@ -39,16 +39,62 @@ KUMA_NS_BEGIN
 
 class IOPoll;
 
-class EventLoop::Impl : public KMObject
+class TaskSlot
 {
 public:
-    class Listener
+    enum class State
     {
-    public:
-        virtual ~Listener() {}
-        virtual void loopStopped() = 0;
+        ACTIVE,
+        RUNNING,
+        INACTIVE,
     };
+    TaskSlot(EventLoop::Task &&t, EventLoopToken *token)
+    : task(std::move(t)), token(token) {}
+    void operator() ()
+    {
+        if (task) {
+            task();
+        }
+    }
+    EventLoop::Task task;
+    State state = State::ACTIVE;
+    EventLoopToken* token;
+};
+using TaskQueue = DL_Queue<TaskSlot>;
+using TaskNodePtr = TaskQueue::NodePtr;
+
+enum class LoopActivity {
+    EXIT,
+};
+using ObserverCallback = std::function<void(LoopActivity)>;
+using ObserverToken = std::weak_ptr<DL_Queue<ObserverCallback>::DLNode>;
+
+class EventLoopToken
+{
+public:
+    EventLoopToken();
+    ~EventLoopToken();
     
+    void eventLoop(EventLoop::Impl *loop);
+    EventLoop::Impl* eventLoop();
+    
+    void appendTaskNode(TaskNodePtr &node);
+    void removeTaskNode(TaskNodePtr &node);
+    
+    bool expired();
+    void reset();
+    
+protected:
+    friend class EventLoop::Impl;
+    EventLoop::Impl* loop_ = nullptr;
+    
+    std::list<TaskNodePtr> node_queue_;
+    bool observed = false;
+    ObserverToken obs_token_;
+};
+
+class EventLoop::Impl final : public KMObject
+{
 public:
     Impl(PollType poll_type = PollType::NONE);
     ~Impl();
@@ -60,41 +106,44 @@ public:
     KMError unregisterFd(SOCKET_FD fd, bool close_fd);
     TimerManagerPtr getTimerMgr() { return timer_mgr_; }
     
-    void addListener(Listener *l);
-    void removeListener(Listener *l);
-    
     PollType getPollType() const;
     bool isPollLT() const; // level trigger
+    
+    KMError appendObserver(ObserverCallback cb, EventLoopToken *token);
+    KMError removeObserver(EventLoopToken *token);
     
 public:
     bool inSameThread() const { return std::this_thread::get_id() == thread_id_; }
     std::thread::id threadId() const { return thread_id_; }
-    KMError sync(LoopCallback cb);
-    KMError async(LoopCallback cb);
-    KMError queue(LoopCallback cb);
+    KMError appendTask(Task task, EventLoopToken *token);
+    KMError removeTask(EventLoopToken *token);
+    KMError sync(Task task);
+    KMError async(Task task, EventLoopToken *token=nullptr);
+    KMError queue(Task task, EventLoopToken *token=nullptr);
     void loopOnce(uint32_t max_wait_ms);
     void loop(uint32_t max_wait_ms = -1);
     void notify();
     void stop();
     bool stopped() const { return stop_loop_; }
-    void processCallbacks();
+    void processTasks();
     
-private:
-    //using CallbackQueue = KM_QueueMT<LoopCallback, std::mutex>;
-    using CallbackQueue = std::list<LoopCallback>;
-    using CallBackMutex = std::mutex;
-    using CallbackGuard = std::lock_guard<CallBackMutex>;
+protected:
+    using ObserverQueue = DL_Queue<ObserverCallback>;
+    using LockType = std::mutex;
+    using LockGuard = std::lock_guard<LockType>;
     
-    IOPoll*         poll_;
-    bool            stop_loop_{ false };
-    std::thread::id thread_id_;
+    IOPoll*             poll_;
+    bool                stop_loop_{ false };
+    std::thread::id     thread_id_;
     
-    CallbackQueue   cb_queue_;
-    CallBackMutex   cb_mutex_;
+    TaskQueue           task_queue_;
+    LockType            task_mutex_;
+    LockType            task_run_mutex_;
     
-    TimerManagerPtr timer_mgr_;
+    ObserverQueue       obs_queue_;
+    LockType            obs_mutex_;
     
-    std::list<Listener*> listeners_;
+    TimerManagerPtr     timer_mgr_;
 };
 
 KUMA_NS_END

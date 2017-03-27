@@ -8,7 +8,7 @@
 
 UdpClient::UdpClient(TestLoop* loop, long conn_id)
 : loop_(loop)
-, udp_(loop->getEventLoop())
+, udp_(loop->eventLoop())
 , conn_id_(conn_id)
 , index_(0)
 , max_send_count_(200000)

@@ -57,6 +57,13 @@ bool EventLoop::init()
     return pimpl_->init();
 }
 
+EventLoop::Token EventLoop::createToken()
+{
+    Token t;
+    t.pimpl()->eventLoop(pimpl());
+    return std::move(t);
+}
+
 PollType EventLoop::getPollType() const
 {
     return pimpl_->getPollType();
@@ -102,19 +109,64 @@ EventLoop::Impl* EventLoop::pimpl()
     return pimpl_;
 }
 
-KMError EventLoop::async(LoopCallback cb)
+KMError EventLoop::sync(Task task)
 {
-    return pimpl_->async(std::move(cb));
+    return pimpl_->sync(std::move(task));
 }
 
-KMError EventLoop::sync(LoopCallback cb)
+KMError EventLoop::async(Task task, Token *token)
 {
-    return pimpl_->sync(std::move(cb));
+    return pimpl_->async(std::move(task), token?token->pimpl():nullptr);
 }
 
-KMError EventLoop::queue(LoopCallback cb)
+KMError EventLoop::queue(Task task, Token *token)
 {
-    return pimpl_->queue(std::move(cb));
+    return pimpl_->queue(std::move(task), token?token->pimpl():nullptr);
+}
+
+void EventLoop::cancel(Token *token)
+{
+    if (token) {
+        pimpl_->removeTask(token->pimpl());
+    }
+}
+
+EventLoop::Token::Token()
+: pimpl_(new EventLoopToken())
+{
+    
+}
+
+EventLoop::Token::Token(Token &&other)
+: pimpl_(other.pimpl_)
+{
+    other.pimpl_ = nullptr;
+}
+
+EventLoop::Token::~Token()
+{
+    delete pimpl_;
+}
+
+EventLoop::Token& EventLoop::Token::operator=(Token &&other)
+{
+    if (this != &other) {
+        pimpl_ = other.pimpl_;
+        other.pimpl_ = nullptr;
+    }
+    return *this;
+}
+
+void EventLoop::Token::reset()
+{
+    if (pimpl_) {
+        pimpl_->reset();
+    }
+}
+
+EventLoopToken* EventLoop::Token::pimpl()
+{
+    return pimpl_;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
