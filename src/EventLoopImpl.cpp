@@ -155,9 +155,12 @@ KMError EventLoop::Impl::removeObserver(EventLoopToken *token)
 
 void EventLoop::Impl::processTasks()
 {
+    TaskQueue tq;
     task_mutex_.lock();
-    while (auto node = task_queue_.front_node()) {
-        task_queue_.pop_front();
+    task_queue_.swap(tq);
+    
+    while (auto node = tq.front_node()) {
+        tq.pop_front();
         node->element_.state = TaskSlot::State::RUNNING;
         task_mutex_.unlock();
         task_run_mutex_.lock();
