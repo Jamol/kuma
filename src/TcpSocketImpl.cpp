@@ -74,7 +74,7 @@
 
 using namespace kuma;
 
-TcpSocket::Impl::Impl(EventLoop::Impl* loop)
+TcpSocket::Impl::Impl(const EventLoopPtr &loop)
 : loop_(loop)
 {
     KM_SetObjKey("TcpSocket");
@@ -100,7 +100,10 @@ void TcpSocket::Impl::cleanup()
         shutdown(fd, 0); // only stop receive
         if(registered_) {
             registered_ = false;
-            loop_->unregisterFd(fd, true);
+            auto loop = loop_.lock();
+            if (loop) {
+                loop->unregisterFd(fd, true);
+            }
         } else {
             closeFd(fd);
         }
@@ -230,8 +233,12 @@ KMError TcpSocket::Impl::connect_i(const char* host, uint16_t port, uint32_t tim
     KUMA_INFOXTRACE("connect_i, fd="<<fd_<<", local_ip="<<local_ip
                    <<", local_port="<<local_port<<", state="<<getState());
     
-    loop_->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
-    registered_ = true;
+    auto loop = loop_.lock();
+    if (loop) {
+        loop->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
+        registered_ = true;
+    }
+    
     return KMError::NOERR;
 }
 
@@ -260,8 +267,11 @@ KMError TcpSocket::Impl::attachFd(SOCKET_FD fd)
         }
     }
 #endif
-    loop_->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
-    registered_ = true;
+    auto loop = loop_.lock();
+    if (loop) {
+        loop->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
+        registered_ = true;
+    }
     return KMError::NOERR;
 }
 
@@ -289,7 +299,10 @@ KMError TcpSocket::Impl::detachFd(SOCKET_FD &fd)
     fd_ = INVALID_FD;
     if(registered_) {
         registered_ = false;
-        loop_->unregisterFd(fd, false);
+        auto loop = loop_.lock();
+        if (loop) {
+            loop->unregisterFd(fd, false);
+        }
     }
     cleanup();
     setState(State::CLOSED);
@@ -345,8 +358,11 @@ KMError TcpSocket::Impl::attachFd(SOCKET_FD fd, SSL* ssl)
         }
     }
 
-    loop_->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
-    registered_ = true;
+    auto loop = loop_.lock();
+    if (loop) {
+        loop->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
+        registered_ = true;
+    }
     return KMError::NOERR;
 }
 
@@ -357,7 +373,10 @@ KMError TcpSocket::Impl::detachFd(SOCKET_FD &fd, SSL* &ssl)
     fd_ = INVALID_FD;
     if(registered_) {
         registered_ = false;
-        loop_->unregisterFd(fd, false);
+        auto loop = loop_.lock();
+        if (loop) {
+            loop->unregisterFd(fd, false);
+        }
     }
     if (ssl_handler_) {
         ssl_handler_->detachSsl(ssl);
@@ -484,8 +503,9 @@ int TcpSocket::Impl::send(const void* data, size_t length)
         cleanup();
         setState(State::CLOSED);
     } else if(ret < length) {
-        if(loop_->isPollLT()) {
-            loop_->updateFd(fd_, KUMA_EV_NETWORK);
+        auto loop = loop_.lock();
+        if (loop && loop->isPollLT()) {
+            loop->updateFd(fd_, KUMA_EV_NETWORK);
         }
     }
     //KUMA_INFOXTRACE("send, ret="<<ret<<", len="<<length);
@@ -553,8 +573,9 @@ int TcpSocket::Impl::send(iovec* iovs, int count)
         cleanup();
         setState(State::CLOSED);
     } else if(ret < total_len) {
-        if(loop_->isPollLT()) {
-            loop_->updateFd(fd_, KUMA_EV_NETWORK);
+        auto loop = loop_.lock();
+        if(loop && loop->isPollLT()) {
+            loop->updateFd(fd_, KUMA_EV_NETWORK);
         }
     }
     
@@ -609,8 +630,9 @@ int TcpSocket::Impl::receive(void* data, size_t length)
 KMError TcpSocket::Impl::close()
 {
     KUMA_INFOXTRACE("close, state="<<getState());
-    if (loop_ && !loop_->stopped()) {
-        loop_->sync([this] {
+    auto loop = loop_.lock();
+    if (loop && !loop->stopped()) {
+        loop->sync([this] {
             cleanup();
         });
     } else {
@@ -622,12 +644,20 @@ KMError TcpSocket::Impl::close()
 
 KMError TcpSocket::Impl::pause()
 {
-    return loop_->updateFd(fd_, KUMA_EV_ERROR);
+    auto loop = loop_.lock();
+    if (loop) {
+        return loop->updateFd(fd_, KUMA_EV_ERROR);
+    }
+    return KMError::INVALID_STATE;
 }
 
 KMError TcpSocket::Impl::resume()
 {
-    return loop_->updateFd(fd_, KUMA_EV_NETWORK);
+    auto loop = loop_.lock();
+    if (loop) {
+        return loop->updateFd(fd_, KUMA_EV_NETWORK);
+    }
+    return KMError::INVALID_STATE;
 }
 
 void TcpSocket::Impl::onConnect(KMError err)
@@ -655,8 +685,9 @@ void TcpSocket::Impl::onConnect(KMError err)
 void TcpSocket::Impl::onSend(KMError err)
 {
     SOCKET_FD fd = fd_;
-    if (loop_->isPollLT() && fd != INVALID_FD) {
-        loop_->updateFd(fd, KUMA_EV_READ | KUMA_EV_ERROR);
+    auto loop = loop_.lock();
+    if (loop && loop->isPollLT() && fd != INVALID_FD) {
+        loop->updateFd(fd, KUMA_EV_READ | KUMA_EV_ERROR);
     }
     if(write_cb_ && isReady()) write_cb_(err);
 }

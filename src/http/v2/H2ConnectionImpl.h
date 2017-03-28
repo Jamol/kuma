@@ -50,7 +50,7 @@ public:
     using AcceptCallback = H2Connection::AcceptCallback;
     using ErrorCallback = H2Connection::ErrorCallback;
     
-    Impl(EventLoop::Impl* loop);
+    Impl(const EventLoopPtr &loop);
 	~Impl();
     
     //KMError connect(const std::string &host, uint16_t port, ConnectCallback cb);
@@ -157,8 +157,6 @@ protected:
     AcceptCallback accept_cb_; // server only
     ErrorCallback error_cb_;
     
-    EventLoop::Impl* loop_;
-    std::recursive_mutex loop_mutex_;
     std::thread::id thread_id_;
     
     std::map<long, ConnectCallback> connect_listeners_;
@@ -172,9 +170,9 @@ protected:
     
     std::map<uint32_t, H2StreamPtr> streams_;
     std::map<uint32_t, H2StreamPtr> promisedStreams_;
-    std::map<uint32_t, uint32_t>    blocked_streams_;
+    std::map<uint32_t, uint32_t> blocked_streams_;
     
-    std::string             cmpPreface_; // server only
+    std::string cmpPreface_; // server only
     
     uint32_t remoteFrameSize_ = H2_DEFAULT_FRAME_SIZE;
     uint32_t initRemoteWindowSize_ = H2_DEFAULT_WINDOW_SIZE;

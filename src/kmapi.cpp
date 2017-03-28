@@ -41,15 +41,38 @@
 
 KUMA_NS_BEGIN
 
-EventLoop::EventLoop(PollType poll_type)
-: pimpl_(new Impl(poll_type))
-{
+// don't want to expose shared_ptr to interface
+template <typename Impl>
+struct ImplHelper {
+    using ImplPtr = std::shared_ptr<Impl>;
+    Impl impl;
+    ImplPtr ptr;
+    
+    static ImplPtr toSharedPtr(Impl *pimpl)
+    {
+        if (pimpl) {
+            auto h = reinterpret_cast<ImplHelper<Impl>*>(pimpl);
+            return h->ptr;
+        }
+        return ImplPtr();
+    }
+};
+using EventLoopHelper = ImplHelper<EventLoop::Impl>;
 
+EventLoop::EventLoop(PollType poll_type)
+{
+    auto h = new EventLoopHelper();
+    pimpl_ = reinterpret_cast<Impl*>(h);
+    h->ptr.reset(pimpl_, [](Impl* p){
+        auto h = reinterpret_cast<EventLoopHelper*>(p);
+        delete h;
+    });
 }
 
 EventLoop::~EventLoop()
 {
-    delete pimpl_;
+    auto h = reinterpret_cast<EventLoopHelper*>(pimpl_);
+    h->ptr.reset();
 }
 
 bool EventLoop::init()
@@ -60,7 +83,7 @@ bool EventLoop::init()
 EventLoop::Token EventLoop::createToken()
 {
     Token t;
-    t.pimpl()->eventLoop(pimpl());
+    t.pimpl()->eventLoop(EventLoopHelper::toSharedPtr(pimpl()));
     return std::move(t);
 }
 
@@ -171,7 +194,7 @@ EventLoopToken* EventLoop::Token::pimpl()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 TcpSocket::TcpSocket(EventLoop* loop)
-    : pimpl_(new Impl(loop->pimpl()))
+: pimpl_(new Impl(EventLoopHelper::toSharedPtr(loop->pimpl())))
 {
 
 }
@@ -309,7 +332,7 @@ TcpSocket::Impl* TcpSocket::pimpl()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 TcpListener::TcpListener(EventLoop* loop)
-: pimpl_(new Impl(loop->pimpl()))
+: pimpl_(new Impl(EventLoopHelper::toSharedPtr(loop->pimpl())))
 {
 
 }
@@ -350,7 +373,7 @@ TcpListener::Impl* TcpListener::pimpl()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 UdpSocket::UdpSocket(EventLoop* loop)
-: pimpl_(new Impl(loop->pimpl()))
+: pimpl_(new Impl(EventLoopHelper::toSharedPtr(loop->pimpl())))
 {
     
 }
@@ -573,10 +596,11 @@ HttpParser::Impl* HttpParser::pimpl()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 HttpRequest::HttpRequest(EventLoop* loop, const char* ver)
 {
+    auto loop_ptr = EventLoopHelper::toSharedPtr(loop->pimpl());
     if (is_equal(ver, VersionHTTP2_0)) {
-        pimpl_ = new Http2Request(loop->pimpl(), ver);
+        pimpl_ = new Http2Request(loop_ptr, ver);
     } else {
-        pimpl_ = new Http1xRequest(loop->pimpl(), ver);
+        pimpl_ = new Http1xRequest(loop_ptr, ver);
     }
 }
 
@@ -676,10 +700,11 @@ HttpRequest::Impl* HttpRequest::pimpl()
 
 HttpResponse::HttpResponse(EventLoop* loop, const char* ver)
 {
+    auto loop_ptr = EventLoopHelper::toSharedPtr(loop->pimpl());
     if (is_equal(ver, VersionHTTP2_0)) {
-        pimpl_ = new Http2Response(loop->pimpl(), ver);
+        pimpl_ = new Http2Response(loop_ptr, ver);
     } else {
-        pimpl_ = new Http1xResponse(loop->pimpl(), ver);
+        pimpl_ = new Http1xResponse(loop_ptr, ver);
     }
 }
 
@@ -803,7 +828,7 @@ HttpResponse::Impl* HttpResponse::pimpl()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 WebSocket::WebSocket(EventLoop* loop)
-: pimpl_(new Impl(loop->pimpl()))
+: pimpl_(new Impl(EventLoopHelper::toSharedPtr(loop->pimpl())))
 {
     
 }
@@ -885,7 +910,7 @@ WebSocket::Impl* WebSocket::pimpl()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 H2Connection::H2Connection(EventLoop* loop)
-: pimpl_(new Impl(loop->pimpl()))
+: pimpl_(new Impl(EventLoopHelper::toSharedPtr(loop->pimpl())))
 {
     
 }

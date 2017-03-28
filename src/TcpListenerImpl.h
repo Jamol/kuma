@@ -34,7 +34,7 @@ public:
     using AcceptCallback = TcpListener::AcceptCallback;
     using ErrorCallback = TcpListener::ErrorCallback;
     
-    Impl(EventLoop::Impl* loop);
+    Impl(const EventLoopPtr &loop);
     ~Impl();
     
     KMError startListen(const char* host, uint16_t port);
@@ -57,7 +57,7 @@ private:
     
 private:
     SOCKET_FD           fd_{ INVALID_FD };
-    EventLoop::Impl*    loop_;
+    EventLoopWeakPtr    loop_;
     bool                registered_{ false };
     uint32_t            flags_{ 0 };
     bool                stopped_{ false };

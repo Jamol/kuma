@@ -39,11 +39,11 @@ namespace {
 }
 
 //////////////////////////////////////////////////////////////////////////
-H2Connection::Impl::Impl(EventLoop::Impl* loop)
-: TcpConnection(loop), loop_(loop), thread_id_(loop->threadId()), frameParser_(this)
+H2Connection::Impl::Impl(const EventLoopPtr &loop)
+: TcpConnection(loop), thread_id_(loop->threadId()), frameParser_(this)
 , flow_ctrl_(0, [this] (uint32_t w) { sendWindowUpdate(0, w); })
 {
-    loop_token_.eventLoop(loop_);
+    loop_token_.eventLoop(loop);
     flow_ctrl_.initLocalWindowSize(LOCAL_CONN_INITIAL_WINDOW_SIZE);
     flow_ctrl_.setMinLocalWindowSize(initLocalWindowSize_);
     flow_ctrl_.setLocalWindowStep(LOCAL_CONN_INITIAL_WINDOW_SIZE);
@@ -56,18 +56,15 @@ H2Connection::Impl::~Impl()
 {
     KUMA_INFOXTRACE("~H2Connection");
     if (!loop_token_.expired()) {
-        tcp_.eventLoop()->sync([this] { cleanup(); });
+        eventLoop()->sync([this] { cleanup(); });
     }
+    loop_token_.reset();
 }
 
 void H2Connection::Impl::cleanup()
 {
     setState(State::CLOSED);
-    tcp_.close();
-    loop_mutex_.lock();
-    loop_token_.reset();
-    loop_ = nullptr;
-    loop_mutex_.unlock();
+    TcpConnection::close();
     removeSelf();
 }
 
@@ -87,7 +84,7 @@ KMError H2Connection::Impl::connect(const std::string &host, uint16_t port)
     }
     
     // add to EventLoop to get notification when loop exit
-    tcp_.eventLoop()->appendObserver([this] (LoopActivity acti) {
+    eventLoop()->appendObserver([this] (LoopActivity acti) {
         onLoopActivity(acti);
     }, &loop_token_);
     return connect_i(host, port);
@@ -389,7 +386,7 @@ void H2Connection::Impl::handlePingFrame(PingFrame *frame)
 void H2Connection::Impl::handleGoawayFrame(GoawayFrame *frame)
 {
     KUMA_INFOXTRACE("handleGoawayFrame, streamId="<<frame->getLastStreamId()<<", err="<<frame->getErrorCode());
-    tcp_.close();
+    TcpConnection::close();
     auto streams = std::move(streams_);
     for (auto it : streams) {
         it.second->onError(frame->getErrorCode());
@@ -647,6 +644,7 @@ void H2Connection::Impl::onLoopActivity(LoopActivity acti)
     if (acti == LoopActivity::EXIT) {
         KUMA_INFOXTRACE("loop exit");
         cleanup();
+        loop_token_.reset();
     }
 }
 
@@ -656,11 +654,11 @@ bool H2Connection::Impl::sync(EventLoop::Task task)
         task();
         return true;
     }
-    std::lock_guard<std::recursive_mutex> g(loop_mutex_);
-    if (!loop_) {
-        return false;
+    auto loop = eventLoop();
+    if (loop) {
+        return loop->sync(std::move(task)) == KMError::NOERR;
     }
-    return loop_->sync(std::move(task)) == KMError::NOERR;
+    return false;
 }
 
 bool H2Connection::Impl::async(EventLoop::Task task, EventLoopToken *token)
@@ -669,11 +667,11 @@ bool H2Connection::Impl::async(EventLoop::Task task, EventLoopToken *token)
         task();
         return true;
     }
-    std::lock_guard<std::recursive_mutex> g(loop_mutex_);
-    if (!loop_) {
-        return false;
+    auto loop = eventLoop();
+    if (loop) {
+        return loop->async(std::move(task), token) == KMError::NOERR;
     }
-    return loop_->async(std::move(task), token) == KMError::NOERR;
+    return false;
 }
 
 std::string H2Connection::Impl::buildUpgradeRequest()

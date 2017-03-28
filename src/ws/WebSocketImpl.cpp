@@ -28,7 +28,7 @@
 using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
-WebSocket::Impl::Impl(EventLoop::Impl* loop)
+WebSocket::Impl::Impl(const EventLoopPtr &loop)
 : TcpConnection(loop)
 {
     setupWsHandler();

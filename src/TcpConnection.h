@@ -30,7 +30,7 @@ KUMA_NS_BEGIN
 class TcpConnection
 {
 public:
-    TcpConnection(EventLoop::Impl* loop);
+    TcpConnection(const EventLoopPtr &loop);
 	virtual ~TcpConnection();
     
     KMError setSslFlags(uint32_t ssl_flags);
@@ -43,7 +43,7 @@ public:
     int send(iovec* iovs, int count);
     KMError close();
     
-    EventLoop::Impl* eventLoop() { return tcp_.eventLoop(); }
+    EventLoopPtr eventLoop() { return tcp_.eventLoop(); }
     
 protected:
     // subclass should install destroy detector in this interface or implement delayed destroy

@@ -36,7 +36,7 @@ KUMA_NS_BEGIN
 class Http1xRequest : public KMObject, public DestroyDetector, public HttpRequest::Impl, public TcpConnection
 {
 public:
-    Http1xRequest(EventLoop::Impl* loop, std::string ver);
+    Http1xRequest(const EventLoopPtr &loop, std::string ver);
     ~Http1xRequest();
     
     KMError setSslFlags(uint32_t ssl_flags) override { return TcpConnection::setSslFlags(ssl_flags); }

@@ -121,7 +121,7 @@ KMError EventLoop::Impl::unregisterFd(SOCKET_FD fd, bool close_fd)
 
 KMError EventLoop::Impl::appendObserver(ObserverCallback cb, EventLoopToken *token)
 {
-    if (token && token->eventLoop() != this) {
+    if (token && token->eventLoop().get() != this) {
         return KMError::INVALID_PARAM;
     }
     LockGuard g(obs_mutex_);
@@ -139,7 +139,7 @@ KMError EventLoop::Impl::appendObserver(ObserverCallback cb, EventLoopToken *tok
 KMError EventLoop::Impl::removeObserver(EventLoopToken *token)
 {
     if (token) {
-        if (token->eventLoop() != this) {
+        if (token->eventLoop().get() != this) {
             return KMError::INVALID_STATE;
         }
         auto node = token->obs_token_.lock();
@@ -219,7 +219,7 @@ void EventLoop::Impl::stop()
 
 KMError EventLoop::Impl::appendTask(Task task, EventLoopToken *token)
 {
-    if (token && token->eventLoop() != this) {
+    if (token && token->eventLoop().get() != this) {
         return KMError::INVALID_PARAM;
     }
     auto node = std::make_shared<TaskQueue::DLNode>(std::move(task), token);
@@ -236,7 +236,7 @@ KMError EventLoop::Impl::appendTask(Task task, EventLoopToken *token)
 
 KMError EventLoop::Impl::removeTask(EventLoopToken *token)
 {
-    if (!token || token->eventLoop() != this) {
+    if (!token || token->eventLoop().get() != this) {
         return KMError::INVALID_PARAM;
     }
     bool is_running = false;
@@ -316,14 +316,14 @@ EventLoopToken::~EventLoopToken()
     reset();
 }
 
-void EventLoopToken::eventLoop(EventLoop::Impl *loop)
+void EventLoopToken::eventLoop(const EventLoopPtr &loop)
 {
     loop_ = loop;
 }
 
-EventLoop::Impl* EventLoopToken::eventLoop()
+EventLoopPtr EventLoopToken::eventLoop()
 {
-    return loop_;
+    return loop_.lock();
 }
 
 void EventLoopToken::appendTaskNode(TaskNodePtr &node)
@@ -343,20 +343,21 @@ void EventLoopToken::removeTaskNode(TaskNodePtr &node)
 
 bool EventLoopToken::expired()
 {
-    return !loop_ || (observed && obs_token_.expired());
+    return loop_.expired() || (observed && obs_token_.expired());
 }
 
 void EventLoopToken::reset()
 {
-    if (loop_) {
+    auto loop = loop_.lock();
+    if (loop) {
         if (!node_queue_.empty()) {
-            loop_->removeTask(this);
+            loop->removeTask(this);
         }
         if (!obs_token_.expired()) {
-            loop_->removeObserver(this);
+            loop->removeObserver(this);
             obs_token_.reset();
         }
-        loop_ = nullptr;
+        loop_.reset();
     } else {
         node_queue_.clear();
     }

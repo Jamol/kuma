@@ -25,7 +25,7 @@
 
 using namespace kuma;
 
-Http2Response::Http2Response(EventLoop::Impl* loop, std::string ver)
+Http2Response::Http2Response(const EventLoopPtr &loop, std::string ver)
 : HttpResponse::Impl(std::move(ver)), loop_(loop)
 {
     KM_SetObjKey("Http2Response");
@@ -86,10 +86,16 @@ KMError Http2Response::sendResponse(int status_code, const std::string& desc, co
     if (ret == KMError::NOERR) {
         if (endStream) {
             setState(State::COMPLETE);
-            loop_->queue([this] { notifyComplete(); }, &loop_token_);
+            auto loop = loop_.lock();
+            if (loop) {
+                loop->queue([this] { notifyComplete(); }, &loop_token_);
+            }
         } else {
             setState(State::SENDING_BODY);
-            loop_->queue([this] { if (write_cb_) write_cb_(KMError::NOERR); }, &loop_token_);
+            auto loop = loop_.lock();
+            if (loop) {
+                loop->queue([this] { if (write_cb_) write_cb_(KMError::NOERR); }, &loop_token_);
+            }
         }
     }
     return ret;
@@ -116,7 +122,10 @@ int Http2Response::sendData(const void* data, size_t len)
     if (endStream) { // end stream
         stream_->sendData(nullptr, 0, true);
         setState(State::COMPLETE);
-        loop_->queue([this] { notifyComplete(); }, &loop_token_);
+        auto loop = loop_.lock();
+        if (loop) {
+            loop->queue([this] { notifyComplete(); }, &loop_token_);
+        }
     }
     return ret;
 }

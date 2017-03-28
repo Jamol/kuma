@@ -37,7 +37,7 @@ public:
     using DataCallback = WebSocket::DataCallback;
     using EventCallback = WebSocket::EventCallback;
     
-    Impl(EventLoop::Impl* loop);
+    Impl(const EventLoopPtr &loop);
     ~Impl();
     
     void setProtocol(const std::string& proto);

@@ -32,7 +32,7 @@ KUMA_NS_BEGIN
 class Http2Response : public KMObject, public HttpResponse::Impl, public HttpHeader, public DestroyDetector
 {
 public:
-    Http2Response(EventLoop::Impl* loop, std::string ver);
+    Http2Response(const EventLoopPtr &loop, std::string ver);
     
     KMError attachStream(H2Connection::Impl* conn, uint32_t streamId) override;
     void addHeader(std::string name, std::string value) override;
@@ -59,7 +59,7 @@ private:
     size_t buildHeaders(int status_code, HeaderVector &headers);
     
 private:
-    EventLoop::Impl*        loop_;
+    EventLoopWeakPtr        loop_;
     H2StreamPtr             stream_;
     
     // response

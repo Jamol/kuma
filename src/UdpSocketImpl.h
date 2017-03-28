@@ -41,7 +41,7 @@ class UdpSocket::Impl : public KMObject, public DestroyDetector
 public:
     using EventCallback = UdpSocket::EventCallback;
     
-    Impl(EventLoop::Impl* loop);
+    Impl(const EventLoopPtr &loop);
     ~Impl();
     
     KMError bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags);
@@ -66,7 +66,7 @@ private:
     
 private:
     SOCKET_FD           fd_{ INVALID_FD };
-    EventLoop::Impl*    loop_;
+    EventLoopWeakPtr    loop_;
     bool                registered_{ false };
     uint32_t            flags_{ 0 };
     

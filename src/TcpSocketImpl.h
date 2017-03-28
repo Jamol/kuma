@@ -27,6 +27,7 @@
 #include "evdefs.h"
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
+#include "EventLoopImpl.h"
 #ifdef KUMA_OS_WIN
 # include <Ws2tcpip.h>
 #else
@@ -46,7 +47,7 @@ class TcpSocket::Impl : public KMObject, public DestroyDetector
 public:
     using EventCallback = TcpSocket::EventCallback;
     
-    Impl(EventLoop::Impl* loop);
+    Impl(const EventLoopPtr &loop);
     Impl(const Impl &other) = delete;
     Impl& operator= (const Impl &other) = delete;
     ~Impl();
@@ -80,7 +81,7 @@ public:
     void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
     
     SOCKET_FD getFd() const { return fd_; }
-    EventLoop::Impl* eventLoop() { return loop_; }
+    EventLoopPtr eventLoop() { return loop_.lock(); }
     
 private:
     KMError connect_i(const char* addr, uint16_t port, uint32_t timeout_ms);
@@ -106,7 +107,7 @@ private:
     
 private:
     SOCKET_FD           fd_{ INVALID_FD };
-    EventLoop::Impl*    loop_;
+    EventLoopWeakPtr    loop_;
     State               state_{ State::IDLE };
     bool                registered_{ false };
     uint32_t            ssl_flags_{ SSL_NONE };

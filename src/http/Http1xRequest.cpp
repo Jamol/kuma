@@ -29,7 +29,7 @@
 using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
-Http1xRequest::Http1xRequest(EventLoop::Impl* loop, std::string ver)
+Http1xRequest::Http1xRequest(const EventLoopPtr &loop, std::string ver)
 : HttpRequest::Impl(std::move(ver)), TcpConnection(loop), http_parser_()
 {
     http_message_.setSender([this] (const void* data, size_t len) -> int {

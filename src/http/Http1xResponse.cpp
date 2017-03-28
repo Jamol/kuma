@@ -28,7 +28,7 @@
 using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
-Http1xResponse::Http1xResponse(EventLoop::Impl* loop, std::string ver)
+Http1xResponse::Http1xResponse(const EventLoopPtr &loop, std::string ver)
 : HttpResponse::Impl(std::move(ver)), TcpConnection(loop)
 {
     loop_token_.eventLoop(loop);

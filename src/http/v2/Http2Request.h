@@ -35,7 +35,7 @@ KUMA_NS_BEGIN
 class Http2Request : public KMObject, public DestroyDetector, public HttpRequest::Impl, public HttpHeader
 {
 public:
-    Http2Request(EventLoop::Impl* loop, std::string ver);
+    Http2Request(const EventLoopPtr &loop, std::string ver);
     ~Http2Request();
     
     KMError setSslFlags(uint32_t ssl_flags) override;
@@ -68,13 +68,10 @@ protected:
     int sendData_i(const void* data, size_t len);
     int sendData_i();
     void close_i();
-    void onLoopActivity(LoopActivity acti);
     //}
     
-    void cleanup();
-    
 protected:
-    EventLoop::Impl* loop_;
+    EventLoopWeakPtr loop_;
     H2ConnectionPtr conn_;
     H2StreamPtr stream_;
     
@@ -87,9 +84,6 @@ protected:
     
     bool write_blocked_ { false };
     KM_Queue<iovec> data_queue_;
-    
-    std::recursive_mutex loop_mutex_;
-    EventLoopToken loop_token_;
 };
 
 KUMA_NS_END

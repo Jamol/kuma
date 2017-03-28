@@ -72,7 +72,7 @@
 
 using namespace kuma;
 
-UdpSocket::Impl::Impl(EventLoop::Impl* loop)
+UdpSocket::Impl::Impl(const EventLoopPtr &loop)
 : loop_(loop)
 {
     KM_SetObjKey("UdpSocket");
@@ -91,7 +91,10 @@ void UdpSocket::Impl::cleanup()
         shutdown(fd, 2);
         if(registered_) {
             registered_ = false;
-            loop_->unregisterFd(fd, true);
+            auto loop = loop_.lock();
+            if (loop) {
+                loop->unregisterFd(fd, true);
+            }
         } else {
             closeFd(fd);
         }
@@ -163,8 +166,11 @@ KMError UdpSocket::Impl::bind(const char *bind_host, uint16_t bind_port, uint32_
     }
     KUMA_INFOXTRACE("bind, fd="<<fd_<<", local_ip="<<local_ip<<", local_port="<<local_port);
     
-    loop_->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
-    registered_ = true;
+    auto loop = loop_.lock();
+    if (loop) {
+        loop->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
+        registered_ = true;
+    }
     return KMError::NOERR;
 }
 
@@ -325,8 +331,9 @@ int UdpSocket::Impl::send(const void* data, size_t length, const char* host, uin
     if(ret < 0) {
         //cleanup();
     } else if(ret < length) {
-        if(loop_->isPollLT()) {
-            loop_->updateFd(fd_, KUMA_EV_NETWORK);
+        auto loop = loop_.lock();
+        if(loop && loop->isPollLT()) {
+            loop->updateFd(fd_, KUMA_EV_NETWORK);
         }
     }
     //WTP_INFOXTRACE("send, ret="<<ret<<", len="<<len);
@@ -396,8 +403,9 @@ int UdpSocket::Impl::send(iovec* iovs, int count, const char* host, uint16_t por
     if(ret < 0) {
         //cleanup();
     } else if(0 == ret) {
-        if(loop_->isPollLT()) {
-            loop_->updateFd(fd_, KUMA_EV_NETWORK);
+        auto loop = loop_.lock();
+        if(loop && loop->isPollLT()) {
+            loop->updateFd(fd_, KUMA_EV_NETWORK);
         }
     }
     
@@ -447,16 +455,20 @@ int UdpSocket::Impl::receive(void* data, size_t length, char* ip, size_t ip_len,
 KMError UdpSocket::Impl::close()
 {
     KUMA_INFOXTRACE("close");
-    loop_->sync([this] {
-        cleanup();
-    });
+    auto loop = loop_.lock();
+    if (loop) {
+        loop->sync([this] {
+            cleanup();
+        });
+    }
     return KMError::NOERR;
 }
 
 void UdpSocket::Impl::onSend(KMError err)
 {
-    if(loop_->isPollLT()) {
-        loop_->updateFd(fd_, KUMA_EV_READ | KUMA_EV_ERROR);
+    auto loop = loop_.lock();
+    if(loop && loop->isPollLT()) {
+        loop->updateFd(fd_, KUMA_EV_READ | KUMA_EV_ERROR);
     }
 }
 

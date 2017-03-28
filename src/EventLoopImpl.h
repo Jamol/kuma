@@ -38,6 +38,7 @@
 KUMA_NS_BEGIN
 
 class IOPoll;
+class EventLoopToken;
 
 class TaskSlot
 {
@@ -68,30 +69,6 @@ enum class LoopActivity {
 };
 using ObserverCallback = std::function<void(LoopActivity)>;
 using ObserverToken = std::weak_ptr<DL_Queue<ObserverCallback>::DLNode>;
-
-class EventLoopToken
-{
-public:
-    EventLoopToken();
-    ~EventLoopToken();
-    
-    void eventLoop(EventLoop::Impl *loop);
-    EventLoop::Impl* eventLoop();
-    
-    void appendTaskNode(TaskNodePtr &node);
-    void removeTaskNode(TaskNodePtr &node);
-    
-    bool expired();
-    void reset();
-    
-protected:
-    friend class EventLoop::Impl;
-    EventLoop::Impl* loop_ = nullptr;
-    
-    std::list<TaskNodePtr> node_queue_;
-    bool observed = false;
-    ObserverToken obs_token_;
-};
 
 class EventLoop::Impl final : public KMObject
 {
@@ -144,6 +121,32 @@ protected:
     LockType            obs_mutex_;
     
     TimerManagerPtr     timer_mgr_;
+};
+using EventLoopPtr = std::shared_ptr<EventLoop::Impl>;
+using EventLoopWeakPtr = std::weak_ptr<EventLoop::Impl>;
+
+class EventLoopToken
+{
+public:
+    EventLoopToken();
+    ~EventLoopToken();
+    
+    void eventLoop(const EventLoopPtr &loop);
+    EventLoopPtr eventLoop();
+    
+    void appendTaskNode(TaskNodePtr &node);
+    void removeTaskNode(TaskNodePtr &node);
+    
+    bool expired();
+    void reset();
+    
+protected:
+    friend class EventLoop::Impl;
+    EventLoopWeakPtr loop_;
+    
+    std::list<TaskNodePtr> node_queue_;
+    bool observed = false;
+    ObserverToken obs_token_;
 };
 
 KUMA_NS_END

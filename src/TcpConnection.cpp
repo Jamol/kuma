@@ -27,7 +27,7 @@
 using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
-TcpConnection::TcpConnection(EventLoop::Impl* loop)
+TcpConnection::TcpConnection(const EventLoopPtr &loop)
 : tcp_(loop)
 {
     

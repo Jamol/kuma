@@ -48,7 +48,7 @@ H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &key)
     return it != connMap_.end() ? it->second : nullptr;
 }
 
-H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &host, uint16_t port, uint32_t ssl_flags, EventLoop::Impl* loop)
+H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &host, uint16_t port, uint32_t ssl_flags, const EventLoopPtr &loop)
 {
     std::string key;
     char ip_buf[128];
