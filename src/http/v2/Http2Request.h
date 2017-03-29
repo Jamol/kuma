@@ -84,6 +84,8 @@ protected:
     
     bool write_blocked_ { false };
     KM_Queue<iovec> data_queue_;
+    
+    EventLoopToken loop_token_;
 };
 
 KUMA_NS_END

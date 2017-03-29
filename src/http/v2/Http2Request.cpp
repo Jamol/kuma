@@ -41,6 +41,7 @@ Http2Request::~Http2Request()
     while (data_queue_.dequeue(iov)) {
         delete [] (uint8_t*)iov.iov_base;
     }
+    loop_token_.reset();
 }
 
 KMError Http2Request::setSslFlags(uint32_t ssl_flags)
@@ -84,6 +85,7 @@ KMError Http2Request::sendRequest()
         KUMA_ERRXTRACE("sendRequest, failed to get H2Connection");
         return KMError::INVALID_PARAM;
     } else {
+        loop_token_.eventLoop(conn_->eventLoop());
         if (conn_->isInSameThread()) {
             return sendRequest_i();
         } else if (!conn_->async([this] {
@@ -91,7 +93,7 @@ KMError Http2Request::sendRequest()
                                         if (err != KMError::NOERR) {
                                             onError(err);
                                         }
-                                    })) {
+                                    }, &loop_token_)) {
             KUMA_ERRXTRACE("sendRequest, failed to run in H2Connection, key="<<conn_->getConnectionKey());
             return KMError::INVALID_STATE;
         }
@@ -196,7 +198,10 @@ KMError Http2Request::sendHeaders()
             setState(State::RECVING_RESPONSE);
         } else {
             setState(State::SENDING_BODY);
-            onWrite(); // should queue in event loop rather than call onWrite directly?
+            auto loop = conn_->eventLoop();
+            if (loop) {
+                loop->queue([this] { onWrite(); }, &loop_token_);
+            }
         }
     }
     return ret;
@@ -240,7 +245,7 @@ int Http2Request::sendData(const void* data, size_t len)
         iov.iov_len = len;
         data_queue_.enqueue(iov);
         if (data_queue_.size() <= 1) {
-            conn_->async([=] { sendData_i(); });
+            conn_->async([=] { sendData_i(); }, &loop_token_);
         }
         return int(len);
     }
@@ -348,6 +353,7 @@ KMError Http2Request::close()
         conn_->sync([this] { close_i(); });
     }
     conn_.reset();
+    loop_token_.reset();
     return KMError::NOERR;
 }
 
