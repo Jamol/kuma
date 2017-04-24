@@ -56,6 +56,10 @@ KUMA_NS_BEGIN
 
 #define UNUSED(x) (void)(x)
 
+template <typename T, size_t N>
+char(&ArraySizeHelper(const T(&array)[N]))[N];
+#define ARRAY_SIZE(array) (sizeof(ArraySizeHelper(array)))
+
 int set_nonblocking(SOCKET_FD fd);
 int set_tcpnodelay(SOCKET_FD fd);
 int find_first_set(uint32_t b);
@@ -114,7 +118,7 @@ extern "C" {
     KUMA_API int km_set_sock_addr(const char* addr, unsigned short port,
                          addrinfo* hints, sockaddr * sk_addr,
                          unsigned int sk_addr_len);
-    KUMA_API int km_get_sock_addr(sockaddr * sk_addr, unsigned int sk_addr_len,
+    KUMA_API int km_get_sock_addr(const sockaddr * sk_addr, unsigned int sk_addr_len,
                          char* addr, unsigned int addr_len, unsigned short* port);
     KUMA_API bool km_is_ipv6_address(const char* addr);
     KUMA_API bool km_is_ip_address(const char* addr);
@@ -125,6 +129,11 @@ extern "C" {
     size_t strlcat(char *, const char *, size_t);
 #endif
 }
+
+int km_get_sock_addr(const sockaddr *addr, size_t addr_len, std::string &ip, uint16_t *port);
+int km_get_sock_addr(const sockaddr_storage &addr, std::string &ip, uint16_t *port);
+int km_set_addr_port(uint16_t port, sockaddr_storage &addr);
+int km_get_addr_length(const sockaddr_storage &addr);
 
 KUMA_NS_END
 

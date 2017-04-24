@@ -67,6 +67,7 @@
 #include "TcpSocketImpl.h"
 #include "util/util.h"
 #include "util/kmtrace.h"
+#include "DnsResolver.h"
 
 #ifdef KUMA_HAS_OPENSSL
 # include "ssl/SslHandler.h"
@@ -87,6 +88,10 @@ TcpSocket::Impl::~Impl()
 
 void TcpSocket::Impl::cleanup()
 {
+    if (!dns_token_.expired()) {
+        DnsResolver::get().cancel("", dns_token_);
+        dns_token_.reset();
+    }
 #ifdef KUMA_HAS_OPENSSL
     if(ssl_handler_) {
         ssl_handler_->close();
@@ -143,13 +148,7 @@ KMError TcpSocket::Impl::bind(const char *bind_host, uint16_t bind_port)
         KUMA_ERRXTRACE("bind, socket failed, err="<<getLastError());
         return KMError::FAILED;
     }
-    int addr_len = sizeof(ss_addr);
-#ifdef KUMA_OS_MAC
-    if(AF_INET == ss_addr.ss_family)
-        addr_len = sizeof(sockaddr_in);
-    else
-        addr_len = sizeof(sockaddr_in6);
-#endif
+    int addr_len = km_get_addr_length(ss_addr);
     int ret = ::bind(fd_, (struct sockaddr*)&ss_addr, addr_len);
     if(ret < 0) {
         KUMA_ERRXTRACE("bind, bind failed, err="<<getLastError());
@@ -160,31 +159,54 @@ KMError TcpSocket::Impl::bind(const char *bind_host, uint16_t bind_port)
 
 KMError TcpSocket::Impl::connect(const char *host, uint16_t port, EventCallback cb, uint32_t timeout_ms)
 {
+    KUMA_INFOXTRACE("connect, host="<<host<<", port="<<port<<", this="<<this);
     if(getState() != State::IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
         return KMError::INVALID_STATE;
     }
     connect_cb_ = std::move(cb);
+    if (!km_is_ip_address(host)) {
+#ifdef KUMA_HAS_OPENSSL
+        if (sslEnabled()) {
+            ssl_host_name_ = host;
+        }
+#endif
+        sockaddr_storage ss_addr = {0};
+        if (DnsResolver::get().getAddress(host, ss_addr) == KMError::NOERR) {
+            return connect_i(ss_addr, timeout_ms);
+        }
+        setState(HOST_RESOLVING);
+        dns_token_ = DnsResolver::get().resolve(host, port, [this](KMError err, const sockaddr_storage &addr) {
+            onResolved(err, addr);
+        });
+        return KMError::NOERR;
+    }
     return connect_i(host, port, timeout_ms);
 }
 
 KMError TcpSocket::Impl::connect_i(const char* host, uint16_t port, uint32_t timeout_ms)
 {
-    KUMA_INFOXTRACE("connect_i, host="<<host<<", port="<<port<<", this="<<this);
+    sockaddr_storage ss_addr = {0};
+    struct addrinfo hints = {0};
+    hints.ai_family = AF_UNSPEC;
+    hints.ai_flags = AI_NUMERICHOST|AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
+    if(km_set_sock_addr(host, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
+        auto err = getLastError();
+        KUMA_ERRXTRACE("connect_i, DNS resolving failure, host="<<host<<", err="<<err);
+        return KMError::INVALID_PARAM;
+    }
+    return connect_i(ss_addr, timeout_ms);
+}
+
+KMError TcpSocket::Impl::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_ms)
+{
 #ifndef KUMA_HAS_OPENSSL
     if (sslEnabled()) {
         KUMA_ERRXTRACE("connect_i, OpenSSL is disabled");
         return KMError::UNSUPPORT;
     }
 #endif
-    sockaddr_storage ss_addr = {0};
-    struct addrinfo hints = {0};
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-    if(km_set_sock_addr(host, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
-        KUMA_ERRXTRACE("connect_i, failed to resolve host: "<<host);
-        return KMError::INVALID_PARAM;
-    }
+    
     if(INVALID_FD == fd_) {
         fd_ = ::socket(ss_addr.ss_family, SOCK_STREAM, 0);
         if(INVALID_FD == fd_) {
@@ -194,13 +216,7 @@ KMError TcpSocket::Impl::connect_i(const char* host, uint16_t port, uint32_t tim
     }
     setSocketOption();
     
-    int addr_len = sizeof(ss_addr);
-#ifdef KUMA_OS_MAC
-    if(AF_INET == ss_addr.ss_family)
-        addr_len = sizeof(sockaddr_in);
-    else
-        addr_len = sizeof(sockaddr_in6);
-#endif
+    int addr_len = km_get_addr_length(ss_addr);
     int ret = ::connect(fd_, (struct sockaddr *)&ss_addr, addr_len);
     if(0 == ret) {
         setState(State::CONNECTING); // wait for writable event
@@ -218,6 +234,7 @@ KMError TcpSocket::Impl::connect_i(const char* host, uint16_t port, uint32_t tim
         setState(State::CLOSED);
         return KMError::FAILED;
     }
+
 #if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
     socklen_t len = sizeof(ss_addr);
 #else
@@ -330,7 +347,7 @@ KMError TcpSocket::Impl::getAlpnSelected(std::string &proto)
 
 KMError TcpSocket::Impl::setSslServerName(std::string serverName)
 {
-    ssl_server_name = std::move(serverName);
+    ssl_server_name_ = std::move(serverName);
     return KMError::NOERR;
 }
 
@@ -407,8 +424,11 @@ KMError TcpSocket::Impl::startSslHandshake(SslRole ssl_role)
         if (!alpn_protos_.empty()) {
             ssl_handler_->setAlpnProtocols(alpn_protos_);
         }
-        if (!ssl_server_name.empty()) {
-            ssl_handler_->setServerName(ssl_server_name);
+        if (!ssl_server_name_.empty()) {
+            ssl_handler_->setServerName(ssl_server_name_);
+        }
+        if (!ssl_host_name_.empty() && (ssl_flags_ & SSL_VERIFY_HOST_NAME)) {
+            ssl_handler_->setHostName(ssl_host_name_);
         }
     }
     ssl_flags_ |= SSL_ENABLE;
@@ -703,6 +723,20 @@ void TcpSocket::Impl::onClose(KMError err)
     cleanup();
     setState(State::CLOSED);
     if(error_cb_) error_cb_(err);
+}
+
+void TcpSocket::Impl::onResolved(KMError err, const sockaddr_storage &addr)
+{
+    auto loop = loop_.lock();
+    if (loop) {
+        loop->async([=]{ // addr is captured by value
+            if (err == KMError::NOERR) {
+                connect_i(addr, -1);
+            } else {
+                onConnect(err);
+            }
+        });
+    }
 }
 
 void TcpSocket::Impl::ioReady(uint32_t events)

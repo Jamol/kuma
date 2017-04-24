@@ -50,14 +50,15 @@ enum class KMError : int {
     INVALID_PARAM       = -3,
     INVALID_PROTO       = -4,
     ALREADY_EXIST       = -5,
-    AGAIN               = -6,
-    SOCK_ERROR          = -7,
-    POLL_ERROR          = -8,
-    PROTO_ERROR         = -9,
-    SSL_FAILED          = -10,
-    BUFFER_TOO_SMALL    = -11,
-    UNSUPPORT           = -12,
-    DESTROYED           = -13
+    NOT_EXIST           = -6,
+    AGAIN               = -7,
+    SOCK_ERROR          = -8,
+    POLL_ERROR          = -9,
+    PROTO_ERROR         = -10,
+    SSL_FAILED          = -11,
+    BUFFER_TOO_SMALL    = -12,
+    UNSUPPORT           = -13,
+    DESTROYED           = -14
 };
 
 enum class HttpEvent : int {
@@ -68,12 +69,13 @@ enum class HttpEvent : int {
 
 typedef enum {
     SSL_NONE                    = 0,
-    SSL_ENABLE                  = 1,
-    SSL_ALLOW_EXPIRED_CERT      = 0X02,
-    SSL_ALLOW_INVALID_CERT_CN   = 0X04,
-    SSL_ALLOW_EXPIRED_ROOT      = 0X08,
+    SSL_ENABLE                  = 0x01,
+    SSL_ALLOW_EXPIRED_CERT      = 0x02,
+    SSL_ALLOW_INVALID_CERT_CN   = 0x04,
+    SSL_ALLOW_EXPIRED_ROOT      = 0x08,
     SSL_ALLOW_ANY_ROOT          = 0x10,
-    SSL_ALLOW_REVOKED_CERT      = 0X20
+    SSL_ALLOW_REVOKED_CERT      = 0x20,
+    SSL_VERIFY_HOST_NAME        = 0x40
 }SslFlag;
 
 enum class SslRole {

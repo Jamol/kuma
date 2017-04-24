@@ -55,6 +55,7 @@ public:
     KMError setAlpnProtocols(const AlpnProtos &protocols);
     KMError getAlpnSelected(std::string &proto);
     KMError setServerName(const std::string &serverName);
+    KMError setHostName(const std::string &hostName);
     KMError attachFd(SOCKET_FD fd, SslRole ssl_role);
     KMError attachSsl(SOCKET_FD fd, SSL* ssl);
     KMError detachSsl(SSL* &ssl);

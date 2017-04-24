@@ -966,6 +966,9 @@ H2Connection::Impl* H2Connection::pimpl()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+#include "DnsResolver.h"
+
 void init(const char* path)
 {
 #ifdef KUMA_HAS_OPENSSL
@@ -978,6 +981,7 @@ void fini()
 #ifdef KUMA_HAS_OPENSSL
     OpenSslLib::fini();
 #endif
+    DnsResolver::get().stop();
 }
 
 KUMA_NS_END

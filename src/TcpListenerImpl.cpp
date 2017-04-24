@@ -115,13 +115,7 @@ KMError TcpListener::Impl::startListen(const char* host, uint16_t port)
         return KMError::FAILED;
     }
     setSocketOption();
-    int addr_len = sizeof(ss_addr);
-#ifdef KUMA_OS_MAC
-    if(AF_INET == ss_addr.ss_family)
-        addr_len = sizeof(sockaddr_in);
-    else
-        addr_len = sizeof(sockaddr_in6);
-#endif
+    int addr_len = km_get_addr_length(ss_addr);
     int ret = ::bind(fd_, (struct sockaddr*)&ss_addr, addr_len);
     if(ret < 0) {
         KUMA_ERRXTRACE("startListen, bind failed, err="<<getLastError());

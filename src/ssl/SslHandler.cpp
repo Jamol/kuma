@@ -62,6 +62,8 @@
 #include "SslHandler.h"
 #include "util/kmtrace.h"
 
+#include <openssl/x509v3.h>
+
 using namespace kuma;
 
 SslHandler::SslHandler()
@@ -131,6 +133,17 @@ KMError SslHandler::setServerName(const std::string &serverName)
 #else
     return KMError::UNSUPPORT;
 #endif
+}
+
+KMError SslHandler::setHostName(const std::string &hostName)
+{
+    if (ssl_) {
+        auto param = SSL_get0_param(ssl_);
+        X509_VERIFY_PARAM_set_hostflags(param, X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS);
+        X509_VERIFY_PARAM_set1_host(param, hostName.c_str(), hostName.size());
+        return KMError::NOERR;
+    }
+    return KMError::SSL_FAILED;
 }
 
 KMError SslHandler::attachFd(SOCKET_FD fd, SslRole ssl_role)

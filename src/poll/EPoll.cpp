@@ -50,8 +50,6 @@ private:
     uint32_t get_kuma_events(uint32_t events);
 
 private:
-    typedef std::map<int, IOCallback> IOCallbackMap;
-
     int             epoll_fd_;
     NotifierPtr     notifier_ { std::move(Notifier::createNotifier()) };
 };

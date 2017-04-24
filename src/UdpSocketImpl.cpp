@@ -64,6 +64,7 @@
 #include "UdpSocketImpl.h"
 #include "util/util.h"
 #include "util/kmtrace.h"
+#include "DnsResolver.h"
 
 #ifdef KUMA_OS_MAC
 #define IPV6_ADD_MEMBERSHIP IPV6_JOIN_GROUP
@@ -140,13 +141,7 @@ KMError UdpSocket::Impl::bind(const char *bind_host, uint16_t bind_port, uint32_
     } else {
         return KMError::INVALID_PROTO;
     }
-    int addr_len = sizeof(bind_addr_);
-#ifdef KUMA_OS_MAC
-    if(AF_INET == bind_addr_.ss_family)
-        addr_len = sizeof(sockaddr_in);
-    else
-        addr_len = sizeof(sockaddr_in6);
-#endif
+    int addr_len = km_get_addr_length(bind_addr_);
 
     if(::bind(fd_, (struct sockaddr *)&bind_addr_, addr_len) < 0) {
         KUMA_ERRXTRACE("bind, bind error: "<<getLastError());
@@ -298,18 +293,22 @@ int UdpSocket::Impl::send(const void* data, size_t length, const char* host, uin
     }
     
     sockaddr_storage ss_addr = {0};
-    struct addrinfo hints = {0};
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_flags = AI_NUMERICHOST|AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-    km_set_sock_addr(host, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr));
-    int addr_len = sizeof(ss_addr);
-#ifdef KUMA_OS_MAC
-    if(AF_INET == ss_addr.ss_family)
-        addr_len = sizeof(sockaddr_in);
-    else
-        addr_len = sizeof(sockaddr_in6);
-#endif
+    if (!km_is_ip_address(host)) {
+        if (DnsResolver::get().resolve(host, port, ss_addr) != KMError::NOERR) {
+            KUMA_ERRXTRACE("send, cannot resolve host, host=" << host << ", port=" << port);
+            return -1;
+        }
+    } else {
+        struct addrinfo hints = { 0 };
+        hints.ai_family = AF_UNSPEC;
+        hints.ai_socktype = SOCK_DGRAM;
+        hints.ai_flags = AI_NUMERICHOST | AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
+        if (km_set_sock_addr(host, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
+            KUMA_ERRXTRACE("send, cannot resolve host 2, host=" << host << ", port=" << port);
+            return -1;
+        }
+    }
+    int addr_len = km_get_addr_length(ss_addr);
     int ret = (int)::sendto(fd_, (const char*)data, length, 0, (struct sockaddr*)&ss_addr, addr_len);
     if(0 == ret) {
         KUMA_ERRXTRACE("send, peer closed, err="<<getLastError()<<", host="<<host<<", port="<<port);
@@ -366,13 +365,7 @@ int UdpSocket::Impl::send(iovec* iovs, int count, const char* host, uint16_t por
     send_msg.msg_iov = (iovec *)&iovs[0];
     send_msg.msg_iovlen = count;
     send_msg.msg_name = (struct sockaddr *)&ss_addr;
-    send_msg.msg_namelen = sizeof(ss_addr);
-#ifdef KUMA_OS_MAC
-    if(AF_INET == ss_addr.ss_family)
-        send_msg.msg_namelen = sizeof(sockaddr_in);
-    else
-        send_msg.msg_namelen = sizeof(sockaddr_in6);
-#endif
+    send_msg.msg_namelen = km_get_addr_length(ss_addr);
 #if defined(SOLARIS)
     send_msg.msg_accrights = 0;
     send_msg.msg_accrightslen = 0;

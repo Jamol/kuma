@@ -65,6 +65,7 @@ SRCS =  \
     util/base64.cpp \
     ssl/SslHandler.cpp \
     ssl/OpenSslLib.cpp \
+    DnsResolver.cpp \
     kmapi.cpp
     
 OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(patsubst %.cpp,$(OBJDIR)/%.o,$(patsubst %.cxx,$(OBJDIR)/%.o,$(SRCS))))

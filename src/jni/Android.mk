@@ -48,6 +48,7 @@ LOCAL_SRC_FILES := \
     util/base64.cpp \
     ssl/SslHandler.cpp \
     ssl/OpenSslLib.cpp \
+    DnsResolver.cpp \
     kmapi.cpp 
 
 LOCAL_C_INCLUDES := \

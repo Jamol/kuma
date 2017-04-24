@@ -36,6 +36,8 @@
 		6F7512921D76BE27000BE6EC /* Notifier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7512911D76BE27000BE6EC /* Notifier.cpp */; };
 		6F7512941D76C237000BE6EC /* SocketNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F7512931D76C237000BE6EC /* SocketNotifier.h */; };
 		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
+		6F8775FE1EAB4AD0002F1165 /* DnsResolver.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F8775FD1EAB4AD0002F1165 /* DnsResolver.h */; };
+		6F8776001EAB4B18002F1165 /* DnsResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F8775FF1EAB4B18002F1165 /* DnsResolver.cpp */; };
 		6F91F1711D782DD3004A95B9 /* Http1xRequest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F16F1D782DD3004A95B9 /* Http1xRequest.cpp */; };
 		6F91F1721D782DD3004A95B9 /* Http1xRequest.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F91F1701D782DD3004A95B9 /* Http1xRequest.h */; };
 		6F91F1B21D7ADF77004A95B9 /* KQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F1B11D7ADF77004A95B9 /* KQueue.cpp */; };
@@ -125,6 +127,8 @@
 		6F852E421985EB2B00271D87 /* kuma-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "kuma-Prefix.pch"; sourceTree = SOURCE_ROOT; };
 		6F852E441985EB4700271D87 /* kumaProj.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaProj.xcconfig; sourceTree = "<group>"; };
 		6F852E451985EB4700271D87 /* kumaTarget.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaTarget.xcconfig; sourceTree = "<group>"; };
+		6F8775FD1EAB4AD0002F1165 /* DnsResolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DnsResolver.h; sourceTree = "<group>"; };
+		6F8775FF1EAB4B18002F1165 /* DnsResolver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DnsResolver.cpp; sourceTree = "<group>"; };
 		6F91F16F1D782DD3004A95B9 /* Http1xRequest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Http1xRequest.cpp; sourceTree = "<group>"; };
 		6F91F1701D782DD3004A95B9 /* Http1xRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Http1xRequest.h; sourceTree = "<group>"; };
 		6F91F1B11D7ADF77004A95B9 /* KQueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = KQueue.cpp; sourceTree = "<group>"; };
@@ -253,6 +257,8 @@
 				6F2D403D1B1834D300E24928 /* UdpSocketImpl.cpp */,
 				6F0098B01B03110100122C15 /* UdpSocketImpl.h */,
 				6F852DF41985E33000271D87 /* Supporting Files */,
+				6F8775FD1EAB4AD0002F1165 /* DnsResolver.h */,
+				6F8775FF1EAB4B18002F1165 /* DnsResolver.cpp */,
 			);
 			name = kuma;
 			path = ../../src;
@@ -402,6 +408,7 @@
 				6FE0EF051D409863006136B7 /* H2ConnectionMgr.h in Headers */,
 				6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */,
 				6FA951421A3808450033C9CF /* kmdefs.h in Headers */,
+				6F8775FE1EAB4AD0002F1165 /* DnsResolver.h in Headers */,
 				6F6208FD1A26BDB1000DAF4B /* kmapi.h in Headers */,
 				6FBB2C911D139C430024550F /* Notifier.h in Headers */,
 				6F2963541A18AB0D00C3C79B /* kmtrace.h in Headers */,
@@ -501,6 +508,7 @@
 				6F2D40471B194AE200E24928 /* TimerManager.cpp in Sources */,
 				6F6D12EE1D965A9D008B64E6 /* Http1xResponse.cpp in Sources */,
 				6F2963531A18AB0D00C3C79B /* kmtrace.cpp in Sources */,
+				6F8776001EAB4B18002F1165 /* DnsResolver.cpp in Sources */,
 				6FE0EF071D409863006136B7 /* H2Frame.cpp in Sources */,
 				6FF211D91B1556FB006603BB /* EventLoopImpl.cpp in Sources */,
 				6FBB2C921D139C430024550F /* SelectPoll.cpp in Sources */,

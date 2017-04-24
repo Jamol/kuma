@@ -21,6 +21,7 @@
 
 #include "H2ConnectionMgr.h"
 #include "util/kmtrace.h"
+#include "DnsResolver.h"
 
 using namespace kuma;
 
@@ -51,11 +52,11 @@ H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &key)
 H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &host, uint16_t port, uint32_t ssl_flags, const EventLoopPtr &loop)
 {
     std::string key;
-    char ip_buf[128];
-    if (km_resolve_2_ip(host.c_str(), ip_buf, sizeof(ip_buf)) == 0) {
-        std::stringstream ss;
-        ss << ip_buf << ":" << port;
-        key = ss.str();
+    std::string ip;
+    sockaddr_storage ss_addr = { 0 };
+    auto ret = DnsResolver::get().resolve(host, port, ss_addr);
+    if (ret == KMError::NOERR && km_get_sock_addr(ss_addr, ip, nullptr) == 0) {
+        key = ip + ":" + std::to_string(port);
     } else {
         key = host + ":" + std::to_string(port);
     }

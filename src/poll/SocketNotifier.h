@@ -45,7 +45,7 @@ public:
         struct addrinfo hints = {0};
         hints.ai_family = AF_INET;
         hints.ai_socktype = SOCK_STREAM;
-        hints.ai_flags = AI_ADDRCONFIG;
+        hints.ai_flags = AI_NUMERICHOST|AI_ADDRCONFIG;
         if(km_set_sock_addr("127.0.0.1", 0, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
             return false;
         }

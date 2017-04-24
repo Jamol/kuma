@@ -231,7 +231,7 @@ extern "C" int km_resolve_2_ip(const char* host_name, char *ip_buf, int ip_buf_l
         hints.ai_family = AF_UNSPEC;
     }
     hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-    if(km_getaddrinfo(host_name, nullptr, &hints, &ai) != 0 || nullptr == ai) {
+    if(km_getaddrinfo(host_name, nullptr, &hints, &ai) != 0 || !ai) {
         return -1;
     }
     
@@ -278,10 +278,17 @@ extern "C" int km_set_sock_addr(const char* addr, unsigned short port,
         sa->sin_port = htons(port);
         if(!addr || addr[0] == '\0') {
             sa->sin_addr.s_addr = INADDR_ANY;
+            return 0;
         } else {
-            inet_pton(sa->sin_family, addr, &sa->sin_addr);
+            auto ret = inet_pton(sa->sin_family, addr, &sa->sin_addr);
+            if (ret == 1) {
+                return 0;
+            } else if (ret == 0) {
+                return EAI_NONAME;
+            } else {
+                return -1;
+            }
         }
-        return 0;
     }
 #endif
     char service[128] = {0};
@@ -290,18 +297,24 @@ extern "C" int km_set_sock_addr(const char* addr, unsigned short port,
         hints->ai_flags |= AI_PASSIVE;
     }
     SNPRINTF(service, sizeof(service)-1, "%d", port);
-    if(km_getaddrinfo(addr, service, hints, &ai) != 0 || !ai || ai->ai_addrlen > sk_addr_len) {
+    auto ret = km_getaddrinfo(addr, service, hints, &ai);
+    if(ret != 0 || !ai) {
+        if(ai) km_freeaddrinfo(ai);
+        return ret;
+    }
+    if (ai->ai_addrlen > sk_addr_len) {
         if(ai) km_freeaddrinfo(ai);
         return -1;
     }
-    if(sk_addr)
+    if(sk_addr) {
         memcpy(sk_addr, ai->ai_addr, ai->ai_addrlen);
+    }
     km_freeaddrinfo(ai);
     return 0;
 }
 
-extern "C" int km_get_sock_addr(struct sockaddr * sk_addr, unsigned int sk_addr_len,
-                                char* addr, unsigned int addr_len, unsigned short* port)
+extern "C" int km_get_sock_addr(const sockaddr *sk_addr, unsigned int sk_addr_len,
+                                char *addr, unsigned int addr_len, unsigned short *port)
 {
 #ifdef KUMA_OS_WIN
     if(!ipv6_api_init()) {
@@ -319,6 +332,53 @@ extern "C" int km_get_sock_addr(struct sockaddr * sk_addr, unsigned int sk_addr_
     if(port)
         *port = atoi(service);
     return 0;
+}
+
+int km_get_sock_addr(const sockaddr *addr, size_t addr_len, std::string &ip, uint16_t *port)
+{
+    char ip_buf[128] = {0};
+    if (km_get_sock_addr(addr, (unsigned int)addr_len, ip_buf, sizeof(ip_buf), port) != 0) {
+        return -1;
+    }
+    ip = ip_buf;
+    return 0;
+}
+
+int km_get_sock_addr(const sockaddr_storage &addr, std::string &ip, uint16_t *port)
+{
+    char ip_buf[128] = { 0 };
+    int addr_len = km_get_addr_length(addr);
+    if (km_get_sock_addr((const sockaddr *)&addr, addr_len, ip_buf, sizeof(ip_buf), port) != 0) {
+        return -1;
+    }
+    ip = ip_buf;
+    return 0;
+}
+
+int km_set_addr_port(uint16_t port, sockaddr_storage &addr)
+{
+    if (AF_INET == addr.ss_family) {
+        sockaddr_in *p = (sockaddr_in*)&addr;
+        p->sin_port = htons(port);
+    } else if (AF_INET6 == addr.ss_family) {
+        sockaddr_in6 *p = (sockaddr_in6*)&addr;
+        p->sin6_port = htons(port);
+    } else {
+        return -1;
+    }
+    return 0;
+}
+
+int km_get_addr_length(const sockaddr_storage &addr)
+{
+    int addr_len = sizeof(addr);
+    if (AF_INET == addr.ss_family) {
+        addr_len = sizeof(sockaddr_in);
+    }
+    else if (AF_INET6 == addr.ss_family) {
+        addr_len = sizeof(sockaddr_in6);
+    }
+    return addr_len;
 }
 
 extern "C" bool km_is_ipv6_address(const char* addr)

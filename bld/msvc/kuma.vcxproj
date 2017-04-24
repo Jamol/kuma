@@ -162,6 +162,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\DnsResolver.cpp" />
     <ClCompile Include="..\..\src\EventLoopImpl.cpp" />
     <ClCompile Include="..\..\src\http\Http1xRequest.cpp" />
     <ClCompile Include="..\..\src\http\Http1xResponse.cpp" />
@@ -182,6 +183,7 @@
     <ClCompile Include="..\..\src\http\v2\Http2Request.cpp" />
     <ClCompile Include="..\..\src\http\v2\Http2Response.cpp" />
     <ClCompile Include="..\..\src\kmapi.cpp" />
+    <ClCompile Include="..\..\src\poll\IocpPoll.cpp" />
     <ClCompile Include="..\..\src\poll\Notifier.cpp" />
     <ClCompile Include="..\..\src\poll\SelectPoll.cpp" />
     <ClCompile Include="..\..\src\poll\VPoll.cpp" />
@@ -199,6 +201,7 @@
     <ClCompile Include="..\..\src\ws\WSHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\DnsResolver.h" />
     <ClInclude Include="..\..\src\evdefs.h" />
     <ClInclude Include="..\..\src\EventLoopImpl.h" />
     <ClInclude Include="..\..\src\http\Http1xRequest.h" />

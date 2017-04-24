@@ -150,6 +150,12 @@
     <ClCompile Include="..\..\src\http\HttpHeader.cpp">
       <Filter>Source Files\http</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\DnsResolver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\poll\IocpPoll.cpp">
+      <Filter>Source Files\poll</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\util\kmqueue.h">
@@ -271,6 +277,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\http\HttpHeader.h">
       <Filter>Header Files\http</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\DnsResolver.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

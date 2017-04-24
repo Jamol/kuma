@@ -28,6 +28,7 @@
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
 #include "EventLoopImpl.h"
+#include "DnsResolver.h"
 #ifdef KUMA_OS_WIN
 # include <Ws2tcpip.h>
 #else
@@ -39,6 +40,7 @@
 #endif
 
 #include <vector>
+#include <mutex>
 
 KUMA_NS_BEGIN
 
@@ -85,6 +87,7 @@ public:
     
 private:
     KMError connect_i(const char* addr, uint16_t port, uint32_t timeout_ms);
+    KMError connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_ms);
     void setSocketOption();
     void ioReady(uint32_t events);
     void onConnect(KMError err);
@@ -92,9 +95,12 @@ private:
     void onReceive(KMError err);
     void onClose(KMError err);
     
+    void onResolved(KMError err, const sockaddr_storage &addr);
+    
 private:
     enum State {
         IDLE,
+        HOST_RESOLVING,
         CONNECTING,
         OPEN,
         CLOSED
@@ -112,10 +118,13 @@ private:
     bool                registered_{ false };
     uint32_t            ssl_flags_{ SSL_NONE };
     
+    DnsResolver::Token  dns_token_;
+    
 #ifdef KUMA_HAS_OPENSSL
     SslHandler*         ssl_handler_{ nullptr };
     AlpnProtos          alpn_protos_;
-    std::string         ssl_server_name;
+    std::string         ssl_server_name_;
+    std::string         ssl_host_name_;
 #endif
     
     EventCallback       connect_cb_;
