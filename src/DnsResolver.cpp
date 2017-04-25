@@ -96,6 +96,10 @@ DnsResolver& DnsResolver::get()
 {
     // thread-safe is guaranteed by C++11
     static DnsResolver s_instance;
+    static std::once_flag s_once_flag;
+    std::call_once(s_once_flag, [] {
+        s_instance.init();
+    });
     return s_instance;
 }
 
@@ -134,8 +138,7 @@ void DnsResolver::cancel(const std::string &host, const Token &t)
 bool DnsResolver::init()
 {
     stop_flag_ = false;
-    int count = 1;
-    for (int i=0; i<count; ++i) {
+    for (int i=0; i<thread_count_; ++i) {
         auto thr = std::thread([=]{
             dnsProc();
         });
@@ -187,6 +190,7 @@ void DnsResolver::dnsProc()
 
         sockaddr_storage addr = { 0 };
         auto ret = doResolve(host, 0, addr);
+        KUMA_INFOTRACE("DNS resolved, host="<<host);
         for (auto &slot : slots) {
             if (slot) {
                 km_set_addr_port(slot->port, addr);

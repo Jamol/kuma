@@ -95,6 +95,7 @@ protected:
     using SlotList = std::list<std::shared_ptr<Slot>>;
     std::unordered_map<std::string, SlotList> requests_;
     std::vector<std::thread> threads_;
+    int thread_count_ = 1;
     bool stop_flag_ = false;
     std::condition_variable conv_;
 };
