@@ -34,21 +34,21 @@ public:
     ~SelectPoll();
     
     bool init() override;
-    KMError registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb) override;
+    KMError registerFd(SOCKET_FD fd, KMEvent events, IOCallback cb) override;
     KMError unregisterFd(SOCKET_FD fd) override;
-    KMError updateFd(SOCKET_FD fd, uint32_t events) override;
+    KMError updateFd(SOCKET_FD fd, KMEvent events) override;
     KMError wait(uint32_t wait_time_ms) override;
     void notify() override;
     PollType getType() const override { return PollType::SELECT; }
     bool isLevelTriggered() const override { return true; }
 
 private:
-    void updateFdSet(SOCKET_FD fd, uint32_t events);
+    void updateFdSet(SOCKET_FD fd, KMEvent events);
     
 private:
     struct PollFD {
         SOCKET_FD fd = INVALID_FD;
-        uint32_t  events = 0;
+        KMEvent events = 0;
     };
 
 private:
@@ -82,13 +82,13 @@ bool SelectPoll::init()
         if (!notifier_->init()) {
             return false;
         }
-        IOCallback cb([this](uint32_t ev) { notifier_->onEvent(ev); });
+        IOCallback cb([this](KMEvent ev, void*, size_t) { notifier_->onEvent(ev); });
         registerFd(notifier_->getReadFD(), KUMA_EV_READ | KUMA_EV_ERROR, std::move(cb));
     }
     return true;
 }
 
-KMError SelectPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
+KMError SelectPoll::registerFd(SOCKET_FD fd, KMEvent events, IOCallback cb)
 {
     if (fd < 0) {
         return KMError::INVALID_PARAM;
@@ -136,7 +136,7 @@ KMError SelectPoll::unregisterFd(SOCKET_FD fd)
     return KMError::NOERR;
 }
 
-KMError SelectPoll::updateFd(SOCKET_FD fd, uint32_t events)
+KMError SelectPoll::updateFd(SOCKET_FD fd, KMEvent events)
 {
     int max_fd = int(poll_items_.size() - 1);
     if (fd < 0 || -1 == max_fd || fd > max_fd) {
@@ -162,7 +162,7 @@ KMError SelectPoll::updateFd(SOCKET_FD fd, uint32_t events)
     return KMError::NOERR;
 }
 
-void SelectPoll::updateFdSet(SOCKET_FD fd, uint32_t events)
+void SelectPoll::updateFdSet(SOCKET_FD fd, KMEvent events)
 {
     if(events != 0) {
         if (events & KUMA_EV_READ) {
@@ -229,7 +229,7 @@ KMError SelectPoll::wait(uint32_t wait_ms)
         }
         if (fd < poll_items_.size()) {
             IOCallback& cb = poll_items_[fd].cb;
-            if (cb) cb(events);
+            if (cb) cb(events, nullptr, 0);
         }
     }
     return KMError::NOERR;

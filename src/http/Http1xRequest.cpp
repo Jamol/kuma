@@ -88,8 +88,7 @@ void Http1xRequest::buildRequest()
     }
     auto url(ss.str());
     auto req = http_message_.buildHeader(method_, url, version_);
-    send_offset_ = 0;
-    send_buffer_.assign(req.begin(), req.end());
+    send_buffer_.write(req);
 }
 
 KMError Http1xRequest::sendRequest()

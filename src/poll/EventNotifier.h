@@ -58,7 +58,7 @@ public:
         return efd_;
     }
     
-    KMError onEvent(uint32_t ev) override {
+    KMError onEvent(KMEvent ev) override {
         while (true) {
             //eventfd_t val;
             //eventfd_read(efd_, &val);

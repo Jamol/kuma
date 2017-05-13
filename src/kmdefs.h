@@ -52,13 +52,14 @@ enum class KMError : int {
     ALREADY_EXIST       = -5,
     NOT_EXIST           = -6,
     AGAIN               = -7,
-    SOCK_ERROR          = -8,
-    POLL_ERROR          = -9,
-    PROTO_ERROR         = -10,
-    SSL_FAILED          = -11,
-    BUFFER_TOO_SMALL    = -12,
-    UNSUPPORT           = -13,
-    DESTROYED           = -14
+    TIMEOUT             = -8,
+    SOCK_ERROR          = -9,
+    POLL_ERROR          = -10,
+    PROTO_ERROR         = -11,
+    SSL_FAILED          = -12,
+    BUFFER_TOO_SMALL    = -13,
+    UNSUPPORT           = -14,
+    DESTROYED           = -15
 };
 
 enum class HttpEvent : int {

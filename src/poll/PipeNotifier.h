@@ -66,7 +66,7 @@ public:
         return fds_[READ_FD];
     }
     
-    KMError onEvent(uint32_t ev) override {
+    KMError onEvent(KMEvent ev) override {
         while (true) {
             char buf[1024];
             auto ret = read(fds_[READ_FD], buf, sizeof(buf));

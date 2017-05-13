@@ -96,7 +96,7 @@ public:
         return fds_[READ_FD];
     }
     
-    KMError onEvent(uint32_t ev) override {
+    KMError onEvent(KMEvent ev) override {
         char buf[1024];
         int ret = ::recv(fds_[READ_FD], buf, sizeof(buf), 0);
         while (ret == sizeof(buf)) {

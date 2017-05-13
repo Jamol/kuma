@@ -149,16 +149,17 @@
       <Optimization>Disabled</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;NOMINMAX;KUMA_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;NOMINMAX;KUMA_EXPORTS;KUMA_HAS_OPENSSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\src;..\..\src\loop;..\..\vendor</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\src;..\..\src\loop;..\..\vendor;..\..\vendor\openssl\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ssleay64.lib;libeay64.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\vendor\openssl\lib\win</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -184,11 +185,15 @@
     <ClCompile Include="..\..\src\http\v2\Http2Response.cpp" />
     <ClCompile Include="..\..\src\kmapi.cpp" />
     <ClCompile Include="..\..\src\poll\IocpPoll.cpp" />
+    <ClCompile Include="..\..\src\poll\IocpSocket.cpp" />
     <ClCompile Include="..\..\src\poll\Notifier.cpp" />
+    <ClCompile Include="..\..\src\poll\PollSocket.cpp" />
     <ClCompile Include="..\..\src\poll\SelectPoll.cpp" />
     <ClCompile Include="..\..\src\poll\VPoll.cpp" />
+    <ClCompile Include="..\..\src\SocketBase.cpp" />
+    <ClCompile Include="..\..\src\ssl\BioHandler.cpp" />
     <ClCompile Include="..\..\src\ssl\OpenSslLib.cpp" />
-    <ClCompile Include="..\..\src\ssl\SslHandler.cpp" />
+    <ClCompile Include="..\..\src\ssl\SioHandler.cpp" />
     <ClCompile Include="..\..\src\TcpConnection.cpp" />
     <ClCompile Include="..\..\src\TcpListenerImpl.cpp" />
     <ClCompile Include="..\..\src\TcpSocketImpl.cpp" />
@@ -228,14 +233,23 @@
     <ClInclude Include="..\..\src\kmapi.h" />
     <ClInclude Include="..\..\src\kmconf.h" />
     <ClInclude Include="..\..\src\kmdefs.h" />
+    <ClInclude Include="..\..\src\poll\IocpSocket.h" />
     <ClInclude Include="..\..\src\poll\IOPoll.h" />
     <ClInclude Include="..\..\src\poll\Notifier.h" />
+    <ClInclude Include="..\..\src\poll\PollSocket.h" />
+    <ClInclude Include="..\..\src\SocketBase.h" />
+    <ClInclude Include="..\..\src\ssl\BioHandler.h" />
+    <ClInclude Include="..\..\src\ssl\OpenSslLib.h" />
+    <ClInclude Include="..\..\src\ssl\SioHandler.h" />
+    <ClInclude Include="..\..\src\ssl\SslHandler.h" />
     <ClInclude Include="..\..\src\TcpConnection.h" />
     <ClInclude Include="..\..\src\TcpListenerImpl.h" />
     <ClInclude Include="..\..\src\TcpSocketImpl.h" />
     <ClInclude Include="..\..\src\TimerManager.h" />
     <ClInclude Include="..\..\src\UdpSocketImpl.h" />
     <ClInclude Include="..\..\src\util\base64.h" />
+    <ClInclude Include="..\..\src\util\kmbuffer.h" />
+    <ClInclude Include="..\..\src\util\kmobject.h" />
     <ClInclude Include="..\..\src\util\kmqueue.h" />
     <ClInclude Include="..\..\src\util\kmtrace.h" />
     <ClInclude Include="..\..\src\util\util.h" />

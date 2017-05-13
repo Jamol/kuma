@@ -12,6 +12,7 @@
 #include "kmdefs.h"
 #include <string>
 #include <atomic>
+#include <sstream>
 
 KUMA_NS_BEGIN
 

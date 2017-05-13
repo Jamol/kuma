@@ -49,7 +49,8 @@ KUMA_NS_BEGIN
 
 #define INVALID_FD  ((SOCKET_FD)-1)
 
-using IOCallback = std::function<void(uint32_t)>;
+using KMEvent = uint32_t;
+using IOCallback = std::function<void(KMEvent, void*, size_t)>;
 
 enum class PollType {
     NONE,

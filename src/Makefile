@@ -31,6 +31,7 @@ LDFLAGS = -shared -Wl,-Bsymbolic -lpthread -ldl -lssl -lcrypto
 
 SRCS =  \
     EventLoopImpl.cpp \
+    SocketBase.cpp \
     TcpSocketImpl.cpp \
     UdpSocketImpl.cpp \
     TimerManager.cpp \
@@ -40,6 +41,7 @@ SRCS =  \
     poll/VPoll.cpp \
     poll/SelectPoll.cpp \
     poll/Notifier.cpp \
+    poll/PollSocket.cpp \
     http/Uri.cpp \
     http/HttpHeader.cpp \
     http/HttpMessage.cpp \
@@ -63,7 +65,8 @@ SRCS =  \
     util/util.cpp \
     util/kmtrace.cpp \
     util/base64.cpp \
-    ssl/SslHandler.cpp \
+    ssl/BioHandler.cpp \
+    ssl/SioHandler.cpp \
     ssl/OpenSslLib.cpp \
     DnsResolver.cpp \
     kmapi.cpp

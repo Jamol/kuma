@@ -26,6 +26,7 @@
 #include <stdlib.h>
 
 #ifdef KUMA_OS_WIN
+# include <MSWSock.h>
 # include <Ws2tcpip.h>
 # include <windows.h>
 #else
@@ -677,7 +678,7 @@ int generateRandomBytes(uint8_t *buf, int len)
         int rnd = dis(gen);
         auto copy_len = len - rnd_len > sizeof(rnd) ? sizeof(rnd) : len - rnd_len;
         memcpy(buf + rnd_len, &rnd, copy_len);
-        rnd_len += copy_len;
+        rnd_len += static_cast<int>(copy_len);
     }
     return rnd_len;
 }
@@ -806,6 +807,11 @@ extern "C" size_t strlcat(char *dest, const char *src, size_t count)
 KUMA_NS_END
 
 #ifdef KUMA_OS_WIN
+KUMA_NS_BEGIN
+LPFN_CONNECTEX connect_ex = nullptr;
+LPFN_ACCEPTEX accept_ex = nullptr;
+KUMA_NS_END
+using namespace kuma;
 void kuma_init()
 {
     WSADATA wsaData;
@@ -815,6 +821,22 @@ void kuma_init()
     {
         return;
     }
+
+    auto sock = socket(AF_INET, SOCK_STREAM, 0);
+    GUID guid = WSAID_CONNECTEX;
+    DWORD bytes = 0;
+    if (::WSAIoctl(sock, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid), &connect_ex, sizeof(connect_ex), &bytes, 0, 0) != 0)
+    {
+        connect_ex = nullptr;
+    }
+
+    guid = WSAID_ACCEPTEX;
+    bytes = 0;
+    if (::WSAIoctl(sock, SIO_GET_EXTENSION_FUNCTION_POINTER, &guid, sizeof(guid), &accept_ex, sizeof(accept_ex), &bytes, 0, 0) != 0)
+    {
+        accept_ex = nullptr;
+    }
+    closeFd(sock);
 }
 
 void kuma_fini()

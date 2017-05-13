@@ -24,6 +24,7 @@
 
 #include "kmdefs.h"
 #include "TcpSocketImpl.h"
+#include "util/kmbuffer.h"
 
 KUMA_NS_BEGIN
 
@@ -70,8 +71,7 @@ protected:
     TcpSocket::Impl tcp_;
     std::string host_;
     uint16_t port_{ 0 };
-    std::vector<uint8_t> send_buffer_;
-    size_t send_offset_{ 0 };
+    KMBuffer send_buffer_;
     
 private:
     std::vector<uint8_t>    initData_;

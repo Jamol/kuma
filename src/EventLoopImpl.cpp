@@ -369,10 +369,20 @@ IOPoll* createEPoll();
 IOPoll* createVPoll();
 IOPoll* createKQueue();
 IOPoll* createSelectPoll();
+IOPoll* createIocpPoll();
+
+#ifdef KUMA_OS_WIN
+# include <MSWSock.h>
+extern LPFN_CONNECTEX connect_ex;
+extern LPFN_ACCEPTEX accept_ex;
+#endif
 
 IOPoll* createDefaultIOPoll()
 {
 #ifdef KUMA_OS_WIN
+    if (connect_ex && accept_ex) {
+        //return createIocpPoll();
+    }
     return createSelectPoll();
 #elif defined(KUMA_OS_LINUX)
     return createEPoll();
@@ -401,6 +411,13 @@ IOPoll* createIOPoll(PollType poll_type)
         case PollType::EPOLL:
 #ifdef KUMA_OS_LINUX
             return createEPoll();
+#else
+            return createDefaultIOPoll();
+#endif
+        case PollType::IOCP:
+#ifdef KUMA_OS_WIN
+            return createDefaultIOPoll();
+            //return createIocpPoll();
 #else
             return createDefaultIOPoll();
 #endif

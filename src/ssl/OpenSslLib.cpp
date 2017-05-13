@@ -93,6 +93,7 @@ bool OpenSslLib::doInit(const std::string &path)
     }
     //OpenSSL_add_all_algorithms();
     SSL_load_error_strings();
+    ERR_load_BIO_strings();
     
     // PRNG
     RAND_poll();

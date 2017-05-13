@@ -1,4 +1,4 @@
-/* Copyright (c) 2014, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2014-2017, Fengping Bao <jamol@live.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,66 +28,45 @@
 #include "evdefs.h"
 #include "OpenSslLib.h"
 
-#ifndef KUMA_OS_WIN
-struct iovec;
-#endif
-
 KUMA_NS_BEGIN
-
-#ifdef KUMA_OS_WIN
-struct iovec;
-#endif
 
 class SslHandler
 {
 public:
-    enum SslState{
-        SSL_NONE        = 0,
-        SSL_HANDSHAKE   = 1,
-        SSL_SUCCESS     = 2,
+    enum class SslState {
+        SSL_NONE        =  0,
+        SSL_HANDSHAKE   =  1,
+        SSL_SUCCESS     =  2,
         SSL_ERROR       = -1,
     };
+    virtual ~SslHandler() {}
+    virtual KMError setAlpnProtocols(const AlpnProtos &protocols) = 0;
+    virtual KMError getAlpnSelected(std::string &proto) = 0;
+    virtual KMError setServerName(const std::string &serverName) = 0;
+    virtual KMError setHostName(const std::string &hostName) = 0;
     
-public:
-    SslHandler();
-    ~SslHandler();
+    virtual KMError init(SslRole ssl_role, SOCKET_FD fd) = 0;
+    virtual KMError attachSsl(SSL *ssl, BIO *nbio, SOCKET_FD fd) = 0;
+    virtual KMError detachSsl(SSL* &ssl, BIO* &nbio) = 0;
+    virtual SslState handshake() = 0;
+    virtual int send(const void* data, size_t size) = 0;
+    virtual int send(const iovec* iovs, int count) = 0;
+    virtual int receive(void* data, size_t size) = 0;
+    virtual KMError close() = 0;
     
-    KMError setAlpnProtocols(const AlpnProtos &protocols);
-    KMError getAlpnSelected(std::string &proto);
-    KMError setServerName(const std::string &serverName);
-    KMError setHostName(const std::string &hostName);
-    KMError attachFd(SOCKET_FD fd, SslRole ssl_role);
-    KMError attachSsl(SOCKET_FD fd, SSL* ssl);
-    KMError detachSsl(SSL* &ssl);
-    SslState doSslHandshake();
-    int send(const void* data, size_t size);
-    int send(const iovec* iovs, int count);
-    int receive(void* data, size_t size);
-    KMError close();
-    
-    bool isServer() { return is_server_; }
-    SSL* getSsl() { return ssl_; }
-    
+    virtual KMError sendBufferedData() { return KMError::NOERR; }
     SslState getState() { return state_; }
+    bool isServer() { return is_server_; }
     
 protected:
-    const char* getObjKey();
-    
-private:
-    SslState sslConnect();
-    SslState sslAccept();
     void setState(SslState state) { state_ = state; }
-    void cleanup();
     
-private:
-    SOCKET_FD   fd_;
-    SSL*        ssl_;
-    SslState    state_;
-    bool        is_server_;
+protected:
+    SSL*        ssl_ = nullptr;
+    SslState    state_ = SslState::SSL_NONE;
+    bool        is_server_ = false;
 };
 
 KUMA_NS_END
-
 #endif // KUMA_HAS_OPENSSL
-
-#endif
+#endif // __SslHandler_H__

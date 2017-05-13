@@ -96,8 +96,7 @@ void Http1xResponse::checkHeaders()
 void Http1xResponse::buildResponse(int status_code, const std::string& desc, const std::string& ver)
 {
     auto rsp = http_message_.buildHeader(status_code, desc, ver);
-    send_offset_ = 0;
-    send_buffer_.assign(rsp.begin(), rsp.end());
+    send_buffer_.write(rsp);
 }
 
 KMError Http1xResponse::sendResponse(int status_code, const std::string& desc, const std::string& ver)
@@ -145,8 +144,7 @@ int Http1xResponse::sendData(const void* data, size_t len)
 void Http1xResponse::reset()
 {
     // reset TcpConnection
-    send_buffer_.clear();
-    send_offset_ = 0;
+    send_buffer_.reset();
     
     HttpResponse::Impl::reset();
     http_parser_.reset();

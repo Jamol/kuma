@@ -1,4 +1,4 @@
-/* Copyright (c) 2014, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2014-2017, Fengping Bao <jamol@live.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -29,6 +29,7 @@
 #include "util/DestroyDetector.h"
 #include "EventLoopImpl.h"
 #include "DnsResolver.h"
+#include "SocketBase.h"
 #ifdef KUMA_OS_WIN
 # include <Ws2tcpip.h>
 #else
@@ -66,8 +67,8 @@ public:
     KMError setAlpnProtocols(const AlpnProtos &protocols);
     KMError getAlpnSelected(std::string &proto);
     KMError setSslServerName(std::string serverName);
-    KMError attachFd(SOCKET_FD fd, SSL* ssl);
-    KMError detachFd(SOCKET_FD &fd, SSL* &ssl);
+    KMError attachFd(SOCKET_FD fd, SSL *ssl, BIO *nbio);
+    KMError detachFd(SOCKET_FD &fd, SSL* &ssl, BIO* &nbio);
     KMError startSslHandshake(SslRole ssl_role);
 #endif
     int send(const void* data, size_t length);
@@ -82,46 +83,35 @@ public:
     void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
     void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
     
-    SOCKET_FD getFd() const { return fd_; }
-    EventLoopPtr eventLoop() { return loop_.lock(); }
+    SOCKET_FD getFd() const { return socket_->getFd(); }
+    EventLoopPtr eventLoop() { return socket_->eventLoop(); }
     
 private:
-    KMError connect_i(const char* addr, uint16_t port, uint32_t timeout_ms);
-    KMError connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_ms);
-    void setSocketOption();
     void ioReady(uint32_t events);
     void onConnect(KMError err);
     void onSend(KMError err);
     void onReceive(KMError err);
     void onClose(KMError err);
     
-    void onResolved(KMError err, const sockaddr_storage &addr);
+#ifdef KUMA_HAS_OPENSSL
+    bool createSslHandler();
+    KMError checkSslHandshake(KMError err);
+#endif
+    int sendData(const void *data, size_t length);
+    int sendData(iovec *iovs, int count);
+    int recvData(void *data, size_t length);
     
 private:
-    enum State {
-        IDLE,
-        HOST_RESOLVING,
-        CONNECTING,
-        OPEN,
-        CLOSED
-    };
-    
-    State getState() const { return state_; }
-    void setState(State state) { state_ = state; }
     void cleanup();
     bool isReady();
     
 private:
-    SOCKET_FD           fd_{ INVALID_FD };
-    EventLoopWeakPtr    loop_;
-    State               state_{ State::IDLE };
-    bool                registered_{ false };
     uint32_t            ssl_flags_{ SSL_NONE };
     
-    DnsResolver::Token  dns_token_;
-    
+    std::unique_ptr<SocketBase> socket_;
 #ifdef KUMA_HAS_OPENSSL
-    SslHandler*         ssl_handler_{ nullptr };
+    bool                is_bio_handler_ = false;
+    std::unique_ptr<SslHandler> ssl_handler_;
     AlpnProtos          alpn_protos_;
     std::string         ssl_server_name_;
     std::string         ssl_host_name_;

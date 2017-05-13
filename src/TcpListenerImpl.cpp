@@ -130,7 +130,7 @@ KMError TcpListener::Impl::startListen(const char* host, uint16_t port)
     stopped_ = false;
     auto loop = loop_.lock();
     if (loop) {
-        loop->registerFd(fd_, KUMA_EV_NETWORK, [this] (uint32_t ev) { ioReady(ev); });
+        loop->registerFd(fd_, KUMA_EV_NETWORK, [this] (KMEvent ev, void*, size_t) { ioReady(ev); });
         registered_ = true;
     }
     return KMError::NOERR;

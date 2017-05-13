@@ -36,7 +36,7 @@ public:
     virtual bool ready() = 0;
     virtual void notify() = 0;
     virtual SOCKET_FD getReadFD() = 0;
-    virtual KMError onEvent(uint32_t ev) = 0;
+    virtual KMError onEvent(KMEvent ev) = 0;
     
     static std::unique_ptr<Notifier> createNotifier();
 };

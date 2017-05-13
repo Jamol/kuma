@@ -200,22 +200,14 @@ KMError H2Connection::Impl::sendH2Frame(H2Frame *frame)
     
     size_t payloadSize = frame->calcPayloadSize();
     size_t frameSize = payloadSize + H2_FRAME_HEADER_SIZE;
-    size_t buffSize = 0;
-    if (!sendBufferEmpty()) {
-        buffSize = send_buffer_.size() - send_offset_;
-        if (send_offset_) {
-            memmove(&send_buffer_[0], &send_buffer_[0] + send_offset_, buffSize);
-        }
-    }
-    if (buffSize + frameSize != send_buffer_.size()) {
-        send_buffer_.resize(buffSize + frameSize);
-    }
-    int ret = frame->encode(&send_buffer_[0] + buffSize, frameSize);
+    
+    send_buffer_.expand(frameSize);
+    int ret = frame->encode(send_buffer_.wr_ptr(), frameSize);
     if (ret < 0) {
         KUMA_ERRXTRACE("sendH2Frame, failed to encode frame");
         return KMError::INVALID_PARAM;
     }
-    send_offset_ = 0;
+    send_buffer_.bytes_written(frameSize);
     return sendBufferedData();
 }
 
@@ -229,27 +221,16 @@ KMError H2Connection::Impl::sendHeadersFrame(HeadersFrame *frame)
     
     size_t hpackSize = hdrSize * 3 / 2;
     size_t frameSize = len1 + hpackSize;
-    size_t buffSize = 0;
-    if (!sendBufferEmpty()) {
-        buffSize = send_buffer_.size() - send_offset_;
-        if (send_offset_) {
-            memmove(&send_buffer_[0], &send_buffer_[0] + send_offset_, buffSize);
-        }
-    }
-    if (buffSize + frameSize != send_buffer_.size()) {
-        send_buffer_.resize(buffSize + frameSize);
-    }
     
-    int ret = hpEncoder_.encode(headers, &send_buffer_[0] + buffSize + len1, hpackSize);
+    send_buffer_.expand(frameSize);
+    int ret = hpEncoder_.encode(headers, send_buffer_.wr_ptr() + len1, hpackSize);
     if (ret < 0) {
         return KMError::FAILED;
     }
     size_t bsize = ret;
-    ret = frame->encode(&send_buffer_[0] + buffSize, len1, bsize);
+    ret = frame->encode(send_buffer_.wr_ptr(), len1, bsize);
     KUMA_ASSERT(ret == (int)len1);
-    size_t total_len = buffSize + len1 + bsize;
-    send_buffer_.resize(total_len);
-    send_offset_ = 0;
+    send_buffer_.bytes_written(len1 + bsize);
     return sendBufferedData();
 }
 
@@ -710,8 +691,7 @@ std::string H2Connection::Impl::buildUpgradeResponse()
 void H2Connection::Impl::sendUpgradeRequest()
 {
     std::string str(buildUpgradeRequest());
-    send_buffer_.assign(str.begin(), str.end());
-    send_offset_ = 0;
+    send_buffer_.write(str);
     setState(State::UPGRADING);
     sendBufferedData();
 }
@@ -719,8 +699,7 @@ void H2Connection::Impl::sendUpgradeRequest()
 void H2Connection::Impl::sendUpgradeResponse()
 {
     std::string str(buildUpgradeResponse());
-    send_buffer_.assign(str.begin(), str.end());
-    send_offset_ = 0;
+    send_buffer_.write(str);
     setState(State::UPGRADING);
     sendBufferedData();
     if (sendBufferEmpty()) {
@@ -735,32 +714,34 @@ void H2Connection::Impl::sendPreface()
     params.emplace_back(std::make_pair(INITIAL_WINDOW_SIZE, initLocalWindowSize_));
     params.emplace_back(std::make_pair(MAX_FRAME_SIZE, 65536));
     size_t setting_size = H2_FRAME_HEADER_SIZE + params.size() * H2_SETTING_ITEM_SIZE;
-    size_t encoded_len = 0;
     if (!isServer()) {
         size_t total_len = ClientConnectionPreface.size() + setting_size + H2_WINDOW_UPDATE_FRAME_SIZE;
-        send_buffer_.resize(total_len);
-        memcpy(&send_buffer_[0], ClientConnectionPreface.c_str(), ClientConnectionPreface.size());
-        encoded_len += ClientConnectionPreface.size();
+        send_buffer_.expand(total_len);
+        send_buffer_.write(ClientConnectionPreface);
     } else {
         params.emplace_back(std::make_pair(MAX_CONCURRENT_STREAMS, 128));
         setting_size += H2_SETTING_ITEM_SIZE;
         size_t total_len = setting_size + H2_WINDOW_UPDATE_FRAME_SIZE;
-        send_buffer_.resize(total_len);
+        send_buffer_.expand(total_len);
     }
     SettingsFrame settings;
     settings.setStreamId(0);
     settings.setParams(std::move(params));
-    int ret = settings.encode(&send_buffer_[0] + encoded_len, send_buffer_.size() - encoded_len);
+    int ret = settings.encode(send_buffer_.wr_ptr(), send_buffer_.space());
     if (ret < 0) {
         KUMA_ERRXTRACE("sendPreface, failed to encode setting frame");
         return;
     }
-    encoded_len += ret;
+    send_buffer_.bytes_written(ret);
     WindowUpdateFrame win_update;
     win_update.setStreamId(0);
     win_update.setWindowSizeIncrement(flow_ctrl_.localWindowSize());
-    win_update.encode(&send_buffer_[0] + encoded_len, send_buffer_.size() - encoded_len);
-    send_offset_ = 0;
+    ret = win_update.encode(send_buffer_.wr_ptr(), send_buffer_.space());
+    if (ret < 0) {
+        KUMA_ERRXTRACE("sendPreface, failed to window update frame");
+        return;
+    }
+    send_buffer_.bytes_written(ret);
     sendBufferedData();
     if (sendBufferEmpty() && prefaceReceived_) {
         onStateOpen();

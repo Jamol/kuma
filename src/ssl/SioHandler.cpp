@@ -1,4 +1,4 @@
-/* Copyright (c) 2014, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2014-2017, Fengping Bao <jamol@live.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -59,43 +59,39 @@
 # error "UNSUPPORTED OS"
 #endif
 
-#include "SslHandler.h"
+#include "SioHandler.h"
 #include "util/kmtrace.h"
 
 #include <openssl/x509v3.h>
 
 using namespace kuma;
 
-SslHandler::SslHandler()
-: fd_(INVALID_FD)
-, ssl_(NULL)
-, state_(SSL_NONE)
-, is_server_(false)
+SioHandler::SioHandler()
 {
     
 }
 
-SslHandler::~SslHandler()
+SioHandler::~SioHandler()
 {
     cleanup();
 }
 
-const char* SslHandler::getObjKey()
+const char* SioHandler::getObjKey()
 {
-    return "SslHandler";
+    return "SioHandler";
 }
 
-void SslHandler::cleanup()
+void SioHandler::cleanup()
 {
     if(ssl_) {
         SSL_shutdown(ssl_);
         SSL_free(ssl_);
         ssl_ = NULL;
     }
-    setState(SSL_NONE);
+    setState(SslState::SSL_NONE);
 }
 
-KMError SslHandler::setAlpnProtocols(const AlpnProtos &protocols)
+KMError SioHandler::setAlpnProtocols(const AlpnProtos &protocols)
 {
 #if OPENSSL_VERSION_NUMBER >= 0x1000200fL && !defined(OPENSSL_NO_TLSEXT)
     if (ssl_ && SSL_set_alpn_protos(ssl_, &protocols[0], (unsigned int)protocols.size()) == 0) {
@@ -107,7 +103,7 @@ KMError SslHandler::setAlpnProtocols(const AlpnProtos &protocols)
 #endif
 }
 
-KMError SslHandler::getAlpnSelected(std::string &proto)
+KMError SioHandler::getAlpnSelected(std::string &proto)
 {
     if (!ssl_) {
         return KMError::INVALID_STATE;
@@ -123,7 +119,7 @@ KMError SslHandler::getAlpnSelected(std::string &proto)
     return KMError::NOERR;
 }
 
-KMError SslHandler::setServerName(const std::string &serverName)
+KMError SioHandler::setServerName(const std::string &serverName)
 {
 #if OPENSSL_VERSION_NUMBER >= 0x1000105fL && !defined(OPENSSL_NO_TLSEXT)
     if (ssl_ && SSL_set_tlsext_host_name(ssl_, serverName.c_str())) {
@@ -135,7 +131,7 @@ KMError SslHandler::setServerName(const std::string &serverName)
 #endif
 }
 
-KMError SslHandler::setHostName(const std::string &hostName)
+KMError SioHandler::setHostName(const std::string &hostName)
 {
     if (ssl_) {
         auto param = SSL_get0_param(ssl_);
@@ -146,7 +142,7 @@ KMError SslHandler::setHostName(const std::string &hostName)
     return KMError::SSL_FAILED;
 }
 
-KMError SslHandler::attachFd(SOCKET_FD fd, SslRole ssl_role)
+KMError SioHandler::init(SslRole ssl_role, SOCKET_FD fd)
 {
     cleanup();
     is_server_ = ssl_role == SslRole::SERVER;
@@ -159,19 +155,19 @@ KMError SslHandler::attachFd(SOCKET_FD fd, SslRole ssl_role)
         ctx = OpenSslLib::defaultClientContext();
     }
     if(NULL == ctx) {
-        KUMA_ERRXTRACE("attachFd, CTX is NULL");
+        KUMA_ERRXTRACE("init, CTX is NULL");
         return KMError::SSL_FAILED;
     }
     ssl_ = SSL_new(ctx);
-    if(NULL == ssl_) {
-        KUMA_ERRXTRACE("attachFd, SSL_new failed");
+    if(!ssl_) {
+        KUMA_ERRXTRACE("init, SSL_new failed");
         return KMError::SSL_FAILED;
     }
     //SSL_set_mode(ssl_, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
     //SSL_set_mode(ssl_, SSL_MODE_ENABLE_PARTIAL_WRITE);
     int ret = SSL_set_fd(ssl_, fd_);
     if(0 == ret) {
-        KUMA_ERRXTRACE("attachFd, SSL_set_fd failed, err="<<ERR_reason_error_string(ERR_get_error()));
+        KUMA_ERRXTRACE("init, SSL_set_fd failed, err="<<ERR_reason_error_string(ERR_get_error()));
         SSL_free(ssl_);
         ssl_ = NULL;
         return KMError::SSL_FAILED;
@@ -179,29 +175,33 @@ KMError SslHandler::attachFd(SOCKET_FD fd, SslRole ssl_role)
     return KMError::NOERR;
 }
 
-KMError SslHandler::attachSsl(SOCKET_FD fd, SSL* ssl)
+KMError SioHandler::attachSsl(SSL *ssl, BIO *nbio, SOCKET_FD fd)
 {
     cleanup();
     ssl_ = ssl;
     fd_ = fd;
     if (ssl_) {
-        setState(SSL_SUCCESS);
+        setState(SslState::SSL_SUCCESS);
+    }
+    if (nbio) {
+        BIO_free(nbio);
     }
     return KMError::NOERR;
 }
 
-KMError SslHandler::detachSsl(SSL* &ssl)
+KMError SioHandler::detachSsl(SSL* &ssl, BIO* &nbio)
 {
     ssl = ssl_;
     ssl_ = nullptr;
+    nbio = nullptr;
     return KMError::NOERR;
 }
 
-SslHandler::SslState SslHandler::sslConnect()
+SioHandler::SslState SioHandler::sslConnect()
 {
-    if(NULL == ssl_) {
+    if(!ssl_) {
         KUMA_ERRXTRACE("sslConnect, ssl_ is NULL");
-        return SSL_ERROR;
+        return SslState::SSL_ERROR;
     }
     
     int ret = SSL_connect(ssl_);
@@ -209,11 +209,11 @@ SslHandler::SslState SslHandler::sslConnect()
     switch (ssl_err)
     {
         case SSL_ERROR_NONE:
-            return SSL_SUCCESS;
+            return SslState::SSL_SUCCESS;
             
         case SSL_ERROR_WANT_WRITE:
         case SSL_ERROR_WANT_READ:
-            return SSL_HANDSHAKE;
+            return SslState::SSL_HANDSHAKE;
             
         default:
         {
@@ -225,18 +225,18 @@ SslHandler::SslState SslHandler::sslConnect()
                            <<", err_msg="<<(err_str?err_str:""));
             SSL_free(ssl_);
             ssl_ = NULL;
-            return SSL_ERROR;
+            return SslState::SSL_ERROR;
         }
     }
     
-    return SSL_HANDSHAKE;
+    return SslState::SSL_HANDSHAKE;
 }
 
-SslHandler::SslState SslHandler::sslAccept()
+SioHandler::SslState SioHandler::sslAccept()
 {
-    if(NULL == ssl_) {
+    if(!ssl_) {
         KUMA_ERRXTRACE("sslAccept, ssl_ is NULL");
-        return SSL_ERROR;
+        return SslState::SSL_ERROR;
     }
     
     int ret = SSL_accept(ssl_);
@@ -244,11 +244,11 @@ SslHandler::SslState SslHandler::sslAccept()
     switch (ssl_err)
     {
         case SSL_ERROR_NONE:
-            return SSL_SUCCESS;
+            return SslState::SSL_SUCCESS;
             
         case SSL_ERROR_WANT_WRITE:
         case SSL_ERROR_WANT_READ:
-            return SSL_HANDSHAKE;
+            return SslState::SSL_HANDSHAKE;
             
         default:
         {
@@ -260,16 +260,16 @@ SslHandler::SslState SslHandler::sslAccept()
                            <<", err_msg="<<(err_str?err_str:""));
             SSL_free(ssl_);
             ssl_ = NULL;
-            return SSL_ERROR;
+            return SslState::SSL_ERROR;
         }
     }
     
-    return SSL_HANDSHAKE;
+    return SslState::SSL_HANDSHAKE;
 }
 
-int SslHandler::send(const void* data, size_t size)
+int SioHandler::send(const void* data, size_t size)
 {
-    if(NULL == ssl_) {
+    if(!ssl_) {
         KUMA_ERRXTRACE("send, ssl is NULL");
         return -1;
     }
@@ -320,11 +320,11 @@ int SslHandler::send(const void* data, size_t size)
     return int(offset);
 }
 
-int SslHandler::send(const iovec* iovs, int count)
+int SioHandler::send(const iovec* iovs, int count)
 {
     uint32_t bytes_sent = 0;
     for (int i=0; i < count; ++i) {
-        int ret = SslHandler::send((const uint8_t*)iovs[i].iov_base, uint32_t(iovs[i].iov_len));
+        int ret = SioHandler::send((const uint8_t*)iovs[i].iov_base, uint32_t(iovs[i].iov_len));
         if(ret < 0) {
             return ret;
         } else {
@@ -337,9 +337,9 @@ int SslHandler::send(const iovec* iovs, int count)
     return bytes_sent;
 }
 
-int SslHandler::receive(void* data, size_t size)
+int SioHandler::receive(void* data, size_t size)
 {
-    if(NULL == ssl_) {
+    if(!ssl_) {
         KUMA_ERRXTRACE("receive, ssl is NULL");
         return -1;
     }
@@ -385,22 +385,28 @@ int SslHandler::receive(void* data, size_t size)
     return ret;
 }
 
-KMError SslHandler::close()
+KMError SioHandler::close()
 {
     cleanup();
     return KMError::NOERR;
 }
 
-SslHandler::SslState SslHandler::doSslHandshake()
+SioHandler::SslState SioHandler::handshake()
 {
-    SslState state = SSL_HANDSHAKE;
+    if (getState() == SslState::SSL_SUCCESS) {
+        return SslState::SSL_SUCCESS;
+    }
+    SslState state = SslState::SSL_HANDSHAKE;
     if(is_server_) {
         state = sslAccept();
     } else {
         state = sslConnect();
     }
     setState(state);
-    if(SSL_ERROR == state) {
+    if (SslState::SSL_SUCCESS == state) {
+        KUMA_INFOXTRACE("handshake, success");
+    }
+    else if(SslState::SSL_ERROR == state) {
         cleanup();
     }
     return state;

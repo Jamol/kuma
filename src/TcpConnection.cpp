@@ -104,8 +104,7 @@ int TcpConnection::send(const void* data, size_t len)
     int ret = tcp_.send(data, len);
     if (ret > 0) {
         if (ret < len) {
-            send_buffer_.assign((const uint8_t*)data + ret, (const uint8_t*)data + len);
-            send_offset_ = 0;
+            send_buffer_.write((const uint8_t*)data + ret, len - ret);
         }
         return int(len);
     }
@@ -125,13 +124,12 @@ int TcpConnection::send(iovec* iovs, int count)
             const uint8_t* first = ((uint8_t*)iovs[i].iov_base) + ret;
             const uint8_t* last = ((uint8_t*)iovs[i].iov_base) + iovs[i].iov_len;
             if(first < last) {
-                send_buffer_.insert(send_buffer_.end(), first, last);
+                send_buffer_.write(first, last - first);
                 ret = 0;
             } else {
                 ret -= iovs[i].iov_len;
             }
         }
-        send_offset_ = 0;
         return int(total_len);
     }
     return ret;
@@ -146,16 +144,12 @@ KMError TcpConnection::close()
 
 KMError TcpConnection::sendBufferedData()
 {
-    if(!send_buffer_.empty() && send_offset_ < send_buffer_.size()) {
-        int ret = tcp_.send(&send_buffer_[0] + send_offset_, send_buffer_.size() - send_offset_);
+    if(!send_buffer_.empty()) {
+        int ret = tcp_.send(send_buffer_.ptr(), send_buffer_.size());
         if(ret < 0) {
             return KMError::SOCK_ERROR;
         } else {
-            send_offset_ += ret;
-            if(send_offset_ == send_buffer_.size()) {
-                send_offset_ = 0;
-                send_buffer_.clear();
-            }
+            send_buffer_.bytes_read(ret);
         }
     }
     return KMError::NOERR;

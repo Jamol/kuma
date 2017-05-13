@@ -38,17 +38,17 @@ public:
     ~VPoll();
     
     bool init() override;
-    KMError registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb) override;
+    KMError registerFd(SOCKET_FD fd, KMEvent events, IOCallback cb) override;
     KMError unregisterFd(SOCKET_FD fd) override;
-    KMError updateFd(SOCKET_FD fd, uint32_t events) override;
+    KMError updateFd(SOCKET_FD fd, KMEvent events) override;
     KMError wait(uint32_t wait_ms) override;
     void notify() override;
     PollType getType() const override { return PollType::POLL; }
     bool isLevelTriggered() const override { return true; }
     
 private:
-    uint32_t get_events(uint32_t kuma_events);
-    uint32_t get_kuma_events(uint32_t events);
+    uint32_t get_events(KMEvent kuma_events);
+    KMEvent get_kuma_events(uint32_t events);
     
 private:
     typedef std::vector<pollfd> PollFdVector;
@@ -73,13 +73,13 @@ bool VPoll::init()
         if (!notifier_->init()) {
             return false;
         }
-        IOCallback cb([this](uint32_t ev) { notifier_->onEvent(ev); });
+        IOCallback cb([this](KMEvent ev, void*, size_t) { notifier_->onEvent(ev); });
         registerFd(notifier_->getReadFD(), KUMA_EV_READ | KUMA_EV_ERROR, std::move(cb));
     }
     return true;
 }
 
-uint32_t VPoll::get_events(uint32_t kuma_events)
+uint32_t VPoll::get_events(KMEvent kuma_events)
 {
     uint32_t ev = 0;
     if(kuma_events & KUMA_EV_READ) {
@@ -102,9 +102,9 @@ uint32_t VPoll::get_events(uint32_t kuma_events)
     return ev;
 }
 
-uint32_t VPoll::get_kuma_events(uint32_t events)
+KMEvent VPoll::get_kuma_events(uint32_t events)
 {
-    uint32_t ev = 0;
+    KMEvent ev = 0;
     if(events & (POLLIN | POLLPRI)) {
         ev |= KUMA_EV_READ;
     }
@@ -117,7 +117,7 @@ uint32_t VPoll::get_kuma_events(uint32_t events)
     return ev;
 }
 
-KMError VPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
+KMError VPoll::registerFd(SOCKET_FD fd, KMEvent events, IOCallback cb)
 {
     if (fd < 0) {
         return KMError::INVALID_PARAM;
@@ -167,7 +167,7 @@ KMError VPoll::unregisterFd(SOCKET_FD fd)
     return KMError::NOERR;
 }
 
-KMError VPoll::updateFd(SOCKET_FD fd, uint32_t events)
+KMError VPoll::updateFd(SOCKET_FD fd, KMEvent events)
 {
     int max_fd = int(poll_items_.size() - 1);
     if (fd < 0 || -1 == max_fd || fd > max_fd) {
@@ -218,7 +218,7 @@ KMError VPoll::wait(uint32_t wait_ms)
             --num_revts;
             if(poll_fds[idx].fd < poll_items_.size()) {
                 IOCallback &cb = poll_items_[poll_fds[idx].fd].cb;
-                if(cb) cb(get_kuma_events(poll_fds[idx].revents));
+                if(cb) cb(get_kuma_events(poll_fds[idx].revents), nullptr, 0);
             }
         }
         ++idx;

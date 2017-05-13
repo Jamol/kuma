@@ -38,9 +38,9 @@ public:
     ~KQueue();
     
     bool init() override;
-    KMError registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb) override;
+    KMError registerFd(SOCKET_FD fd, KMEvent events, IOCallback cb) override;
     KMError unregisterFd(SOCKET_FD fd) override;
-    KMError updateFd(SOCKET_FD fd, uint32_t events) override;
+    KMError updateFd(SOCKET_FD fd, KMEvent events) override;
     KMError wait(uint32_t wait_time_ms) override;
     void notify() override;
     PollType getType() const override { return PollType::KQUEUE; }
@@ -83,13 +83,13 @@ bool KQueue::init()
         if(!notifier_->init()) {
             return false;
         }
-        IOCallback cb ([this](uint32_t ev) { notifier_->onEvent(ev); });
+        IOCallback cb ([this](KMEvent ev, void*, size_t) { notifier_->onEvent(ev); });
         registerFd(notifier_->getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, std::move(cb));
     }
     return true;
 }
 
-KMError KQueue::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
+KMError KQueue::registerFd(SOCKET_FD fd, KMEvent events, IOCallback cb)
 {
     if (fd < 0) {
         return KMError::INVALID_PARAM;
@@ -161,7 +161,7 @@ KMError KQueue::unregisterFd(SOCKET_FD fd)
     return KMError::NOERR;
 }
 
-KMError KQueue::updateFd(SOCKET_FD fd, uint32_t events)
+KMError KQueue::updateFd(SOCKET_FD fd, KMEvent events)
 {
     if(fd < 0 || fd >= poll_items_.size() || INVALID_FD == poll_items_[fd].fd) {
         return KMError::FAILED;
@@ -248,7 +248,7 @@ KMError KQueue::wait(uint32_t wait_ms)
                 uint32_t revents = poll_items_[fd].revents;
                 poll_items_[fd].revents = 0;
                 IOCallback &cb = poll_items_[fd].cb;
-                if(cb) cb(revents);
+                if(cb) cb(revents, nullptr, 0);
             }
         }
     }

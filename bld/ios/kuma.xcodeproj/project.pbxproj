@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6F2733181EC75565006E221E /* PollSocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2733161EC75565006E221E /* PollSocket.cpp */; };
+		6F27331D1EC75579006E221E /* BioHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2733191EC75579006E221E /* BioHandler.cpp */; };
+		6F27331E1EC75579006E221E /* SioHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F27331B1EC75579006E221E /* SioHandler.cpp */; };
+		6F2733211EC755CA006E221E /* SocketBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F27331F1EC755CA006E221E /* SocketBase.cpp */; };
 		6F3730821E2F6AEB00479457 /* HttpMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F3730801E2F6AEB00479457 /* HttpMessage.cpp */; };
 		6F3731F91E37278800479457 /* HttpHeader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F3731F71E37278800479457 /* HttpHeader.cpp */; };
 		6F66AC3D1C71B03F00BB37B9 /* TcpListenerImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F66AC3B1C71B03F00BB37B9 /* TcpListenerImpl.cpp */; };
@@ -39,7 +43,6 @@
 		6FECED0D1C2139A400310F52 /* SelectPoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECED0B1C2139A400310F52 /* SelectPoll.cpp */; };
 		6FECED0E1C2139A400310F52 /* VPoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECED0C1C2139A400310F52 /* VPoll.cpp */; };
 		6FECED131C2139B100310F52 /* OpenSslLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECED0F1C2139B100310F52 /* OpenSslLib.cpp */; };
-		6FECED141C2139B100310F52 /* SslHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECED111C2139B100310F52 /* SslHandler.cpp */; };
 		6FECED1C1C2139CA00310F52 /* base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECED151C2139CA00310F52 /* base64.cpp */; };
 		6FECED1D1C2139CA00310F52 /* kmtrace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECED181C2139CA00310F52 /* kmtrace.cpp */; };
 		6FECED1E1C2139CA00310F52 /* util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECED1A1C2139CA00310F52 /* util.cpp */; };
@@ -70,6 +73,14 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		6F2733161EC75565006E221E /* PollSocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PollSocket.cpp; sourceTree = "<group>"; };
+		6F2733171EC75565006E221E /* PollSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PollSocket.h; sourceTree = "<group>"; };
+		6F2733191EC75579006E221E /* BioHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BioHandler.cpp; sourceTree = "<group>"; };
+		6F27331A1EC75579006E221E /* BioHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BioHandler.h; sourceTree = "<group>"; };
+		6F27331B1EC75579006E221E /* SioHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SioHandler.cpp; sourceTree = "<group>"; };
+		6F27331C1EC75579006E221E /* SioHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SioHandler.h; sourceTree = "<group>"; };
+		6F27331F1EC755CA006E221E /* SocketBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SocketBase.cpp; path = ../../src/SocketBase.cpp; sourceTree = "<group>"; };
+		6F2733201EC755CA006E221E /* SocketBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SocketBase.h; path = ../../src/SocketBase.h; sourceTree = "<group>"; };
 		6F3730801E2F6AEB00479457 /* HttpMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpMessage.cpp; sourceTree = "<group>"; };
 		6F3730811E2F6AEB00479457 /* HttpMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpMessage.h; sourceTree = "<group>"; };
 		6F3731F71E37278800479457 /* HttpHeader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpHeader.cpp; sourceTree = "<group>"; };
@@ -142,7 +153,6 @@
 		6FECED0C1C2139A400310F52 /* VPoll.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VPoll.cpp; sourceTree = "<group>"; };
 		6FECED0F1C2139B100310F52 /* OpenSslLib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OpenSslLib.cpp; sourceTree = "<group>"; };
 		6FECED101C2139B100310F52 /* OpenSslLib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = OpenSslLib.h; sourceTree = "<group>"; };
-		6FECED111C2139B100310F52 /* SslHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SslHandler.cpp; sourceTree = "<group>"; };
 		6FECED121C2139B100310F52 /* SslHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SslHandler.h; sourceTree = "<group>"; };
 		6FECED151C2139CA00310F52 /* base64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = base64.cpp; sourceTree = "<group>"; };
 		6FECED161C2139CA00310F52 /* base64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = base64.h; sourceTree = "<group>"; };
@@ -228,6 +238,8 @@
 				6F7D5FD81B33EC65000FF2F8 /* kmapi.h */,
 				6F7D5FD91B33EC65000FF2F8 /* kmconf.h */,
 				6F7D5FDA1B33EC65000FF2F8 /* kmdefs.h */,
+				6F27331F1EC755CA006E221E /* SocketBase.cpp */,
+				6F2733201EC755CA006E221E /* SocketBase.h */,
 				6F84E9671D5B016C00AF8E3B /* TcpConnection.cpp */,
 				6F84E9681D5B016C00AF8E3B /* TcpConnection.h */,
 				6F66AC3B1C71B03F00BB37B9 /* TcpListenerImpl.cpp */,
@@ -337,9 +349,12 @@
 		6FECED071C21395C00310F52 /* ssl */ = {
 			isa = PBXGroup;
 			children = (
+				6F2733191EC75579006E221E /* BioHandler.cpp */,
+				6F27331A1EC75579006E221E /* BioHandler.h */,
+				6F27331B1EC75579006E221E /* SioHandler.cpp */,
+				6F27331C1EC75579006E221E /* SioHandler.h */,
 				6FECED0F1C2139B100310F52 /* OpenSslLib.cpp */,
 				6FECED101C2139B100310F52 /* OpenSslLib.h */,
-				6FECED111C2139B100310F52 /* SslHandler.cpp */,
 				6FECED121C2139B100310F52 /* SslHandler.h */,
 			);
 			name = ssl;
@@ -349,6 +364,8 @@
 		6FECED081C21396F00310F52 /* poll */ = {
 			isa = PBXGroup;
 			children = (
+				6F2733161EC75565006E221E /* PollSocket.cpp */,
+				6F2733171EC75565006E221E /* PollSocket.h */,
 				6F91F1B31D7B29CB004A95B9 /* KQueue.cpp */,
 				6F91F1761D782F1A004A95B9 /* Notifier.cpp */,
 				6FECED091C2139A400310F52 /* IOPoll.h */,
@@ -451,12 +468,14 @@
 				6F91F1771D782F1A004A95B9 /* Notifier.cpp in Sources */,
 				6F91F1751D782EF8004A95B9 /* Http1xRequest.cpp in Sources */,
 				6F7D5FEA1B33EC65000FF2F8 /* UdpSocketImpl.cpp in Sources */,
+				6F2733211EC755CA006E221E /* SocketBase.cpp in Sources */,
 				6FECED041C2138E700310F52 /* Uri.cpp in Sources */,
 				6F84E9891D5B032D00AF8E3B /* HPacker.cpp in Sources */,
 				6F84E98A1D5B032D00AF8E3B /* HPackTable.cpp in Sources */,
 				6F84E9821D5B031300AF8E3B /* H2Stream.cpp in Sources */,
 				6F6D148D1D9D098C008B64E6 /* FlowControl.cpp in Sources */,
 				6FECED1D1C2139CA00310F52 /* kmtrace.cpp in Sources */,
+				6F27331D1EC75579006E221E /* BioHandler.cpp in Sources */,
 				6FECED0E1C2139A400310F52 /* VPoll.cpp in Sources */,
 				6F84E97E1D5B031300AF8E3B /* H2ConnectionMgr.cpp in Sources */,
 				6F84E97C1D5B031300AF8E3B /* FrameParser.cpp in Sources */,
@@ -467,8 +486,8 @@
 				6FECED231C2139D600310F52 /* WebSocketImpl.cpp in Sources */,
 				6F66AC3D1C71B03F00BB37B9 /* TcpListenerImpl.cpp in Sources */,
 				6FECED031C2138E700310F52 /* HttpResponseImpl.cpp in Sources */,
-				6FECED141C2139B100310F52 /* SslHandler.cpp in Sources */,
 				6F3731F91E37278800479457 /* HttpHeader.cpp in Sources */,
+				6F2733181EC75565006E221E /* PollSocket.cpp in Sources */,
 				6FECED1C1C2139CA00310F52 /* base64.cpp in Sources */,
 				6F84E9811D5B031300AF8E3B /* Http2Response.cpp in Sources */,
 				6F3730821E2F6AEB00479457 /* HttpMessage.cpp in Sources */,
@@ -483,6 +502,7 @@
 				6FECED1E1C2139CA00310F52 /* util.cpp in Sources */,
 				6F84E9801D5B031300AF8E3B /* Http2Request.cpp in Sources */,
 				6FECED011C2138E700310F52 /* HttpParserImpl.cpp in Sources */,
+				6F27331E1EC75579006E221E /* SioHandler.cpp in Sources */,
 				6FECED021C2138E700310F52 /* HttpRequestImpl.cpp in Sources */,
 				6F84E97D1D5B031300AF8E3B /* H2ConnectionImpl.cpp in Sources */,
 			);

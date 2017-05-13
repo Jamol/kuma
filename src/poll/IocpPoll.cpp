@@ -1,4 +1,4 @@
-/* Copyright (c) 2014, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2014-2017, Fengping Bao <jamol@live.com>
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -32,17 +32,13 @@ public:
     ~IocpPoll();
     
     bool init();
-    KMError registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
+    KMError registerFd(SOCKET_FD fd, KMEvent events, IOCallback cb);
     KMError unregisterFd(SOCKET_FD fd);
-    KMError updateFd(SOCKET_FD fd, uint32_t events);
+    KMError updateFd(SOCKET_FD fd, KMEvent events);
     KMError wait(uint32_t wait_ms);
     void notify();
     PollType getType() const { return PollType::IOCP; }
-    bool isLevelTriggered() const { return true; }
-    
-protected:
-    uint32_t get_events(uint32_t kuma_events);
-    uint32_t get_kuma_events(uint32_t events);
+    bool isLevelTriggered() const { return false; }
 
 protected:
     HANDLE hCompPort_ = nullptr;
@@ -71,45 +67,9 @@ bool IocpPoll::init()
     return true;
 }
 
-uint32_t IocpPoll::get_events(uint32_t kuma_events)
+KMError IocpPoll::registerFd(SOCKET_FD fd, KMEvent events, IOCallback cb)
 {
-    uint32_t ev = 0;
-    if(kuma_events & KUMA_EV_READ) {
-        ev |= FD_READ;
-    }
-    if(kuma_events & KUMA_EV_WRITE) {
-        ev |= FD_WRITE;
-    }
-    if(kuma_events & KUMA_EV_ERROR) {
-        ev |= FD_CLOSE;
-    }
-    return ev;
-}
-
-uint32_t IocpPoll::get_kuma_events(uint32_t events)
-{
-    uint32_t ev = 0;
-    if (events & FD_CONNECT) {
-        ev |= KUMA_EV_WRITE;
-    }
-    if (events & FD_ACCEPT) {
-        ev |= KUMA_EV_READ;
-    }
-    if(events & FD_READ) {
-        ev |= KUMA_EV_READ;
-    }
-    if(events & FD_WRITE) {
-        ev |= KUMA_EV_WRITE;
-    }
-    if(events & FD_CLOSE) {
-        ev |= KUMA_EV_ERROR;
-    }
-    return ev;
-}
-
-KMError IocpPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
-{
-    KUMA_INFOTRACE("WinPoll::registerFd, fd=" << fd << ", events=" << events);
+    KUMA_INFOTRACE("IocpPoll::registerFd, fd=" << fd << ", events=" << events);
     if (CreateIoCompletionPort((HANDLE)fd, hCompPort_, (ULONG_PTR)fd, 0) == NULL) {
         return KMError::POLL_ERROR;
     }
@@ -121,10 +81,10 @@ KMError IocpPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
 
 KMError IocpPoll::unregisterFd(SOCKET_FD fd)
 {
-    KUMA_INFOTRACE("WinPoll::unregisterFd, fd="<<fd);
+    KUMA_INFOTRACE("IocpPoll::unregisterFd, fd="<<fd);
     SOCKET_FD max_fd = poll_items_.size() - 1;
     if (fd < 0 || -1 == max_fd || fd > max_fd) {
-        KUMA_WARNTRACE("WinPoll::unregisterFd, failed, max_fd=" << max_fd);
+        KUMA_WARNTRACE("IocpPoll::unregisterFd, failed, max_fd=" << max_fd);
         return KMError::INVALID_PARAM;
     }
     if (fd == max_fd) {
@@ -137,18 +97,9 @@ KMError IocpPoll::unregisterFd(SOCKET_FD fd)
     return KMError::NOERR;
 }
 
-KMError IocpPoll::updateFd(SOCKET_FD fd, uint32_t events)
+KMError IocpPoll::updateFd(SOCKET_FD fd, KMEvent events)
 {
-    SOCKET_FD max_fd = poll_items_.size() - 1;
-    if (fd < 0 || -1 == max_fd || fd > max_fd) {
-        KUMA_WARNTRACE("WinPoll::updateFd, failed, fd="<<fd<<", max_fd=" << max_fd);
-        return KMError::INVALID_PARAM;
-    }
-    if(poll_items_[fd].fd != fd) {
-        KUMA_WARNTRACE("WinPoll::updateFd, failed, fd="<<fd<<", fd1="<<poll_items_[fd].fd);
-        return KMError::INVALID_PARAM;
-    }
-    return KMError::NOERR;
+    return KMError::UNSUPPORT;
 }
 
 KMError IocpPoll::wait(uint32_t wait_ms)
@@ -162,8 +113,9 @@ KMError IocpPoll::wait(uint32_t wait_ms)
                 SOCKET_FD fd = (SOCKET_FD)entries[i].lpCompletionKey;
                 if (fd < poll_items_.size()) {
                     IOCallback &cb = poll_items_[fd].cb;
-                    uint32_t revents = get_kuma_events(0);
-                    if (cb) cb(revents);
+                    uint32_t revents = 0;
+                    size_t io_size = entries[i].dwNumberOfBytesTransferred;
+                    if (cb) cb(0, entries[i].lpOverlapped, io_size);
                 }
             }
         }

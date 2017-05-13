@@ -37,17 +37,17 @@ public:
     ~EPoll();
 
     bool init();
-    KMError registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
+    KMError registerFd(SOCKET_FD fd, KMEvent events, IOCallback cb);
     KMError unregisterFd(SOCKET_FD fd);
-    KMError updateFd(SOCKET_FD fd, uint32_t events);
+    KMError updateFd(SOCKET_FD fd, KMEvent events);
     KMError wait(uint32_t wait_time_ms);
     void notify();
     PollType getType() const { return PollType::EPOLL; }
     bool isLevelTriggered() const { return false; }
 
 private:
-    uint32_t get_events(uint32_t kuma_events);
-    uint32_t get_kuma_events(uint32_t events);
+    uint32_t get_events(KMEvent kuma_events);
+    KMEvent get_kuma_events(uint32_t events);
 
 private:
     int             epoll_fd_;
@@ -78,13 +78,13 @@ bool EPoll::init()
         if(!notifier_->init()) {
             return false;
         }
-        IOCallback cb ([this](uint32_t ev) { notifier_->onEvent(ev); });
+        IOCallback cb ([this](KMEvent ev, void*, size_t) { notifier_->onEvent(ev); });
         registerFd(notifier_->getReadFD(), KUMA_EV_READ|KUMA_EV_ERROR, std::move(cb));
     }
     return true;
 }
 
-uint32_t EPoll::get_events(uint32_t kuma_events)
+uint32_t EPoll::get_events(KMEvent kuma_events)
 {
     uint32_t ev = EPOLLET;//EPOLLIN | EPOLLOUT | EPOLLERR | EPOLLHUP | EPOLLET;
     if(kuma_events & KUMA_EV_READ) {
@@ -99,9 +99,9 @@ uint32_t EPoll::get_events(uint32_t kuma_events)
     return ev;
 }
 
-uint32_t EPoll::get_kuma_events(uint32_t events)
+KMEvent EPoll::get_kuma_events(uint32_t events)
 {
-    uint32_t ev = 0;
+    KMEvent ev = 0;
     if(events & EPOLLIN) {
         ev |= KUMA_EV_READ;
     }
@@ -114,7 +114,7 @@ uint32_t EPoll::get_kuma_events(uint32_t events)
     return ev;
 }
 
-KMError EPoll::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
+KMError EPoll::registerFd(SOCKET_FD fd, KMEvent events, IOCallback cb)
 {
     if (fd < 0) {
         return KMError::INVALID_PARAM;
@@ -156,7 +156,7 @@ KMError EPoll::unregisterFd(SOCKET_FD fd)
     return KMError::NOERR;
 }
 
-KMError EPoll::updateFd(SOCKET_FD fd, uint32_t events)
+KMError EPoll::updateFd(SOCKET_FD fd, KMEvent events)
 {
     if(fd < 0 || fd >= poll_items_.size() || INVALID_FD == poll_items_[fd].fd) {
         return KMError::FAILED;
@@ -186,7 +186,7 @@ KMError EPoll::wait(uint32_t wait_ms)
             SOCKET_FD fd = (SOCKET_FD)(long)events[i].data.ptr;
             if(fd < poll_items_.size()) {
                 IOCallback &cb = poll_items_[fd].cb;
-                if(cb) cb(get_kuma_events(events[i].events));
+                if(cb) cb(get_kuma_events(events[i].events), nullptr, 0);
             }
         }
     }

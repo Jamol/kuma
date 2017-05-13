@@ -43,6 +43,18 @@
     <Filter Include="Header Files\http\v2\hpack">
       <UniqueIdentifier>{1c609ba5-82eb-4ec7-8ea8-30b6baa59af4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\ssl">
+      <UniqueIdentifier>{4e93771b-372b-4455-b390-7df045744bb7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ws">
+      <UniqueIdentifier>{ccf0017a-180c-49b5-b98a-f479c60ee8e9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\util">
+      <UniqueIdentifier>{7c11836c-7761-4c7a-8d0e-c8f661e4e03b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\poll">
+      <UniqueIdentifier>{11158e84-2c8f-4a8b-9613-8b47abf79440}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\EventLoopImpl.cpp">
@@ -73,9 +85,6 @@
       <Filter>Source Files\http</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\ssl\OpenSslLib.cpp">
-      <Filter>Source Files\ssl</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\ssl\SslHandler.cpp">
       <Filter>Source Files\ssl</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\ws\WSHandler.cpp">
@@ -156,27 +165,27 @@
     <ClCompile Include="..\..\src\poll\IocpPoll.cpp">
       <Filter>Source Files\poll</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\ssl\BioHandler.cpp">
+      <Filter>Source Files\ssl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\SocketBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\poll\IocpSocket.cpp">
+      <Filter>Source Files\poll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\poll\PollSocket.cpp">
+      <Filter>Source Files\poll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ssl\SioHandler.cpp">
+      <Filter>Source Files\ssl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\src\util\kmqueue.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\util\kmtrace.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\util\util.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\kmconf.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\kmdefs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\poll\IOPoll.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\poll\Notifier.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\evdefs.h">
@@ -211,15 +220,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\http\HttpParserImpl.h">
       <Filter>Header Files\http</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\ws\WebSocketImpl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\ws\WSHandler.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\util\base64.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\TcpListenerImpl.h">
       <Filter>Header Files</Filter>
@@ -280,6 +280,57 @@
     </ClInclude>
     <ClInclude Include="..\..\src\DnsResolver.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ssl\BioHandler.h">
+      <Filter>Header Files\ssl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ssl\SslHandler.h">
+      <Filter>Header Files\ssl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ssl\OpenSslLib.h">
+      <Filter>Header Files\ssl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ws\WSHandler.h">
+      <Filter>Header Files\ws</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ws\WebSocketImpl.h">
+      <Filter>Header Files\ws</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\util\util.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\util\kmtrace.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\util\kmqueue.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\util\base64.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\SocketBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\poll\IOPoll.h">
+      <Filter>Header Files\poll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\poll\Notifier.h">
+      <Filter>Header Files\poll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\poll\IocpSocket.h">
+      <Filter>Header Files\poll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\poll\PollSocket.h">
+      <Filter>Header Files\poll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\util\kmbuffer.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\util\kmobject.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ssl\SioHandler.h">
+      <Filter>Header Files\ssl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
