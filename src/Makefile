@@ -65,6 +65,7 @@ SRCS =  \
     util/util.cpp \
     util/kmtrace.cpp \
     util/base64.cpp \
+    ssl/SslHandler.cpp \
     ssl/BioHandler.cpp \
     ssl/SioHandler.cpp \
     ssl/OpenSslLib.cpp \

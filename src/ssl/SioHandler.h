@@ -42,11 +42,6 @@ public:
     SioHandler();
     ~SioHandler();
     
-    KMError setAlpnProtocols(const AlpnProtos &protocols) override;
-    KMError getAlpnSelected(std::string &proto) override;
-    KMError setServerName(const std::string &serverName) override;
-    KMError setHostName(const std::string &hostName) override;
-    
     KMError init(SslRole ssl_role, SOCKET_FD fd) override;
     KMError attachSsl(SSL *ssl, BIO *nbio, SOCKET_FD fd) override;
     KMError detachSsl(SSL* &ssl, BIO* &nbio) override;

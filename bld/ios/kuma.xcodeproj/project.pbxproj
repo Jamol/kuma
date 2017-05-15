@@ -11,6 +11,7 @@
 		6F27331D1EC75579006E221E /* BioHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2733191EC75579006E221E /* BioHandler.cpp */; };
 		6F27331E1EC75579006E221E /* SioHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F27331B1EC75579006E221E /* SioHandler.cpp */; };
 		6F2733211EC755CA006E221E /* SocketBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F27331F1EC755CA006E221E /* SocketBase.cpp */; };
+		6F2733271EC88875006E221E /* SslHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2733261EC88875006E221E /* SslHandler.cpp */; };
 		6F3730821E2F6AEB00479457 /* HttpMessage.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F3730801E2F6AEB00479457 /* HttpMessage.cpp */; };
 		6F3731F91E37278800479457 /* HttpHeader.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F3731F71E37278800479457 /* HttpHeader.cpp */; };
 		6F66AC3D1C71B03F00BB37B9 /* TcpListenerImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F66AC3B1C71B03F00BB37B9 /* TcpListenerImpl.cpp */; };
@@ -81,6 +82,7 @@
 		6F27331C1EC75579006E221E /* SioHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SioHandler.h; sourceTree = "<group>"; };
 		6F27331F1EC755CA006E221E /* SocketBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SocketBase.cpp; path = ../../src/SocketBase.cpp; sourceTree = "<group>"; };
 		6F2733201EC755CA006E221E /* SocketBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SocketBase.h; path = ../../src/SocketBase.h; sourceTree = "<group>"; };
+		6F2733261EC88875006E221E /* SslHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SslHandler.cpp; sourceTree = "<group>"; };
 		6F3730801E2F6AEB00479457 /* HttpMessage.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpMessage.cpp; sourceTree = "<group>"; };
 		6F3730811E2F6AEB00479457 /* HttpMessage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpMessage.h; sourceTree = "<group>"; };
 		6F3731F71E37278800479457 /* HttpHeader.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpHeader.cpp; sourceTree = "<group>"; };
@@ -355,6 +357,7 @@
 				6F27331C1EC75579006E221E /* SioHandler.h */,
 				6FECED0F1C2139B100310F52 /* OpenSslLib.cpp */,
 				6FECED101C2139B100310F52 /* OpenSslLib.h */,
+				6F2733261EC88875006E221E /* SslHandler.cpp */,
 				6FECED121C2139B100310F52 /* SslHandler.h */,
 			);
 			name = ssl;
@@ -494,6 +497,7 @@
 				6F7D5FE51B33EC65000FF2F8 /* kmapi.cpp in Sources */,
 				6F7D5FE41B33EC65000FF2F8 /* EventLoopImpl.cpp in Sources */,
 				6F6D14111D9A5AE7008B64E6 /* Http1xResponse.cpp in Sources */,
+				6F2733271EC88875006E221E /* SslHandler.cpp in Sources */,
 				6F7D5FE91B33EC65000FF2F8 /* TimerManager.cpp in Sources */,
 				6F87763B1EACEA10002F1165 /* DnsResolver.cpp in Sources */,
 				6F84E97F1D5B031300AF8E3B /* H2Frame.cpp in Sources */,

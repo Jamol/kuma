@@ -28,6 +28,9 @@
 #include "DnsResolver.h"
 #include "SocketBase.h"
 #include "util/DestroyDetector.h"
+#include "util/kmbuffer.h"
+
+#include <vector>
 KUMA_NS_BEGIN
 
 class IocpSocket : public SocketBase, public DestroyDetector
@@ -51,13 +54,23 @@ protected:
 
 protected:
     void ioReady(KMEvent events, void* ol, size_t io_size);
-    void onClose(KMError err);
+    void onConnect(KMError err) override;
+    void onSend(size_t io_size);
+    void onReceive(size_t io_size);
+    void onClose(KMError err) override;
+
+    int postSendOperation();
+    int postRecvOperation();
 
 protected:
-    bool send_pending = false;
-    bool recv_pending = false;
-    OVERLAPPED rd_ol_;
-    OVERLAPPED wr_ol_;
+    bool            send_pending_ = false;
+    bool            recv_pending_ = false;
+    KMBuffer        send_buf_;
+    KMBuffer        recv_buf_;
+    WSABUF          wsa_buf_s_;
+    WSABUF          wsa_buf_r_;
+    OVERLAPPED      send_ol_;
+    OVERLAPPED      recv_ol_;
 };
 
 KUMA_NS_END

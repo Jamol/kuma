@@ -42,7 +42,7 @@ using AlpnProtos = std::vector<uint8_t>;
 class OpenSslLib
 {
 public:
-    static bool init(const char* path);
+    static bool init(const std::string &path);
     static void fini();
     
     static int verifyCallback(int ok, X509_STORE_CTX *ctx);

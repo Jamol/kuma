@@ -56,6 +56,7 @@ KMError IocpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
             KUMA_ERRXTRACE("connect_i, socket failed, err=" << getLastError());
             return KMError::FAILED;
         }
+        // need bind before ConnectEx
         sockaddr_storage ss_any = { 0 };
         ss_any.ss_family = ss_addr.ss_family;
         int addr_len = km_get_addr_length(ss_any);
@@ -63,13 +64,12 @@ KMError IocpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
         if (ret < 0) {
             KUMA_ERRXTRACE("connect_i, bind failed, err=" << getLastError());
         }
-        setsockopt(fd_, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
     }
     setSocketOption();
     registerFd(fd_);
 
     int addr_len = km_get_addr_length(ss_addr);
-    auto ret = connect_ex(fd_, (LPSOCKADDR)&ss_addr, addr_len, NULL, 0, NULL, &rd_ol_);
+    auto ret = connect_ex(fd_, (LPSOCKADDR)&ss_addr, addr_len, NULL, 0, NULL, &recv_ol_);
     if (ret) {
         setState(State::CONNECTING); // wait for writable event
     }
@@ -141,73 +141,73 @@ void IocpSocket::unregisterFd(SOCKET_FD fd, bool close_fd)
 
 int IocpSocket::send(const void* data, size_t length)
 {
-    
-    return 0;
+    iovec iov;
+    iov.iov_base = (char*)data;
+    iov.iov_len = length;
+    return send(&iov, 1);
 }
 
 int IocpSocket::send(iovec* iovs, int count)
 {
     if (!isReady()) {
-        KUMA_WARNXTRACE("send 2, invalid state=" << getState());
+        KUMA_WARNXTRACE("send, invalid state=" << getState());
         return 0;
     }
     if (INVALID_FD == fd_) {
-        KUMA_ERRXTRACE("send 2, invalid fd");
+        KUMA_ERRXTRACE("send, invalid fd");
         return -1;
     }
 
-    uint32_t total_len = 0;
-    for (int i = 0; i < count; ++i) {
-        total_len += iovs[i].iov_len;
-    }
-    if (total_len == 0) {
+    if (!send_buf_.empty() || send_pending_) {
         return 0;
     }
-    int ret = 0;
-    uint32_t bytes_sent = 0;
-#ifdef KUMA_OS_WIN
-    DWORD bytes_sent_t = 0;
-    ret = ::WSASend(fd_, (LPWSABUF)iovs, count, &bytes_sent_t, 0, NULL, NULL);
-    bytes_sent = bytes_sent_t;
+
+    size_t bytes_total = 0;
+    for (int i = 0; i < count; ++i) {
+        bytes_total += iovs[i].iov_len;
+    }
+    if (bytes_total == 0) {
+        return 0;
+    }
+    
+    DWORD bytes_sent = 0;
+    auto ret = ::WSASend(fd_, (LPWSABUF)iovs, count, &bytes_sent, 0, NULL, NULL);
     if (0 == ret) ret = bytes_sent;
-#else
-    ret = (int)::writev(fd_, iovs, count);
-#endif
+
     if (0 == ret) {
-        KUMA_WARNXTRACE("send 2, peer closed");
+        KUMA_WARNXTRACE("send, peer closed");
         ret = -1;
     }
     else if (ret < 0) {
-        if (EAGAIN == getLastError() ||
-#ifdef KUMA_OS_WIN
-            WSAEWOULDBLOCK == getLastError() || WSA_IO_PENDING
-#else
-            EWOULDBLOCK
-#endif
-            == getLastError()) {
+        if (WSAEWOULDBLOCK == getLastError() || WSA_IO_PENDING == getLastError()) {
             ret = 0;
         }
         else {
-            KUMA_ERRXTRACE("send 2, fail, err=" << getLastError());
+            KUMA_ERRXTRACE("send, fail, err=" << getLastError());
         }
-    }
-    else {
-        bytes_sent = ret;
     }
 
     if (ret < 0) {
         cleanup();
         setState(State::CLOSED);
     }
-    else if (static_cast<size_t>(ret) < total_len) {
-        auto loop = loop_.lock();
-        if (loop && loop->isPollLT()) {
-            loop->updateFd(fd_, KUMA_EV_NETWORK);
+    else if (static_cast<size_t>(ret) < bytes_total) {
+        for (size_t i = 0; i<count; ++i) {
+            const uint8_t* first = ((uint8_t*)iovs[i].iov_base) + ret;
+            const uint8_t* last = ((uint8_t*)iovs[i].iov_base) + iovs[i].iov_len;
+            if (first < last) {
+                send_buf_.write(first, last - first);
+                ret = 0;
+            }
+            else {
+                ret -= iovs[i].iov_len;
+            }
         }
+        postSendOperation();
     }
 
-    //KUMA_INFOXTRACE("send, ret="<<ret<<", bytes_sent="<<bytes_sent);
-    return ret < 0 ? ret : bytes_sent;
+    //KUMA_INFOXTRACE("send, ret="<<ret<<", bytes_total="<<bytes_total);
+    return ret < 0 ? ret : static_cast<int>(bytes_total);
 }
 
 int IocpSocket::receive(void* data, size_t length)
@@ -219,33 +219,32 @@ int IocpSocket::receive(void* data, size_t length)
         KUMA_ERRXTRACE("receive, invalid fd");
         return -1;
     }
-    int ret = (int)::recv(fd_, (char*)data, int(length), 0);
-    if (0 == ret) {
-        KUMA_WARNXTRACE("receive, peer closed, err=" << getLastError());
-        ret = -1;
+    if (recv_pending_) {
+        return 0;
     }
-    else if (ret < 0) {
-        if (EAGAIN == getLastError() ||
-#ifdef WIN32
-            WSAEWOULDBLOCK
-#else
-            EWOULDBLOCK
-#endif
-            == getLastError()) {
-            ret = 0;
-        }
-        else {
-            KUMA_ERRXTRACE("receive, failed, err=" << getLastError());
-        }
+    char *ptr = (char*)data;
+    size_t bytes_recv = 0;
+    if (!recv_buf_.empty()) {
+        auto bytes_read = recv_buf_.read(ptr + bytes_recv, length - bytes_recv);
+        bytes_recv += bytes_read;
     }
-
-    if (ret < 0) {
-        cleanup();
-        setState(State::CLOSED);
+    if (bytes_recv == length) {
+        return static_cast<int>(bytes_recv);
+    }
+    auto ret = SocketBase::receive(ptr + bytes_recv, length - bytes_recv);
+    if (ret >= 0) {
+        bytes_recv += ret;
+    }
+    else {
+        return ret;
     }
 
-    //KUMA_INFOXTRACE("receive, ret="<<ret);
-    return ret;
+    if (bytes_recv == 0) {
+        postRecvOperation();
+    }
+
+    //KUMA_INFOXTRACE("receive, ret="<<ret<<", bytes_recv="<<bytes_recv);
+    return static_cast<int>(bytes_recv);;
 }
 
 KMError IocpSocket::close()
@@ -287,6 +286,35 @@ KMError IocpSocket::resume()
     return KMError::INVALID_STATE;
 }
 
+void IocpSocket::onConnect(KMError err)
+{
+    if (err == KMError::NOERR) {
+        setsockopt(fd_, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
+        postRecvOperation();
+    }
+    SocketBase::onConnect(err);
+}
+
+void IocpSocket::onSend(size_t io_size)
+{
+    if (io_size != send_buf_.size()) {
+        KUMA_ERRXTRACE("onSend, error, io_size="<<io_size<<", buffer="<<send_buf_.size());
+    }
+    send_buf_.bytes_read(io_size);
+    send_pending_ = false;
+    SocketBase::onSend(KMError::NOERR);
+}
+
+void IocpSocket::onReceive(size_t io_size)
+{
+    if (io_size > recv_buf_.space()) {
+        KUMA_ERRXTRACE("onReceive, error, io_size=" << io_size << ", buffer=" << recv_buf_.space());
+    }
+    recv_buf_.bytes_written(io_size);
+    recv_pending_ = false;
+    SocketBase::onReceive(KMError::NOERR);
+}
+
 void IocpSocket::onClose(KMError err)
 {
     KUMA_INFOXTRACE("onClose, err=" << int(err) << ", state=" << getState());
@@ -295,9 +323,57 @@ void IocpSocket::onClose(KMError err)
     if (error_cb_) error_cb_(err);
 }
 
+int IocpSocket::postSendOperation()
+{
+    if (send_buf_.empty() || send_pending_) {
+        return 0;
+    }
+    wsa_buf_s_.buf = (char*)send_buf_.ptr();
+    wsa_buf_s_.len = send_buf_.size();
+    DWORD bytes_sent = 0;
+    auto ret = WSASend(fd_, &wsa_buf_s_, 1, &bytes_sent, 0, &send_ol_, NULL);
+    if (0 == ret) ret = bytes_sent;
+    if (ret == SOCKET_ERROR) {
+        if (WSA_IO_PENDING == WSAGetLastError()) {
+            send_pending_ = true;
+            return 0;
+        }
+        return -1;
+    }
+    else if (ret > 0) {
+        send_buf_.bytes_read(ret);
+    }
+    return ret;
+}
+
+int IocpSocket::postRecvOperation()
+{
+    if (recv_pending_) {
+        return 0;
+    }
+    recv_buf_.expand(4096);
+    wsa_buf_r_.buf = (char*)recv_buf_.wr_ptr();
+    wsa_buf_r_.len = recv_buf_.space();
+    DWORD bytes_recv = 0, flags = 0;
+    auto ret = WSARecv(fd_, &wsa_buf_r_, 1, &bytes_recv, &flags, &recv_ol_, NULL);
+    if (0 == ret) ret = bytes_recv;
+    if (ret == SOCKET_ERROR) {
+        if (WSA_IO_PENDING == WSAGetLastError()) {
+            recv_pending_ = true;
+            return 0;
+        }
+        return -1;
+    }
+    else if (ret > 0) {
+        recv_buf_.bytes_written(ret);
+    }
+    return ret;
+}
+
 void IocpSocket::ioReady(KMEvent events, void* ol, size_t io_size)
 {
-    if (ol == &rd_ol_) {
+    //KUMA_INFOXTRACE("ioReady, io_size="<< io_size);
+    if (ol == &recv_ol_) {
         if (getState() == State::CONNECTING) {
             DWORD seconds;
             int bytes = sizeof(seconds);
@@ -310,10 +386,10 @@ void IocpSocket::ioReady(KMEvent events, void* ol, size_t io_size)
             }
         }
         else {
-
+            onReceive(io_size);
         }
     }
-    else if (ol == &wr_ol_) {
-
+    else if (ol == &send_ol_) {
+        onSend(io_size);
     }
 }

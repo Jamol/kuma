@@ -129,65 +129,15 @@ KMError BioHandler::init(SslRole ssl_role, SOCKET_FD fd)
     return KMError::NOERR;
 }
 
-KMError BioHandler::setAlpnProtocols(const AlpnProtos &protocols)
-{
-#if OPENSSL_VERSION_NUMBER >= 0x1000200fL && !defined(OPENSSL_NO_TLSEXT)
-    if (ssl_ && SSL_set_alpn_protos(ssl_, &protocols[0], (unsigned int)protocols.size()) == 0) {
-        return KMError::NOERR;
-    }
-    return KMError::SSL_FAILED;
-#else
-    return KMError::UNSUPPORT;
-#endif
-}
-
-KMError BioHandler::getAlpnSelected(std::string &proto)
-{
-    if (!ssl_) {
-        return KMError::INVALID_STATE;
-    }
-    const uint8_t *buf = nullptr;
-    uint32_t len = 0;
-    SSL_get0_alpn_selected(ssl_, &buf, &len);
-    if (buf && len > 0) {
-        proto.assign((const char*)buf, len);
-    } else {
-        proto.clear();
-    }
-    return KMError::NOERR;
-}
-
-KMError BioHandler::setServerName(const std::string &serverName)
-{
-#if OPENSSL_VERSION_NUMBER >= 0x1000105fL && !defined(OPENSSL_NO_TLSEXT)
-    if (ssl_ && SSL_set_tlsext_host_name(ssl_, serverName.c_str())) {
-        return KMError::NOERR;
-    }
-    return KMError::SSL_FAILED;
-#else
-    return KMError::UNSUPPORT;
-#endif
-}
-
-KMError BioHandler::setHostName(const std::string &hostName)
-{
-    if (ssl_) {
-        auto param = SSL_get0_param(ssl_);
-        X509_VERIFY_PARAM_set_hostflags(param, X509_CHECK_FLAG_MULTI_LABEL_WILDCARDS);
-        X509_VERIFY_PARAM_set1_host(param, hostName.c_str(), hostName.size());
-        return KMError::NOERR;
-    }
-    return KMError::SSL_FAILED;
-}
-
 KMError BioHandler::attachSsl(SSL *ssl, BIO *nbio, SOCKET_FD fd)
 {
+    if (!ssl || !nbio) {
+        return KMError::INVALID_PARAM;
+    }
     cleanup();
     ssl_ = ssl;
     net_bio_ = nbio;
-    if (ssl_) {
-        setState(SslState::SSL_SUCCESS);
-    }
+    setState(SslState::SSL_SUCCESS);
     return KMError::NOERR;
 }
 

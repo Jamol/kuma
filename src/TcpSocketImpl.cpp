@@ -132,6 +132,11 @@ KMError TcpSocket::Impl::bind(const char *bind_host, uint16_t bind_port)
 KMError TcpSocket::Impl::connect(const char *host, uint16_t port, EventCallback cb, uint32_t timeout_ms)
 {
     connect_cb_ = std::move(cb);
+#ifdef KUMA_HAS_OPENSSL
+    if (!km_is_ip_address(host) && sslEnabled()) {
+        ssl_host_name_ = host;
+    }
+#endif
     return socket_->connect(host, port, [this](KMError err) {
         onConnect(err);
     }, timeout_ms);
@@ -278,6 +283,8 @@ KMError TcpSocket::Impl::startSslHandshake(SslRole ssl_role)
         }
         if (!ssl_server_name_.empty()) {
             ssl_handler_->setServerName(ssl_server_name_);
+        } else if (!ssl_host_name_.empty()) {
+            ssl_handler_->setServerName(ssl_host_name_);
         }
         if (!ssl_host_name_.empty() && (ssl_flags_ & SSL_VERIFY_HOST_NAME)) {
             ssl_handler_->setHostName(ssl_host_name_);

@@ -972,7 +972,8 @@ H2Connection::Impl* H2Connection::pimpl()
 void init(const char* path)
 {
 #ifdef KUMA_HAS_OPENSSL
-    OpenSslLib::init(path);
+    std::string cfg_path(path?path:"");
+    OpenSslLib::init(cfg_path);
 #endif
 }
 

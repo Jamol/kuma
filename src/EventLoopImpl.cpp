@@ -416,8 +416,7 @@ IOPoll* createIOPoll(PollType poll_type)
 #endif
         case PollType::IOCP:
 #ifdef KUMA_OS_WIN
-            return createDefaultIOPoll();
-            //return createIocpPoll();
+            return createIocpPoll();
 #else
             return createDefaultIOPoll();
 #endif

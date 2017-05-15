@@ -28,6 +28,8 @@
 #include "evdefs.h"
 #include "OpenSslLib.h"
 
+#include <string>
+
 KUMA_NS_BEGIN
 
 class SslHandler
@@ -40,14 +42,15 @@ public:
         SSL_ERROR       = -1,
     };
     virtual ~SslHandler() {}
-    virtual KMError setAlpnProtocols(const AlpnProtos &protocols) = 0;
-    virtual KMError getAlpnSelected(std::string &proto) = 0;
-    virtual KMError setServerName(const std::string &serverName) = 0;
-    virtual KMError setHostName(const std::string &hostName) = 0;
-    
     virtual KMError init(SslRole ssl_role, SOCKET_FD fd) = 0;
     virtual KMError attachSsl(SSL *ssl, BIO *nbio, SOCKET_FD fd) = 0;
     virtual KMError detachSsl(SSL* &ssl, BIO* &nbio) = 0;
+    
+    virtual KMError setAlpnProtocols(const AlpnProtos &protocols);
+    virtual KMError getAlpnSelected(std::string &proto);
+    virtual KMError setServerName(const std::string &serverName);
+    virtual KMError setHostName(const std::string &hostName);
+    
     virtual SslState handshake() = 0;
     virtual int send(const void* data, size_t size) = 0;
     virtual int send(const iovec* iovs, int count) = 0;

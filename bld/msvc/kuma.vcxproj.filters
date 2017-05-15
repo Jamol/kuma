@@ -180,6 +180,9 @@
     <ClCompile Include="..\..\src\ssl\SioHandler.cpp">
       <Filter>Source Files\ssl</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\ssl\SslHandler.cpp">
+      <Filter>Source Files\ssl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\kmconf.h">

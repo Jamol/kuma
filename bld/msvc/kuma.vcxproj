@@ -194,6 +194,7 @@
     <ClCompile Include="..\..\src\ssl\BioHandler.cpp" />
     <ClCompile Include="..\..\src\ssl\OpenSslLib.cpp" />
     <ClCompile Include="..\..\src\ssl\SioHandler.cpp" />
+    <ClCompile Include="..\..\src\ssl\SslHandler.cpp" />
     <ClCompile Include="..\..\src\TcpConnection.cpp" />
     <ClCompile Include="..\..\src\TcpListenerImpl.cpp" />
     <ClCompile Include="..\..\src\TcpSocketImpl.cpp" />

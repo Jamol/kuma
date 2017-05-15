@@ -14,6 +14,7 @@
 		6F2732A01EC44A0C006E221E /* PollSocket.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F27329E1EC44A0C006E221E /* PollSocket.h */; };
 		6F2732A31EC44A16006E221E /* SocketBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2732A11EC44A16006E221E /* SocketBase.cpp */; };
 		6F2732A41EC44A16006E221E /* SocketBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2732A21EC44A16006E221E /* SocketBase.h */; };
+		6F2733251EC7DF00006E221E /* SslHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2733241EC7DF00006E221E /* SslHandler.cpp */; };
 		6F29634D1A18AB0D00C3C79B /* DataPacket.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963411A18AB0D00C3C79B /* DataPacket.h */; };
 		6F29634F1A18AB0D00C3C79B /* kmqueue.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F2963431A18AB0D00C3C79B /* kmqueue.h */; };
 		6F2963531A18AB0D00C3C79B /* kmtrace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2963471A18AB0D00C3C79B /* kmtrace.cpp */; };
@@ -109,6 +110,7 @@
 		6F2732A11EC44A16006E221E /* SocketBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SocketBase.cpp; sourceTree = "<group>"; };
 		6F2732A21EC44A16006E221E /* SocketBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SocketBase.h; sourceTree = "<group>"; };
 		6F2733151EC6A233006E221E /* SslHandler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SslHandler.h; sourceTree = "<group>"; };
+		6F2733241EC7DF00006E221E /* SslHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SslHandler.cpp; sourceTree = "<group>"; };
 		6F2963411A18AB0D00C3C79B /* DataPacket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DataPacket.h; path = ../../src/util/DataPacket.h; sourceTree = "<group>"; };
 		6F2963431A18AB0D00C3C79B /* kmqueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = kmqueue.h; path = ../../src/util/kmqueue.h; sourceTree = "<group>"; };
 		6F2963471A18AB0D00C3C79B /* kmtrace.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = kmtrace.cpp; path = ../../src/util/kmtrace.cpp; sourceTree = "<group>"; };
@@ -355,6 +357,7 @@
 				6FBB2CB11D139C700024550F /* OpenSslLib.h */,
 				6FBB2CB21D139C700024550F /* SioHandler.cpp */,
 				6FBB2CB31D139C700024550F /* SioHandler.h */,
+				6F2733241EC7DF00006E221E /* SslHandler.cpp */,
 				6F2733151EC6A233006E221E /* SslHandler.h */,
 			);
 			path = ssl;
@@ -536,6 +539,7 @@
 				6F37307F1E2F35B500479457 /* HttpMessage.cpp in Sources */,
 				6FBB2CBE1D139C990024550F /* WSHandler.cpp in Sources */,
 				6F2D40471B194AE200E24928 /* TimerManager.cpp in Sources */,
+				6F2733251EC7DF00006E221E /* SslHandler.cpp in Sources */,
 				6F6D12EE1D965A9D008B64E6 /* Http1xResponse.cpp in Sources */,
 				6F2963531A18AB0D00C3C79B /* kmtrace.cpp in Sources */,
 				6F8776001EAB4B18002F1165 /* DnsResolver.cpp in Sources */,

@@ -52,15 +52,14 @@ namespace {
     }
 }
 
-bool OpenSslLib::init(const char* path)
+bool OpenSslLib::init(const std::string &cfg_path)
 {
     std::lock_guard<std::mutex> g(getOpenSslMutex());
     if (initialized_) {
         ++init_ref_;
         return true;
     }
-    std::string str(path?path:"");
-    if (doInit(str)) {
+    if (doInit(cfg_path)) {
         initialized_ = true;
         ++init_ref_;
         return true;
@@ -68,16 +67,13 @@ bool OpenSslLib::init(const char* path)
     return false;
 }
 
-bool OpenSslLib::doInit(const std::string &path)
+bool OpenSslLib::doInit(const std::string &cfg_path)
 {
-    if(path.empty()) {
+    certs_path_ = cfg_path;
+    if(certs_path_.empty()) {
         certs_path_ = getExecutablePath();
-    } else {
-        certs_path_ = path;
-        if(certs_path_.empty()) {
-            certs_path_ = getExecutablePath();
-        }
     }
+    certs_path_ += "/cert";
     if(certs_path_.at(certs_path_.length() - 1) != PATH_SEPARATOR) {
         certs_path_ += PATH_SEPARATOR;
     }
@@ -222,9 +218,9 @@ SSL_CTX* OpenSslLib::defaultClientContext()
 {
     if (!ssl_ctx_client_) {
         std::call_once(once_flag_client_, []{
-            std::string certFile;// = certs_path + "cleint.cer";
+            std::string certFile;// = certs_path + "cleint.pem";
             std::string keyFile;// = certs_path + "client.key";
-            std::string caFile = certs_path_ + "ca.cer";
+            std::string caFile = certs_path_ + "ca.pem";
             ssl_ctx_client_ = createSSLContext(SSLv23_client_method(), caFile, certFile, keyFile, true);
         });
     }
@@ -235,7 +231,7 @@ SSL_CTX* OpenSslLib::defaultServerContext()
 {
     if (!ssl_ctx_server_) {
         std::call_once(once_flag_server_, []{
-            std::string certFile = certs_path_ + "server.cer";
+            std::string certFile = certs_path_ + "server.pem";
             std::string keyFile = certs_path_ + "server.key";
             std::string caFile;
             ssl_ctx_server_ = createSSLContext(SSLv23_server_method(), caFile, certFile, keyFile, false);
