@@ -19,46 +19,49 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __SioHandler_H__
-#define __SioHandler_H__
+#ifndef __IocpUdpSocket_H__
+#define __IocpUdpSocket_H__
 
-#ifdef KUMA_HAS_OPENSSL
-
-#include "SslHandler.h"
-
-#ifndef KUMA_OS_WIN
-struct iovec;
-#endif
+#include "kmdefs.h"
+#include "kmapi.h"
+#include "evdefs.h"
+#include "UdpSocketBase.h"
+#include "util/kmbuffer.h"
 
 KUMA_NS_BEGIN
 
-#ifdef KUMA_OS_WIN
-struct iovec;
-#endif
-
-class SioHandler : public SslHandler
+class IocpUdpSocket : public UdpSocketBase
 {
 public:
-    SioHandler();
-    ~SioHandler();
+    IocpUdpSocket(const EventLoopPtr &loop);
+    ~IocpUdpSocket();
     
-    KMError init(SslRole ssl_role, SOCKET_FD fd) override;
-    KMError attachSsl(SSL *ssl, BIO *nbio, SOCKET_FD fd) override;
-    KMError detachSsl(SSL* &ssl, BIO* &nbio) override;
-    SslState handshake() override;
-    int send(const void* data, size_t size) override;
-    int send(const iovec* iovs, int count) override;
-    int receive(void* data, size_t size) override;
+    KMError bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags) override;
+    int receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port) override;
     KMError close() override;
+
+    bool isPending() const override { return hasPendingOperation(); }
     
 protected:
-    SslState sslConnect();
-    SslState sslAccept();
-    void cleanup();
+    void ioReady(KMEvent events, void* ol, size_t io_size) override;
+    void onReceive(size_t io_size);
+
+    int postRecvOperation();
+    bool hasPendingOperation() const;
+
+    void cleanup() override;
+    void cancel();
+
+protected:
+    bool            recv_pending_ = false;
+    KMBuffer        recv_buf_;
+    WSABUF          wsa_buf_r_;
+    OVERLAPPED      recv_ol_;
+    sockaddr_storage recv_addr_;
+    int             recv_addr_len_ = 0;
+    bool            closing_ = false;
 };
 
 KUMA_NS_END
-
-#endif // KUMA_HAS_OPENSSL
 
 #endif

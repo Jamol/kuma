@@ -71,7 +71,18 @@ SocketBase::SocketBase(const EventLoopPtr &loop)
 
 SocketBase::~SocketBase()
 {
-    cleanup();
+    timer_.cancel();
+    if (!dns_token_.expired()) {
+        DnsResolver::get().cancel("", dns_token_);
+        dns_token_.reset();
+    }
+
+    if (INVALID_FD != fd_) {
+        SOCKET_FD fd = fd_;
+        fd_ = INVALID_FD;
+        shutdown(fd, 2);
+        unregisterFd(fd, true);
+    }
 }
 
 void SocketBase::cleanup()
@@ -88,6 +99,11 @@ void SocketBase::cleanup()
         shutdown(fd, 0); // only stop receive
         unregisterFd(fd, true);
     }
+}
+
+SOCKET_FD SocketBase::createFd(int addr_family)
+{
+    return ::socket(addr_family, SOCK_STREAM, 0);
 }
 
 KMError SocketBase::bind(const char* bind_host, uint16_t bind_port)
@@ -107,7 +123,7 @@ KMError SocketBase::bind(const char* bind_host, uint16_t bind_port)
     if (km_set_sock_addr(bind_host, bind_port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
         return KMError::INVALID_PARAM;
     }
-    fd_ = ::socket(ss_addr.ss_family, SOCK_STREAM, 0);
+    fd_ = createFd(ss_addr.ss_family);
     if (INVALID_FD == fd_) {
         KUMA_ERRXTRACE("bind, socket failed, err=" << getLastError());
         return KMError::FAILED;
@@ -162,24 +178,76 @@ KMError SocketBase::connect_i(const char* host, uint16_t port, uint32_t timeout_
     return connect_i(ss_addr, timeout_ms);
 }
 
+KMError SocketBase::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_ms)
+{
+    if (INVALID_FD == fd_) {
+        fd_ = createFd(ss_addr.ss_family);
+        if (INVALID_FD == fd_) {
+            KUMA_ERRXTRACE("connect_i, socket failed, err=" << getLastError());
+            return KMError::FAILED;
+        }
+    }
+    setSocketOption();
+
+    int addr_len = km_get_addr_length(ss_addr);
+    int ret = ::connect(fd_, (struct sockaddr *)&ss_addr, addr_len);
+    if (0 == ret) {
+        setState(State::CONNECTING); // wait for writable event
+    }
+    else if (ret < 0 &&
+#ifdef KUMA_OS_WIN
+        WSAEWOULDBLOCK
+#else
+        EINPROGRESS
+#endif
+        == getLastError()) {
+        setState(State::CONNECTING);
+    }
+    else {
+        KUMA_ERRXTRACE("connect_i, error, fd=" << fd_ << ", err=" << getLastError());
+        cleanup();
+        setState(State::CLOSED);
+        return KMError::FAILED;
+    }
+
+#if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
+    socklen_t len = sizeof(ss_addr);
+#else
+    int len = sizeof(ss_addr);
+#endif
+    char local_ip[128] = { 0 };
+    uint16_t local_port = 0;
+    ret = getsockname(fd_, (struct sockaddr*)&ss_addr, &len);
+    if (ret != -1) {
+        km_get_sock_addr((struct sockaddr*)&ss_addr, sizeof(ss_addr), local_ip, sizeof(local_ip), &local_port);
+    }
+
+    KUMA_INFOXTRACE("connect_i, fd=" << fd_ << ", local_ip=" << local_ip
+        << ", local_port=" << local_port << ", state=" << getState());
+
+    registerFd(fd_);
+    return KMError::NOERR;
+}
+
 KMError SocketBase::attachFd(SOCKET_FD fd)
 {
-    KUMA_INFOXTRACE("attachFd, fd=" << fd << ", state=" << getState());
     if (getState() != State::IDLE) {
-        KUMA_ERRXTRACE("attachFd, invalid state, state=" << getState());
+        KUMA_ERRXTRACE("attachFd, invalid state, fd="<<fd<<", state=" << getState());
         return KMError::INVALID_STATE;
     }
+    KUMA_INFOXTRACE("attachFd, fd=" << fd << ", state=" << getState());
 
     fd_ = fd;
     setSocketOption();
     setState(State::OPEN);
-
+    registerFd(fd_);
     return KMError::NOERR;
 }
 
 KMError SocketBase::detachFd(SOCKET_FD &fd)
 {
     KUMA_INFOXTRACE("detachFd, fd=" << fd_ << ", state=" << getState());
+    unregisterFd(fd_, false);
     fd = fd_;
     fd_ = INVALID_FD;
     cleanup();
@@ -187,15 +255,36 @@ KMError SocketBase::detachFd(SOCKET_FD &fd)
     return KMError::NOERR;
 }
 
+bool SocketBase::registerFd(SOCKET_FD fd)
+{
+    auto loop = loop_.lock();
+    if (loop && fd != INVALID_FD) {
+        if (loop->registerFd(fd, KUMA_EV_NETWORK, [this](KMEvent ev, void* ol, size_t io_size) { ioReady(ev, ol, io_size); }) == KMError::NOERR) {
+            registered_ = true;
+        }
+    }
+    return registered_;
+}
+
+void SocketBase::unregisterFd(SOCKET_FD fd, bool close_fd)
+{
+    if (registered_) {
+        registered_ = false;
+        auto loop = loop_.lock();
+        if (loop && fd != INVALID_FD) {
+            loop->unregisterFd(fd, close_fd);
+        }
+    }
+    else if (close_fd) {
+        closeFd(fd);
+    }
+}
+
 int SocketBase::send(const void* data, size_t length)
 {
     if (!isReady()) {
         KUMA_WARNXTRACE("send, invalid state=" << getState());
         return 0;
-    }
-    if (INVALID_FD == fd_) {
-        KUMA_ERRXTRACE("send, invalid fd");
-        return -1;
     }
 
     int ret = (int)::send(fd_, (const char*)data, int(length), 0);
@@ -218,7 +307,9 @@ int SocketBase::send(const void* data, size_t length)
         }
     }
 
-    if (ret < 0) {
+    if (ret >= 0 && static_cast<size_t>(ret) < length) {
+        notifySendBlocked();
+    } else if (ret < 0) {
         cleanup();
         setState(State::CLOSED);
     }
@@ -233,9 +324,13 @@ int SocketBase::send(iovec* iovs, int count)
         KUMA_WARNXTRACE("send 2, invalid state=" << getState());
         return 0;
     }
-    if (INVALID_FD == fd_) {
-        KUMA_ERRXTRACE("send 2, invalid fd");
-        return -1;
+
+    size_t bytes_total = 0;
+    for (int i = 0; i < count; ++i) {
+        bytes_total += iovs[i].iov_len;
+    }
+    if (bytes_total == 0) {
+        return 0;
     }
 
     int ret = 0;
@@ -265,7 +360,9 @@ int SocketBase::send(iovec* iovs, int count)
         }
     }
 
-    if (ret < 0) {
+    if (ret >= 0 && static_cast<size_t>(ret) < bytes_total) {
+        notifySendBlocked();
+    } else if (ret < 0) {
         cleanup();
         setState(State::CLOSED);
     }
@@ -279,10 +376,7 @@ int SocketBase::receive(void* data, size_t length)
     if (!isReady()) {
         return 0;
     }
-    if (INVALID_FD == fd_) {
-        KUMA_ERRXTRACE("receive, invalid fd");
-        return -1;
-    }
+    
     int ret = (int)::recv(fd_, (char*)data, int(length), 0);
     if (0 == ret) {
         KUMA_WARNXTRACE("receive, peer closed, err=" << getLastError());
@@ -328,6 +422,24 @@ KMError SocketBase::close()
     return KMError::NOERR;
 }
 
+KMError SocketBase::pause()
+{
+    auto loop = loop_.lock();
+    if (loop && isReady()) {
+        return loop->updateFd(fd_, KUMA_EV_ERROR);
+    }
+    return KMError::INVALID_STATE;
+}
+
+KMError SocketBase::resume()
+{
+    auto loop = loop_.lock();
+    if (loop && isReady()) {
+        return loop->updateFd(fd_, KUMA_EV_NETWORK);
+    }
+    return KMError::INVALID_STATE;
+}
+
 void SocketBase::setSocketOption()
 {
     if (INVALID_FD == fd_) {
@@ -348,6 +460,22 @@ void SocketBase::setSocketOption()
 
     if (set_tcpnodelay(fd_) != 0) {
         KUMA_WARNXTRACE("setSocketOption, failed to set TCP_NODELAY, fd=" << fd_ << ", err=" << getLastError());
+    }
+}
+
+void SocketBase::notifySendBlocked()
+{
+    auto loop = loop_.lock();
+    if (loop && loop->isPollLT()) {
+        loop->updateFd(fd_, KUMA_EV_NETWORK);
+    }
+}
+
+void SocketBase::notifySendReady()
+{
+    auto loop = loop_.lock();
+    if (loop && loop->isPollLT() && fd_ != INVALID_FD) {
+        loop->updateFd(fd_, KUMA_EV_READ | KUMA_EV_ERROR);
     }
 }
 
@@ -383,6 +511,7 @@ void SocketBase::onConnect(KMError err)
 
 void SocketBase::onSend(KMError err)
 {
+    notifySendReady();
     if (write_cb_ && isReady()) write_cb_(err);
 }
 
@@ -397,4 +526,48 @@ void SocketBase::onClose(KMError err)
     cleanup();
     setState(State::CLOSED);
     if (error_cb_) error_cb_(err);
+}
+
+void SocketBase::ioReady(KMEvent events, void* ol, size_t io_size)
+{
+    switch (getState())
+    {
+    case State::CONNECTING:
+    {
+        if (events & KUMA_EV_ERROR) {
+            KUMA_ERRXTRACE("ioReady, KUMA_EV_ERROR on CONNECTING, events=" << events << ", err=" << getLastError());
+            onConnect(KMError::POLL_ERROR);
+        }
+        else {
+            DESTROY_DETECTOR_SETUP();
+            onConnect(KMError::NOERR);
+            DESTROY_DETECTOR_CHECK_VOID();
+            if ((events & KUMA_EV_READ)) {
+                onReceive(KMError::NOERR);
+            }
+        }
+        break;
+    }
+
+    case State::OPEN:
+    {
+        if (events & KUMA_EV_READ) {// handle EPOLLIN firstly
+            DESTROY_DETECTOR_SETUP();
+            onReceive(KMError::NOERR);
+            DESTROY_DETECTOR_CHECK_VOID();
+        }
+        if ((events & KUMA_EV_ERROR) && getState() == State::OPEN) {
+            KUMA_ERRXTRACE("ioReady, KUMA_EV_ERROR on OPEN, events=" << events << ", err=" << getLastError());
+            onClose(KMError::POLL_ERROR);
+            break;
+        }
+        if ((events & KUMA_EV_WRITE) && getState() == State::OPEN) {
+            onSend(KMError::NOERR);
+        }
+        break;
+    }
+    default:
+        //KUMA_WARNXTRACE("ioReady, invalid state="<<getState()<<", events="<<events);
+        break;
+    }
 }

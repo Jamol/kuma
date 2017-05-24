@@ -49,6 +49,10 @@ public:
     static int appVerifyCallback(X509_STORE_CTX *ctx, void *arg);
     static unsigned long threadIdCallback(void);
     static void lockingCallback(int mode, int n, const char *file, int line);
+
+    static CRYPTO_dynlock_value* dynlockCreateCallback(const char *file, int line);
+    static void dynlockLockingCallback(int mode, CRYPTO_dynlock_value* l, const char *file, int line);
+    static void dynlockDestroyCallback(CRYPTO_dynlock_value* l, const char *file, int line);
     
 #if OPENSSL_VERSION_NUMBER >= 0x1000200fL && !defined(OPENSSL_NO_TLSEXT)
     static int alpnCallback(SSL *ssl, const unsigned char **out, unsigned char *outlen, const unsigned char *_in, unsigned int inlen, void *arg);

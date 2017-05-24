@@ -58,16 +58,19 @@ public:
     virtual KMError close() = 0;
     
     virtual KMError sendBufferedData() { return KMError::NOERR; }
-    SslState getState() { return state_; }
-    bool isServer() { return is_server_; }
+    SslState getState() const { return state_; }
+    bool isServer() const { return is_server_; }
     
 protected:
     void setState(SslState state) { state_ = state; }
+    const std::string& getObjKey() const { return obj_key_; }
     
 protected:
     SSL*        ssl_ = nullptr;
+    SOCKET_FD   fd_ = INVALID_FD;
     SslState    state_ = SslState::SSL_NONE;
     bool        is_server_ = false;
+    std::string obj_key_{ "SslHandler" };
 };
 
 KUMA_NS_END

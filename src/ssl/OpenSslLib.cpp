@@ -32,6 +32,10 @@
 
 using namespace kuma;
 
+struct CRYPTO_dynlock_value {
+    std::mutex lock;
+};
+
 bool OpenSslLib::initialized_ = false;
 std::string OpenSslLib::certs_path_;
 std::uint32_t OpenSslLib::init_ref_ { 0 };
@@ -82,6 +86,10 @@ bool OpenSslLib::doInit(const std::string &cfg_path)
         ssl_locks_ = new std::mutex[CRYPTO_num_locks()];
         CRYPTO_set_id_callback(threadIdCallback);
         CRYPTO_set_locking_callback(lockingCallback);
+
+        CRYPTO_set_dynlock_create_callback(&dynlockCreateCallback);
+        CRYPTO_set_dynlock_lock_callback(&dynlockLockingCallback);
+        CRYPTO_set_dynlock_destroy_callback(&dynlockDestroyCallback);
     }
     
     if (SSL_library_init() != 1) {
@@ -114,6 +122,10 @@ void OpenSslLib::doFini()
     if (ssl_locks_) {
         CRYPTO_set_id_callback(nullptr);
         CRYPTO_set_locking_callback(nullptr);
+
+        CRYPTO_set_dynlock_create_callback(nullptr);
+        CRYPTO_set_dynlock_lock_callback(nullptr);
+        CRYPTO_set_dynlock_destroy_callback(nullptr);
     }
     EVP_cleanup();
     CRYPTO_cleanup_all_ex_data();
@@ -343,6 +355,33 @@ void OpenSslLib::lockingCallback(int mode, int n, const char *file, int line)
     else {
         ssl_locks_[n].unlock();
     }
+}
+
+CRYPTO_dynlock_value* OpenSslLib::dynlockCreateCallback(const char *file, int line)
+{
+    UNUSED(file);
+    UNUSED(line);
+
+    return new CRYPTO_dynlock_value;
+}
+
+void OpenSslLib::dynlockLockingCallback(int mode, CRYPTO_dynlock_value* l, const char *file, int line)
+{
+    UNUSED(file);
+    UNUSED(line);
+
+    if (mode & CRYPTO_LOCK)
+        l->lock.lock();
+    else
+        l->lock.unlock();
+}
+
+void OpenSslLib::dynlockDestroyCallback(CRYPTO_dynlock_value* l, const char *file, int line)
+{
+    UNUSED(file);
+    UNUSED(line);
+
+    delete l;
 }
 
 #if OPENSSL_VERSION_NUMBER >= 0x1000200fL && !defined(OPENSSL_NO_TLSEXT)

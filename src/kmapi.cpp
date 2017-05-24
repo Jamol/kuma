@@ -36,6 +36,7 @@
 #ifdef KUMA_HAS_OPENSSL
 #include "ssl/OpenSslLib.h"
 #endif
+#include "DnsResolver.h"
 
 #include "kmapi.h"
 
@@ -47,6 +48,20 @@ struct ImplHelper {
     using ImplPtr = std::shared_ptr<Impl>;
     Impl impl;
     ImplPtr ptr;
+
+    template <typename... Args>
+    ImplHelper(Args&... args)
+        : impl(args...)
+    {
+
+    }
+
+    template <typename... Args>
+    ImplHelper(Args&&... args)
+        : impl(std::forward<Args...>(args)...)
+    {
+
+    }
     
     static ImplPtr toSharedPtr(Impl *pimpl)
     {
@@ -61,7 +76,7 @@ using EventLoopHelper = ImplHelper<EventLoop::Impl>;
 
 EventLoop::EventLoop(PollType poll_type)
 {
-    auto h = new EventLoopHelper();
+    auto h = new EventLoopHelper(poll_type);
     pimpl_ = reinterpret_cast<Impl*>(h);
     h->ptr.reset(pimpl_, [](Impl* p){
         auto h = reinterpret_cast<EventLoopHelper*>(p);
@@ -967,7 +982,6 @@ H2Connection::Impl* H2Connection::pimpl()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 //
-#include "DnsResolver.h"
 
 void init(const char* path)
 {

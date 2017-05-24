@@ -69,17 +69,12 @@ using namespace kuma;
 
 BioHandler::BioHandler()
 {
-    
+    obj_key_ = "BioHandler";
 }
 
 BioHandler::~BioHandler()
 {
     cleanup();
-}
-
-const char* BioHandler::getObjKey()
-{
-    return "BioHandler";
 }
 
 void BioHandler::cleanup()
@@ -98,8 +93,13 @@ void BioHandler::cleanup()
 
 KMError BioHandler::init(SslRole ssl_role, SOCKET_FD fd)
 {
+    if (fd == INVALID_FD) {
+        return KMError::INVALID_PARAM;
+    }
     cleanup();
+    fd_ = fd;
     is_server_ = ssl_role == SslRole::SERVER;
+    obj_key_ = "BioHandler_" + std::to_string(fd_);
     
     SSL_CTX* ctx = NULL;
     if(is_server_) {
@@ -131,12 +131,14 @@ KMError BioHandler::init(SslRole ssl_role, SOCKET_FD fd)
 
 KMError BioHandler::attachSsl(SSL *ssl, BIO *nbio, SOCKET_FD fd)
 {
-    if (!ssl || !nbio) {
+    if (!ssl || !nbio || fd == INVALID_FD) {
         return KMError::INVALID_PARAM;
     }
     cleanup();
+    fd_ = fd;
     ssl_ = ssl;
     net_bio_ = nbio;
+    obj_key_ = "BioHandler_" + std::to_string(fd_);
     setState(SslState::SSL_SUCCESS);
     return KMError::NOERR;
 }

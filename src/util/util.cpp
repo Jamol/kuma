@@ -810,6 +810,7 @@ KUMA_NS_END
 KUMA_NS_BEGIN
 LPFN_CONNECTEX connect_ex = nullptr;
 LPFN_ACCEPTEX accept_ex = nullptr;
+LPFN_CANCELIOEX cancel_io_ex = nullptr;
 KUMA_NS_END
 using namespace kuma;
 void kuma_init()
@@ -837,6 +838,7 @@ void kuma_init()
         accept_ex = nullptr;
     }
     closeFd(sock);
+    cancel_io_ex = (LPFN_CANCELIOEX)GetProcAddress(GetModuleHandle("KERNEL32"), "CancelIoEx");
 }
 
 void kuma_fini()

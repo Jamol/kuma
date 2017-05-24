@@ -87,6 +87,7 @@ HttpParser::Impl& HttpParser::Impl::operator=(Impl&& other)
         paused_ = other.paused_;
         has_content_length_ = other.has_content_length_;
         content_length_ = other.content_length_;
+        has_body_ = other.has_body_;
         
         is_chunked_ = other.is_chunked_;
         chunk_state_ = other.chunk_state_;

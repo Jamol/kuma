@@ -174,14 +174,23 @@
     <ClCompile Include="..\..\src\poll\IocpSocket.cpp">
       <Filter>Source Files\poll</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\poll\PollSocket.cpp">
-      <Filter>Source Files\poll</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\ssl\SioHandler.cpp">
       <Filter>Source Files\ssl</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\ssl\SslHandler.cpp">
       <Filter>Source Files\ssl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\AcceptorBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\poll\IocpAcceptor.cpp">
+      <Filter>Source Files\poll</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\UdpSocketBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\poll\IocpUdpSocket.cpp">
+      <Filter>Source Files\poll</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -323,9 +332,6 @@
     <ClInclude Include="..\..\src\poll\IocpSocket.h">
       <Filter>Header Files\poll</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\poll\PollSocket.h">
-      <Filter>Header Files\poll</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\util\kmbuffer.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
@@ -334,6 +340,18 @@
     </ClInclude>
     <ClInclude Include="..\..\src\ssl\SioHandler.h">
       <Filter>Header Files\ssl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\AcceptorBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\poll\IocpAcceptor.h">
+      <Filter>Header Files\poll</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\UdpSocketBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\poll\IocpUdpSocket.h">
+      <Filter>Header Files\poll</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

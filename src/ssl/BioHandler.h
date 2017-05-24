@@ -65,7 +65,6 @@ protected:
     KMError trySendSslData();
     KMError tryRecvSslData();
     KMError trySslHandshake();
-    KMError checkSslHandshake(KMError err);
     int writeAppData(const void* data, size_t size);
     int readAppData(void* data, size_t size);
     int writeSslData(const void* data, size_t size);
@@ -76,7 +75,6 @@ protected:
     int recvData(KMBuffer &buf);
     
 protected:
-    const char* getObjKey();
     void cleanup();
     
 protected:

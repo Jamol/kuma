@@ -14,7 +14,9 @@ LOCAL_MODULE := kuma
 
 LOCAL_SRC_FILES := \
     EventLoopImpl.cpp \
+    AcceptorBase.cpp \
     SocketBase.cpp \
+    UdpSocketBase.cpp \
     TcpSocketImpl.cpp \
     UdpSocketImpl.cpp \
     TimerManager.cpp \
@@ -24,7 +26,6 @@ LOCAL_SRC_FILES := \
     poll/VPoll.cpp \
     poll/SelectPoll.cpp \
     poll/Notifier.cpp \
-    poll/PollSocket.cpp \
     http/Uri.cpp \
     http/HttpHeader.cpp \
     http/HttpMessage.cpp \

@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6F2733181EC75565006E221E /* PollSocket.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2733161EC75565006E221E /* PollSocket.cpp */; };
 		6F27331D1EC75579006E221E /* BioHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F2733191EC75579006E221E /* BioHandler.cpp */; };
 		6F27331E1EC75579006E221E /* SioHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F27331B1EC75579006E221E /* SioHandler.cpp */; };
 		6F2733211EC755CA006E221E /* SocketBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F27331F1EC755CA006E221E /* SocketBase.cpp */; };
@@ -17,6 +16,8 @@
 		6F66AC3D1C71B03F00BB37B9 /* TcpListenerImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F66AC3B1C71B03F00BB37B9 /* TcpListenerImpl.cpp */; };
 		6F6D14111D9A5AE7008B64E6 /* Http1xResponse.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F6D140F1D9A5AE7008B64E6 /* Http1xResponse.cpp */; };
 		6F6D148D1D9D098C008B64E6 /* FlowControl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F6D148B1D9D098C008B64E6 /* FlowControl.cpp */; };
+		6F7BBB3D1ED57DF00093BDE3 /* AcceptorBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7BBB391ED57DF00093BDE3 /* AcceptorBase.cpp */; };
+		6F7BBB3E1ED57DF00093BDE3 /* UdpSocketBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7BBB3B1ED57DF00093BDE3 /* UdpSocketBase.cpp */; };
 		6F7D5FA71B33E9E6000FF2F8 /* libkuma.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F7D5F9B1B33E9E6000FF2F8 /* libkuma.a */; };
 		6F7D5FE41B33EC65000FF2F8 /* EventLoopImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7D5FD51B33EC65000FF2F8 /* EventLoopImpl.cpp */; };
 		6F7D5FE51B33EC65000FF2F8 /* kmapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7D5FD71B33EC65000FF2F8 /* kmapi.cpp */; };
@@ -74,8 +75,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		6F2733161EC75565006E221E /* PollSocket.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PollSocket.cpp; sourceTree = "<group>"; };
-		6F2733171EC75565006E221E /* PollSocket.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PollSocket.h; sourceTree = "<group>"; };
 		6F2733191EC75579006E221E /* BioHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BioHandler.cpp; sourceTree = "<group>"; };
 		6F27331A1EC75579006E221E /* BioHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BioHandler.h; sourceTree = "<group>"; };
 		6F27331B1EC75579006E221E /* SioHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SioHandler.cpp; sourceTree = "<group>"; };
@@ -93,6 +92,10 @@
 		6F6D14101D9A5AE7008B64E6 /* Http1xResponse.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Http1xResponse.h; sourceTree = "<group>"; };
 		6F6D148B1D9D098C008B64E6 /* FlowControl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FlowControl.cpp; sourceTree = "<group>"; };
 		6F6D148C1D9D098C008B64E6 /* FlowControl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FlowControl.h; sourceTree = "<group>"; };
+		6F7BBB391ED57DF00093BDE3 /* AcceptorBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AcceptorBase.cpp; path = ../../src/AcceptorBase.cpp; sourceTree = "<group>"; };
+		6F7BBB3A1ED57DF00093BDE3 /* AcceptorBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AcceptorBase.h; path = ../../src/AcceptorBase.h; sourceTree = "<group>"; };
+		6F7BBB3B1ED57DF00093BDE3 /* UdpSocketBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = UdpSocketBase.cpp; path = ../../src/UdpSocketBase.cpp; sourceTree = "<group>"; };
+		6F7BBB3C1ED57DF00093BDE3 /* UdpSocketBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = UdpSocketBase.h; path = ../../src/UdpSocketBase.h; sourceTree = "<group>"; };
 		6F7D5F9B1B33E9E6000FF2F8 /* libkuma.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libkuma.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F7D5FA61B33E9E6000FF2F8 /* kumaTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = kumaTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F7D5FAC1B33E9E6000FF2F8 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -231,6 +234,8 @@
 				6FECED051C21392600310F52 /* ws */,
 				6FECECF81C21383900310F52 /* http */,
 				6F7D5FF11B33ED97000FF2F8 /* kuma-Prefix.pch */,
+				6F7BBB391ED57DF00093BDE3 /* AcceptorBase.cpp */,
+				6F7BBB3A1ED57DF00093BDE3 /* AcceptorBase.h */,
 				6F8776391EACEA10002F1165 /* DnsResolver.cpp */,
 				6F87763A1EACEA10002F1165 /* DnsResolver.h */,
 				6F7D5FD41B33EC65000FF2F8 /* evdefs.h */,
@@ -250,6 +255,8 @@
 				6F7D5FDF1B33EC65000FF2F8 /* TcpSocketImpl.h */,
 				6F7D5FE01B33EC65000FF2F8 /* TimerManager.cpp */,
 				6F7D5FE11B33EC65000FF2F8 /* TimerManager.h */,
+				6F7BBB3B1ED57DF00093BDE3 /* UdpSocketBase.cpp */,
+				6F7BBB3C1ED57DF00093BDE3 /* UdpSocketBase.h */,
 				6F7D5FE21B33EC65000FF2F8 /* UdpSocketImpl.cpp */,
 				6F7D5FE31B33EC65000FF2F8 /* UdpSocketImpl.h */,
 			);
@@ -367,8 +374,6 @@
 		6FECED081C21396F00310F52 /* poll */ = {
 			isa = PBXGroup;
 			children = (
-				6F2733161EC75565006E221E /* PollSocket.cpp */,
-				6F2733171EC75565006E221E /* PollSocket.h */,
 				6F91F1B31D7B29CB004A95B9 /* KQueue.cpp */,
 				6F91F1761D782F1A004A95B9 /* Notifier.cpp */,
 				6FECED091C2139A400310F52 /* IOPoll.h */,
@@ -473,6 +478,7 @@
 				6F7D5FEA1B33EC65000FF2F8 /* UdpSocketImpl.cpp in Sources */,
 				6F2733211EC755CA006E221E /* SocketBase.cpp in Sources */,
 				6FECED041C2138E700310F52 /* Uri.cpp in Sources */,
+				6F7BBB3D1ED57DF00093BDE3 /* AcceptorBase.cpp in Sources */,
 				6F84E9891D5B032D00AF8E3B /* HPacker.cpp in Sources */,
 				6F84E98A1D5B032D00AF8E3B /* HPackTable.cpp in Sources */,
 				6F84E9821D5B031300AF8E3B /* H2Stream.cpp in Sources */,
@@ -490,7 +496,6 @@
 				6F66AC3D1C71B03F00BB37B9 /* TcpListenerImpl.cpp in Sources */,
 				6FECED031C2138E700310F52 /* HttpResponseImpl.cpp in Sources */,
 				6F3731F91E37278800479457 /* HttpHeader.cpp in Sources */,
-				6F2733181EC75565006E221E /* PollSocket.cpp in Sources */,
 				6FECED1C1C2139CA00310F52 /* base64.cpp in Sources */,
 				6F84E9811D5B031300AF8E3B /* Http2Response.cpp in Sources */,
 				6F3730821E2F6AEB00479457 /* HttpMessage.cpp in Sources */,
@@ -501,6 +506,7 @@
 				6F7D5FE91B33EC65000FF2F8 /* TimerManager.cpp in Sources */,
 				6F87763B1EACEA10002F1165 /* DnsResolver.cpp in Sources */,
 				6F84E97F1D5B031300AF8E3B /* H2Frame.cpp in Sources */,
+				6F7BBB3E1ED57DF00093BDE3 /* UdpSocketBase.cpp in Sources */,
 				6FECED131C2139B100310F52 /* OpenSslLib.cpp in Sources */,
 				6FECED241C2139D600310F52 /* WSHandler.cpp in Sources */,
 				6FECED1E1C2139CA00310F52 /* util.cpp in Sources */,

@@ -28,8 +28,7 @@
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
 #include "EventLoopImpl.h"
-#include "DnsResolver.h"
-#include "SocketBase.h"
+
 #ifdef KUMA_OS_WIN
 # include <Ws2tcpip.h>
 #else
@@ -44,6 +43,7 @@
 #include <mutex>
 
 KUMA_NS_BEGIN
+class SocketBase;
 
 class TcpSocket::Impl : public KMObject, public DestroyDetector
 {
@@ -83,8 +83,8 @@ public:
     void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
     void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
     
-    SOCKET_FD getFd() const { return socket_->getFd(); }
-    EventLoopPtr eventLoop() { return socket_->eventLoop(); }
+    SOCKET_FD getFd() const;
+    EventLoopPtr eventLoop() const;
     
 private:
     void ioReady(uint32_t events);
@@ -93,6 +93,7 @@ private:
     void onReceive(KMError err);
     void onClose(KMError err);
     
+    bool createSocket();
 #ifdef KUMA_HAS_OPENSSL
     bool createSslHandler();
     KMError checkSslHandshake(KMError err);
@@ -103,9 +104,10 @@ private:
     
 private:
     void cleanup();
-    bool isReady();
+    bool isReady() const;
     
 private:
+    EventLoopWeakPtr    loop_;
     uint32_t            ssl_flags_{ SSL_NONE };
     
     std::unique_ptr<SocketBase> socket_;

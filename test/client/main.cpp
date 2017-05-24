@@ -160,7 +160,7 @@ int main(int argc, char *argv[])
     }
     
     LoopPool loop_pool;
-    loop_pool.init(THREAD_COUNT);
+    loop_pool.init(THREAD_COUNT, main_loop.getPollType());
     loop_pool.startTest(addr, bind_addr, concurrent);
     
     main_loop.loop();

@@ -27,9 +27,10 @@
 #include "EventLoopImpl.h"
 #include "DnsResolver.h"
 #include "util/kmobject.h"
+#include "util/DestroyDetector.h"
 KUMA_NS_BEGIN
 
-class SocketBase : public KMObject
+class SocketBase : public KMObject, public PendingObject, public DestroyDetector
 {
 public:
     using EventCallback = std::function<void(KMError)>;
@@ -44,18 +45,20 @@ public:
     virtual int send(const void* data, size_t length);
     virtual int send(iovec* iovs, int count);
     virtual int receive(void* data, size_t length);
-    virtual KMError pause() = 0;
-    virtual KMError resume() = 0;
+    virtual KMError pause();
+    virtual KMError resume();
     virtual KMError close();
 
-    virtual void notifySendBlocked() = 0;
-    SOCKET_FD getFd() { return fd_; }
-    EventLoopPtr eventLoop() { return loop_.lock(); }
-    bool isReady() { return getState() == State::OPEN; }
+    virtual void notifySendBlocked();
+    SOCKET_FD getFd() const { return fd_; }
+    EventLoopPtr eventLoop() const { return loop_.lock(); }
+    bool isReady() const { return getState() == State::OPEN; }
 
     void setReadCallback(EventCallback cb) { read_cb_ = std::move(cb); }
     void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
     void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
+
+    bool isPending() const override { return false; }
 
 protected:
     enum State {
@@ -69,14 +72,17 @@ protected:
     void setState(State state) { state_ = state; }
     void setSocketOption();
     KMError connect_i(const char* addr, uint16_t port, uint32_t timeout_ms);
-    virtual KMError connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_ms) = 0;
+    virtual KMError connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_ms);
     virtual void cleanup();
-    virtual void registerFd(SOCKET_FD fd) = 0;
-    virtual void unregisterFd(SOCKET_FD fd, bool close_fd) = 0;
+    virtual bool registerFd(SOCKET_FD fd);
+    virtual void unregisterFd(SOCKET_FD fd, bool close_fd);
+    virtual SOCKET_FD createFd(int addr_family);
+    virtual void notifySendReady();
 
 protected:
     void onResolved(KMError err, const sockaddr_storage &addr);
 
+    virtual void ioReady(KMEvent events, void* ol, size_t io_size);
     virtual void onConnect(KMError err);
     virtual void onSend(KMError err);
     virtual void onReceive(KMError err);

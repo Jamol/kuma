@@ -19,46 +19,38 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __SioHandler_H__
-#define __SioHandler_H__
+#ifndef __IocpAcceptor_H__
+#define __IocpAcceptor_H__
 
-#ifdef KUMA_HAS_OPENSSL
-
-#include "SslHandler.h"
-
-#ifndef KUMA_OS_WIN
-struct iovec;
-#endif
-
+#include "kmdefs.h"
+#include "kmapi.h"
+#include "evdefs.h"
+#include "AcceptorBase.h"
 KUMA_NS_BEGIN
 
-#ifdef KUMA_OS_WIN
-struct iovec;
-#endif
-
-class SioHandler : public SslHandler
+class IocpAcceptor : public AcceptorBase
 {
 public:
-    SioHandler();
-    ~SioHandler();
-    
-    KMError init(SslRole ssl_role, SOCKET_FD fd) override;
-    KMError attachSsl(SSL *ssl, BIO *nbio, SOCKET_FD fd) override;
-    KMError detachSsl(SSL* &ssl, BIO* &nbio) override;
-    SslState handshake() override;
-    int send(const void* data, size_t size) override;
-    int send(const iovec* iovs, int count) override;
-    int receive(void* data, size_t size) override;
-    KMError close() override;
+    IocpAcceptor(const EventLoopPtr &loop);
+    ~IocpAcceptor();
+    KMError listen(const char* host, uint16_t port) override;
+    bool isPending() const override { return hasPendingOperation(); }
     
 protected:
-    SslState sslConnect();
-    SslState sslAccept();
-    void cleanup();
+    void ioReady(KMEvent events, void* ol, size_t io_size);
+    void postAcceptOperation();
+    void onAccept() override;
+    bool hasPendingOperation() const;
+    void cleanup() override;
+    void cancel();
+
+protected:
+    bool                accept_pending_ = false;
+    OVERLAPPED          accept_ol_;
+    SOCKET_FD           accept_fd_ = INVALID_FD;
+    sockaddr_storage    ss_addrs_[2];
 };
 
 KUMA_NS_END
-
-#endif // KUMA_HAS_OPENSSL
 
 #endif

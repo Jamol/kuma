@@ -80,11 +80,11 @@ void TracePrint(int level, const char* szMessage, ...)
         trace_func(level, ss.str().c_str());
     } else {
 #ifdef KUMA_OS_WIN
-        OutputDebugString(ss.str().c_str());
+        auto str(ss.str());
+        str += "\n";
+        OutputDebugString(str.c_str());
 #else
         ss << std::endl;
-        // sometimes the outputs are garbled when two threads print log with cout simultaneously
-        //std::cout << ss.str();
         printf("%s", ss.str().c_str());
 #endif
     }

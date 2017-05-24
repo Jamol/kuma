@@ -153,6 +153,13 @@ KMError EventLoop::Impl::removeObserver(EventLoopToken *token)
     return KMError::NOERR;
 }
 
+KMError EventLoop::Impl::appendPendingObject(std::unique_ptr<PendingObject> &&obj)
+{
+    KUMA_ASSERT(inSameThread());
+    pending_objects_.emplace_back(std::move(obj));
+    return KMError::NOERR;
+}
+
 void EventLoop::Impl::processTasks()
 {
     TaskQueue tq;
@@ -177,6 +184,20 @@ void EventLoop::Impl::processTasks()
     task_mutex_.unlock();
 }
 
+void EventLoop::Impl::processPendingObjects()
+{
+    auto it = pending_objects_.begin();
+    while (it != pending_objects_.end())
+    {
+        if (!(*it)->isPending()) {
+            it = pending_objects_.erase(it);
+        }
+        else {
+            ++it;
+        }
+    }
+}
+
 void EventLoop::Impl::loopOnce(uint32_t max_wait_ms)
 {
     processTasks();
@@ -186,6 +207,7 @@ void EventLoop::Impl::loopOnce(uint32_t max_wait_ms)
         wait_ms = max_wait_ms;
     }
     poll_->wait((uint32_t)wait_ms);
+    processPendingObjects();
 }
 
 void EventLoop::Impl::loop(uint32_t max_wait_ms)
@@ -381,7 +403,7 @@ IOPoll* createDefaultIOPoll()
 {
 #ifdef KUMA_OS_WIN
     if (connect_ex && accept_ex) {
-        //return createIocpPoll();
+        return createIocpPoll();
     }
     return createSelectPoll();
 #elif defined(KUMA_OS_LINUX)

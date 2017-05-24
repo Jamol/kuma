@@ -27,40 +27,46 @@
 #include "EventLoopImpl.h"
 #include "DnsResolver.h"
 #include "SocketBase.h"
-#include "util/DestroyDetector.h"
 #include "util/kmbuffer.h"
 
-#include <vector>
 KUMA_NS_BEGIN
 
-class IocpSocket : public SocketBase, public DestroyDetector
+class IocpSocket : public SocketBase
 {
 public:
     IocpSocket(const EventLoopPtr &loop);
     ~IocpSocket();
 
     KMError attachFd(SOCKET_FD fd) override;
+    KMError detachFd(SOCKET_FD &fd) override;
     int send(const void* data, size_t length) override;
     int send(iovec* iovs, int count) override;
     int receive(void* data, size_t length) override;
     KMError pause() override;
     KMError resume() override;
     KMError close() override;
-    void notifySendBlocked() override;
+
+    bool isPending() const override { return hasPendingOperation(); }
+    
 protected:
     KMError connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_ms) override;
-    void registerFd(SOCKET_FD fd) override;
-    void unregisterFd(SOCKET_FD fd, bool close_fd) override;
+    SOCKET_FD createFd(int addr_family) override;
 
 protected:
-    void ioReady(KMEvent events, void* ol, size_t io_size);
+    void ioReady(KMEvent events, void* ol, size_t io_size) override;
     void onConnect(KMError err) override;
     void onSend(size_t io_size);
     void onReceive(size_t io_size);
-    void onClose(KMError err) override;
+
+    void notifySendBlocked() override {}
+    void notifySendReady() override {}
 
     int postSendOperation();
     int postRecvOperation();
+    bool hasPendingOperation() const;
+
+    void cleanup() override;
+    void cancel();
 
 protected:
     bool            send_pending_ = false;
@@ -71,6 +77,7 @@ protected:
     WSABUF          wsa_buf_r_;
     OVERLAPPED      send_ol_;
     OVERLAPPED      recv_ol_;
+    bool            closing_ = false;
 };
 
 KUMA_NS_END

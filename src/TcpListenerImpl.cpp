@@ -21,42 +21,6 @@
 
 #include "kmconf.h"
 
-#if defined(KUMA_OS_WIN)
-# include <Ws2tcpip.h>
-# include <windows.h>
-# include <time.h>
-#elif defined(KUMA_OS_LINUX)
-# include <string.h>
-# include <pthread.h>
-# include <unistd.h>
-# include <fcntl.h>
-# include <sys/types.h>
-# include <sys/stat.h>
-# include <sys/time.h>
-# include <sys/socket.h>
-# include <netdb.h>
-# include <arpa/inet.h>
-# include <netinet/tcp.h>
-# include <netinet/in.h>
-#elif defined(KUMA_OS_MAC)
-# include <string.h>
-# include <pthread.h>
-# include <unistd.h>
-# include <sys/types.h>
-# include <sys/socket.h>
-# include <sys/ioctl.h>
-# include <sys/fcntl.h>
-# include <sys/time.h>
-# include <sys/uio.h>
-# include <netinet/tcp.h>
-# include <netinet/in.h>
-# include <arpa/inet.h>
-# include <netdb.h>
-# include <ifaddrs.h>
-#else
-# error "UNSUPPORTED OS"
-#endif
-
 #include <stdarg.h>
 #include <errno.h>
 
@@ -64,13 +28,23 @@
 #include "TcpListenerImpl.h"
 #include "util/util.h"
 #include "util/kmtrace.h"
+#ifdef KUMA_OS_WIN
+# include "poll/IocpAcceptor.h"
+#endif
 
 using namespace kuma;
 
 TcpListener::Impl::Impl(const EventLoopPtr &loop)
-: loop_(loop)
 {
-    KM_SetObjKey("TcpListener");
+#ifdef KUMA_OS_WIN
+    if (loop->getPollType() == PollType::IOCP) {
+        acceptor_.reset(new IocpAcceptor(loop));
+    }
+    else
+#endif
+    {
+        acceptor_.reset(new AcceptorBase(loop));
+    }
 }
 
 TcpListener::Impl::~Impl()
@@ -78,154 +52,37 @@ TcpListener::Impl::~Impl()
 
 }
 
-void TcpListener::Impl::cleanup()
+void TcpListener::Impl::setAcceptCallback(AcceptCallback cb)
 {
-    if(INVALID_FD != fd_) {
-        SOCKET_FD fd = fd_;
-        fd_ = INVALID_FD;
-        ::shutdown(fd, 2);
-        if(registered_) {
-            registered_ = false;
-            auto loop = loop_.lock();
-            if (loop) {
-                loop->unregisterFd(fd, true);
-            }
-        } else {
-            closeFd(fd);
-        }
-    }
+    acceptor_->setAcceptCallback(std::move(cb));
+}
+
+void TcpListener::Impl::setErrorCallback(ErrorCallback cb)
+{
+    acceptor_->setErrorCallback(std::move(cb));
 }
 
 KMError TcpListener::Impl::startListen(const char* host, uint16_t port)
 {
-    KUMA_INFOXTRACE("startListen, host="<<host<<", port="<<port);
-    if (INVALID_FD != fd_) {
-        return KMError::INVALID_STATE;
-    }
-    sockaddr_storage ss_addr = {0};
-    struct addrinfo hints = {0};
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-    if(km_set_sock_addr(host, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
-        return KMError::INVALID_PARAM;
-    }
-    fd_ = ::socket(ss_addr.ss_family, SOCK_STREAM, 0);
-    if(INVALID_FD == fd_) {
-        KUMA_ERRXTRACE("startListen, socket failed, err="<<getLastError());
-        return KMError::FAILED;
-    }
-    setSocketOption();
-    int addr_len = km_get_addr_length(ss_addr);
-    int ret = ::bind(fd_, (struct sockaddr*)&ss_addr, addr_len);
-    if(ret < 0) {
-        KUMA_ERRXTRACE("startListen, bind failed, err="<<getLastError());
-        return KMError::FAILED;
-    }
-    if(::listen(fd_, 3000) != 0) {
-        closeFd(fd_);
-        fd_ = INVALID_FD;
-        KUMA_ERRXTRACE("startListen, socket listen fail, err="<<getLastError());
-        return KMError::FAILED;
-    }
-    stopped_ = false;
-    auto loop = loop_.lock();
-    if (loop) {
-        loop->registerFd(fd_, KUMA_EV_NETWORK, [this] (KMEvent ev, void*, size_t) { ioReady(ev); });
-        registered_ = true;
-    }
-    return KMError::NOERR;
+    return acceptor_->listen(host, port);
 }
 
 KMError TcpListener::Impl::stopListen(const char* host, uint16_t port)
 {
-    KUMA_INFOXTRACE("stopListen");
-    stopped_ = true;
-    auto loop = loop_.lock();
-    if (loop) {
-        loop->sync([this] {
-            cleanup();
-        });
-    }
-    return KMError::NOERR;
-}
-
-void TcpListener::Impl::setSocketOption()
-{
-    if(INVALID_FD == fd_) {
-        return ;
-    }
-    
-#ifdef KUMA_OS_LINUX
-    fcntl(fd_, F_SETFD, FD_CLOEXEC);
-#endif
-    
-    // nonblock
-    set_nonblocking(fd_);
-    
-    int opt_val = 1;
-    setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt_val, sizeof(int));
+    return close();
 }
 
 KMError TcpListener::Impl::close()
 {
-    KUMA_INFOXTRACE("close");
-    stopped_ = true;
-    auto loop = loop_.lock();
-    if (loop) {
-        loop->sync([this] {
-            cleanup();
-        });
+    if (acceptor_) {
+        acceptor_->close();
+        if (acceptor_->isPending()) {
+            auto loop = acceptor_->eventLoop();
+            if (loop) {
+                auto base = acceptor_.release();
+                loop->appendPendingObject(std::unique_ptr<PendingObject>(base));
+            }
+        }
     }
     return KMError::NOERR;
-}
-
-void TcpListener::Impl::onAccept()
-{
-    SOCKET_FD fd = INVALID_FD;
-    while(!stopped_) {
-        fd = ::accept(fd_, NULL, NULL);
-        if(INVALID_FD == fd) {
-            if (EINTR == errno) {
-                continue;
-            }
-            return ;
-        }
-        char peer_ip[128] = {0};
-        uint16_t peer_port = 0;
-        
-        sockaddr_storage ss_addr = {0};
-#if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
-        socklen_t ss_len = sizeof(ss_addr);
-#else
-        int ss_len = sizeof(ss_addr);
-#endif
-        int ret = getpeername(fd, (struct sockaddr*)&ss_addr, &ss_len);
-        if(ret == 0) {
-            km_get_sock_addr((struct sockaddr*)&ss_addr, sizeof(ss_addr), peer_ip, sizeof(peer_ip), &peer_port);
-        } else {
-            KUMA_WARNXTRACE("onAccept, getpeername failed, err="<<getLastError());
-        }
-        
-        KUMA_INFOXTRACE("onAccept, fd="<<fd<<", peer_ip="<<peer_ip<<", peer_port="<<peer_port);
-        if(!accept_cb_ || !accept_cb_(fd, peer_ip, peer_port)) {
-            closeFd(fd);
-        }
-    }
-}
-
-void TcpListener::Impl::onClose(KMError err)
-{
-    KUMA_INFOXTRACE("onClose, err="<<int(err));
-    cleanup();
-    if(error_cb_) error_cb_(err);
-}
-
-void TcpListener::Impl::ioReady(uint32_t events)
-{
-    if(events & KUMA_EV_ERROR) {
-        KUMA_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events="<<events<<", err="<<getLastError());
-        onClose(KMError::POLL_ERROR);
-    } else {
-        onAccept();
-    }
 }

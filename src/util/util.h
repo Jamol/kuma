@@ -37,6 +37,7 @@ KUMA_NS_BEGIN
 # define strcasecmp     _stricmp
 # define strncasecmp    _strnicmp
 # define getCurrentThreadId() GetCurrentThreadId()
+using LPFN_CANCELIOEX = BOOL(WINAPI*)(HANDLE, LPOVERLAPPED);
 #elif defined(KUMA_OS_MAC)
 # define getCurrentThreadId() pthread_mach_thread_np(pthread_self())
 #else

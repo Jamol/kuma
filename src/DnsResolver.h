@@ -33,6 +33,7 @@
 #include <functional>
 #include <thread>
 #include <mutex>
+#include <condition_variable>
 
 #if defined(KUMA_OS_WIN)
 # include <Ws2tcpip.h>

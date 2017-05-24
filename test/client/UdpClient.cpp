@@ -65,13 +65,15 @@ void UdpClient::onReceive(KMError err)
                 std::chrono::steady_clock::time_point end_point = std::chrono::steady_clock::now();
                 std::chrono::milliseconds diff_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_point - start_point_);
                 printf("spent %lld ms to echo %u packets\n", diff_ms.count(), max_send_count_);
+                break;
             }
         } else if (0 == bytes_read) {
             break;
         } else {
             printf("UdpClient::onReceive, err=%d\n", getLastError());
+            break;
         }
-    } while (0);
+    } while (true);
 }
 
 void UdpClient::onClose(KMError err)

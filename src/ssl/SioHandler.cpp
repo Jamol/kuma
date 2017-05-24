@@ -68,17 +68,12 @@ using namespace kuma;
 
 SioHandler::SioHandler()
 {
-    
+    obj_key_ = "SioHandler";
 }
 
 SioHandler::~SioHandler()
 {
     cleanup();
-}
-
-const char* SioHandler::getObjKey()
-{
-    return "SioHandler";
 }
 
 void SioHandler::cleanup()
@@ -99,6 +94,8 @@ KMError SioHandler::init(SslRole ssl_role, SOCKET_FD fd)
     cleanup();
     is_server_ = ssl_role == SslRole::SERVER;
     fd_ = fd;
+
+    obj_key_ = "SioHandler_" + std::to_string(fd_);
 
     SSL_CTX* ctx = NULL;
     if(is_server_) {
@@ -135,6 +132,7 @@ KMError SioHandler::attachSsl(SSL *ssl, BIO *nbio, SOCKET_FD fd)
     cleanup();
     ssl_ = ssl;
     fd_ = fd;
+    obj_key_ = "SioHandler_" + std::to_string(fd_);
     setState(SslState::SSL_SUCCESS);
     return KMError::NOERR;
 }
@@ -279,7 +277,7 @@ int SioHandler::send(const iovec* iovs, int count)
             return ret;
         } else {
             bytes_sent += ret;
-            if(static_cast<int>(ret) < iovs[i].iov_len) {
+            if(static_cast<size_t>(ret) < iovs[i].iov_len) {
                 break;
             }
         }
@@ -354,7 +352,7 @@ SioHandler::SslState SioHandler::handshake()
     }
     setState(state);
     if (SslState::SSL_SUCCESS == state) {
-        KUMA_INFOXTRACE("handshake, success");
+        KUMA_INFOXTRACE("handshake, success, fd="<<fd_);
     }
     else if(SslState::SSL_ERROR == state) {
         cleanup();

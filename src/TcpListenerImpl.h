@@ -25,10 +25,10 @@
 #include "kmdefs.h"
 #include "kmapi.h"
 #include "evdefs.h"
-#include "util/kmobject.h"
+#include "AcceptorBase.h"
 KUMA_NS_BEGIN
 
-class TcpListener::Impl : public KMObject
+class TcpListener::Impl
 {
 public:
     using AcceptCallback = TcpListener::AcceptCallback;
@@ -41,29 +41,11 @@ public:
     KMError stopListen(const char* host, uint16_t port);
     KMError close();
     
-    void setAcceptCallback(AcceptCallback cb) { accept_cb_ = std::move(cb); }
-    void setErrorCallback(ErrorCallback cb) { error_cb_ = std::move(cb); }
-    
-    SOCKET_FD getFd() const { return fd_; }
+    void setAcceptCallback(AcceptCallback cb);
+    void setErrorCallback(ErrorCallback cb);
     
 private:
-    void setSocketOption();
-    void ioReady(uint32_t events);
-    void onAccept();
-    void onClose(KMError err);
-    
-private:
-    void cleanup();
-    
-private:
-    SOCKET_FD           fd_{ INVALID_FD };
-    EventLoopWeakPtr    loop_;
-    bool                registered_{ false };
-    uint32_t            flags_{ 0 };
-    bool                stopped_{ false };
-    
-    AcceptCallback      accept_cb_;
-    ErrorCallback       error_cb_;
+    std::unique_ptr<AcceptorBase> acceptor_;
 };
 
 KUMA_NS_END

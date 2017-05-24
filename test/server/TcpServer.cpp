@@ -41,7 +41,7 @@ KMError TcpServer::startListen(const char* proto, const char* host, uint16_t por
     } else if(strcmp(proto, "autos") == 0) {
         proto_ = PROTO_AUTOS;
     }
-    loop_pool_.init(thr_count_);
+    loop_pool_.init(thr_count_, loop_->getPollType());
     server_.setAcceptCallback([this] (SOCKET_FD fd, const char* ip, uint16_t port) -> bool { return onAccept(fd, ip, port); });
     server_.setErrorCallback([this] (KMError err) { onError(err); });
     return server_.startListen(host, port);

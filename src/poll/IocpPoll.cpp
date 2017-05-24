@@ -113,7 +113,6 @@ KMError IocpPoll::wait(uint32_t wait_ms)
                 SOCKET_FD fd = (SOCKET_FD)entries[i].lpCompletionKey;
                 if (fd < poll_items_.size()) {
                     IOCallback &cb = poll_items_[fd].cb;
-                    uint32_t revents = 0;
                     size_t io_size = entries[i].dwNumberOfBytesTransferred;
                     if (cb) cb(0, entries[i].lpOverlapped, io_size);
                 }
