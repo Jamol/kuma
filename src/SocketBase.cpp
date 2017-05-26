@@ -106,7 +106,7 @@ SOCKET_FD SocketBase::createFd(int addr_family)
     return ::socket(addr_family, SOCK_STREAM, 0);
 }
 
-KMError SocketBase::bind(const char* bind_host, uint16_t bind_port)
+KMError SocketBase::bind(const std::string &bind_host, uint16_t bind_port)
 {
     KUMA_INFOTRACE("bind, bind_host=" << bind_host << ", bind_port=" << bind_port);
     if (getState() != State::IDLE) {
@@ -120,7 +120,7 @@ KMError SocketBase::bind(const char* bind_host, uint16_t bind_port)
     struct addrinfo hints = { 0 };
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_NUMERICHOST;//AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-    if (km_set_sock_addr(bind_host, bind_port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
+    if (km_set_sock_addr(bind_host.c_str(), bind_port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
         return KMError::INVALID_PARAM;
     }
     fd_ = createFd(ss_addr.ss_family);
@@ -137,7 +137,7 @@ KMError SocketBase::bind(const char* bind_host, uint16_t bind_port)
     return KMError::NOERR;
 }
 
-KMError SocketBase::connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout_ms)
+KMError SocketBase::connect(const std::string &host, uint16_t port, EventCallback cb, uint32_t timeout_ms)
 {
     KUMA_INFOXTRACE("connect, host=" << host << ", port=" << port << ", this=" << this);
     if (getState() != State::IDLE) {
@@ -150,7 +150,7 @@ KMError SocketBase::connect(const char* host, uint16_t port, EventCallback cb, u
             onConnect(KMError::TIMEOUT);
         }, TimerMode::ONE_SHOT);
     }
-    if (!km_is_ip_address(host)) {
+    if (!km_is_ip_address(host.c_str())) {
         sockaddr_storage ss_addr = { 0 };
         if (DnsResolver::get().getAddress(host, ss_addr) == KMError::NOERR) {
             return connect_i(ss_addr, timeout_ms);
@@ -164,13 +164,13 @@ KMError SocketBase::connect(const char* host, uint16_t port, EventCallback cb, u
     return connect_i(host, port, timeout_ms);
 }
 
-KMError SocketBase::connect_i(const char* host, uint16_t port, uint32_t timeout_ms)
+KMError SocketBase::connect_i(const std::string &host, uint16_t port, uint32_t timeout_ms)
 {
     sockaddr_storage ss_addr = { 0 };
     struct addrinfo hints = { 0 };
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_NUMERICHOST | AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-    if (km_set_sock_addr(host, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
+    if (km_set_sock_addr(host.c_str(), port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
         auto err = getLastError();
         KUMA_ERRXTRACE("connect_i, DNS resolving failure, host=" << host << ", err=" << err);
         return KMError::INVALID_PARAM;

@@ -7,11 +7,11 @@ UdpServer::UdpServer(EventLoop* loop)
     
 }
 
-KMError UdpServer::bind(const char* host, uint16_t port)
+KMError UdpServer::bind(const std::string &host, uint16_t port)
 {
     udp_.setReadCallback([this] (KMError err) { onReceive(err); });
     udp_.setErrorCallback([this] (KMError err) { onClose(err); });
-    return udp_.bind(host, port);
+    return udp_.bind(host.c_str(), port);
 }
 
 int UdpServer::close()

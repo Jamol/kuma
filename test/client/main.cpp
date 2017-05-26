@@ -43,7 +43,7 @@ void HandlerRoutine(int sig)
 }
 #endif
 
-static const char* g_usage =
+static const std::string g_usage =
 "   client [option] tcp://127.0.0.1:52328\n"
 "   client [option] http://google.com/\n"
 "   client [option] ws://www.websocket.org/\n"
@@ -60,7 +60,7 @@ std::vector<std::thread> event_threads;
 
 void printUsage()
 {
-    printf("%s\n", g_usage);
+    printf("%s\n", g_usage.c_str());
 }
 
 std::string getHttpVersion()

@@ -91,16 +91,7 @@ void TcpSocket::Impl::cleanup()
 {
     if (socket_) {
         socket_->close();
-        if (socket_->isPending()) {
-            auto loop = socket_->eventLoop();
-            if (loop) {
-                auto base = socket_.release();
-                loop->appendPendingObject(std::unique_ptr<PendingObject>(base));
-            }
-        }
-        else {
-            socket_.reset();
-        }
+        socket_.reset();
     }
 #ifdef KUMA_HAS_OPENSSL
     ssl_handler_.reset();
@@ -128,7 +119,7 @@ EventLoopPtr TcpSocket::Impl::eventLoop() const
     return loop_.lock();
 }
 
-KMError TcpSocket::Impl::bind(const char *bind_host, uint16_t bind_port)
+KMError TcpSocket::Impl::bind(const std::string &bind_host, uint16_t bind_port)
 {
     if (!socket_ && !createSocket()) {
         return KMError::FAILED;
@@ -136,11 +127,11 @@ KMError TcpSocket::Impl::bind(const char *bind_host, uint16_t bind_port)
     return socket_->bind(bind_host, bind_port);
 }
 
-KMError TcpSocket::Impl::connect(const char *host, uint16_t port, EventCallback cb, uint32_t timeout_ms)
+KMError TcpSocket::Impl::connect(const std::string &host, uint16_t port, EventCallback cb, uint32_t timeout_ms)
 {
     connect_cb_ = std::move(cb);
 #ifdef KUMA_HAS_OPENSSL
-    if (!km_is_ip_address(host) && sslEnabled()) {
+    if (!km_is_ip_address(host.c_str()) && sslEnabled()) {
         ssl_host_name_ = host;
     }
 #endif

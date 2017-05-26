@@ -101,27 +101,27 @@ void UdpSocket::Impl::cleanup()
     }
 }
 
-KMError UdpSocket::Impl::bind(const char *bind_host, uint16_t bind_port, uint32_t udp_flags)
+KMError UdpSocket::Impl::bind(const std::string &bind_host, uint16_t bind_port, uint32_t udp_flags)
 {
     return socket_->bind(bind_host, bind_port, udp_flags);
 }
 
-KMError UdpSocket::Impl::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
+KMError UdpSocket::Impl::mcastJoin(const std::string &mcast_addr, uint16_t mcast_port)
 {
     return socket_->mcastJoin(mcast_addr, mcast_port);
 }
 
-KMError UdpSocket::Impl::mcastLeave(const char* mcast_addr, uint16_t mcast_port)
+KMError UdpSocket::Impl::mcastLeave(const std::string &mcast_addr, uint16_t mcast_port)
 {
     return socket_->mcastLeave(mcast_addr, mcast_port);
 }
 
-int UdpSocket::Impl::send(const void* data, size_t length, const char* host, uint16_t port)
+int UdpSocket::Impl::send(const void* data, size_t length, const std::string &host, uint16_t port)
 {
     return socket_->send(data, length, host, port);
 }
 
-int UdpSocket::Impl::send(iovec* iovs, int count, const char* host, uint16_t port)
+int UdpSocket::Impl::send(iovec* iovs, int count, const std::string &host, uint16_t port)
 {
     return socket_->send(iovs, count, host, port);
 }
@@ -133,17 +133,7 @@ int UdpSocket::Impl::receive(void *data, size_t length, char *ip, size_t ip_len,
 
 KMError UdpSocket::Impl::close()
 {
-    if (socket_) {
-        socket_->close();
-        if (socket_->isPending()) {
-            auto loop = socket_->eventLoop();
-            if (loop) {
-                auto base = socket_.release();
-                loop->appendPendingObject(std::unique_ptr<PendingObject>(base));
-            }
-        }
-    }
-    return KMError::NOERR;
+    return socket_->close();;
 }
 
 void UdpSocket::Impl::onReceive(KMError err)

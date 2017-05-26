@@ -62,27 +62,17 @@ void TcpListener::Impl::setErrorCallback(ErrorCallback cb)
     acceptor_->setErrorCallback(std::move(cb));
 }
 
-KMError TcpListener::Impl::startListen(const char* host, uint16_t port)
+KMError TcpListener::Impl::startListen(const std::string &host, uint16_t port)
 {
     return acceptor_->listen(host, port);
 }
 
-KMError TcpListener::Impl::stopListen(const char* host, uint16_t port)
+KMError TcpListener::Impl::stopListen(const std::string &host, uint16_t port)
 {
     return close();
 }
 
 KMError TcpListener::Impl::close()
 {
-    if (acceptor_) {
-        acceptor_->close();
-        if (acceptor_->isPending()) {
-            auto loop = acceptor_->eventLoop();
-            if (loop) {
-                auto base = acceptor_.release();
-                loop->appendPendingObject(std::unique_ptr<PendingObject>(base));
-            }
-        }
-    }
-    return KMError::NOERR;
+    return acceptor_->close();
 }

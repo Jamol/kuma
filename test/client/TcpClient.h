@@ -14,8 +14,8 @@ class TcpClient : public TestObject
 public:
     TcpClient(TestLoop* loop, long conn_id);
     
-    KMError bind(const char* bind_host, uint16_t bind_port);
-    KMError connect(const char* host, uint16_t port);
+    KMError bind(const std::string &bind_host, uint16_t bind_port);
+    KMError connect(const std::string &host, uint16_t port);
     int close();
     
     void onConnect(KMError err);

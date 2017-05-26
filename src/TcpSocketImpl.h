@@ -58,8 +58,8 @@ public:
     KMError setSslFlags(uint32_t ssl_flags);
     uint32_t getSslFlags() const { return ssl_flags_; }
     bool sslEnabled() const;
-    KMError bind(const char* bind_host, uint16_t bind_port);
-    KMError connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
+    KMError bind(const std::string &bind_host, uint16_t bind_port);
+    KMError connect(const std::string &host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
     KMError attachFd(SOCKET_FD fd);
     KMError attach(Impl &&other);
     KMError detachFd(SOCKET_FD &fd);

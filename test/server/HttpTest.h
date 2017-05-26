@@ -12,7 +12,7 @@ using namespace kuma;
 class HttpTest : public TestObject
 {
 public:
-    HttpTest(ObjectManager* obj_mgr, long conn_id, const char* ver);
+    HttpTest(ObjectManager* obj_mgr, long conn_id, const std::string &ver);
 
     KMError attachFd(SOCKET_FD fd, uint32_t ssl_flags, void *init, size_t len);
     KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, void *init, size_t len);

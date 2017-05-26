@@ -72,7 +72,7 @@ extern LPFN_CANCELIOEX cancel_io_ex;
 KUMA_NS_END
 
 IocpUdpSocket::IocpUdpSocket(const EventLoopPtr &loop)
-: UdpSocketBase(loop)
+: UdpSocketBase(loop), recv_ctx_(IocpContext::create())
 {
     KM_SetObjKey("IocpUdpSocket");
 }
@@ -82,35 +82,28 @@ IocpUdpSocket::~IocpUdpSocket()
     cleanup();
 }
 
-void IocpUdpSocket::cleanup()
+void IocpUdpSocket::cancel(SOCKET_FD fd)
 {
-    if (closing_) {
-        error_cb_ = nullptr;
-        read_cb_ = nullptr;
-    }
-    if (hasPendingOperation() && INVALID_FD != fd_) {
-        // wait untill all pending operations are completed
-        shutdown(fd_, 2); // not close fd to avoid fd reusing
-        cancel();
-    }
-    else {
-        UdpSocketBase::cleanup();
-    }
-}
-
-void IocpUdpSocket::cancel()
-{
-    if (hasPendingOperation() && fd_ != INVALID_FD) {
+    if (fd != INVALID_FD) {
         if (cancel_io_ex) {
-            cancel_io_ex(reinterpret_cast<HANDLE>(fd_), nullptr);
+            cancel_io_ex(reinterpret_cast<HANDLE>(fd), nullptr);
         }
         else {
-            CancelIo(reinterpret_cast<HANDLE>(fd_));
+            CancelIo(reinterpret_cast<HANDLE>(fd));
         }
     }
 }
 
-KMError IocpUdpSocket::bind(const char *bind_host, uint16_t bind_port, uint32_t udp_flags)
+void IocpUdpSocket::unregisterFd(SOCKET_FD fd, bool close_fd)
+{
+    if (hasPendingOperation()) {
+        cancel(fd);
+    }
+    recv_ctx_.reset();
+    UdpSocketBase::unregisterFd(fd, close_fd);
+}
+
+KMError IocpUdpSocket::bind(const std::string &bind_host, uint16_t bind_port, uint32_t udp_flags)
 {
     auto ret = UdpSocketBase::bind(bind_host, bind_port, udp_flags);
     if (ret != KMError::NOERR) {
@@ -149,32 +142,14 @@ int IocpUdpSocket::receive(void *data, size_t length, char *ip, size_t ip_len, u
     return ret;
 }
 
-KMError IocpUdpSocket::close()
-{
-    KUMA_INFOXTRACE("close, pending="<<hasPendingOperation());
-    closing_ = true;
-    auto loop = loop_.lock();
-    if (loop && !loop->stopped()) {
-        loop->sync([this] {
-            cleanup();
-        });
-    }
-    else {
-        cleanup();
-    }
-    return KMError::NOERR;
-}
-
 void IocpUdpSocket::onReceive(size_t io_size)
 {
     if (io_size == 0) {
         recv_pending_ = false;
         if (fd_ != INVALID_FD) {
-            KUMA_WARNXTRACE("onReceive, io_size=0, closing="<<closing_);
+            KUMA_WARNXTRACE("onReceive, io_size=0");
             cleanup();
-            if (!closing_) {
-                onClose(KMError::SOCK_ERROR);
-            }
+            onClose(KMError::SOCK_ERROR);
         }
         return;
     }
@@ -199,9 +174,9 @@ int IocpUdpSocket::postRecvOperation()
     wsa_buf_r_.buf = (char*)recv_buf_.wr_ptr();
     wsa_buf_r_.len = recv_buf_.space();
     DWORD bytes_recv = 0, flags = 0;
-    memset(&recv_ol_, 0, sizeof(recv_ol_));
     recv_addr_len_ = sizeof(recv_addr_);
-    auto ret = WSARecvFrom(fd_, &wsa_buf_r_, 1, &bytes_recv, &flags, (sockaddr*)&recv_addr_, &recv_addr_len_, &recv_ol_, NULL);
+    recv_ctx_->prepare(IocpContext::Op::RECV);
+    auto ret = WSARecvFrom(fd_, &wsa_buf_r_, 1, &bytes_recv, &flags, (sockaddr*)&recv_addr_, &recv_addr_len_, &recv_ctx_->ol, NULL);
     if (ret == SOCKET_ERROR) {
         if (WSA_IO_PENDING == WSAGetLastError()) {
             recv_pending_ = true;
@@ -226,7 +201,7 @@ bool IocpUdpSocket::hasPendingOperation() const
 void IocpUdpSocket::ioReady(KMEvent events, void* ol, size_t io_size)
 {
     //KUMA_INFOXTRACE("ioReady, io_size="<< io_size);
-    if (ol == &recv_ol_) {
+    if (recv_ctx_ && ol == &recv_ctx_->ol) {
         onReceive(io_size);
     }
     else {

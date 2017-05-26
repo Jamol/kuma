@@ -239,6 +239,7 @@
     <ClInclude Include="..\..\src\kmapi.h" />
     <ClInclude Include="..\..\src\kmconf.h" />
     <ClInclude Include="..\..\src\kmdefs.h" />
+    <ClInclude Include="..\..\src\poll\Iocp.h" />
     <ClInclude Include="..\..\src\poll\IocpAcceptor.h" />
     <ClInclude Include="..\..\src\poll\IocpSocket.h" />
     <ClInclude Include="..\..\src\poll\IOPoll.h" />

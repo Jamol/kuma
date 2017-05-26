@@ -29,7 +29,7 @@
 #include "EventLoopImpl.h"
 KUMA_NS_BEGIN
 
-class AcceptorBase : public KMObject, public PendingObject
+class AcceptorBase : public KMObject
 {
 public:
     using AcceptCallback = TcpListener::AcceptCallback;
@@ -38,15 +38,13 @@ public:
     AcceptorBase(const EventLoopPtr &loop);
     virtual ~AcceptorBase();
     
-    virtual KMError listen(const char* host, uint16_t port);
+    virtual KMError listen(const std::string &host, uint16_t port);
     virtual KMError close();
     
     void setAcceptCallback(AcceptCallback cb) { accept_cb_ = std::move(cb); }
     void setErrorCallback(ErrorCallback cb) { error_cb_ = std::move(cb); }
     
     SOCKET_FD getFd() const { return fd_; }
-
-    bool isPending() const override { return false; }
     EventLoopPtr eventLoop() const { return loop_.lock(); }
     
 protected:

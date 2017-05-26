@@ -17,18 +17,18 @@ TcpClient::TcpClient(TestLoop* loop, long conn_id)
     
 }
 
-KMError TcpClient::bind(const char* bind_host, uint16_t bind_port)
+KMError TcpClient::bind(const std::string &bind_host, uint16_t bind_port)
 {
-    return tcp_.bind(bind_host, bind_port);
+    return tcp_.bind(bind_host.c_str(), bind_port);
 }
 
-KMError TcpClient::connect(const char* host, uint16_t port)
+KMError TcpClient::connect(const std::string &host, uint16_t port)
 {
     tcp_.setReadCallback([this] (KMError err) { onReceive(err); });
     tcp_.setWriteCallback([this] (KMError err) { onSend(err); });
     tcp_.setErrorCallback([this] (KMError err) { onClose(err); });
     timer_.schedule(1000, [this] { onTimer(); }, TimerMode::REPEATING);
-    return tcp_.connect(host, port, [this] (KMError err) { onConnect(err); });
+    return tcp_.connect(host.c_str(), port, [this] (KMError err) { onConnect(err); });
 }
 
 int TcpClient::close()

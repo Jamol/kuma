@@ -237,6 +237,9 @@ bool TcpSocket::sslEnabled() const
 KMError TcpSocket::setSslServerName(const char *server_name)
 {
 #ifdef KUMA_HAS_OPENSSL
+    if (!server_name) {
+        return KMError::INVALID_PARAM;
+    }
     return pimpl_->setSslServerName(server_name);
 #else
     return KMError::UNSUPPORT;
@@ -245,11 +248,17 @@ KMError TcpSocket::setSslServerName(const char *server_name)
 
 KMError TcpSocket::bind(const char* bind_host, uint16_t bind_port)
 {
+    if (!bind_host) {
+        return KMError::INVALID_PARAM;
+    }
     return pimpl_->bind(bind_host, bind_port);
 }
 
 KMError TcpSocket::connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout)
 {
+    if (!host) {
+        return KMError::INVALID_PARAM;
+    }
     return pimpl_->connect(host, port, std::move(cb), timeout);
 }
 
@@ -358,12 +367,15 @@ TcpListener::~TcpListener()
 
 KMError TcpListener::startListen(const char* host, uint16_t port)
 {
+    if (!host) {
+        return KMError::INVALID_PARAM;
+    }
     return pimpl_->startListen(host, port);
 }
 
 KMError TcpListener::stopListen(const char* host, uint16_t port)
 {
-    return pimpl_->stopListen(host, port);
+    return pimpl_->stopListen(host ? host : "", port);
 }
 
 KMError TcpListener::close()
@@ -400,6 +412,9 @@ UdpSocket::~UdpSocket()
 
 KMError UdpSocket::bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags)
 {
+    if (!bind_host) {
+        return KMError::INVALID_PARAM;
+    }
     return pimpl_->bind(bind_host, bind_port, udp_flags);
 }
 
@@ -425,11 +440,17 @@ KMError UdpSocket::close()
 
 KMError UdpSocket::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
 {
+    if (!mcast_addr) {
+        return KMError::INVALID_PARAM;
+    }
     return pimpl_->mcastJoin(mcast_addr, mcast_port);
 }
 
 KMError UdpSocket::mcastLeave(const char* mcast_addr, uint16_t mcast_port)
 {
+    if (!mcast_addr) {
+        return KMError::INVALID_PARAM;
+    }
     return pimpl_->mcastLeave(mcast_addr, mcast_port);
 }
 
@@ -631,16 +652,25 @@ KMError HttpRequest::setSslFlags(uint32_t ssl_flags)
 
 void HttpRequest::addHeader(const char* name, const char* value)
 {
+    if (!name || !value) {
+        return;
+    }
     pimpl_->addHeader(name, value);
 }
 
 void HttpRequest::addHeader(const char* name, uint32_t value)
 {
+    if (!name) {
+        return;
+    }
     pimpl_->addHeader(name, value);
 }
 
 KMError HttpRequest::sendRequest(const char* method, const char* url)
 {
+    if (!method || !url) {
+        return KMError::INVALID_PARAM;
+    }
     return pimpl_->sendRequest(method, url);
 }
 
@@ -745,11 +775,17 @@ KMError HttpResponse::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const v
 
 void HttpResponse::addHeader(const char* name, const char* value)
 {
+    if (!name || !value) {
+        return;
+    }
     return pimpl_->addHeader(name, value);
 }
 
 void HttpResponse::addHeader(const char* name, uint32_t value)
 {
+    if (!name) {
+        return;
+    }
     return pimpl_->addHeader(name, value);
 }
 
@@ -860,6 +896,9 @@ KMError WebSocket::setSslFlags(uint32_t ssl_flags)
 
 void WebSocket::setProtocol(const char* proto)
 {
+    if (!proto) {
+        return;
+    }
     pimpl_->setProtocol(proto);
 }
 
@@ -870,6 +909,9 @@ const char* WebSocket::getProtocol() const
 
 void WebSocket::setOrigin(const char* origin)
 {
+    if (!origin) {
+        return;
+    }
     pimpl_->setOrigin(origin);
 }
 
@@ -880,6 +922,9 @@ const char* WebSocket::getOrigin() const
 
 KMError WebSocket::connect(const char* ws_url, EventCallback cb)
 {
+    if (!ws_url) {
+        return KMError::INVALID_PARAM;
+    }
     return pimpl_->connect(ws_url, std::move(cb));
 }
 
@@ -942,6 +987,9 @@ KMError H2Connection::setSslFlags(uint32_t ssl_flags)
 /*
 KMError H2Connection::connect(const char* host, uint16_t port, ConnectCallback cb)
 {
+    if (!host) {
+        return KMError::INVALID_PARAM;
+    }
     return pimpl_->connect(host, port, cb);
 }
 */

@@ -16,11 +16,11 @@ UdpClient::UdpClient(TestLoop* loop, long conn_id)
     
 }
 
-KMError UdpClient::bind(const char* bind_host, uint16_t bind_port)
+KMError UdpClient::bind(const std::string &bind_host, uint16_t bind_port)
 {
     udp_.setReadCallback([this] (KMError err) { onReceive(err); });
     udp_.setErrorCallback([this] (KMError err) { onClose(err); });
-    return udp_.bind(bind_host, bind_port);
+    return udp_.bind(bind_host.c_str(), bind_port);
 }
 
 int UdpClient::close()
@@ -29,7 +29,7 @@ int UdpClient::close()
     return 0;
 }
 
-void UdpClient::startSend(const char* host, uint16_t port)
+void UdpClient::startSend(const std::string &host, uint16_t port)
 {
     host_ = host;
     port_ = port;

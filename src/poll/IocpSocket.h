@@ -28,6 +28,7 @@
 #include "DnsResolver.h"
 #include "SocketBase.h"
 #include "util/kmbuffer.h"
+#include "Iocp.h"
 
 KUMA_NS_BEGIN
 
@@ -44,13 +45,11 @@ public:
     int receive(void* data, size_t length) override;
     KMError pause() override;
     KMError resume() override;
-    KMError close() override;
-
-    bool isPending() const override { return hasPendingOperation(); }
     
 protected:
     KMError connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_ms) override;
     SOCKET_FD createFd(int addr_family) override;
+    void unregisterFd(SOCKET_FD fd, bool close_fd) override;
 
 protected:
     void ioReady(KMEvent events, void* ol, size_t io_size) override;
@@ -65,8 +64,7 @@ protected:
     int postRecvOperation();
     bool hasPendingOperation() const;
 
-    void cleanup() override;
-    void cancel();
+    void cancel(SOCKET_FD fd);
 
 protected:
     bool            send_pending_ = false;
@@ -75,9 +73,8 @@ protected:
     KMBuffer        recv_buf_;
     WSABUF          wsa_buf_s_;
     WSABUF          wsa_buf_r_;
-    OVERLAPPED      send_ol_;
-    OVERLAPPED      recv_ol_;
-    bool            closing_ = false;
+    IocpContextPtr  send_ctx_;
+    IocpContextPtr  recv_ctx_;
 };
 
 KUMA_NS_END

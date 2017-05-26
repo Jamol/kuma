@@ -17,10 +17,10 @@ public:
     TcpServer(EventLoop* loop, int count);
     ~TcpServer();
     
-    KMError startListen(const char* proto, const char* host, uint16_t port);
+    KMError startListen(const std::string &proto, const std::string &host, uint16_t port);
     KMError stopListen();
     
-    bool onAccept(SOCKET_FD, const char* ip, uint16_t port);
+    bool onAccept(SOCKET_FD, const std::string &ip, uint16_t port);
     void onError(KMError err);
     
 private:

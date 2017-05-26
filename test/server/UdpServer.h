@@ -11,7 +11,7 @@ class UdpServer
 public:
     UdpServer(EventLoop* loop);
     
-    KMError bind(const char* host, uint16_t port);
+    KMError bind(const std::string &host, uint16_t port);
     int close();
     
     void onReceive(KMError err);

@@ -30,7 +30,7 @@
 #include "util/DestroyDetector.h"
 KUMA_NS_BEGIN
 
-class SocketBase : public KMObject, public PendingObject, public DestroyDetector
+class SocketBase : public KMObject, public DestroyDetector
 {
 public:
     using EventCallback = std::function<void(KMError)>;
@@ -38,8 +38,8 @@ public:
     SocketBase(const EventLoopPtr &loop);
     virtual ~SocketBase();
 
-    KMError bind(const char* bind_host, uint16_t bind_port);
-    KMError connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
+    KMError bind(const std::string &bind_host, uint16_t bind_port);
+    KMError connect(const std::string &host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
     virtual KMError attachFd(SOCKET_FD fd);
     virtual KMError detachFd(SOCKET_FD &fd);
     virtual int send(const void* data, size_t length);
@@ -58,8 +58,6 @@ public:
     void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
     void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
 
-    bool isPending() const override { return false; }
-
 protected:
     enum State {
         IDLE,
@@ -71,7 +69,7 @@ protected:
     State getState() const { return state_; }
     void setState(State state) { state_ = state; }
     void setSocketOption();
-    KMError connect_i(const char* addr, uint16_t port, uint32_t timeout_ms);
+    KMError connect_i(const std::string &addr, uint16_t port, uint32_t timeout_ms);
     virtual KMError connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_ms);
     virtual void cleanup();
     virtual bool registerFd(SOCKET_FD fd);

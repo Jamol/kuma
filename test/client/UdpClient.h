@@ -15,10 +15,10 @@ class UdpClient : public TestObject
 public:
     UdpClient(TestLoop* loop, long conn_id);
     
-    KMError bind(const char* bind_host, uint16_t bind_port);
+    KMError bind(const std::string &bind_host, uint16_t bind_port);
     int close();
     
-    void startSend(const char* host, uint16_t port);
+    void startSend(const std::string &host, uint16_t port);
 
     void onReceive(KMError err);
     void onClose(KMError err);

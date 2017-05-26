@@ -44,7 +44,7 @@ void HandlerRoutine(int sig)
 }
 #endif
 
-static const char* g_usage =
+static const std::string g_usage =
 "   server [option] tcp://0.0.0.0:52328\n"
 "   server [option] http://0.0.0.0:8443\n"
 "   server [option] ws://0.0.0.0:8443\n"
@@ -57,7 +57,7 @@ std::vector<std::thread> event_threads;
 
 void printUsage()
 {
-    printf("%s\n", g_usage);
+    printf("%s\n", g_usage.c_str());
 }
 
 int main(int argc, char *argv[])

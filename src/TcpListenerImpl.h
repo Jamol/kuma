@@ -37,8 +37,8 @@ public:
     Impl(const EventLoopPtr &loop);
     ~Impl();
     
-    KMError startListen(const char* host, uint16_t port);
-    KMError stopListen(const char* host, uint16_t port);
+    KMError startListen(const std::string &host, uint16_t port);
+    KMError stopListen(const std::string &host, uint16_t port);
     KMError close();
     
     void setAcceptCallback(AcceptCallback cb);

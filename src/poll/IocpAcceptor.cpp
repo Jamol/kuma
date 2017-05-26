@@ -39,7 +39,7 @@ extern LPFN_CANCELIOEX cancel_io_ex;
 KUMA_NS_END
 
 IocpAcceptor::IocpAcceptor(const EventLoopPtr &loop)
-: AcceptorBase(loop)
+: AcceptorBase(loop), accept_ctx_(IocpContext::create())
 {
     KM_SetObjKey("IocpAcceptor");
 }
@@ -49,35 +49,28 @@ IocpAcceptor::~IocpAcceptor()
 
 }
 
-void IocpAcceptor::cleanup()
+void IocpAcceptor::cancel(SOCKET_FD fd)
 {
-    if (closed_) {
-        accept_cb_ = nullptr;
-        error_cb_ = nullptr;
-    }
-    if (hasPendingOperation() && INVALID_FD != fd_) {
-        // wait untill all pending operations are completed
-        shutdown(fd_, 2); // not close fd to avoid fd reusing
-        cancel();
-    }
-    else {
-        AcceptorBase::cleanup();
-    }
-}
-
-void IocpAcceptor::cancel()
-{
-    if (hasPendingOperation() && fd_ != INVALID_FD) {
+    if (fd != INVALID_FD) {
         if (cancel_io_ex) {
-            cancel_io_ex(reinterpret_cast<HANDLE>(fd_), nullptr);
+            cancel_io_ex(reinterpret_cast<HANDLE>(fd), nullptr);
         }
         else {
-            CancelIo(reinterpret_cast<HANDLE>(fd_));
+            CancelIo(reinterpret_cast<HANDLE>(fd));
         }
     }
 }
 
-KMError IocpAcceptor::listen(const char* host, uint16_t port)
+void IocpAcceptor::unregisterFd(SOCKET_FD fd, bool close_fd)
+{
+    if (hasPendingOperation()) {
+        cancel(fd);
+    }
+    accept_ctx_.reset();
+    AcceptorBase::unregisterFd(fd, close_fd);
+}
+
+KMError IocpAcceptor::listen(const std::string &host, uint16_t port)
 {
     auto ret = AcceptorBase::listen(host, port);
     if (ret != KMError::NOERR) {
@@ -96,8 +89,8 @@ void IocpAcceptor::postAcceptOperation()
     }
     DWORD bytes_recv = 0;
     DWORD addr_len = static_cast<DWORD>(sizeof(sockaddr_storage));
-    memset(&accept_ol_, 0, sizeof(accept_ol_));
-    auto ret = accept_ex(fd_, accept_fd_, &ss_addrs_, 0, addr_len, addr_len, &bytes_recv, &accept_ol_);
+    accept_ctx_->prepare(IocpContext::Op::ACCEPT);
+    auto ret = accept_ex(fd_, accept_fd_, &ss_addrs_, 0, addr_len, addr_len, &bytes_recv, &accept_ctx_->ol);
     if (!ret && getLastError() != WSA_IO_PENDING) {
         KUMA_ERRXTRACE("postAcceptOperation, AcceptEx, err=" << getLastError());
     }
@@ -135,7 +128,7 @@ bool IocpAcceptor::hasPendingOperation() const
 
 void IocpAcceptor::ioReady(KMEvent events, void* ol, size_t io_size)
 {
-    if (ol == &accept_ol_) {
+    if (accept_ctx_ && ol == &accept_ctx_->ol) {
         onAccept();
     }
 }

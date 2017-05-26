@@ -99,7 +99,7 @@ void UdpSocketBase::cleanup()
     }
 }
 
-KMError UdpSocketBase::bind(const char *bind_host, uint16_t bind_port, uint32_t udp_flags)
+KMError UdpSocketBase::bind(const std::string &bind_host, uint16_t bind_port, uint32_t udp_flags)
 {
     KUMA_INFOXTRACE("bind, bind_host="<<bind_host<<", bind_port="<<bind_port);
     if(fd_ != INVALID_FD) {
@@ -110,7 +110,7 @@ KMError UdpSocketBase::bind(const char *bind_host, uint16_t bind_port, uint32_t 
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-    if(km_set_sock_addr(bind_host, bind_port, &hints, (struct sockaddr*)&bind_addr_, sizeof(bind_addr_)) != 0) {
+    if(km_set_sock_addr(bind_host.c_str(), bind_port, &hints, (struct sockaddr*)&bind_addr_, sizeof(bind_addr_)) != 0) {
         KUMA_ERRXTRACE("bind, km_set_sock_addr failed");
         return KMError::INVALID_PARAM;
     }
@@ -203,10 +203,10 @@ void UdpSocketBase::setSocketOption()
     setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt_val, sizeof(int));
 }
 
-KMError UdpSocketBase::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
+KMError UdpSocketBase::mcastJoin(const std::string &mcast_addr, uint16_t mcast_port)
 {
-    KUMA_INFOXTRACE("mcastJoin, mcast_addr"<<(mcast_addr?mcast_addr:"")<<", mcast_port="<<mcast_port);
-    if(!km_is_mcast_address(mcast_addr)) {
+    KUMA_INFOXTRACE("mcastJoin, mcast_addr"<<mcast_addr<<", mcast_port="<<mcast_port);
+    if(!km_is_mcast_address(mcast_addr.c_str())) {
         KUMA_ERRXTRACE("mcastJoin, invalid mcast address");
         return KMError::INVALID_PARAM;
     }
@@ -214,7 +214,7 @@ KMError UdpSocketBase::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_NUMERICHOST|AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-    km_set_sock_addr(mcast_addr, mcast_port, &hints, (struct sockaddr*)&mcast_addr_, sizeof(mcast_addr_));
+    km_set_sock_addr(mcast_addr.c_str(), mcast_port, &hints, (struct sockaddr*)&mcast_addr_, sizeof(mcast_addr_));
     mcast_port_ = mcast_port;
     if(bind_addr_.ss_family != mcast_addr_.ss_family) {
         KUMA_ERRXTRACE("mcastJoin, invalid mcast address family");
@@ -284,9 +284,9 @@ KMError UdpSocketBase::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
     return KMError::NOERR;
 }
 
-KMError UdpSocketBase::mcastLeave(const char* mcast_addr, uint16_t mcast_port)
+KMError UdpSocketBase::mcastLeave(const std::string &mcast_addr, uint16_t mcast_port)
 {
-    KUMA_INFOXTRACE("mcastLeave, mcast_addr: "<<(mcast_addr?mcast_addr:"")<<", mcast_port: "<<mcast_port);
+    KUMA_INFOXTRACE("mcastLeave, mcast_addr: "<<mcast_addr<<", mcast_port: "<<mcast_port);
     if(INVALID_FD == fd_) {
         return KMError::INVALID_STATE;
     }
@@ -302,7 +302,7 @@ KMError UdpSocketBase::mcastLeave(const char* mcast_addr, uint16_t mcast_port)
     return KMError::NOERR;
 }
 
-int UdpSocketBase::send(const void* data, size_t length, const char* host, uint16_t port)
+int UdpSocketBase::send(const void* data, size_t length, const std::string &host, uint16_t port)
 {
     if(INVALID_FD == fd_) {
         KUMA_ERRXTRACE("send, invalid fd");
@@ -310,7 +310,7 @@ int UdpSocketBase::send(const void* data, size_t length, const char* host, uint1
     }
     
     sockaddr_storage ss_addr = {0};
-    if (!km_is_ip_address(host)) {
+    if (!km_is_ip_address(host.c_str())) {
         if (DnsResolver::get().resolve(host, port, ss_addr) != KMError::NOERR) {
             KUMA_ERRXTRACE("send, cannot resolve host, host=" << host << ", port=" << port);
             return -1;
@@ -320,7 +320,7 @@ int UdpSocketBase::send(const void* data, size_t length, const char* host, uint1
         hints.ai_family = AF_UNSPEC;
         hints.ai_socktype = SOCK_DGRAM;
         hints.ai_flags = AI_NUMERICHOST | AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-        if (km_set_sock_addr(host, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
+        if (km_set_sock_addr(host.c_str(), port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
             KUMA_ERRXTRACE("send, cannot resolve host 2, host=" << host << ", port=" << port);
             return -1;
         }
@@ -353,7 +353,7 @@ int UdpSocketBase::send(const void* data, size_t length, const char* host, uint1
     return ret;
 }
 
-int UdpSocketBase::send(iovec* iovs, int count, const char* host, uint16_t port)
+int UdpSocketBase::send(iovec* iovs, int count, const std::string &host, uint16_t port)
 {
     if(INVALID_FD == fd_) {
         KUMA_ERRXTRACE("send 2, invalid fd");
@@ -375,7 +375,7 @@ int UdpSocketBase::send(iovec* iovs, int count, const char* host, uint16_t port)
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_NUMERICHOST|AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-    km_set_sock_addr(host, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr));
+    km_set_sock_addr(host.c_str(), port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr));
 #ifdef KUMA_OS_WIN
     DWORD bytes_sent = 0;
     ret = ::WSASendTo(fd_, (LPWSABUF)iovs, count, &bytes_sent, 0,

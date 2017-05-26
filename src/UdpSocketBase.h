@@ -37,7 +37,7 @@
 
 KUMA_NS_BEGIN
 
-class UdpSocketBase : public KMObject, public DestroyDetector, public PendingObject
+class UdpSocketBase : public KMObject, public DestroyDetector
 {
 public:
     using EventCallback = UdpSocket::EventCallback;
@@ -45,19 +45,17 @@ public:
     UdpSocketBase(const EventLoopPtr &loop);
     virtual ~UdpSocketBase();
     
-    virtual KMError bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags);
-    virtual int send(const void* data, size_t length, const char* host, uint16_t port);
-    virtual int send(iovec* iovs, int count, const char* host, uint16_t port);
+    virtual KMError bind(const std::string &bind_host, uint16_t bind_port, uint32_t udp_flags);
+    virtual int send(const void* data, size_t length, const std::string &host, uint16_t port);
+    virtual int send(iovec* iovs, int count, const std::string &host, uint16_t port);
     virtual int receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port);
     virtual KMError close();
     
-    KMError mcastJoin(const char* mcast_addr, uint16_t mcast_port);
-    KMError mcastLeave(const char* mcast_addr, uint16_t mcast_port);
+    KMError mcastJoin(const std::string &mcast_addr, uint16_t mcast_port);
+    KMError mcastLeave(const std::string &mcast_addr, uint16_t mcast_port);
 
     void setReadCallback(EventCallback cb) { read_cb_ = std::move(cb); }
     void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
-
-    bool isPending() const override { return false; }
 
     EventLoopPtr eventLoop() const { return loop_.lock(); }
     

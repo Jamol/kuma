@@ -24,27 +24,27 @@ void TcpServer::cleanup()
 
 }
 
-KMError TcpServer::startListen(const char* proto, const char* host, uint16_t port)
+KMError TcpServer::startListen(const std::string &proto, const std::string &host, uint16_t port)
 {
-    if(strcmp(proto, "tcp") == 0) {
+    if(proto == "tcp") {
         proto_ = PROTO_TCP;
-    } else if(strcmp(proto, "http") == 0) {
+    } else if(proto == "http") {
         proto_ = PROTO_HTTP;
-    } else if(strcmp(proto, "https") == 0) {
+    } else if(proto == "https") {
         proto_ = PROTO_HTTPS;
-    } else if(strcmp(proto, "ws") == 0) {
+    } else if(proto == "ws") {
         proto_ = PROTO_WS;
-    } else if(strcmp(proto, "wss") == 0) {
+    } else if(proto == "wss") {
         proto_ = PROTO_WSS;
-    } else if(strcmp(proto, "auto") == 0) {
+    } else if(proto == "auto") {
         proto_ = PROTO_AUTO;
-    } else if(strcmp(proto, "autos") == 0) {
+    } else if(proto == "autos") {
         proto_ = PROTO_AUTOS;
     }
     loop_pool_.init(thr_count_, loop_->getPollType());
     server_.setAcceptCallback([this] (SOCKET_FD fd, const char* ip, uint16_t port) -> bool { return onAccept(fd, ip, port); });
     server_.setErrorCallback([this] (KMError err) { onError(err); });
-    return server_.startListen(host, port);
+    return server_.startListen(host.c_str(), port);
 }
 
 KMError TcpServer::stopListen()
@@ -54,7 +54,7 @@ KMError TcpServer::stopListen()
     return KMError::NOERR;
 }
 
-bool TcpServer::onAccept(SOCKET_FD fd, const char* ip, uint16_t port)
+bool TcpServer::onAccept(SOCKET_FD fd, const std::string &ip, uint16_t port)
 {
     std::stringstream ss;
     ss << "TcpServer::onAccept, fd=" << fd << ", ip=" << ip << ", port=" << port << ", proto=" << proto_ << std::endl;

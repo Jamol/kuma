@@ -40,13 +40,6 @@ KUMA_NS_BEGIN
 class IOPoll;
 class EventLoopToken;
 
-class PendingObject
-{
-public:
-    virtual ~PendingObject() {}
-    virtual bool isPending() const = 0;
-};
-
 class TaskSlot
 {
 public:
@@ -95,8 +88,6 @@ public:
     
     KMError appendObserver(ObserverCallback cb, EventLoopToken *token);
     KMError removeObserver(EventLoopToken *token);
-
-    KMError appendPendingObject(std::unique_ptr<PendingObject> &&obj);
     
 public:
     bool inSameThread() const { return std::this_thread::get_id() == thread_id_; }
@@ -114,13 +105,11 @@ public:
 
 protected:
     void processTasks();
-    void processPendingObjects();
     
 protected:
     using ObserverQueue = DL_Queue<ObserverCallback>;
     using LockType = std::mutex;
     using LockGuard = std::lock_guard<LockType>;
-    using PendingObjectList = std::list<std::unique_ptr<PendingObject>>;
     
     IOPoll*             poll_;
     bool                stop_loop_{ false };
@@ -134,7 +123,6 @@ protected:
     LockType            obs_mutex_;
     
     TimerManagerPtr     timer_mgr_;
-    PendingObjectList   pending_objects_;
 };
 using EventLoopPtr = std::shared_ptr<EventLoop::Impl>;
 using EventLoopWeakPtr = std::weak_ptr<EventLoop::Impl>;

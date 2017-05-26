@@ -1,5 +1,5 @@
 # kuma
-kuma is a multi-platform support network library developed in C++11. It implements interfaces for TCP/UDP/Multicast/HTTP/HTTP2/WebSocket/timer that drove by event loop. kuma supports epoll/poll/WSAPoll/kqueue/select on platform Linux/Windows/OSX/iOS/Android.
+kuma is a multi-platform support network library developed in C++11. It implements interfaces for TCP/UDP/Multicast/HTTP/HTTP2/WebSocket/timer that drove by event loop. kuma supports epoll/poll/WSAPoll/IOCP/kqueue/select on platform Linux/Windows/OSX/iOS/Android.
 
 
 ## Build

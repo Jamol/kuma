@@ -353,6 +353,9 @@
     <ClInclude Include="..\..\src\poll\IocpUdpSocket.h">
       <Filter>Header Files\poll</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\poll\Iocp.h">
+      <Filter>Header Files\poll</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc">

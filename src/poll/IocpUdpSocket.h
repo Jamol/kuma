@@ -27,6 +27,7 @@
 #include "evdefs.h"
 #include "UdpSocketBase.h"
 #include "util/kmbuffer.h"
+#include "Iocp.h"
 
 KUMA_NS_BEGIN
 
@@ -36,11 +37,8 @@ public:
     IocpUdpSocket(const EventLoopPtr &loop);
     ~IocpUdpSocket();
     
-    KMError bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags) override;
+    KMError bind(const std::string &bind_host, uint16_t bind_port, uint32_t udp_flags) override;
     int receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port) override;
-    KMError close() override;
-
-    bool isPending() const override { return hasPendingOperation(); }
     
 protected:
     void ioReady(KMEvent events, void* ol, size_t io_size) override;
@@ -49,17 +47,16 @@ protected:
     int postRecvOperation();
     bool hasPendingOperation() const;
 
-    void cleanup() override;
-    void cancel();
+    void cancel(SOCKET_FD fd);
+    void unregisterFd(SOCKET_FD fd, bool close_fd) override;
 
 protected:
-    bool            recv_pending_ = false;
-    KMBuffer        recv_buf_;
-    WSABUF          wsa_buf_r_;
-    OVERLAPPED      recv_ol_;
-    sockaddr_storage recv_addr_;
-    int             recv_addr_len_ = 0;
-    bool            closing_ = false;
+    bool                recv_pending_ = false;
+    KMBuffer            recv_buf_;
+    WSABUF              wsa_buf_r_;
+    IocpContextPtr      recv_ctx_;
+    sockaddr_storage    recv_addr_;
+    int                 recv_addr_len_ = 0;
 };
 
 KUMA_NS_END

@@ -88,7 +88,7 @@ void AcceptorBase::cleanup()
     }
 }
 
-KMError AcceptorBase::listen(const char* host, uint16_t port)
+KMError AcceptorBase::listen(const std::string &host, uint16_t port)
 {
     KUMA_INFOXTRACE("startListen, host="<<host<<", port="<<port);
     if (INVALID_FD != fd_) {
@@ -98,7 +98,7 @@ KMError AcceptorBase::listen(const char* host, uint16_t port)
     struct addrinfo hints = {0};
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-    if(km_set_sock_addr(host, port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
+    if(km_set_sock_addr(host.c_str(), port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
         return KMError::INVALID_PARAM;
     }
     ss_family_ = ss_addr.ss_family;
