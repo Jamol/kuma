@@ -69,10 +69,6 @@ protected:
 protected:
     bool            send_pending_ = false;
     bool            recv_pending_ = false;
-    KMBuffer        send_buf_;
-    KMBuffer        recv_buf_;
-    WSABUF          wsa_buf_s_;
-    WSABUF          wsa_buf_r_;
     IocpContextPtr  send_ctx_;
     IocpContextPtr  recv_ctx_;
 };

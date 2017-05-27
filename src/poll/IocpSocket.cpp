@@ -144,8 +144,7 @@ KMError IocpSocket::detachFd(SOCKET_FD &fd)
 {
     // cannot cancel the IO safely
     return KMError::UNSUPPORT;
-    /*cancel();
-    unregisterFd(fd_, false);
+    /*unregisterFd(fd_, false);
     return SocketBase::detachFd(fd);*/
 }
 
@@ -153,7 +152,7 @@ int IocpSocket::send(const void* data, size_t length)
 {
     iovec iov;
     iov.iov_base = (char*)data;
-    iov.iov_len = length;
+    iov.iov_len = static_cast<decltype(iov.iov_len)>(length);
     return send(&iov, 1);
 }
 
@@ -163,7 +162,7 @@ int IocpSocket::send(iovec* iovs, int count)
         KUMA_WARNXTRACE("send, invalid state=" << getState());
         return 0;
     }
-    if (!send_buf_.empty() || send_pending_) {
+    if (!send_ctx_->bufferEmpty() || send_pending_) {
         return 0;
     }
 
@@ -201,7 +200,7 @@ int IocpSocket::send(iovec* iovs, int count)
             const uint8_t* first = ((uint8_t*)iovs[i].iov_base) + ret;
             const uint8_t* last = ((uint8_t*)iovs[i].iov_base) + iovs[i].iov_len;
             if (first < last) {
-                send_buf_.write(first, last - first);
+                send_ctx_->buf.write(first, last - first);
                 ret = 0;
             }
             else {
@@ -225,15 +224,15 @@ int IocpSocket::receive(void* data, size_t length)
     }
     char *ptr = (char*)data;
     size_t bytes_recv = 0;
-    if (!recv_buf_.empty()) {
-        auto bytes_read = recv_buf_.read(ptr + bytes_recv, length - bytes_recv);
+    if (!recv_ctx_->bufferEmpty()) {
+        auto bytes_read = recv_ctx_->buf.read(ptr + bytes_recv, length - bytes_recv);
         //KUMA_INFOXTRACE("receive, bytes_read=" << bytes_read<<", len="<<length);
         bytes_recv += bytes_read;
     }
     if (bytes_recv == length) {
         return static_cast<int>(bytes_recv);
     }
-    if (bytes_recv < recv_buf_.space()) {
+    if (bytes_recv < recv_ctx_->buf.space()) {
         postRecvOperation();
         return static_cast<int>(bytes_recv);
     }
@@ -297,10 +296,10 @@ void IocpSocket::onSend(size_t io_size)
     if (getState() != State::OPEN) {
         KUMA_WARNXTRACE("onSend, invalid state, state=" << getState() << ", io_size=" << io_size);
     }
-    if (io_size != send_buf_.size()) {
-        KUMA_ERRXTRACE("onSend, error, io_size=" << io_size << ", buffer=" << send_buf_.size());
+    if (io_size != send_ctx_->buf.size()) {
+        KUMA_ERRXTRACE("onSend, error, io_size=" << io_size << ", buffer=" << send_ctx_->buf.size());
     }
-    send_buf_.bytes_read(io_size);
+    send_ctx_->buf.bytes_read(io_size);
     send_pending_ = false;
     SocketBase::onSend(KMError::NOERR);
 }
@@ -321,25 +320,23 @@ void IocpSocket::onReceive(size_t io_size)
     if (getState() != State::OPEN) {
         KUMA_WARNXTRACE("onReceive, invalid state, state=" << getState() << ", io_size=" << io_size);
     }
-    if (io_size > recv_buf_.space()) {
-        KUMA_ERRXTRACE("onReceive, error, io_size=" << io_size << ", buffer=" << recv_buf_.space());
+    if (io_size > recv_ctx_->buf.space()) {
+        KUMA_ERRXTRACE("onReceive, error, io_size=" << io_size << ", buffer=" << recv_ctx_->buf.space());
     }
-    recv_buf_.bytes_written(io_size);
-    //KUMA_INFOXTRACE("onReceive, io_size="<<io_size<<", buf="<<recv_buf_.size());
+    recv_ctx_->buf.bytes_written(io_size);
+    //KUMA_INFOXTRACE("onReceive, io_size="<<io_size<<", buf="<<recv_ctx_->buf.size());
     recv_pending_ = false;
     SocketBase::onReceive(KMError::NOERR);
 }
 
 int IocpSocket::postSendOperation()
 {
-    if (send_buf_.empty() || send_pending_) {
+    if (send_ctx_->bufferEmpty() || send_pending_) {
         return 0;
     }
-    wsa_buf_s_.buf = (char*)send_buf_.ptr();
-    wsa_buf_s_.len = send_buf_.size();
     DWORD bytes_sent = 0;
     send_ctx_->prepare(IocpContext::Op::SEND);
-    auto ret = WSASend(fd_, &wsa_buf_s_, 1, &bytes_sent, 0, &send_ctx_->ol, NULL);
+    auto ret = WSASend(fd_, &send_ctx_->wbuf, 1, &bytes_sent, 0, &send_ctx_->ol, NULL);
     if (ret == SOCKET_ERROR) {
         if (WSA_IO_PENDING == WSAGetLastError()) {
             send_pending_ = true;
@@ -361,15 +358,13 @@ int IocpSocket::postRecvOperation()
     if (recv_pending_) {
         return 0;
     }
-    if (!recv_buf_.empty()) {
-        KUMA_WARNXTRACE("postRecvOperation, buf=" << recv_buf_.size());
+    if (!recv_ctx_->bufferEmpty()) {
+        KUMA_WARNXTRACE("postRecvOperation, buf=" << recv_ctx_->buf.size());
     }
-    recv_buf_.expand(4096);
-    wsa_buf_r_.buf = (char*)recv_buf_.wr_ptr();
-    wsa_buf_r_.len = recv_buf_.space();
     DWORD bytes_recv = 0, flags = 0;
+    recv_ctx_->buf.expand(TCPRecvPacketSize);
     recv_ctx_->prepare(IocpContext::Op::RECV);
-    auto ret = WSARecv(fd_, &wsa_buf_r_, 1, &bytes_recv, &flags, &recv_ctx_->ol, NULL);
+    auto ret = WSARecv(fd_, &recv_ctx_->wbuf, 1, &bytes_recv, &flags, &recv_ctx_->ol, NULL);
     if (ret == SOCKET_ERROR) {
         if (WSA_IO_PENDING == WSAGetLastError()) {
             recv_pending_ = true;

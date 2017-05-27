@@ -18,12 +18,16 @@
 
 #include "kmdefs.h"
 #include "util/kmtrace.h"
+#include "util/kmbuffer.h"
 
 #include <Ws2tcpip.h>
 #include <windows.h>
 #include <atomic>
 
 KUMA_NS_BEGIN
+
+const size_t TCPRecvPacketSize = 4 * 1024;
+const size_t UDPRecvPacketSize = 64 * 1024;
 
 struct IocpContext;
 using IocpContextPtr = std::unique_ptr < IocpContext, void(*)(IocpContext*) > ;
@@ -41,6 +45,8 @@ struct IocpContext
 
     OVERLAPPED      ol;
     Op              op = Op::NONE;
+    KMBuffer        buf;
+    WSABUF          wbuf { 0, nullptr };
 
     int incReference()
     {
@@ -56,10 +62,23 @@ struct IocpContext
         return tmp;
     }
 
+    bool bufferEmpty() const
+    {
+        return buf.empty();
+    }
+
     void prepare(Op op)
     {
         memset(&ol, 0, sizeof(ol));
         this->op = op;
+        if (op == Op::SEND) {
+            wbuf.buf = (char*)buf.ptr();
+            wbuf.len = static_cast<ULONG>(buf.size());
+        }
+        else if (op == Op::RECV) {
+            wbuf.buf = (char*)buf.wr_ptr();
+            wbuf.len = static_cast<ULONG>(buf.space());
+        }
         incReference(); // decreased after IO completion
     }
 

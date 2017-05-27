@@ -123,11 +123,11 @@ int IocpUdpSocket::receive(void *data, size_t length, char *ip, size_t ip_len, u
         return 0;
     }
     
-    if (!recv_buf_.empty()) {
-        if (recv_buf_.size() > length) {
+    if (!recv_ctx_->bufferEmpty()) {
+        if (recv_ctx_->buf.size() > length) {
             return int(KMError::BUFFER_TOO_SMALL);
         }
-        auto bytes_read = recv_buf_.read(data, length);
+        auto bytes_read = recv_ctx_->buf.read(data, length);
         km_get_sock_addr((struct sockaddr*)&recv_addr_, recv_addr_len_, ip, (uint32_t)ip_len, &port);
         //KUMA_INFOXTRACE("receive, bytes_read=" << bytes_read<<", len="<<length);
         return static_cast<int>(bytes_read);
@@ -153,10 +153,10 @@ void IocpUdpSocket::onReceive(size_t io_size)
         }
         return;
     }
-    if (io_size > recv_buf_.space()) {
-        KUMA_ERRXTRACE("onReceive, error, io_size=" << io_size << ", buffer=" << recv_buf_.space());
+    if (io_size > recv_ctx_->buf.space()) {
+        KUMA_ERRXTRACE("onReceive, error, io_size=" << io_size << ", buffer=" << recv_ctx_->buf.space());
     }
-    recv_buf_.bytes_written(io_size);
+    recv_ctx_->buf.bytes_written(io_size);
     //KUMA_INFOXTRACE("onReceive, io_size="<<io_size<<", buf="<<recv_buf_.size());
     recv_pending_ = false;
     UdpSocketBase::onReceive(KMError::NOERR);
@@ -167,16 +167,14 @@ int IocpUdpSocket::postRecvOperation()
     if (recv_pending_) {
         return 0;
     }
-    if (!recv_buf_.empty()) {
-        KUMA_WARNXTRACE("postRecvOperation, buf=" << recv_buf_.size());
+    if (!recv_ctx_->bufferEmpty()) {
+        KUMA_WARNXTRACE("postRecvOperation, buf=" << recv_ctx_->buf.size());
     }
-    recv_buf_.expand(64*1024); // max UDP packet size
-    wsa_buf_r_.buf = (char*)recv_buf_.wr_ptr();
-    wsa_buf_r_.len = recv_buf_.space();
     DWORD bytes_recv = 0, flags = 0;
     recv_addr_len_ = sizeof(recv_addr_);
+    recv_ctx_->buf.expand(UDPRecvPacketSize);
     recv_ctx_->prepare(IocpContext::Op::RECV);
-    auto ret = WSARecvFrom(fd_, &wsa_buf_r_, 1, &bytes_recv, &flags, (sockaddr*)&recv_addr_, &recv_addr_len_, &recv_ctx_->ol, NULL);
+    auto ret = WSARecvFrom(fd_, &recv_ctx_->wbuf, 1, &bytes_recv, &flags, (sockaddr*)&recv_addr_, &recv_addr_len_, &recv_ctx_->ol, NULL);
     if (ret == SOCKET_ERROR) {
         if (WSA_IO_PENDING == WSAGetLastError()) {
             recv_pending_ = true;

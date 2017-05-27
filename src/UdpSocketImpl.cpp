@@ -133,7 +133,7 @@ int UdpSocket::Impl::receive(void *data, size_t length, char *ip, size_t ip_len,
 
 KMError UdpSocket::Impl::close()
 {
-    return socket_->close();;
+    return socket_->close();
 }
 
 void UdpSocket::Impl::onReceive(KMError err)

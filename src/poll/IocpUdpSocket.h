@@ -52,8 +52,6 @@ protected:
 
 protected:
     bool                recv_pending_ = false;
-    KMBuffer            recv_buf_;
-    WSABUF              wsa_buf_r_;
     IocpContextPtr      recv_ctx_;
     sockaddr_storage    recv_addr_;
     int                 recv_addr_len_ = 0;
