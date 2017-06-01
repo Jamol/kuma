@@ -28,11 +28,11 @@
 #include "DnsResolver.h"
 #include "SocketBase.h"
 #include "util/kmbuffer.h"
-#include "Iocp.h"
+#include "IocpBase.h"
 
 KUMA_NS_BEGIN
 
-class IocpSocket : public SocketBase
+class IocpSocket : public SocketBase, public IocpBase
 {
 public:
     IocpSocket(const EventLoopPtr &loop);
@@ -49,10 +49,11 @@ public:
 protected:
     KMError connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_ms) override;
     SOCKET_FD createFd(int addr_family) override;
+    bool registerFd(SOCKET_FD fd) override;
     void unregisterFd(SOCKET_FD fd, bool close_fd) override;
 
 protected:
-    void ioReady(KMEvent events, void* ol, size_t io_size) override;
+    void ioReady(IocpContext::Op op, size_t io_size) override;
     void onConnect(KMError err) override;
     void onSend(size_t io_size);
     void onReceive(size_t io_size);
@@ -60,17 +61,8 @@ protected:
     void notifySendBlocked() override {}
     void notifySendReady() override {}
 
-    int postSendOperation();
-    int postRecvOperation();
-    bool hasPendingOperation() const;
-
-    void cancel(SOCKET_FD fd);
-
 protected:
-    bool            send_pending_ = false;
-    bool            recv_pending_ = false;
-    IocpContextPtr  send_ctx_;
-    IocpContextPtr  recv_ctx_;
+    bool readable_ = false;
 };
 
 KUMA_NS_END

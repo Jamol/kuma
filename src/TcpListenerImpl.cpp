@@ -29,7 +29,7 @@
 #include "util/util.h"
 #include "util/kmtrace.h"
 #ifdef KUMA_OS_WIN
-# include "poll/IocpAcceptor.h"
+# include "iocp/IocpAcceptor.h"
 #endif
 
 using namespace kuma;

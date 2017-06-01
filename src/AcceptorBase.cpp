@@ -143,9 +143,11 @@ void AcceptorBase::unregisterFd(SOCKET_FD fd, bool close_fd)
         auto loop = loop_.lock();
         if (loop && fd != INVALID_FD) {
             loop->unregisterFd(fd, close_fd);
+            return;
         }
     }
-    else if (close_fd) {
+    // uregistered or loop stopped
+    if (close_fd && fd != INVALID_FD) {
         closeFd(fd);
     }
 }

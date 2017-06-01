@@ -26,10 +26,11 @@
 #include "kmapi.h"
 #include "evdefs.h"
 #include "AcceptorBase.h"
-#include "Iocp.h"
+#include "IocpBase.h"
+
 KUMA_NS_BEGIN
 
-class IocpAcceptor : public AcceptorBase
+class IocpAcceptor : public AcceptorBase, public IocpBase
 {
 public:
     IocpAcceptor(const EventLoopPtr &loop);
@@ -37,18 +38,14 @@ public:
     KMError listen(const std::string &host, uint16_t port) override;
     
 protected:
-    void ioReady(KMEvent events, void* ol, size_t io_size);
-    void postAcceptOperation();
     void onAccept() override;
-    bool hasPendingOperation() const;
-    void cancel(SOCKET_FD fd);
+    bool registerFd(SOCKET_FD fd) override;
     void unregisterFd(SOCKET_FD fd, bool close_fd) override;
+    bool postAcceptOperation();
+    void ioReady(IocpContext::Op op, size_t io_size) override;
 
 protected:
-    bool                accept_pending_ = false;
-    IocpContextPtr      accept_ctx_;
-    SOCKET_FD           accept_fd_ = INVALID_FD;
-    sockaddr_storage    ss_addrs_[2];
+    SOCKET_FD       accept_fd_ = INVALID_FD;
 };
 
 KUMA_NS_END

@@ -22,7 +22,7 @@
 #include "IOPoll.h"
 #include "util/kmtrace.h"
 #include "util/util.h"
-#include "Iocp.h"
+#include "iocp/Iocp.h"
 
 KUMA_NS_BEGIN
 
@@ -111,11 +111,6 @@ KMError IocpPoll::wait(uint32_t wait_ms)
     if (success) {
         for (ULONG i = 0; i < count; ++i) {
             if (entries[i].lpOverlapped) {
-                auto ctx = reinterpret_cast<IocpContext*>(entries[i].lpOverlapped);
-                auto ref = ctx->decReference();
-                if (ref <= 0) {
-                    continue;
-                }
                 SOCKET_FD fd = (SOCKET_FD)entries[i].lpCompletionKey;
                 if (fd < poll_items_.size()) {
                     IOCallback &cb = poll_items_[fd].cb;

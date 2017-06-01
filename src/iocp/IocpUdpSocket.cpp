@@ -67,12 +67,8 @@
 
 using namespace kuma;
 
-KUMA_NS_BEGIN
-extern LPFN_CANCELIOEX cancel_io_ex;
-KUMA_NS_END
-
 IocpUdpSocket::IocpUdpSocket(const EventLoopPtr &loop)
-: UdpSocketBase(loop), recv_ctx_(IocpContext::create())
+: UdpSocketBase(loop), IocpBase(IocpWrapperPtr(new IocpUdpWrapper()))
 {
     KM_SetObjKey("IocpUdpSocket");
 }
@@ -82,25 +78,14 @@ IocpUdpSocket::~IocpUdpSocket()
     cleanup();
 }
 
-void IocpUdpSocket::cancel(SOCKET_FD fd)
+bool IocpUdpSocket::registerFd(SOCKET_FD fd)
 {
-    if (fd != INVALID_FD) {
-        if (cancel_io_ex) {
-            cancel_io_ex(reinterpret_cast<HANDLE>(fd), nullptr);
-        }
-        else {
-            CancelIo(reinterpret_cast<HANDLE>(fd));
-        }
-    }
+    return IocpBase::registerFd(loop_.lock(), fd);
 }
 
 void IocpUdpSocket::unregisterFd(SOCKET_FD fd, bool close_fd)
 {
-    if (hasPendingOperation()) {
-        cancel(fd);
-    }
-    recv_ctx_.reset();
-    UdpSocketBase::unregisterFd(fd, close_fd);
+    IocpBase::unregisterFd(loop_.lock(), fd, close_fd);
 }
 
 KMError IocpUdpSocket::bind(const std::string &bind_host, uint16_t bind_port, uint32_t udp_flags)
@@ -109,7 +94,7 @@ KMError IocpUdpSocket::bind(const std::string &bind_host, uint16_t bind_port, ui
     if (ret != KMError::NOERR) {
         return ret;
     }
-    postRecvOperation();
+    postRecvOperation(fd_);
     return KMError::NOERR;
 }
 
@@ -119,23 +104,24 @@ int IocpUdpSocket::receive(void *data, size_t length, char *ip, size_t ip_len, u
         KUMA_ERRXTRACE("receive, invalid fd");
         return -1;
     }
-    if (recv_pending_) {
+    if (recvPending()) {
         return 0;
     }
     
-    if (!recv_ctx_->bufferEmpty()) {
-        if (recv_ctx_->buf.size() > length) {
+    if (!recvBuffer().empty()) {
+        if (recvBuffer().size() > length) {
             return int(KMError::BUFFER_TOO_SMALL);
         }
-        auto bytes_read = recv_ctx_->buf.read(data, length);
-        km_get_sock_addr((struct sockaddr*)&recv_addr_, recv_addr_len_, ip, (uint32_t)ip_len, &port);
+        auto bytes_read = recvBuffer().read(data, length);
+        auto ctx = (IocpUdpWrapper*)iocp_ctx_.get();
+        km_get_sock_addr((struct sockaddr*)&ctx->ss_addr_, ctx->addr_len_, ip, (uint32_t)ip_len, &port);
         //KUMA_INFOXTRACE("receive, bytes_read=" << bytes_read<<", len="<<length);
         return static_cast<int>(bytes_read);
     }
     
     auto ret = UdpSocketBase::receive(data, length, ip, ip_len, port);
     if (ret == 0) {
-        postRecvOperation();
+        postRecvOperation(fd_);
     }
 
     //KUMA_INFOXTRACE("receive, ret="<<ret<<", len="<<length);
@@ -145,7 +131,6 @@ int IocpUdpSocket::receive(void *data, size_t length, char *ip, size_t ip_len, u
 void IocpUdpSocket::onReceive(size_t io_size)
 {
     if (io_size == 0) {
-        recv_pending_ = false;
         if (fd_ != INVALID_FD) {
             KUMA_WARNXTRACE("onReceive, io_size=0");
             cleanup();
@@ -153,56 +138,16 @@ void IocpUdpSocket::onReceive(size_t io_size)
         }
         return;
     }
-    if (io_size > recv_ctx_->buf.space()) {
-        KUMA_ERRXTRACE("onReceive, error, io_size=" << io_size << ", buffer=" << recv_ctx_->buf.space());
-    }
-    recv_ctx_->buf.bytes_written(io_size);
-    //KUMA_INFOXTRACE("onReceive, io_size="<<io_size<<", buf="<<recv_buf_.size());
-    recv_pending_ = false;
     UdpSocketBase::onReceive(KMError::NOERR);
 }
 
-int IocpUdpSocket::postRecvOperation()
+void IocpUdpSocket::ioReady(IocpContext::Op op, size_t io_size)
 {
-    if (recv_pending_) {
-        return 0;
-    }
-    if (!recv_ctx_->bufferEmpty()) {
-        KUMA_WARNXTRACE("postRecvOperation, buf=" << recv_ctx_->buf.size());
-    }
-    DWORD bytes_recv = 0, flags = 0;
-    recv_addr_len_ = sizeof(recv_addr_);
-    recv_ctx_->buf.expand(UDPRecvPacketSize);
-    recv_ctx_->prepare(IocpContext::Op::RECV);
-    auto ret = WSARecvFrom(fd_, &recv_ctx_->wbuf, 1, &bytes_recv, &flags, (sockaddr*)&recv_addr_, &recv_addr_len_, &recv_ctx_->ol, NULL);
-    if (ret == SOCKET_ERROR) {
-        if (WSA_IO_PENDING == WSAGetLastError()) {
-            recv_pending_ = true;
-            return 0;
-        }
-        return -1;
-    }
-    else if (ret == 0) {
-        // operation completed, continue to wait for the completion notification
-        // or set FILE_SKIP_COMPLETION_PORT_ON_SUCCESS
-        // SetFileCompletionNotificationModes
-        recv_pending_ = true;
-    }
-    return ret;
-}
-
-bool IocpUdpSocket::hasPendingOperation() const
-{
-    return recv_pending_;
-}
-
-void IocpUdpSocket::ioReady(KMEvent events, void* ol, size_t io_size)
-{
-    //KUMA_INFOXTRACE("ioReady, io_size="<< io_size);
-    if (recv_ctx_ && ol == &recv_ctx_->ol) {
+    //KUMA_INFOXTRACE("ioReady, op="<<int(op)<<", io_size="<< io_size);
+    if (op == IocpContext::Op::RECV) {
         onReceive(io_size);
     }
     else {
-        KUMA_WARNXTRACE("ioReady, invalid overlapped");
+        KUMA_WARNXTRACE("ioReady, invalid op: "<<int(op));
     }
 }

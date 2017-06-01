@@ -55,6 +55,12 @@
     <Filter Include="Header Files\poll">
       <UniqueIdentifier>{11158e84-2c8f-4a8b-9613-8b47abf79440}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\iocp">
+      <UniqueIdentifier>{4719f598-9233-4eda-b9e5-9f13e85a07d4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\iocp">
+      <UniqueIdentifier>{72369736-9295-4043-9abb-0347b03c95f2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\EventLoopImpl.cpp">
@@ -171,9 +177,6 @@
     <ClCompile Include="..\..\src\SocketBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\poll\IocpSocket.cpp">
-      <Filter>Source Files\poll</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\ssl\SioHandler.cpp">
       <Filter>Source Files\ssl</Filter>
     </ClCompile>
@@ -183,14 +186,17 @@
     <ClCompile Include="..\..\src\AcceptorBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\poll\IocpAcceptor.cpp">
-      <Filter>Source Files\poll</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\UdpSocketBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\poll\IocpUdpSocket.cpp">
-      <Filter>Source Files\poll</Filter>
+    <ClCompile Include="..\..\src\iocp\IocpAcceptor.cpp">
+      <Filter>Source Files\iocp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\iocp\IocpSocket.cpp">
+      <Filter>Source Files\iocp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\iocp\IocpUdpSocket.cpp">
+      <Filter>Source Files\iocp</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -329,9 +335,6 @@
     <ClInclude Include="..\..\src\poll\Notifier.h">
       <Filter>Header Files\poll</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\poll\IocpSocket.h">
-      <Filter>Header Files\poll</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\util\kmbuffer.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
@@ -344,17 +347,23 @@
     <ClInclude Include="..\..\src\AcceptorBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\poll\IocpAcceptor.h">
-      <Filter>Header Files\poll</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\UdpSocketBase.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\poll\IocpUdpSocket.h">
-      <Filter>Header Files\poll</Filter>
+    <ClInclude Include="..\..\src\iocp\Iocp.h">
+      <Filter>Header Files\iocp</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\poll\Iocp.h">
-      <Filter>Header Files\poll</Filter>
+    <ClInclude Include="..\..\src\iocp\IocpAcceptor.h">
+      <Filter>Header Files\iocp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\iocp\IocpBase.h">
+      <Filter>Header Files\iocp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\iocp\IocpSocket.h">
+      <Filter>Header Files\iocp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\iocp\IocpUdpSocket.h">
+      <Filter>Header Files\iocp</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

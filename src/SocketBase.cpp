@@ -139,7 +139,7 @@ KMError SocketBase::bind(const std::string &bind_host, uint16_t bind_port)
 
 KMError SocketBase::connect(const std::string &host, uint16_t port, EventCallback cb, uint32_t timeout_ms)
 {
-    KUMA_INFOXTRACE("connect, host=" << host << ", port=" << port << ", this=" << this);
+    KUMA_INFOXTRACE("connect, host=" << host << ", port=" << port);
     if (getState() != State::IDLE) {
         KUMA_ERRXTRACE("connect, invalid state, state=" << getState());
         return KMError::INVALID_STATE;
@@ -273,9 +273,11 @@ void SocketBase::unregisterFd(SOCKET_FD fd, bool close_fd)
         auto loop = loop_.lock();
         if (loop && fd != INVALID_FD) {
             loop->unregisterFd(fd, close_fd);
+            return;
         }
     }
-    else if (close_fd) {
+    // uregistered or loop stopped
+    if (close_fd && fd != INVALID_FD) {
         closeFd(fd);
     }
 }

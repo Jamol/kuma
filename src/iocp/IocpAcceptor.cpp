@@ -32,42 +32,28 @@
 
 using namespace kuma;
 
-KUMA_NS_BEGIN
-extern LPFN_CONNECTEX connect_ex;
-extern LPFN_ACCEPTEX accept_ex;
-extern LPFN_CANCELIOEX cancel_io_ex;
-KUMA_NS_END
-
 IocpAcceptor::IocpAcceptor(const EventLoopPtr &loop)
-: AcceptorBase(loop), accept_ctx_(IocpContext::create())
+: AcceptorBase(loop), IocpBase(IocpWrapperPtr(new IocpWrapper()))
 {
     KM_SetObjKey("IocpAcceptor");
 }
 
 IocpAcceptor::~IocpAcceptor()
 {
-
+    if (accept_fd_ != INVALID_FD) {
+        closeFd(accept_fd_);
+        accept_fd_ = INVALID_FD;
+    }
 }
 
-void IocpAcceptor::cancel(SOCKET_FD fd)
+bool IocpAcceptor::registerFd(SOCKET_FD fd)
 {
-    if (fd != INVALID_FD) {
-        if (cancel_io_ex) {
-            cancel_io_ex(reinterpret_cast<HANDLE>(fd), nullptr);
-        }
-        else {
-            CancelIo(reinterpret_cast<HANDLE>(fd));
-        }
-    }
+    return IocpBase::registerFd(loop_.lock(), fd);
 }
 
 void IocpAcceptor::unregisterFd(SOCKET_FD fd, bool close_fd)
 {
-    if (hasPendingOperation()) {
-        cancel(fd);
-    }
-    accept_ctx_.reset();
-    AcceptorBase::unregisterFd(fd, close_fd);
+    IocpBase::unregisterFd(loop_.lock(), fd, close_fd);
 }
 
 KMError IocpAcceptor::listen(const std::string &host, uint16_t port)
@@ -80,28 +66,18 @@ KMError IocpAcceptor::listen(const std::string &host, uint16_t port)
     return KMError::NOERR;
 }
 
-void IocpAcceptor::postAcceptOperation()
+bool IocpAcceptor::postAcceptOperation()
 {
     accept_fd_ = WSASocketW(ss_family_, SOCK_STREAM, IPPROTO_IP, NULL, 0, WSA_FLAG_OVERLAPPED);
     if (INVALID_FD == accept_fd_) {
         KUMA_ERRXTRACE("postAcceptOperation, socket failed, err=" << getLastError());
-        return ;
+        return false;
     }
-    DWORD bytes_recv = 0;
-    DWORD addr_len = static_cast<DWORD>(sizeof(sockaddr_storage));
-    accept_ctx_->prepare(IocpContext::Op::ACCEPT);
-    auto ret = accept_ex(fd_, accept_fd_, &ss_addrs_, 0, addr_len, addr_len, &bytes_recv, &accept_ctx_->ol);
-    if (!ret && getLastError() != WSA_IO_PENDING) {
-        KUMA_ERRXTRACE("postAcceptOperation, AcceptEx, err=" << getLastError());
-    }
-    else {
-        accept_pending_ = true;
-    }
+    return IocpBase::postAcceptOperation(fd_, accept_fd_);
 }
 
 void IocpAcceptor::onAccept()
 {
-    accept_pending_ = false;
     auto fd = accept_fd_;
     accept_fd_ = INVALID_FD;
     if (closed_) {
@@ -121,14 +97,7 @@ void IocpAcceptor::onAccept()
     }
 }
 
-bool IocpAcceptor::hasPendingOperation() const
+void IocpAcceptor::ioReady(IocpContext::Op op, size_t io_size)
 {
-    return accept_pending_;
-}
-
-void IocpAcceptor::ioReady(KMEvent events, void* ol, size_t io_size)
-{
-    if (accept_ctx_ && ol == &accept_ctx_->ol) {
-        onAccept();
-    }
+    onAccept();
 }

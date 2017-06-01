@@ -27,11 +27,11 @@
 #include "evdefs.h"
 #include "UdpSocketBase.h"
 #include "util/kmbuffer.h"
-#include "Iocp.h"
+#include "IocpBase.h"
 
 KUMA_NS_BEGIN
 
-class IocpUdpSocket : public UdpSocketBase
+class IocpUdpSocket : public UdpSocketBase, public IocpBase
 {
 public:
     IocpUdpSocket(const EventLoopPtr &loop);
@@ -41,20 +41,12 @@ public:
     int receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port) override;
     
 protected:
-    void ioReady(KMEvent events, void* ol, size_t io_size) override;
     void onReceive(size_t io_size);
 
-    int postRecvOperation();
-    bool hasPendingOperation() const;
-
-    void cancel(SOCKET_FD fd);
+    bool registerFd(SOCKET_FD fd) override;
     void unregisterFd(SOCKET_FD fd, bool close_fd) override;
 
-protected:
-    bool                recv_pending_ = false;
-    IocpContextPtr      recv_ctx_;
-    sockaddr_storage    recv_addr_;
-    int                 recv_addr_len_ = 0;
+    void ioReady(IocpContext::Op op, size_t io_size) override;
 };
 
 KUMA_NS_END

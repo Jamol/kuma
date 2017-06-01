@@ -20,7 +20,6 @@
 */
 
 #include "IocpSocket.h"
-#include "IOPoll.h"
 #include "util/kmtrace.h"
 
 #include <MSWSock.h>
@@ -29,16 +28,8 @@
 
 using namespace kuma;
 
-KUMA_NS_BEGIN
-extern LPFN_CONNECTEX connect_ex;
-extern LPFN_ACCEPTEX accept_ex;
-extern LPFN_CANCELIOEX cancel_io_ex;
-KUMA_NS_END
-
 IocpSocket::IocpSocket(const EventLoopPtr &loop)
-    : SocketBase(loop)
-    , send_ctx_(IocpContext::create())
-    , recv_ctx_(IocpContext::create())
+    : SocketBase(loop), IocpBase(IocpWrapperPtr(new IocpWrapper()))
 {
     KM_SetObjKey("IocpSocket");
     //KUMA_INFOXTRACE("IocpSocket");
@@ -50,31 +41,19 @@ IocpSocket::~IocpSocket()
     cleanup();
 }
 
-void IocpSocket::cancel(SOCKET_FD fd)
-{
-    if (fd != INVALID_FD) {
-        if (cancel_io_ex) {
-            cancel_io_ex(reinterpret_cast<HANDLE>(fd), nullptr);
-        }
-        else {
-            CancelIo(reinterpret_cast<HANDLE>(fd));
-        }
-    }
-}
-
 SOCKET_FD IocpSocket::createFd(int addr_family)
 {
     return WSASocketW(addr_family, SOCK_STREAM, IPPROTO_IP, NULL, 0, WSA_FLAG_OVERLAPPED);
 }
 
+bool IocpSocket::registerFd(SOCKET_FD fd)
+{
+    return IocpBase::registerFd(loop_.lock(), fd);
+}
+
 void IocpSocket::unregisterFd(SOCKET_FD fd, bool close_fd)
 {
-    if (hasPendingOperation()) {
-        cancel(fd);
-    }
-    send_ctx_.reset();
-    recv_ctx_.reset();
-    SocketBase::unregisterFd(fd, close_fd);
+    IocpBase::unregisterFd(loop_.lock(), fd, close_fd);
 }
 
 KMError IocpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_ms)
@@ -100,19 +79,12 @@ KMError IocpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
     setSocketOption();
     registerFd(fd_);
 
-    int addr_len = km_get_addr_length(ss_addr);
-    recv_ctx_->prepare(IocpContext::Op::CONNECT);
-    auto ret = connect_ex(fd_, (LPSOCKADDR)&ss_addr, addr_len, NULL, 0, NULL, &recv_ctx_->ol);
-    if (!ret && getLastError() != WSA_IO_PENDING) {
-        KUMA_ERRXTRACE("connect_i, error, fd=" << fd_ << ", err=" << getLastError());
+    if (!postConnectOperation(fd_, ss_addr)) {
         cleanup();
         setState(State::CLOSED);
         return KMError::FAILED;
     }
-    else {
-        recv_pending_ = true;
-        setState(State::CONNECTING);
-    }
+    setState(State::CONNECTING);
 
 #if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
     socklen_t len = sizeof(ss_addr);
@@ -121,7 +93,7 @@ KMError IocpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
 #endif
     char local_ip[128] = { 0 };
     uint16_t local_port = 0;
-    ret = getsockname(fd_, (struct sockaddr*)&ss_addr, &len);
+    auto ret = getsockname(fd_, (struct sockaddr*)&ss_addr, &len);
     if (ret != -1) {
         km_get_sock_addr((struct sockaddr*)&ss_addr, sizeof(ss_addr), local_ip, sizeof(local_ip), &local_port);
     }
@@ -135,8 +107,7 @@ KMError IocpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
 KMError IocpSocket::attachFd(SOCKET_FD fd)
 {
     SocketBase::attachFd(fd);
-    //setsockopt(fd_, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, NULL, 0);
-    postRecvOperation();
+    postRecvOperation(fd_);
     return KMError::NOERR;
 }
 
@@ -162,7 +133,7 @@ int IocpSocket::send(iovec* iovs, int count)
         KUMA_WARNXTRACE("send, invalid state=" << getState());
         return 0;
     }
-    if (!send_ctx_->bufferEmpty() || send_pending_) {
+    if (sendPending()) {
         return 0;
     }
 
@@ -200,14 +171,14 @@ int IocpSocket::send(iovec* iovs, int count)
             const uint8_t* first = ((uint8_t*)iovs[i].iov_base) + ret;
             const uint8_t* last = ((uint8_t*)iovs[i].iov_base) + iovs[i].iov_len;
             if (first < last) {
-                send_ctx_->buf.write(first, last - first);
+                sendBuffer().write(first, last - first);
                 ret = 0;
             }
             else {
                 ret -= iovs[i].iov_len;
             }
         }
-        postSendOperation();
+        postSendOperation(fd_);
     }
 
     //KUMA_INFOXTRACE("send, ret="<<ret<<", bytes_total="<<bytes_total);
@@ -219,21 +190,21 @@ int IocpSocket::receive(void* data, size_t length)
     if (!isReady()) {
         return 0;
     }
-    if (recv_pending_) {
+    if (recvPending()) {
         return 0;
     }
     char *ptr = (char*)data;
     size_t bytes_recv = 0;
-    if (!recv_ctx_->bufferEmpty()) {
-        auto bytes_read = recv_ctx_->buf.read(ptr + bytes_recv, length - bytes_recv);
+    if (!recvBuffer().empty()) {
+        auto bytes_read = recvBuffer().read(ptr + bytes_recv, length - bytes_recv);
         //KUMA_INFOXTRACE("receive, bytes_read=" << bytes_read<<", len="<<length);
         bytes_recv += bytes_read;
     }
     if (bytes_recv == length) {
         return static_cast<int>(bytes_recv);
     }
-    if (bytes_recv < recv_ctx_->buf.space()) {
-        postRecvOperation();
+    if (!readable_) {
+        postRecvOperation(fd_);
         return static_cast<int>(bytes_recv);
     }
     auto ret = SocketBase::receive(ptr + bytes_recv, length - bytes_recv);
@@ -245,7 +216,7 @@ int IocpSocket::receive(void* data, size_t length)
     }
 
     if (ret == 0) {
-        postRecvOperation();
+        postRecvOperation(fd_);
     }
 
     //KUMA_INFOXTRACE("receive, ret="<<ret<<", bytes_recv="<<bytes_recv<<", len="<<length);
@@ -272,10 +243,9 @@ KMError IocpSocket::resume()
 
 void IocpSocket::onConnect(KMError err)
 {
-    recv_pending_ = false;
     if (err == KMError::NOERR) {
         setsockopt(fd_, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
-        postRecvOperation();
+        postRecvOperation(fd_);
     }
     SocketBase::onConnect(err);
 }
@@ -283,7 +253,6 @@ void IocpSocket::onConnect(KMError err)
 void IocpSocket::onSend(size_t io_size)
 {
     if (io_size == 0) {
-        send_pending_ = false;
         KUMA_WARNXTRACE("onSend, io_size=0, state=" << getState() << ", pending=" << hasPendingOperation());
         if (getState() == State::OPEN) {
             onClose(KMError::SOCK_ERROR);
@@ -296,18 +265,12 @@ void IocpSocket::onSend(size_t io_size)
     if (getState() != State::OPEN) {
         KUMA_WARNXTRACE("onSend, invalid state, state=" << getState() << ", io_size=" << io_size);
     }
-    if (io_size != send_ctx_->buf.size()) {
-        KUMA_ERRXTRACE("onSend, error, io_size=" << io_size << ", buffer=" << send_ctx_->buf.size());
-    }
-    send_ctx_->buf.bytes_read(io_size);
-    send_pending_ = false;
     SocketBase::onSend(KMError::NOERR);
 }
 
 void IocpSocket::onReceive(size_t io_size)
 {
     if (io_size == 0) {
-        recv_pending_ = false;
         KUMA_WARNXTRACE("onReceive, io_size=0, state=" << getState() << ", pending=" << hasPendingOperation());
         if (getState() == State::OPEN) {
             onClose(KMError::SOCK_ERROR);
@@ -320,95 +283,31 @@ void IocpSocket::onReceive(size_t io_size)
     if (getState() != State::OPEN) {
         KUMA_WARNXTRACE("onReceive, invalid state, state=" << getState() << ", io_size=" << io_size);
     }
-    if (io_size > recv_ctx_->buf.space()) {
-        KUMA_ERRXTRACE("onReceive, error, io_size=" << io_size << ", buffer=" << recv_ctx_->buf.space());
-    }
-    recv_ctx_->buf.bytes_written(io_size);
-    //KUMA_INFOXTRACE("onReceive, io_size="<<io_size<<", buf="<<recv_ctx_->buf.size());
-    recv_pending_ = false;
+    readable_ = recvBuffer().space() == 0;
     SocketBase::onReceive(KMError::NOERR);
 }
 
-int IocpSocket::postSendOperation()
+void IocpSocket::ioReady(IocpContext::Op op, size_t io_size)
 {
-    if (send_ctx_->bufferEmpty() || send_pending_) {
-        return 0;
-    }
-    DWORD bytes_sent = 0;
-    send_ctx_->prepare(IocpContext::Op::SEND);
-    auto ret = WSASend(fd_, &send_ctx_->wbuf, 1, &bytes_sent, 0, &send_ctx_->ol, NULL);
-    if (ret == SOCKET_ERROR) {
-        if (WSA_IO_PENDING == WSAGetLastError()) {
-            send_pending_ = true;
-            return 0;
-        }
-        return -1;
-    }
-    else if (ret == 0) {
-        // operation completed, continue to wait for the completion notification
-        // or set FILE_SKIP_COMPLETION_PORT_ON_SUCCESS
-        // SetFileCompletionNotificationModes
-        send_pending_ = true;
-    }
-    return ret;
-}
-
-int IocpSocket::postRecvOperation()
-{
-    if (recv_pending_) {
-        return 0;
-    }
-    if (!recv_ctx_->bufferEmpty()) {
-        KUMA_WARNXTRACE("postRecvOperation, buf=" << recv_ctx_->buf.size());
-    }
-    DWORD bytes_recv = 0, flags = 0;
-    recv_ctx_->buf.expand(TCPRecvPacketSize);
-    recv_ctx_->prepare(IocpContext::Op::RECV);
-    auto ret = WSARecv(fd_, &recv_ctx_->wbuf, 1, &bytes_recv, &flags, &recv_ctx_->ol, NULL);
-    if (ret == SOCKET_ERROR) {
-        if (WSA_IO_PENDING == WSAGetLastError()) {
-            recv_pending_ = true;
-            return 0;
-        }
-        return -1;
-    }
-    else if (ret == 0) {
-        // operation completed, continue to wait for the completion notification
-        // or set FILE_SKIP_COMPLETION_PORT_ON_SUCCESS
-        // SetFileCompletionNotificationModes
-        recv_pending_ = true;
-    }
-    return ret;
-}
-
-bool IocpSocket::hasPendingOperation() const
-{
-    return send_pending_ || recv_pending_;
-}
-
-void IocpSocket::ioReady(KMEvent events, void* ol, size_t io_size)
-{
-    //KUMA_INFOXTRACE("ioReady, io_size="<< io_size<<", state="<<getState());
-    if (recv_ctx_ && ol == &recv_ctx_->ol) {
-        if (recv_ctx_->op == IocpContext::Op::CONNECT) {
-            DWORD seconds;
-            int bytes = sizeof(seconds);
-            auto ret = getsockopt(fd_, SOL_SOCKET, SO_CONNECT_TIME, (char *)&seconds, (PINT)&bytes);
-            if (ret != NO_ERROR || seconds == 0xFFFFFFFF) {
-                onConnect(KMError::SOCK_ERROR);
-            }
-            else {
-                onConnect(KMError::NOERR);
-            }
+    //KUMA_INFOXTRACE("ioReady, op="<<int(op)<<", io_size="<< io_size<<", state="<<getState());
+    if (op == IocpContext::Op::CONNECT) {
+        DWORD seconds;
+        int bytes = sizeof(seconds);
+        auto ret = getsockopt(fd_, SOL_SOCKET, SO_CONNECT_TIME, (char *)&seconds, (PINT)&bytes);
+        if (ret != NO_ERROR || seconds == 0xFFFFFFFF) {
+            onConnect(KMError::SOCK_ERROR);
         }
         else {
-            onReceive(io_size);
+            onConnect(KMError::NOERR);
         }
     }
-    else if (send_ctx_ && ol == &send_ctx_->ol) {
+    else if (op == IocpContext::Op::RECV) {
+        onReceive(io_size);
+    }
+    else if (op == IocpContext::Op::SEND) {
         onSend(io_size);
     }
     else {
-        KUMA_WARNXTRACE("ioReady, invalid overlapped");
+        KUMA_WARNXTRACE("ioReady, invalid op: "<<int(op));
     }
 }

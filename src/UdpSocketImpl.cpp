@@ -65,7 +65,7 @@
 #include "util/util.h"
 #include "util/kmtrace.h"
 #ifdef KUMA_OS_WIN
-# include "poll/IocpUdpSocket.h"
+# include "iocp/IocpUdpSocket.h"
 #endif
 
 using namespace kuma;
