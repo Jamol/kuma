@@ -24,6 +24,7 @@
 #include "OpenSslLib.h"
 #include "util/kmtrace.h"
 #include "util/util.h"
+#include "SslHandler.h"
 
 #include <string>
 #include <thread>
@@ -45,6 +46,7 @@ std::once_flag OpenSslLib::once_flag_client_;
 SSL_CTX* OpenSslLib::ssl_ctx_server_ = nullptr;
 std::once_flag OpenSslLib::once_flag_server_;
 std::mutex* OpenSslLib::ssl_locks_ = nullptr;
+int OpenSslLib::ssl_index_ = -1;
 
 namespace {
     const AlpnProtos alpnProtos {2, 'h', '2'};
@@ -105,6 +107,7 @@ bool OpenSslLib::doInit(const std::string &cfg_path)
         unsigned short rand_ret = rand() % 65536;
         RAND_seed(&rand_ret, sizeof(rand_ret));
     }
+    ssl_index_ = SSL_get_ex_new_index(0, (void*)"SSL data index", NULL, NULL, NULL);
     return true;
 }
 
@@ -257,6 +260,16 @@ SSL_CTX* OpenSslLib::getSSLContext(const char *hostName)
     return defaultServerContext();
 }
 
+int OpenSslLib::setSSLData(SSL* ssl, void *data)
+{
+    return SSL_set_ex_data(ssl, ssl_index_, data);
+}
+
+void* OpenSslLib::getSSLData(SSL* ssl)
+{
+    return SSL_get_ex_data(ssl, ssl_index_);
+}
+
 struct app_verify_arg
 {
     char *string;
@@ -271,8 +284,14 @@ int OpenSslLib::verifyCallback(int ok, X509_STORE_CTX *ctx)
     if(NULL == ctx) {
         return -1;
     }
-    //SSL* ssl = static_cast<SSL*>(X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx()));
+    SSL* ssl = static_cast<SSL*>(X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx()));
     //SSL_CTX* ssl_ctx = ::SSL_get_SSL_CTX(ssl);
+    uint32_t ssl_flags = 0;
+    auto ssl_data = getSSLData(ssl);
+    if (ssl_data) {
+        auto handler = reinterpret_cast<SslHandler*>(ssl_data);
+        ssl_flags = handler->getSslFlags();
+    }
     if(ctx->current_cert) {
         char *s, buf[1024];
         s = X509_NAME_oneline(X509_get_subject_name(ctx->current_cert), buf, sizeof(buf));
@@ -294,10 +313,31 @@ int OpenSslLib::verifyCallback(int ok, X509_STORE_CTX *ctx)
         switch (ctx->error)
         {
                 //case X509_V_ERR_CERT_NOT_YET_VALID:
-                //case X509_V_ERR_CERT_HAS_EXPIRED:
+            case X509_V_ERR_CERT_HAS_EXPIRED:
+                if (ssl_flags & SSL_ALLOW_EXPIRED_CERT) {
+                    ok = 1;
+                }
+                break;
             case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
-                KUMA_INFOTRACE("verifyCallback, ... ignored, err="<<ctx->error);
-                ok = 1;
+                if (ssl_flags & SSL_ALLOW_SELF_SIGNED_CERT) {
+                    KUMA_INFOTRACE("verifyCallback, ... ignored, err="<<ctx->error);
+                    ok = 1;
+                }
+                break;
+            case X509_V_ERR_CERT_REVOKED:
+                if (ssl_flags & SSL_ALLOW_REVOKED_CERT) {
+                    ok = 1;
+                }
+                break;
+            case X509_V_ERR_INVALID_CA:
+                if (ssl_flags & SSL_ALLOW_ANY_ROOT) {
+                    ok = 1;
+                }
+                break;
+            case X509_V_ERR_CERT_UNTRUSTED:
+                if (ssl_flags & SSL_ALLOW_UNTRUSTED_CERT) {
+                    ok = 1;
+                }
                 break;
         }
     }
@@ -385,8 +425,7 @@ void OpenSslLib::dynlockDestroyCallback(CRYPTO_dynlock_value* l, const char *fil
 }
 
 #if OPENSSL_VERSION_NUMBER >= 0x1000200fL && !defined(OPENSSL_NO_TLSEXT)
-int OpenSslLib::alpnCallback(SSL *ssl, const unsigned char **out, unsigned char *outlen, const unsigned char *_in, unsigned int inlen,
-                          void *arg)
+int OpenSslLib::alpnCallback(SSL *ssl, const unsigned char **out, unsigned char *outlen, const unsigned char *_in, unsigned int inlen, void *arg)
 {
     const AlpnProtos *protos = (AlpnProtos*)arg;
     
@@ -420,7 +459,6 @@ int OpenSslLib::serverNameCallback(SSL *ssl, int *ad, void *arg)
 
 int OpenSslLib::passwdCallback(char *buf, int size, int rwflag, void *userdata)
 {
-    //if(size < (int)strlen(pass)+1) return 0;
     return 0;
 }
 

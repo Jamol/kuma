@@ -79,45 +79,20 @@ BioHandler::~BioHandler()
 
 void BioHandler::cleanup()
 {
-    if(ssl_) {
-        SSL_shutdown(ssl_);
-        SSL_free(ssl_);
-        ssl_ = NULL;
-    }
+    SslHandler::cleanup();
     if (net_bio_) {
         BIO_free(net_bio_);
         net_bio_ = nullptr;
     }
-    setState(SslState::SSL_NONE);
 }
 
-KMError BioHandler::init(SslRole ssl_role, SOCKET_FD fd)
+KMError BioHandler::init(SslRole ssl_role, SOCKET_FD fd, uint32_t ssl_flags)
 {
-    if (fd == INVALID_FD) {
-        return KMError::INVALID_PARAM;
+    auto err = SslHandler::init(ssl_role, fd, ssl_flags);
+    if (err != KMError::NOERR) {
+        return err;
     }
-    cleanup();
-    fd_ = fd;
-    is_server_ = ssl_role == SslRole::SERVER;
-    obj_key_ = "BioHandler_" + std::to_string(fd_);
     
-    SSL_CTX* ctx = NULL;
-    if(is_server_) {
-        ctx = OpenSslLib::defaultServerContext();
-    } else {
-        ctx = OpenSslLib::defaultClientContext();
-    }
-    if(!ctx) {
-        KUMA_ERRXTRACE("init, CTX is NULL");
-        return KMError::SSL_FAILED;
-    }
-    ssl_ = SSL_new(ctx);
-    if(!ssl_) {
-        KUMA_ERRXTRACE("init, SSL_new failed");
-        return KMError::SSL_FAILED;
-    }
-    //SSL_set_mode(ssl_, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
-    //SSL_set_mode(ssl_, SSL_MODE_ENABLE_PARTIAL_WRITE);
     BIO *internal_bio = nullptr;
     BIO_new_bio_pair(&internal_bio, 0, &net_bio_, 0);
     SSL_set_bio(ssl_, internal_bio, internal_bio);

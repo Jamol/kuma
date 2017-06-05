@@ -22,6 +22,7 @@ WsClient::WsClient(TestLoop* loop, long conn_id)
 
 void WsClient::startRequest(const std::string& url)
 {
+    ws_.setSslFlags(SSL_ALLOW_SELF_SIGNED_CERT);
     ws_.setDataCallback([this] (void* data, size_t len, bool is_text, bool fin) {
         onData(data, len);
     });

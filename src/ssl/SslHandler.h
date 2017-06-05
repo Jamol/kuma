@@ -42,7 +42,7 @@ public:
         SSL_ERROR       = -1,
     };
     virtual ~SslHandler() {}
-    virtual KMError init(SslRole ssl_role, SOCKET_FD fd) = 0;
+    virtual KMError init(SslRole ssl_role, SOCKET_FD fd, uint32_t ssl_flags);
     virtual KMError attachSsl(SSL *ssl, BIO *nbio, SOCKET_FD fd) = 0;
     virtual KMError detachSsl(SSL* &ssl, BIO* &nbio) = 0;
     
@@ -60,16 +60,19 @@ public:
     virtual KMError sendBufferedData() { return KMError::NOERR; }
     SslState getState() const { return state_; }
     bool isServer() const { return is_server_; }
+    uint32_t getSslFlags() const { return ssl_flags_; }
     
 protected:
     void setState(SslState state) { state_ = state; }
     const std::string& getObjKey() const { return obj_key_; }
+    virtual void cleanup();
     
 protected:
     SSL*        ssl_ = nullptr;
     SOCKET_FD   fd_ = INVALID_FD;
     SslState    state_ = SslState::SSL_NONE;
     bool        is_server_ = false;
+    uint32_t    ssl_flags_ = 0;
     std::string obj_key_{ "SslHandler" };
 };
 

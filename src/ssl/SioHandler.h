@@ -42,7 +42,7 @@ public:
     SioHandler();
     ~SioHandler();
     
-    KMError init(SslRole ssl_role, SOCKET_FD fd) override;
+    KMError init(SslRole ssl_role, SOCKET_FD fd, uint32_t ssl_flags) override;
     KMError attachSsl(SSL *ssl, BIO *nbio, SOCKET_FD fd) override;
     KMError detachSsl(SSL* &ssl, BIO* &nbio) override;
     SslState handshake() override;
@@ -54,7 +54,6 @@ public:
 protected:
     SslState sslConnect();
     SslState sslAccept();
-    void cleanup();
 };
 
 KUMA_NS_END

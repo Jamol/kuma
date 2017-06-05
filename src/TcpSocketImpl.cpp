@@ -305,7 +305,7 @@ KMError TcpSocket::Impl::startSslHandshake(SslRole ssl_role)
     if (!createSslHandler()) {
         return KMError::SSL_FAILED;
     }
-    auto ret = ssl_handler_->init(ssl_role, getFd());
+    auto ret = ssl_handler_->init(ssl_role, getFd(), ssl_flags_);
     if (ret != KMError::NOERR) {
         KUMA_ERRXTRACE("startSslHandshake, failed to init SSL handler");
         return ret;

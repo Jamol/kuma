@@ -49,7 +49,7 @@ public:
     void setSendFunc(SendFunc s) { send_func_ = std::move(s); }
     void setRecvFunc(RecvFunc r) { recv_func_ = std::move(r); }
     
-    KMError init(SslRole ssl_role, SOCKET_FD fd) override;
+    KMError init(SslRole ssl_role, SOCKET_FD fd, uint32_t ssl_flags) override;
     KMError attachSsl(SSL *ssl, BIO *nbio, SOCKET_FD fd) override;
     KMError detachSsl(SSL* &ssl, BIO* &nbio) override;
     SslState handshake() override;
@@ -75,7 +75,7 @@ protected:
     int recvData(KMBuffer &buf);
     
 protected:
-    void cleanup();
+    void cleanup() override;
     
 protected:
     BIO*        net_bio_ = nullptr;

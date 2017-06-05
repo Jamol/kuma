@@ -22,9 +22,54 @@
 #ifdef KUMA_HAS_OPENSSL
 
 #include "SslHandler.h"
+#include "util/kmtrace.h"
+
 #include <openssl/x509v3.h>
 
 using namespace kuma;
+
+void SslHandler::cleanup()
+{
+    if(ssl_) {
+        SSL_shutdown(ssl_);
+        SSL_free(ssl_);
+        ssl_ = NULL;
+    }
+    setState(SslState::SSL_NONE);
+}
+
+KMError SslHandler::init(SslRole ssl_role, SOCKET_FD fd, uint32_t ssl_flags)
+{
+    if (fd == INVALID_FD) {
+        return KMError::INVALID_PARAM;
+    }
+    cleanup();
+    is_server_ = ssl_role == SslRole::SERVER;
+    fd_ = fd;
+    ssl_flags_ = ssl_flags;
+    
+    obj_key_ += "_" + std::to_string(fd_);
+    
+    SSL_CTX* ctx = NULL;
+    if(is_server_) {
+        ctx = OpenSslLib::defaultServerContext();
+    } else {
+        ctx = OpenSslLib::defaultClientContext();
+    }
+    if(NULL == ctx) {
+        KUMA_ERRXTRACE("init, CTX is NULL");
+        return KMError::SSL_FAILED;
+    }
+    ssl_ = SSL_new(ctx);
+    if(!ssl_) {
+        KUMA_ERRXTRACE("init, SSL_new failed");
+        return KMError::SSL_FAILED;
+    }
+    OpenSslLib::setSSLData(ssl_, this);
+    //SSL_set_mode(ssl_, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+    //SSL_set_mode(ssl_, SSL_MODE_ENABLE_PARTIAL_WRITE);
+    return KMError::NOERR;
+}
 
 KMError SslHandler::setAlpnProtocols(const AlpnProtos &protocols)
 {

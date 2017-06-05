@@ -14,6 +14,7 @@ HttpClient::HttpClient(TestLoop* loop, long conn_id)
 
 void HttpClient::startRequest(const std::string& url)
 {
+    http_request_.setSslFlags(SSL_ALLOW_SELF_SIGNED_CERT);
     http_request_.setDataCallback([this] (void* data, size_t len) { onData(data, len); });
     http_request_.setWriteCallback([this] (KMError err) { onSend(err); });
     http_request_.setErrorCallback([this] (KMError err) { onClose(err); });

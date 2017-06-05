@@ -46,6 +46,7 @@ Http2Request::~Http2Request()
 
 KMError Http2Request::setSslFlags(uint32_t ssl_flags)
 {
+    ssl_flags_ = ssl_flags;
     return KMError::NOERR;
 }
 
@@ -65,9 +66,8 @@ KMError Http2Request::sendRequest()
 {
     std::string str_port = uri_.getPort();
     uint16_t port = 80;
-    uint32_t ssl_flags = SSL_NONE;
     if (is_equal("https", uri_.getScheme())) {
-        ssl_flags = SSL_ENABLE;
+        ssl_flags_ |= SSL_ENABLE;
         port = 443;
     }
     if(!str_port.empty()) {
@@ -79,8 +79,8 @@ KMError Http2Request::sendRequest()
     if (!loop) {
         return KMError::INVALID_STATE;
     }
-    auto &connMgr = H2ConnectionMgr::getRequestConnMgr(ssl_flags != SSL_NONE);
-    conn_ = connMgr.getConnection(uri_.getHost(), port, ssl_flags, loop);
+    auto &connMgr = H2ConnectionMgr::getRequestConnMgr(ssl_flags_ != SSL_NONE);
+    conn_ = connMgr.getConnection(uri_.getHost(), port, ssl_flags_, loop);
     if (!conn_ || !conn_->eventLoop()) {
         KUMA_ERRXTRACE("sendRequest, failed to get H2Connection");
         return KMError::INVALID_PARAM;

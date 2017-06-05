@@ -77,6 +77,7 @@ protected:
     
     // request
     size_t body_bytes_sent_ = 0;
+    uint32_t ssl_flags_ = 0;
     
     // response
     int status_code_ = 0;

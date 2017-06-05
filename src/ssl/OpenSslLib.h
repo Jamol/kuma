@@ -68,6 +68,9 @@ public:
     static SSL_CTX* defaultServerContext();
     static SSL_CTX* getSSLContext(const char *hostName);
     
+    static int setSSLData(SSL* ssl, void *data);
+    static void* getSSLData(SSL* ssl);
+    
 private:
     static bool doInit(const std::string &path);
     static void doFini();
@@ -84,6 +87,8 @@ protected:
     static SSL_CTX*             ssl_ctx_server_; // default server SSL context
     static std::once_flag       once_flag_server_;
     static std::mutex*          ssl_locks_;
+    
+    static int                  ssl_index_;
 };
 
 KUMA_NS_END

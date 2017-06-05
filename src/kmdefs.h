@@ -73,10 +73,12 @@ typedef enum {
     SSL_ENABLE                  = 0x01,
     SSL_ALLOW_EXPIRED_CERT      = 0x02,
     SSL_ALLOW_INVALID_CERT_CN   = 0x04,
-    SSL_ALLOW_EXPIRED_ROOT      = 0x08,
-    SSL_ALLOW_ANY_ROOT          = 0x10,
-    SSL_ALLOW_REVOKED_CERT      = 0x20,
-    SSL_VERIFY_HOST_NAME        = 0x40
+    SSL_ALLOW_UNTRUSTED_CERT    = 0x08,
+    SSL_ALLOW_EXPIRED_ROOT      = 0x10,
+    SSL_ALLOW_ANY_ROOT          = 0x20,
+    SSL_ALLOW_REVOKED_CERT      = 0x40,
+    SSL_ALLOW_SELF_SIGNED_CERT  = 0x80,
+    SSL_VERIFY_HOST_NAME        = 0x1000
 }SslFlag;
 
 enum class SslRole {

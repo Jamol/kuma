@@ -76,44 +76,13 @@ SioHandler::~SioHandler()
     cleanup();
 }
 
-void SioHandler::cleanup()
+KMError SioHandler::init(SslRole ssl_role, SOCKET_FD fd, uint32_t ssl_flags)
 {
-    if(ssl_) {
-        SSL_shutdown(ssl_);
-        SSL_free(ssl_);
-        ssl_ = NULL;
+    auto err = SslHandler::init(ssl_role, fd, ssl_flags);
+    if (err != KMError::NOERR) {
+        return err;
     }
-    setState(SslState::SSL_NONE);
-}
-
-KMError SioHandler::init(SslRole ssl_role, SOCKET_FD fd)
-{
-    if (fd == INVALID_FD) {
-        return KMError::INVALID_PARAM;
-    }
-    cleanup();
-    is_server_ = ssl_role == SslRole::SERVER;
-    fd_ = fd;
-
-    obj_key_ = "SioHandler_" + std::to_string(fd_);
-
-    SSL_CTX* ctx = NULL;
-    if(is_server_) {
-        ctx = OpenSslLib::defaultServerContext();
-    } else {
-        ctx = OpenSslLib::defaultClientContext();
-    }
-    if(NULL == ctx) {
-        KUMA_ERRXTRACE("init, CTX is NULL");
-        return KMError::SSL_FAILED;
-    }
-    ssl_ = SSL_new(ctx);
-    if(!ssl_) {
-        KUMA_ERRXTRACE("init, SSL_new failed");
-        return KMError::SSL_FAILED;
-    }
-    //SSL_set_mode(ssl_, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
-    //SSL_set_mode(ssl_, SSL_MODE_ENABLE_PARTIAL_WRITE);
+    
     int ret = SSL_set_fd(ssl_, fd_);
     if(0 == ret) {
         KUMA_ERRXTRACE("init, SSL_set_fd failed, err="<<ERR_reason_error_string(ERR_get_error()));
