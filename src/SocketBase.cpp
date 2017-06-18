@@ -71,17 +71,8 @@ SocketBase::SocketBase(const EventLoopPtr &loop)
 
 SocketBase::~SocketBase()
 {
-    timer_.cancel();
-    if (!dns_token_.expired()) {
-        DnsResolver::get().cancel("", dns_token_);
-        dns_token_.reset();
-    }
-
-    if (INVALID_FD != fd_) {
-        SOCKET_FD fd = fd_;
-        fd_ = INVALID_FD;
-        shutdown(fd, 2);
-        unregisterFd(fd, true);
+    if (getState() != State::CLOSED) {
+        SocketBase::close();
     }
 }
 
@@ -411,16 +402,18 @@ int SocketBase::receive(void* data, size_t length)
 KMError SocketBase::close()
 {
     KUMA_INFOXTRACE("close, state=" << getState());
-    auto loop = loop_.lock();
-    if (loop && !loop->stopped()) {
-        loop->sync([this] {
+    if (getState() != State::CLOSED) {
+        auto loop = loop_.lock();
+        if (loop && !loop->stopped()) {
+            loop->sync([this] {
+                cleanup();
+            });
+        }
+        else {
             cleanup();
-        });
+        }
+        setState(State::CLOSED);
     }
-    else {
-        cleanup();
-    }
-    setState(State::CLOSED);
     return KMError::NOERR;
 }
 

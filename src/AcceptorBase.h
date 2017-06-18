@@ -56,7 +56,7 @@ protected:
     virtual void onAccept();
     void onAccept(SOCKET_FD fd);
     void onClose(KMError err);
-    virtual void cleanup();
+    void cleanup();
     virtual void ioReady(KMEvent events, void* ol, size_t io_size);
     
 protected:

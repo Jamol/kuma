@@ -75,7 +75,9 @@ AcceptorBase::AcceptorBase(const EventLoopPtr &loop)
 
 AcceptorBase::~AcceptorBase()
 {
-
+    if (!closed_) {
+        AcceptorBase::close();
+    }
 }
 
 void AcceptorBase::cleanup()

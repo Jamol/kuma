@@ -197,7 +197,7 @@ KMError VPoll::wait(uint32_t wait_ms)
 #ifdef KUMA_OS_WIN
     int num_revts = WSAPoll(&poll_fds_[0], poll_fds_.size(), wait_ms);
 #else
-    int num_revts = poll(&poll_fds_[0], poll_fds_.size(), wait_ms);
+    int num_revts = poll(&poll_fds_[0], (nfds_t)poll_fds_.size(), wait_ms);
 #endif
     if (-1 == num_revts) {
         if(EINTR == errno) {

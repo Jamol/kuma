@@ -81,20 +81,9 @@ UdpSocket::Impl::Impl(const EventLoopPtr &loop)
     {
         socket_.reset(new UdpSocketBase(loop));
     }
-    socket_->setReadCallback([this](KMError err) {
-        onReceive(err);
-    });
-    socket_->setErrorCallback([this](KMError err) {
-        onClose(err);
-    });
 }
 
 UdpSocket::Impl::~Impl()
-{
-    cleanup();
-}
-
-void UdpSocket::Impl::cleanup()
 {
     if (socket_) {
         socket_->close();
@@ -136,13 +125,12 @@ KMError UdpSocket::Impl::close()
     return socket_->close();
 }
 
-void UdpSocket::Impl::onReceive(KMError err)
+void UdpSocket::Impl::setReadCallback(EventCallback cb)
 {
-    if(read_cb_) read_cb_(err);
+    return socket_->setReadCallback(std::move(cb));
 }
 
-void UdpSocket::Impl::onClose(KMError err)
+void UdpSocket::Impl::setErrorCallback(EventCallback cb)
 {
-    cleanup();
-    if(error_cb_) error_cb_(err);
+    return socket_->setErrorCallback(std::move(cb));
 }

@@ -89,7 +89,9 @@ std::string WSHandler::buildUpgradeRequest(const std::string& path, const std::s
     ss << "Connection: Upgrade\r\n";
     ss << "Origin: " << origin << "\r\n";
     ss << "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n";
-    ss << "Sec-WebSocket-Protocol: " << proto << "\r\n";
+    if (!proto.empty()) {
+        ss << "Sec-WebSocket-Protocol: " << proto << "\r\n";
+    }
     ss << "Sec-WebSocket-Version: 13\r\n";
     ss << "\r\n";
     return ss.str();

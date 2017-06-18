@@ -63,6 +63,7 @@ protected:
 
 protected:
     bool readable_ = false;
+    bool paused_ = false;
 };
 
 KUMA_NS_END

@@ -64,7 +64,7 @@ protected:
     virtual void onSend(KMError err);
     virtual void onReceive(KMError err);
     virtual void onClose(KMError err);
-    virtual void cleanup();
+    void cleanup();
     virtual bool registerFd(SOCKET_FD fd);
     virtual void unregisterFd(SOCKET_FD fd, bool close_fd);
     virtual void ioReady(KMEvent events, void* ol, size_t io_size);

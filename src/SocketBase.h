@@ -71,7 +71,7 @@ protected:
     void setSocketOption();
     KMError connect_i(const std::string &addr, uint16_t port, uint32_t timeout_ms);
     virtual KMError connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_ms);
-    virtual void cleanup();
+    void cleanup();
     virtual bool registerFd(SOCKET_FD fd);
     virtual void unregisterFd(SOCKET_FD fd, bool close_fd);
     virtual SOCKET_FD createFd(int addr_family);

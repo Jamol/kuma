@@ -82,10 +82,7 @@ UdpSocketBase::UdpSocketBase(const EventLoopPtr &loop)
 UdpSocketBase::~UdpSocketBase()
 {
     if (INVALID_FD != fd_) {
-        SOCKET_FD fd = fd_;
-        fd_ = INVALID_FD;
-        shutdown(fd, 2);
-        unregisterFd(fd, true);
+        UdpSocketBase::close();
     }
 }
 
@@ -469,14 +466,16 @@ int UdpSocketBase::receive(void* data, size_t length, char* ip, size_t ip_len, u
 KMError UdpSocketBase::close()
 {
     KUMA_INFOXTRACE("close");
-    auto loop = loop_.lock();
-    if (loop && !loop->stopped()) {
-        loop->sync([this] {
+    if (fd_ != INVALID_FD) {
+        auto loop = loop_.lock();
+        if (loop && !loop->stopped()) {
+            loop->sync([this] {
+                cleanup();
+            });
+        }
+        else {
             cleanup();
-        });
-    }
-    else {
-        cleanup();
+        }
     }
     return KMError::NOERR;
 }

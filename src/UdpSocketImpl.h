@@ -52,19 +52,11 @@ public:
     KMError mcastJoin(const std::string &mcast_addr, uint16_t mcast_port);
     KMError mcastLeave(const std::string &mcast_addr, uint16_t mcast_port);
 
-    void setReadCallback(EventCallback cb) { read_cb_ = std::move(cb); }
-    void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
-    
-protected:
-    void onSend(KMError err);
-    void onReceive(KMError err);
-    void onClose(KMError err);
-    void cleanup();
+    void setReadCallback(EventCallback cb);
+    void setErrorCallback(EventCallback cb);
     
 private:
     std::unique_ptr<UdpSocketBase> socket_;
-    EventCallback       read_cb_;
-    EventCallback       error_cb_;
 };
 
 KUMA_NS_END

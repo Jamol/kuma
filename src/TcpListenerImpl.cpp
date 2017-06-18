@@ -49,7 +49,9 @@ TcpListener::Impl::Impl(const EventLoopPtr &loop)
 
 TcpListener::Impl::~Impl()
 {
-
+    if (acceptor_) {
+        acceptor_->close();
+    }
 }
 
 void TcpListener::Impl::setAcceptCallback(AcceptCallback cb)

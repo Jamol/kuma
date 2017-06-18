@@ -200,23 +200,21 @@ int IocpSocket::receive(void* data, size_t length)
         //KUMA_INFOXTRACE("receive, bytes_read=" << bytes_read<<", len="<<length);
         bytes_recv += bytes_read;
     }
-    if (bytes_recv == length) {
-        return static_cast<int>(bytes_recv);
-    }
-    if (!readable_) {
-        postRecvOperation(fd_);
+    if (bytes_recv == length || !readable_) {
+        if (!readable_) {
+            postRecvOperation(fd_);
+        }
         return static_cast<int>(bytes_recv);
     }
     auto ret = SocketBase::receive(ptr + bytes_recv, length - bytes_recv);
     if (ret >= 0) {
         bytes_recv += ret;
+        if (bytes_recv < length) {
+            postRecvOperation(fd_);
+        }
     }
     else {
         return ret;
-    }
-
-    if (ret == 0) {
-        postRecvOperation(fd_);
     }
 
     //KUMA_INFOXTRACE("receive, ret="<<ret<<", bytes_recv="<<bytes_recv<<", len="<<length);
@@ -225,20 +223,22 @@ int IocpSocket::receive(void* data, size_t length)
 
 KMError IocpSocket::pause()
 {
-    auto loop = loop_.lock();
-    if (loop) {
-        return loop->updateFd(fd_, KUMA_EV_ERROR);
-    }
-    return KMError::INVALID_STATE;
+    paused_ = true;
+    return KMError::NOERR;
 }
 
 KMError IocpSocket::resume()
 {
-    auto loop = loop_.lock();
-    if (loop) {
-        return loop->updateFd(fd_, KUMA_EV_NETWORK);
+    paused_ = false;
+    if (!recvBuffer().empty() || !recvPending()) {
+        auto loop = eventLoop();
+        if (loop) {
+            loop->queue([this] {
+                SocketBase::onReceive(KMError::NOERR);
+            });
+        }
     }
-    return KMError::INVALID_STATE;
+    return KMError::NOERR;
 }
 
 void IocpSocket::onConnect(KMError err)
@@ -284,7 +284,9 @@ void IocpSocket::onReceive(size_t io_size)
         KUMA_WARNXTRACE("onReceive, invalid state, state=" << getState() << ", io_size=" << io_size);
     }
     readable_ = recvBuffer().space() == 0;
-    SocketBase::onReceive(KMError::NOERR);
+    if (!paused_) {
+        SocketBase::onReceive(KMError::NOERR);
+    }
 }
 
 void IocpSocket::ioReady(IocpContext::Op op, size_t io_size)
