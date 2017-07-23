@@ -107,7 +107,7 @@ public:
     KMError removeTask(EventLoopToken *token);
     KMError sync(Task task);
     KMError async(Task task, EventLoopToken *token=nullptr);
-    KMError queue(Task task, EventLoopToken *token=nullptr);
+    KMError post(Task task, EventLoopToken *token=nullptr);
     void loopOnce(uint32_t max_wait_ms);
     void loop(uint32_t max_wait_ms = -1);
     void notify();

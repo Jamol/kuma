@@ -26,69 +26,69 @@ using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
 //
-FlowControl::FlowControl(uint32_t streamId, UpdateCallback cb)
-: streamId_(streamId), update_cb_(std::move(cb))
+FlowControl::FlowControl(uint32_t stream_id, UpdateCallback cb)
+: stream_id_(stream_id), update_cb_(std::move(cb))
 {
     
 }
 
-void FlowControl::setLocalWindowStep(uint32_t windowSize)
+void FlowControl::setLocalWindowStep(uint32_t window_size)
 {
-    localWindowStep_ = windowSize;
-    if (minLocalWindowSize_ > localWindowStep_/2) {
-        minLocalWindowSize_ = localWindowStep_/2;
+    local_window_step_ = window_size;
+    if (min_local_window_size_ > local_window_step_/2) {
+        min_local_window_size_ = local_window_step_/2;
     }
 }
 
-void FlowControl::setMinLocalWindowSize(uint32_t minWindowSize)
+void FlowControl::setMinLocalWindowSize(uint32_t min_window_size)
 {
-    minLocalWindowSize_ = minWindowSize;
-    if (minLocalWindowSize_ > localWindowStep_/2) {
-        minLocalWindowSize_ = localWindowStep_/2;
+    min_local_window_size_ = min_window_size;
+    if (min_local_window_size_ > local_window_step_/2) {
+        min_local_window_size_ = local_window_step_/2;
     }
 }
 
 void FlowControl::updateRemoteWindowSize(long delta)
 {
-    remoteWindowSize_ += delta;
+    remote_window_size_ += delta;
 }
 
-void FlowControl::initLocalWindowSize(uint32_t windowSize)
+void FlowControl::initLocalWindowSize(uint32_t window_size)
 {
-    localWindowSize_ = windowSize;
+    local_window_size_ = window_size;
 }
 
-void FlowControl::initRemoteWindowSize(uint32_t windowSize)
+void FlowControl::initRemoteWindowSize(uint32_t window_size)
 {
-    remoteWindowSize_ = windowSize;
+    remote_window_size_ = window_size;
 }
 
 uint32_t FlowControl::localWindowSize()
 {
-    return localWindowSize_>0 ? uint32_t(localWindowSize_) : 0;
+    return local_window_size_>0 ? uint32_t(local_window_size_) : 0;
 }
 
 uint32_t FlowControl::remoteWindowSize()
 {
-    return remoteWindowSize_>0 ? uint32_t(remoteWindowSize_) : 0;
+    return remote_window_size_>0 ? uint32_t(remote_window_size_) : 0;
 }
 
 void FlowControl::bytesSent(size_t bytes)
 {
-    bytesSent_ += bytes;
-    remoteWindowSize_ -= (long)bytes;
-    if (remoteWindowSize_ <= 0 && bytes + remoteWindowSize_ > 0) {
+    bytes_sent_ += bytes;
+    remote_window_size_ -= (long)bytes;
+    if (remote_window_size_ <= 0 && bytes + remote_window_size_ > 0) {
         //KUMA_INFOTRACE("FlowControl::bytesSent, streamId="<<streamId_<<", bytesSent="<<bytesSent_<<", window="<<remoteWindowSize_);
     }
 }
 
 void FlowControl::bytesReceived(size_t bytes)
 {
-    bytesReceived_ += bytes;
-    localWindowSize_ -= (long)bytes;
-    if (localWindowSize_ < long(minLocalWindowSize_)) {
-        auto delta = localWindowStep_ - localWindowSize_;
-        localWindowSize_ += (long)delta;
+    bytes_received_ += bytes;
+    local_window_size_ -= (long)bytes;
+    if (local_window_size_ < long(min_local_window_size_)) {
+        auto delta = local_window_step_ - local_window_size_;
+        local_window_size_ += (long)delta;
         if (update_cb_) {
             update_cb_(uint32_t(delta));
         }

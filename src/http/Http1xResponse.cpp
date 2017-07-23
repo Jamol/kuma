@@ -115,10 +115,10 @@ KMError Http1xResponse::sendResponse(int status_code, const std::string& desc, c
     } else if (sendBufferEmpty()) {
         if(!http_message_.hasBody()) {
             setState(State::COMPLETE);
-            eventLoop()->queue([this] { notifyComplete(); }, &loop_token_);
+            eventLoop()->post([this] { notifyComplete(); }, &loop_token_);
         } else {
             setState(State::SENDING_BODY);
-            eventLoop()->queue([this] { if (write_cb_) write_cb_(KMError::NOERR); }, &loop_token_);
+            eventLoop()->post([this] { if (write_cb_) write_cb_(KMError::NOERR); }, &loop_token_);
         }
     }
     return KMError::NOERR;
@@ -135,7 +135,7 @@ int Http1xResponse::sendData(const void* data, size_t len)
     } else if(ret >= 0) {
         if (http_message_.isCompleted() && sendBufferEmpty()) {
             setState(State::COMPLETE);
-            eventLoop()->queue([this] { notifyComplete(); }, &loop_token_);
+            eventLoop()->post([this] { notifyComplete(); }, &loop_token_);
         }
     }
     return ret;

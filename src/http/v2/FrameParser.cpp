@@ -101,43 +101,43 @@ bool FrameParser::handleFrame(const FrameHeader &hdr, const uint8_t *payload)
     H2Frame *frame = nullptr;
     switch (hdr_.getType()) {
         case H2FrameType::DATA:
-            frame = &dataFrame_;
+            frame = &data_frame_;
             break;
             
         case H2FrameType::HEADERS:
-            frame = &hdrFrame_;
+            frame = &hdr_frame_;
             break;
             
         case H2FrameType::PRIORITY:
-            frame = &priFrame_;
+            frame = &pri_frame_;
             break;
             
         case H2FrameType::RST_STREAM:
-            frame = &rstFrame_;
+            frame = &rst_frame_;
             break;
             
         case H2FrameType::SETTINGS:
-            frame = &settingsFrame_;
+            frame = &settings_frame_;
             break;
             
         case H2FrameType::PUSH_PROMISE:
-            frame = &pushFrame_;
+            frame = &push_frame_;
             break;
             
         case H2FrameType::PING:
-            frame = &pingFrame_;
+            frame = &ping_frame_;
             break;
             
         case H2FrameType::GOAWAY:
-            frame = &goawayFrame_;
+            frame = &goaway_frame_;
             break;
             
         case H2FrameType::WINDOW_UPDATE:
-            frame = &windowFrame_;
+            frame = &window_frame_;
             break;
             
         case H2FrameType::CONTINUATION:
-            frame = &continuationFrame_;
+            frame = &continuation_frame_;
             break;
             
         default:

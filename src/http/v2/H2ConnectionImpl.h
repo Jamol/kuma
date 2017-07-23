@@ -57,7 +57,7 @@ public:
     KMError connect(const std::string &host, uint16_t port);
     KMError attachFd(SOCKET_FD fd, const void* init_data, size_t init_len);
     KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len);
-    KMError attachStream(uint32_t streamId, HttpResponse::Impl* rsp);
+    KMError attachStream(uint32_t stream_id, HttpResponse::Impl* rsp);
     KMError close();
     void setAcceptCallback(AcceptCallback cb) { accept_cb_ = std::move(cb); }
     void setErrorCallback(ErrorCallback cb) { error_cb_ = std::move(cb); }
@@ -72,12 +72,12 @@ public:
     std::string getConnectionKey() const { return key_; }
     
     H2StreamPtr createStream();
-    H2StreamPtr createStream(uint32_t streamId);
-    H2StreamPtr getStream(uint32_t streamId);
-    void removeStream(uint32_t streamId);
+    H2StreamPtr createStream(uint32_t stream_id);
+    H2StreamPtr getStream(uint32_t stream_id);
+    void removeStream(uint32_t stream_id);
     
     uint32_t remoteWindowSize() { return flow_ctrl_.remoteWindowSize(); }
-    void appendBlockedStream(uint32_t streamId);
+    void appendBlockedStream(uint32_t stream_id);
     
     void onLoopActivity(LoopActivity acti);
     
@@ -140,14 +140,14 @@ private:
     
     void onConnectError(KMError err);
     void notifyBlockedStreams();
-    KMError sendWindowUpdate(uint32_t streamId, uint32_t delta);
+    KMError sendWindowUpdate(uint32_t stream_id, uint32_t delta);
     bool isControlFrame(H2Frame *frame);
     
     void applySettings(const ParamVector &params);
     void updateInitialWindowSize(uint32_t ws);
     void sendGoaway(H2Error err);
     void connectionError(H2Error err);
-    void streamError(uint32_t streamId, H2Error err);
+    void streamError(uint32_t stream_id, H2Error err);
     
     void notifyListeners(KMError err);
     void removeSelf();
@@ -163,27 +163,27 @@ protected:
     
     std::string key_;
     
-    HttpParser::Impl httpParser_;
-    FrameParser frameParser_;
-    HPacker hpEncoder_;
-    HPacker hpDecoder_;
+    HttpParser::Impl http_parser_;
+    FrameParser frame_parser_;
+    HPacker hp_encoder_;
+    HPacker hp_decoder_;
     
     std::map<uint32_t, H2StreamPtr> streams_;
-    std::map<uint32_t, H2StreamPtr> promisedStreams_;
+    std::map<uint32_t, H2StreamPtr> promised_streams_;
     std::map<uint32_t, uint32_t> blocked_streams_;
     
-    std::string cmpPreface_; // server only
+    std::string cmp_preface_; // server only
     
-    uint32_t remoteFrameSize_ = H2_DEFAULT_FRAME_SIZE;
-    uint32_t initRemoteWindowSize_ = H2_DEFAULT_WINDOW_SIZE;
-    uint32_t initLocalWindowSize_ = LOCAL_STREAM_INITIAL_WINDOW_SIZE; // initial local stream window size
+    uint32_t remote_frame_size_ = H2_DEFAULT_FRAME_SIZE;
+    uint32_t init_remote_window_size_ = H2_DEFAULT_WINDOW_SIZE;
+    uint32_t init_local_window_size_ = LOCAL_STREAM_INITIAL_WINDOW_SIZE; // initial local stream window size
     
     FlowControl flow_ctrl_;
     
-    uint32_t nextStreamId_ = 0;
-    uint32_t lastStreamId_ = 0;
+    uint32_t next_stream_id_ = 0;
+    uint32_t last_stream_id_ = 0;
     
-    bool prefaceReceived_ = false;
+    bool preface_received_ = false;
     EventLoopToken loop_token_;
 };
 

@@ -41,18 +41,18 @@ public:
     uint8_t getType() const { return type_; }
     void setFlags(uint8_t flags) { flags_ = flags; }
     uint8_t getFlags() const { return flags_; }
-    void setStreamId(uint32_t streamId) { streamId_ = streamId; }
-    uint32_t getStreamId() const { return streamId_; }
+    void setStreamId(uint32_t stream_id) { stream_id_ = stream_id; }
+    uint32_t getStreamId() const { return stream_id_; }
     
 protected:
     uint32_t length_ = 0;
     uint8_t type_;
     uint8_t flags_ = 0;
-    uint32_t streamId_ = H2_MAX_STREAM_ID;
+    uint32_t stream_id_ = H2_MAX_STREAM_ID;
 };
 
 struct h2_priority_t {
-    uint32_t streamId = 0;
+    uint32_t stream_id = 0;
     uint16_t weight = 16;
     bool exclusive = false;
 };
@@ -72,7 +72,7 @@ public:
     int encodeHeader(uint8_t *dst, size_t len, FrameHeader &hdr);
     
     size_t getPayloadLength() { return hdr_.getLength()?hdr_.getLength():calcPayloadSize(); }
-    void setStreamId(uint32_t streamId) { hdr_.setStreamId(streamId); }
+    void setStreamId(uint32_t stream_id) { hdr_.setStreamId(stream_id); }
     uint32_t getStreamId() { return hdr_.getStreamId(); }
     void setFlags(uint8_t flags) { hdr_.setFlags(flags); }
     uint8_t getFlags() { return hdr_.getFlags(); }
@@ -165,11 +165,11 @@ public:
     
     size_t calcPayloadSize() { return H2_RST_STREAM_PAYLOAD_SIZE; }
     
-    uint32_t getErrorCode() { return errCode_; }
-    void setErrorCode(uint32_t errCode) { errCode_ = errCode; }
+    uint32_t getErrorCode() { return err_code_; }
+    void setErrorCode(uint32_t err_code) { err_code_ = err_code; }
     
 private:
-    uint32_t errCode_ = 0;
+    uint32_t err_code_ = 0;
 };
 
 class SettingsFrame : public H2Frame
@@ -200,14 +200,14 @@ public:
     
     size_t calcPayloadSize() { return 4 + bsize_; }
     
-    uint32_t getPromisedStreamId() { return promStreamId_; }
-    void setPromisedStreamId(uint32_t streamId) { promStreamId_ = streamId; }
+    uint32_t getPromisedStreamId() { return prom_stream_id_; }
+    void setPromisedStreamId(uint32_t stream_id) { prom_stream_id_ = stream_id; }
     
     const uint8_t* getBlock() { return block_; }
     size_t getBlockSize() { return bsize_; }
     
 private:
-    uint32_t promStreamId_ = 0;
+    uint32_t prom_stream_id_ = 0;
     const uint8_t *block_ = nullptr;
     size_t bsize_ = 0;
 };
@@ -239,14 +239,14 @@ public:
     
     size_t calcPayloadSize() { return 8 + size_; }
     
-    uint32_t getLastStreamId() { return lastStreamId_; }
-    uint32_t getErrorCode() { return errCode_; }
-    void setLastStreamId(uint32_t streamId) { lastStreamId_ = streamId; }
-    void setErrorCode(uint32_t errCode) { errCode_ = errCode; }
+    uint32_t getLastStreamId() { return last_stream_id_; }
+    uint32_t getErrorCode() { return err_code_; }
+    void setLastStreamId(uint32_t stream_id) { last_stream_id_ = stream_id; }
+    void setErrorCode(uint32_t err_code) { err_code_ = err_code; }
     
 private:
-    uint32_t lastStreamId_ = 0;
-    uint32_t errCode_ = 0;
+    uint32_t last_stream_id_ = 0;
+    uint32_t err_code_ = 0;
     const uint8_t *data_ = nullptr;
     size_t size_ = 0;
 };
@@ -260,11 +260,11 @@ public:
     
     size_t calcPayloadSize() { return H2_WINDOW_UPDATE_PAYLOAD_SIZE; }
     
-    uint32_t getWindowSizeIncrement() { return windowSizeIncrement_; }
-    void setWindowSizeIncrement(uint32_t w) { windowSizeIncrement_ = w; }
+    uint32_t getWindowSizeIncrement() { return window_size_increment_; }
+    void setWindowSizeIncrement(uint32_t w) { window_size_increment_ = w; }
     
 private:
-    uint32_t windowSizeIncrement_ = 0;
+    uint32_t window_size_increment_ = 0;
 };
 
 class ContinuationFrame : public H2Frame

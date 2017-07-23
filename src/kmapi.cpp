@@ -157,9 +157,9 @@ KMError EventLoop::async(Task task, Token *token)
     return pimpl_->async(std::move(task), token?token->pimpl():nullptr);
 }
 
-KMError EventLoop::queue(Task task, Token *token)
+KMError EventLoop::post(Task task, Token *token)
 {
-    return pimpl_->queue(std::move(task), token?token->pimpl():nullptr);
+    return pimpl_->post(std::move(task), token?token->pimpl():nullptr);
 }
 
 void EventLoop::cancel(Token *token)
@@ -1003,9 +1003,9 @@ KMError H2Connection::attachSocket(TcpSocket &&tcp, HttpParser &&parser, const v
     return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move(*parser.pimpl()), init_data, init_len);
 }
 
-KMError H2Connection::attachStream(uint32_t streamId, HttpResponse* rsp)
+KMError H2Connection::attachStream(uint32_t stream_id, HttpResponse* rsp)
 {
-    return pimpl_->attachStream(streamId, rsp->pimpl());
+    return pimpl_->attachStream(stream_id, rsp->pimpl());
 }
 
 KMError H2Connection::close()

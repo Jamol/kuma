@@ -44,14 +44,14 @@ public:
     void removeConnection(const std::string key);
     
 public:
-    static H2ConnectionMgr& getRequestConnMgr(bool secure) { return secure ? reqSecureConnMgr_ : reqConnMgr_;}
-    static H2ConnectionMgr reqConnMgr_;
-    static H2ConnectionMgr reqSecureConnMgr_;
+    static H2ConnectionMgr& getRequestConnMgr(bool secure) { return secure ? req_secure_conn_mgr_ : req_conn_mgr_;}
+    static H2ConnectionMgr req_conn_mgr_;
+    static H2ConnectionMgr req_secure_conn_mgr_;
 
 private:
     using H2ConnectionMap = std::map<std::string, H2ConnectionPtr>;
-    H2ConnectionMap connMap_;
-    std::mutex connMutex_;
+    H2ConnectionMap conn_map_;
+    std::mutex conn_mutex_;
 };
 
 KUMA_NS_END

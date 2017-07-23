@@ -40,11 +40,11 @@ void Http2Response::cleanup()
     loop_token_.reset();
 }
 
-KMError Http2Response::attachStream(H2Connection::Impl* conn, uint32_t streamId)
+KMError Http2Response::attachStream(H2Connection::Impl* conn, uint32_t stream_id)
 {
     loop_token_.eventLoop(conn->eventLoop());
     //stream_ = conn->createStream(streamId);
-    stream_ = conn->getStream(streamId);
+    stream_ = conn->getStream(stream_id);
     if (!stream_) {
         return KMError::INVALID_STATE;
     }
@@ -88,13 +88,13 @@ KMError Http2Response::sendResponse(int status_code, const std::string& desc, co
             setState(State::COMPLETE);
             auto loop = loop_.lock();
             if (loop) {
-                loop->queue([this] { notifyComplete(); }, &loop_token_);
+                loop->post([this] { notifyComplete(); }, &loop_token_);
             }
         } else {
             setState(State::SENDING_BODY);
             auto loop = loop_.lock();
             if (loop) {
-                loop->queue([this] { if (write_cb_) write_cb_(KMError::NOERR); }, &loop_token_);
+                loop->post([this] { if (write_cb_) write_cb_(KMError::NOERR); }, &loop_token_);
             }
         }
     }
@@ -124,7 +124,7 @@ int Http2Response::sendData(const void* data, size_t len)
         setState(State::COMPLETE);
         auto loop = loop_.lock();
         if (loop) {
-            loop->queue([this] { notifyComplete(); }, &loop_token_);
+            loop->post([this] { notifyComplete(); }, &loop_token_);
         }
     }
     return ret;
@@ -167,7 +167,7 @@ void Http2Response::forEachHeader(HttpParser::Impl::EnumrateCallback&& cb) {
     }
 }
 
-void Http2Response::onHeaders(const HeaderVector &headers, bool endHeaders, bool endSteam)
+void Http2Response::onHeaders(const HeaderVector &headers, bool end_headers, bool end_stream)
 {
     if (headers.empty()) {
         return;
@@ -189,24 +189,24 @@ void Http2Response::onHeaders(const HeaderVector &headers, bool endHeaders, bool
             }
         }
     }
-    if (endHeaders) {
+    if (end_headers) {
         DESTROY_DETECTOR_SETUP();
         if (header_cb_) header_cb_();
         DESTROY_DETECTOR_CHECK_VOID();
     }
-    if (endSteam) {
+    if (end_stream) {
         setState(State::WAIT_FOR_RESPONSE);
         if (request_cb_) request_cb_();
     }
 }
 
-void Http2Response::onData(void *data, size_t len, bool endSteam)
+void Http2Response::onData(void *data, size_t len, bool end_stream)
 {
     DESTROY_DETECTOR_SETUP();
     if (data_cb_ && len > 0) data_cb_(data, len);
     DESTROY_DETECTOR_CHECK_VOID();
     
-    if (endSteam) {
+    if (end_stream) {
         setState(State::WAIT_FOR_RESPONSE);
         if (request_cb_) request_cb_();
     }

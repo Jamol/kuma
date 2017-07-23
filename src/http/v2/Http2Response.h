@@ -34,7 +34,7 @@ class Http2Response : public KMObject, public HttpResponse::Impl, public HttpHea
 public:
     Http2Response(const EventLoopPtr &loop, std::string ver);
     
-    KMError attachStream(H2Connection::Impl* conn, uint32_t streamId) override;
+    KMError attachStream(H2Connection::Impl* conn, uint32_t stream_id) override;
     void addHeader(std::string name, std::string value) override;
     KMError sendResponse(int status_code, const std::string& desc, const std::string& ver) override;
     int sendData(const void* data, size_t len) override;
@@ -48,8 +48,8 @@ public:
     void forEachHeader(HttpParser::Impl::EnumrateCallback&& cb) override;
     
 protected:
-    void onHeaders(const HeaderVector &headers, bool endHeaders, bool endSteam);
-    void onData(void *data, size_t len, bool endSteam);
+    void onHeaders(const HeaderVector &headers, bool end_headers, bool end_stream);
+    void onData(void *data, size_t len, bool end_stream);
     void onRSTStream(int err);
     void onWrite();
     

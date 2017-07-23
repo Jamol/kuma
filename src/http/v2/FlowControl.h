@@ -34,12 +34,12 @@ class FlowControl
 public:
     using UpdateCallback = std::function<void(uint32_t)>;
     
-    FlowControl(uint32_t streamId, UpdateCallback cb);
-    void setLocalWindowStep(uint32_t windowSize);
-    void setMinLocalWindowSize(uint32_t minWindowSize);
+    FlowControl(uint32_t stream_id, UpdateCallback cb);
+    void setLocalWindowStep(uint32_t window_size);
+    void setMinLocalWindowSize(uint32_t min_window_size);
     void updateRemoteWindowSize(long delta);
-    void initLocalWindowSize(uint32_t windowSize);
-    void initRemoteWindowSize(uint32_t windowSize);
+    void initLocalWindowSize(uint32_t window_size);
+    void initRemoteWindowSize(uint32_t window_size);
     
     uint32_t localWindowSize();
     uint32_t remoteWindowSize();
@@ -47,18 +47,18 @@ public:
     void bytesSent(size_t bytes);
     void bytesReceived(size_t bytes);
     
-    size_t bytesSent() { return bytesSent_; }
-    size_t bytesReceived() { return bytesReceived_; }
+    size_t bytesSent() { return bytes_sent_; }
+    size_t bytesReceived() { return bytes_received_; }
     
 private:
-    uint32_t streamId_ = 0;
-    size_t localWindowStep_ = H2_DEFAULT_WINDOW_SIZE;
-    long localWindowSize_ = H2_DEFAULT_WINDOW_SIZE;
-    size_t minLocalWindowSize_ = 32768;
-    size_t bytesReceived_ = 0;
+    uint32_t stream_id_ = 0;
+    size_t local_window_step_ = H2_DEFAULT_WINDOW_SIZE;
+    long local_window_size_ = H2_DEFAULT_WINDOW_SIZE;
+    size_t min_local_window_size_ = 32768;
+    size_t bytes_received_ = 0;
     
-    long remoteWindowSize_ = H2_DEFAULT_WINDOW_SIZE;
-    size_t bytesSent_ = 0;
+    long remote_window_size_ = H2_DEFAULT_WINDOW_SIZE;
+    size_t bytes_sent_ = 0;
     
     UpdateCallback update_cb_;
 };

@@ -79,8 +79,8 @@ KMError Http2Request::sendRequest()
     if (!loop) {
         return KMError::INVALID_STATE;
     }
-    auto &connMgr = H2ConnectionMgr::getRequestConnMgr(ssl_flags_ != SSL_NONE);
-    conn_ = connMgr.getConnection(uri_.getHost(), port, ssl_flags_, loop);
+    auto &conn_mgr = H2ConnectionMgr::getRequestConnMgr(ssl_flags_ != SSL_NONE);
+    conn_ = conn_mgr.getConnection(uri_.getHost(), port, ssl_flags_, loop);
     if (!conn_ || !conn_->eventLoop()) {
         KUMA_ERRXTRACE("sendRequest, failed to get H2Connection");
         return KMError::INVALID_PARAM;
@@ -89,11 +89,11 @@ KMError Http2Request::sendRequest()
         if (conn_->isInSameThread()) {
             return sendRequest_i();
         } else if (!conn_->async([this] {
-                                        auto err = sendRequest_i();
-                                        if (err != KMError::NOERR) {
-                                            onError(err);
-                                        }
-                                    }, &loop_token_)) {
+            auto err = sendRequest_i();
+            if (err != KMError::NOERR) {
+                onError(err);
+            }
+        }, &loop_token_)) {
             KUMA_ERRXTRACE("sendRequest, failed to run in H2Connection, key="<<conn_->getConnectionKey());
             return KMError::INVALID_STATE;
         }
@@ -190,17 +190,17 @@ KMError Http2Request::sendHeaders()
     setState(State::SENDING_HEADER);
     
     HeaderVector headers;
-    size_t headersSize = buildHeaders(headers);
-    bool endStream = !has_content_length_ && !is_chunked_;
-    auto ret = stream_->sendHeaders(headers, headersSize, endStream);
+    size_t headers_size = buildHeaders(headers);
+    bool end_stream = !has_content_length_ && !is_chunked_;
+    auto ret = stream_->sendHeaders(headers, headers_size, end_stream);
     if (ret == KMError::NOERR) {
-        if (endStream) {
+        if (end_stream) {
             setState(State::RECVING_RESPONSE);
         } else {
             setState(State::SENDING_BODY);
             auto loop = conn_->eventLoop();
             if (loop) {
-                loop->queue([this] { onWrite(); }, &loop_token_);
+                loop->post([this] { onWrite(); }, &loop_token_);
             }
         }
     }
@@ -267,8 +267,8 @@ int Http2Request::sendData_i(const void* data, size_t len)
             body_bytes_sent_ += ret;
         }
     }
-    bool endStream = (!data && !len) || (has_content_length_ && body_bytes_sent_ >= content_length_);
-    if (endStream) {
+    bool end_stream = (!data && !len) || (has_content_length_ && body_bytes_sent_ >= content_length_);
+    if (end_stream) {
         stream_->sendData(nullptr, 0, true);
         setState(State::RECVING_RESPONSE);
     }
@@ -298,7 +298,7 @@ int Http2Request::sendData_i()
     return bytes_sent;
 }
 
-void Http2Request::onHeaders(const HeaderVector &headers, bool endHeaders, bool endSteam)
+void Http2Request::onHeaders(const HeaderVector &headers, bool end_headers, bool end_stream)
 {
     if (headers.empty()) {
         return;
@@ -310,24 +310,24 @@ void Http2Request::onHeaders(const HeaderVector &headers, bool endHeaders, bool 
     for (size_t i = 1; i < headers.size(); ++i) {
         rsp_headers_.emplace(headers[i].first, headers[i].second);
     }
-    if (endHeaders) {
+    if (end_headers) {
         DESTROY_DETECTOR_SETUP();
         if (header_cb_) header_cb_();
         DESTROY_DETECTOR_CHECK_VOID();
     }
-    if (endSteam) {
+    if (end_stream) {
         setState(State::COMPLETE);
         if (response_cb_) response_cb_();
     }
 }
 
-void Http2Request::onData(void *data, size_t len, bool endSteam)
+void Http2Request::onData(void *data, size_t len, bool end_stream)
 {
     DESTROY_DETECTOR_SETUP();
     if (data_cb_ && len > 0) data_cb_(data, len);
     DESTROY_DETECTOR_CHECK_VOID();
     
-    if (endSteam && response_cb_) {
+    if (end_stream && response_cb_) {
         setState(State::COMPLETE);
         response_cb_();
     }

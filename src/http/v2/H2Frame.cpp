@@ -33,7 +33,7 @@ int FrameHeader::encode(uint8_t *dst, size_t len)
     encode_u24(dst, length_);
     dst[3] = type_;
     dst[4] = flags_;
-    encode_u32(dst + 5, streamId_);
+    encode_u32(dst + 5, stream_id_);
     
     return H2_FRAME_HEADER_SIZE;
 }
@@ -49,7 +49,7 @@ bool FrameHeader::decode(const uint8_t *src, size_t len)
     length_ = decode_u24(src);
     type_ = src[3];
     flags_ = src[4];
-    streamId_ = decode_u32(src + 5) & 0x7FFFFFFF;
+    stream_id_ = decode_u32(src + 5) & 0x7FFFFFFF;
     return true;
 }
 
@@ -76,9 +76,9 @@ H2Error H2Frame::decodePriority(const uint8_t *src, size_t len, h2_priority_t &p
     if (len < H2_PRIORITY_PAYLOAD_SIZE) {
         return H2Error::FRAME_SIZE_ERROR;
     }
-    pri.streamId = decode_u32(src);
-    pri.exclusive = !!(pri.streamId & 0x80000000);
-    pri.streamId &= 0x7FFFFFFF;
+    pri.stream_id = decode_u32(src);
+    pri.exclusive = !!(pri.stream_id & 0x80000000);
+    pri.stream_id &= 0x7FFFFFFF;
     pri.weight = (uint16_t)(src[4]) + 1;
     return H2Error::NOERR;
 }
@@ -88,11 +88,11 @@ int H2Frame::encodePriority(uint8_t *dst, size_t len, h2_priority_t pri)
     if (len < H2_PRIORITY_PAYLOAD_SIZE) {
         return -1;
     }
-    pri.streamId &= 0x7FFFFFFF;
+    pri.stream_id &= 0x7FFFFFFF;
     if (pri.exclusive) {
-        pri.streamId |= 0x80000000;
+        pri.stream_id |= 0x80000000;
     }
-    encode_u32(dst, pri.streamId);
+    encode_u32(dst, pri.stream_id);
     dst[4] = (uint8_t)pri.weight;
     
     return H2_PRIORITY_PAYLOAD_SIZE;
@@ -258,7 +258,7 @@ H2Error RSTStreamFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
     if (hdr.getLength() != 4) {
         return H2Error::FRAME_SIZE_ERROR;
     }
-    errCode_ = decode_u32(payload);
+    err_code_ = decode_u32(payload);
     return H2Error::NOERR;
 }
 
@@ -273,7 +273,7 @@ int RSTStreamFrame::encode(uint8_t *dst, size_t len)
     }
     ptr += ret;
     
-    encode_u32(ptr, errCode_);
+    encode_u32(ptr, err_code_);
     ptr += 4;
     return int(ptr - dst);
 }
@@ -353,7 +353,7 @@ int PushPromiseFrame::encode(uint8_t *dst, size_t len)
         return -1;
     }
     
-    encode_u32(ptr, promStreamId_);
+    encode_u32(ptr, prom_stream_id_);
     ptr += 4;
     
     if (block_ && bsize_ > 0) {
@@ -383,7 +383,7 @@ H2Error PushPromiseFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
     if (len < 4) {
         return H2Error::FRAME_SIZE_ERROR;
     }
-    promStreamId_ = decode_u32(ptr) & 0x7FFFFFFF;
+    prom_stream_id_ = decode_u32(ptr) & 0x7FFFFFFF;
     ptr += 4;
     len -= 4;
     if (len > 0) {
@@ -449,9 +449,9 @@ int GoawayFrame::encode(uint8_t *dst, size_t len)
         return -1;
     }
     
-    encode_u32(ptr, lastStreamId_);
+    encode_u32(ptr, last_stream_id_);
     ptr += 4;
-    encode_u32(ptr, errCode_);
+    encode_u32(ptr, err_code_);
     ptr += 4;
     if (size_ > 0) {
         memcpy(ptr, data_, size_);
@@ -471,10 +471,10 @@ H2Error GoawayFrame::decode(const FrameHeader &hdr, const uint8_t *payload)
     }
     const uint8_t *ptr = payload;
     uint32_t len = hdr.getLength();
-    lastStreamId_ = decode_u32(ptr) & 0x7FFFFFFF;
+    last_stream_id_ = decode_u32(ptr) & 0x7FFFFFFF;
     ptr += 4;
     len -= 4;
-    errCode_ = decode_u32(ptr);
+    err_code_ = decode_u32(ptr);
     ptr += 4;
     len -= 4;
     if (len > 0) {
@@ -499,7 +499,7 @@ int WindowUpdateFrame::encode(uint8_t *dst, size_t len)
         return -1;
     }
     
-    encode_u32(ptr, windowSizeIncrement_);
+    encode_u32(ptr, window_size_increment_);
     ptr += 4;
     return int(ptr - dst);
 }
@@ -510,7 +510,7 @@ H2Error WindowUpdateFrame::decode(const FrameHeader &hdr, const uint8_t *payload
     if (hdr.getLength() != 4) {
         return H2Error::FRAME_SIZE_ERROR;
     }
-    windowSizeIncrement_ = decode_u32(payload) & 0x7FFFFFFF;
+    window_size_increment_ = decode_u32(payload) & 0x7FFFFFFF;
     return H2Error::NOERR;
 }
 

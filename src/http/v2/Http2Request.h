@@ -49,8 +49,8 @@ public:
     void forEachHeader(EnumrateCallback cb) override;
     
 public:
-    void onHeaders(const HeaderVector &headers, bool endHeaders, bool endSteam);
-    void onData(void *data, size_t len, bool endSteam);
+    void onHeaders(const HeaderVector &headers, bool end_headers, bool end_stream);
+    void onData(void *data, size_t len, bool end_stream);
     void onRSTStream(int err);
     void onWrite();
     

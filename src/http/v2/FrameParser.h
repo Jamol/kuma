@@ -69,16 +69,16 @@ private:
     std::vector<uint8_t> payload_;
     size_t payload_used_ = 0;
     
-    DataFrame dataFrame_;
-    HeadersFrame hdrFrame_;
-    PriorityFrame priFrame_;
-    RSTStreamFrame rstFrame_;
-    SettingsFrame settingsFrame_;
-    PushPromiseFrame pushFrame_;
-    PingFrame pingFrame_;
-    GoawayFrame goawayFrame_;
-    WindowUpdateFrame windowFrame_;
-    ContinuationFrame continuationFrame_;
+    DataFrame data_frame_;
+    HeadersFrame hdr_frame_;
+    PriorityFrame pri_frame_;
+    RSTStreamFrame rst_frame_;
+    SettingsFrame settings_frame_;
+    PushPromiseFrame push_frame_;
+    PingFrame ping_frame_;
+    GoawayFrame goaway_frame_;
+    WindowUpdateFrame window_frame_;
+    ContinuationFrame continuation_frame_;
 };
 
 KUMA_NS_END

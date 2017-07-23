@@ -107,9 +107,9 @@ public:
      * @param token to be used to cancel the task. If token is null, the caller should
      *              make sure the resources referenced by task are valid when task running
      */
-    KMError queue(Task task, Token *token=nullptr);
+    KMError post(Task task, Token *token=nullptr);
     
-    /* cancel the tasks that are scheduled with token. you cannot cancel the task that is running
+    /* cancel the tasks that are scheduled with token. you cannot cancel the task that is in running
      *
      * @param token token of the tasks
      */
@@ -408,7 +408,7 @@ public:
     KMError setSslFlags(uint32_t ssl_flags);
     KMError attachFd(SOCKET_FD fd, const void* init_data=nullptr, size_t init_len=0);
     KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const void* init_data=nullptr, size_t init_len=0);
-    KMError attachStream(uint32_t streamId, HttpResponse* rsp);
+    KMError attachStream(uint32_t stream_id, HttpResponse* rsp);
     KMError close();
     void setAcceptCallback(AcceptCallback cb);
     void setErrorCallback(ErrorCallback cb);

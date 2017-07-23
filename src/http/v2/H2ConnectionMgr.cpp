@@ -26,27 +26,27 @@
 using namespace kuma;
 
 
-H2ConnectionMgr H2ConnectionMgr::reqConnMgr_;
-H2ConnectionMgr H2ConnectionMgr::reqSecureConnMgr_;
+H2ConnectionMgr H2ConnectionMgr::req_conn_mgr_;
+H2ConnectionMgr H2ConnectionMgr::req_secure_conn_mgr_;
 //////////////////////////////////////////////////////////////////////////
 
 void H2ConnectionMgr::addConnection(const std::string &key, H2ConnectionPtr &conn)
 {
-    std::lock_guard<std::mutex> g(connMutex_);
-    connMap_[key] = conn;
+    std::lock_guard<std::mutex> g(conn_mutex_);
+    conn_map_[key] = conn;
 }
 
 void H2ConnectionMgr::addConnection(const std::string &key, H2ConnectionPtr &&conn)
 {
-    std::lock_guard<std::mutex> g(connMutex_);
-    connMap_[key] = std::move(conn);
+    std::lock_guard<std::mutex> g(conn_mutex_);
+    conn_map_[key] = std::move(conn);
 }
 
 H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &key)
 {
-    std::lock_guard<std::mutex> g(connMutex_);
-    auto it = connMap_.find(key);
-    return it != connMap_.end() ? it->second : nullptr;
+    std::lock_guard<std::mutex> g(conn_mutex_);
+    auto it = conn_map_.find(key);
+    return it != conn_map_.end() ? it->second : nullptr;
 }
 
 H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &host, uint16_t port, uint32_t ssl_flags, const EventLoopPtr &loop)
@@ -60,9 +60,9 @@ H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &host, uint16_t
     } else {
         key = host + ":" + std::to_string(port);
     }
-    std::lock_guard<std::mutex> g(connMutex_);
-    auto it = connMap_.find(key);
-    if (it != connMap_.end()) {
+    std::lock_guard<std::mutex> g(conn_mutex_);
+    auto it = conn_map_.find(key);
+    if (it != conn_map_.end()) {
         return it->second;
     }
     H2ConnectionPtr conn(new H2Connection::Impl(loop));
@@ -71,12 +71,12 @@ H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &host, uint16_t
     if (conn->connect(host, port) != KMError::NOERR) {
         return H2ConnectionPtr();
     }
-    connMap_[key] = conn;
+    conn_map_[key] = conn;
     return conn;
 }
 
 void H2ConnectionMgr::removeConnection(const std::string key)
 {
-    std::lock_guard<std::mutex> g(connMutex_);
-    connMap_.erase(key);
+    std::lock_guard<std::mutex> g(conn_mutex_);
+    conn_map_.erase(key);
 }

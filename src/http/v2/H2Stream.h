@@ -43,12 +43,12 @@ public:
     using WriteCallback = std::function<void(void)>;
     
 public:
-    H2Stream(uint32_t streamId, H2Connection::Impl* conn, uint32_t initLocalWindowSize, uint32_t initRemoteWindowSize);
+    H2Stream(uint32_t stream_id, H2Connection::Impl* conn, uint32_t init_local_window_size, uint32_t init_remote_window_size);
     
-    uint32_t getStreamId() { return streamId_; }
+    uint32_t getStreamId() { return stream_id_; }
     
-    KMError sendHeaders(const HeaderVector &headers, size_t headersSize,bool endStream);
-    int sendData(const void *data, size_t len, bool endStream = false);
+    KMError sendHeaders(const HeaderVector &headers, size_t headers_size,bool end_stream);
+    int sendData(const void *data, size_t len, bool end_stream = false);
     KMError sendWindowUpdate(uint32_t delta);
     
     void close();
@@ -90,7 +90,7 @@ private:
     void streamError(H2Error err);
 
 private:
-    uint32_t streamId_;
+    uint32_t stream_id_;
     H2Connection::Impl * conn_;
     State state_ = State::IDLE;
     HeadersCallback headers_cb_;

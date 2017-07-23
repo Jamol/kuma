@@ -304,7 +304,7 @@ KMError EventLoop::Impl::sync(Task task)
             lk.unlock();
             cv.notify_one();
         });
-        auto ret = queue(std::move(task_sync));
+        auto ret = post(std::move(task_sync));
         if (ret != KMError::NOERR) {
             return ret;
         }
@@ -320,11 +320,11 @@ KMError EventLoop::Impl::async(Task task, EventLoopToken *token)
         task();
         return KMError::NOERR;
     } else {
-        return queue(std::move(task), token);
+        return post(std::move(task), token);
     }
 }
 
-KMError EventLoop::Impl::queue(Task task, EventLoopToken *token)
+KMError EventLoop::Impl::post(Task task, EventLoopToken *token)
 {
     auto ret = appendTask(std::move(task), token);
     if (ret != KMError::NOERR) {
