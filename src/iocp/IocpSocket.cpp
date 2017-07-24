@@ -233,7 +233,7 @@ KMError IocpSocket::resume()
     if (!recvBuffer().empty() || !recvPending()) {
         auto loop = eventLoop();
         if (loop) {
-            loop->queue([this] {
+            loop->post([this] {
                 SocketBase::onReceive(KMError::NOERR);
             });
         }

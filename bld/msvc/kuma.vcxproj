@@ -22,7 +22,7 @@
     <ProjectGuid>{F5EAD400-0BC5-4F4A-8C37-58A34E9EDD1C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>kuma</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

@@ -33,9 +33,13 @@
 
 using namespace kuma;
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 struct CRYPTO_dynlock_value {
     std::mutex lock;
 };
+
+#define X509_STORE_CTX_get0_cert(ctx) ctx->cert
+#endif
 
 bool OpenSslLib::initialized_ = false;
 std::string OpenSslLib::certs_path_;
@@ -89,9 +93,11 @@ bool OpenSslLib::doInit(const std::string &cfg_path)
         CRYPTO_set_id_callback(threadIdCallback);
         CRYPTO_set_locking_callback(lockingCallback);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         CRYPTO_set_dynlock_create_callback(&dynlockCreateCallback);
         CRYPTO_set_dynlock_lock_callback(&dynlockLockingCallback);
         CRYPTO_set_dynlock_destroy_callback(&dynlockDestroyCallback);
+#endif
     }
     
     if (SSL_library_init() != 1) {
@@ -292,25 +298,28 @@ int OpenSslLib::verifyCallback(int ok, X509_STORE_CTX *ctx)
         auto handler = reinterpret_cast<SslHandler*>(ssl_data);
         ssl_flags = handler->getSslFlags();
     }
-    if(ctx->current_cert) {
+    auto x509_current_cert = X509_STORE_CTX_get_current_cert(ctx);
+    auto x509_err = X509_STORE_CTX_get_error(ctx);
+    if(x509_current_cert) {
         char *s, buf[1024];
-        s = X509_NAME_oneline(X509_get_subject_name(ctx->current_cert), buf, sizeof(buf));
+        s = X509_NAME_oneline(X509_get_subject_name(x509_current_cert), buf, sizeof(buf));
         if(s != NULL) {
+            auto x509_err_depth = X509_STORE_CTX_get_error_depth(ctx);
             if(ok) {
-                KUMA_INFOTRACE("verifyCallback ok, depth="<<ctx->error_depth<<", subject="<<buf);
-                if(X509_NAME_oneline(X509_get_issuer_name(ctx->current_cert), buf, sizeof(buf))) {
+                KUMA_INFOTRACE("verifyCallback ok, depth="<<x509_err_depth<<", subject="<<buf);
+                if(X509_NAME_oneline(X509_get_issuer_name(x509_current_cert), buf, sizeof(buf))) {
                     KUMA_INFOTRACE("verifyCallback, issuer="<<buf);
                 }
             } else {
-                KUMA_ERRTRACE("verifyCallback failed, depth="<<ctx->error_depth
-                              <<", err="<<ctx->error<<", subject="<<buf);
+                KUMA_ERRTRACE("verifyCallback failed, depth="<<x509_err_depth
+                              <<", err="<<x509_err<<", subject="<<buf);
             }
         }
     }
     
     if (0 == ok) {
-        KUMA_INFOTRACE("verifyCallback, err="<<X509_verify_cert_error_string(ctx->error));
-        switch (ctx->error)
+        KUMA_INFOTRACE("verifyCallback, err="<<X509_verify_cert_error_string(x509_err));
+        switch (x509_err)
         {
                 //case X509_V_ERR_CERT_NOT_YET_VALID:
             case X509_V_ERR_CERT_HAS_EXPIRED:
@@ -320,7 +329,7 @@ int OpenSslLib::verifyCallback(int ok, X509_STORE_CTX *ctx)
                 break;
             case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
                 if (ssl_flags & SSL_ALLOW_SELF_SIGNED_CERT) {
-                    KUMA_INFOTRACE("verifyCallback, ... ignored, err="<<ctx->error);
+                    KUMA_INFOTRACE("verifyCallback, ... ignored, err="<<x509_err);
                     ok = 1;
                 }
                 break;
@@ -356,11 +365,13 @@ int OpenSslLib::appVerifyCallback(X509_STORE_CTX *ctx, void *arg)
     
     if (cb_arg->app_verify) {
         char *s = NULL, buf[256];
-        if(ctx->cert) {
-            s = X509_NAME_oneline(X509_get_subject_name(ctx->cert), buf, 256);
+        auto x509_cert = X509_STORE_CTX_get0_cert(ctx);
+        if(x509_cert) {
+            s = X509_NAME_oneline(X509_get_subject_name(x509_cert), buf, 256);
         }
         if(s != NULL) {
-            KUMA_INFOTRACE("appVerifyCallback, depth="<<ctx->error_depth<<", "<<buf);
+            auto x509_err_depth = X509_STORE_CTX_get_error_depth(ctx);
+            KUMA_INFOTRACE("appVerifyCallback, depth="<<x509_err_depth<<", "<<buf);
         }
         return 1;
     }
@@ -397,6 +408,7 @@ void OpenSslLib::lockingCallback(int mode, int n, const char *file, int line)
     }
 }
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 CRYPTO_dynlock_value* OpenSslLib::dynlockCreateCallback(const char *file, int line)
 {
     UNUSED(file);
@@ -423,6 +435,7 @@ void OpenSslLib::dynlockDestroyCallback(CRYPTO_dynlock_value* l, const char *fil
 
     delete l;
 }
+#endif
 
 #if OPENSSL_VERSION_NUMBER >= 0x1000200fL && !defined(OPENSSL_NO_TLSEXT)
 int OpenSslLib::alpnCallback(SSL *ssl, const unsigned char **out, unsigned char *outlen, const unsigned char *_in, unsigned int inlen, void *arg)
