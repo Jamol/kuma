@@ -47,10 +47,11 @@ public:
     
     static int verifyCallback(int ok, X509_STORE_CTX *ctx);
     static int appVerifyCallback(X509_STORE_CTX *ctx, void *arg);
+    
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     static unsigned long threadIdCallback(void);
     static void lockingCallback(int mode, int n, const char *file, int line);
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
     static CRYPTO_dynlock_value* dynlockCreateCallback(const char *file, int line);
     static void dynlockLockingCallback(int mode, CRYPTO_dynlock_value* l, const char *file, int line);
     static void dynlockDestroyCallback(CRYPTO_dynlock_value* l, const char *file, int line);
@@ -88,7 +89,10 @@ protected:
     static std::once_flag       once_flag_client_;
     static SSL_CTX*             ssl_ctx_server_; // default server SSL context
     static std::once_flag       once_flag_server_;
+    
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     static std::mutex*          ssl_locks_;
+#endif
     
     static int                  ssl_index_;
 };

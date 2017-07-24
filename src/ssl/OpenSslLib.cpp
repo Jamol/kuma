@@ -49,7 +49,11 @@ SSL_CTX* OpenSslLib::ssl_ctx_client_ = nullptr;
 std::once_flag OpenSslLib::once_flag_client_;
 SSL_CTX* OpenSslLib::ssl_ctx_server_ = nullptr;
 std::once_flag OpenSslLib::once_flag_server_;
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 std::mutex* OpenSslLib::ssl_locks_ = nullptr;
+#endif
+
 int OpenSslLib::ssl_index_ = -1;
 
 namespace {
@@ -88,16 +92,20 @@ bool OpenSslLib::doInit(const std::string &cfg_path)
         certs_path_ += PATH_SEPARATOR;
     }
     
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    if (OPENSSL_init_ssl(0, NULL) == 0) {
+        return false;
+    }
+    ERR_clear_error();
+#else
     if (CRYPTO_get_locking_callback() == NULL) {
         ssl_locks_ = new std::mutex[CRYPTO_num_locks()];
         CRYPTO_set_id_callback(threadIdCallback);
         CRYPTO_set_locking_callback(lockingCallback);
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
         CRYPTO_set_dynlock_create_callback(&dynlockCreateCallback);
         CRYPTO_set_dynlock_lock_callback(&dynlockLockingCallback);
         CRYPTO_set_dynlock_destroy_callback(&dynlockDestroyCallback);
-#endif
     }
     
     if (SSL_library_init() != 1) {
@@ -105,6 +113,8 @@ bool OpenSslLib::doInit(const std::string &cfg_path)
     }
     //OpenSSL_add_all_algorithms();
     SSL_load_error_strings();
+#endif
+    
     ERR_load_BIO_strings();
     
     // PRNG
@@ -128,6 +138,8 @@ void OpenSslLib::fini()
 
 void OpenSslLib::doFini()
 {
+    // will automatically release the resource on openssl 1.1
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
     if (ssl_locks_) {
         CRYPTO_set_id_callback(nullptr);
         CRYPTO_set_locking_callback(nullptr);
@@ -139,6 +151,7 @@ void OpenSslLib::doFini()
     EVP_cleanup();
     CRYPTO_cleanup_all_ex_data();
     ERR_free_strings();
+#endif
 }
 
 SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::string &caFile, const std::string &certFile, const std::string &keyFile, bool clientMode)
@@ -152,7 +165,7 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
             break;
         }
         
-#if 1
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
         if (SSL_CTX_set_ecdh_auto(ssl_ctx, 1) != 1) {
             KUMA_WARNTRACE("SSL_CTX_set_ecdh_auto failed, err="<<ERR_reason_error_string(ERR_get_error()));
         }
@@ -381,6 +394,7 @@ int OpenSslLib::appVerifyCallback(X509_STORE_CTX *ctx, void *arg)
     return ok;
 }
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 unsigned long OpenSslLib::threadIdCallback(void)
 {
 #if 0
@@ -408,7 +422,6 @@ void OpenSslLib::lockingCallback(int mode, int n, const char *file, int line)
     }
 }
 
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
 CRYPTO_dynlock_value* OpenSslLib::dynlockCreateCallback(const char *file, int line)
 {
     UNUSED(file);
