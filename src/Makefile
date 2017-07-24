@@ -6,6 +6,8 @@ ROOTDIR = ..
 SRCDIR = $(ROOTDIR)/src
 VENDORDIR = $(ROOTDIR)/vendor
 
+OPENSSLDIR = $(VENDORDIR)/openssl
+
 BINDIR = $(ROOTDIR)/bin/linux
 LIBDIR = $(ROOTDIR)/lib
 OBJDIR = $(ROOTDIR)/objs/linux
@@ -15,11 +17,11 @@ TARGET = libkuma.so
 ##############################################################################
 #
 
-INCLUDES = -I. -I$(VENDORDIR)
+INCLUDES = -I. -I$(VENDORDIR) -I$(OPENSSLDIR)/include
 #
 ##############################################################################
 #
-#LIBS = $(OPENSSL_LIBS)/libssl.a $(OPENSSL_LIBS)/libcrypto.a
+LIBS = $(OPENSSLDIR)/lib/linux/libssl.a $(OPENSSLDIR)/lib/linux/libcrypto.a
 
 #
 ##############################################################################
@@ -27,7 +29,7 @@ INCLUDES = -I. -I$(VENDORDIR)
 CXX=g++
 
 CXXFLAGS = -g -std=c++11 -pipe -fPIC -Wall -Wextra -pedantic -DKUMA_HAS_OPENSSL
-LDFLAGS = -shared -Wl,-Bsymbolic -lpthread -ldl -lssl -lcrypto
+LDFLAGS = -shared -Wl,-Bsymbolic -lpthread -ldl
 
 SRCS =  \
     EventLoopImpl.cpp \

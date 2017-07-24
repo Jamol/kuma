@@ -13,6 +13,7 @@
 #include <vector>
 #include <algorithm>
 #include <string>
+#include <string.h> // for memcpy memmove
 
 KUMA_NS_BEGIN
 
