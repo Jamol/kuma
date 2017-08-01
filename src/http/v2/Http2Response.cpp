@@ -22,6 +22,7 @@
 #include "Http2Response.h"
 
 #include <algorithm>
+#include <string>
 
 using namespace kuma;
 
@@ -48,8 +49,8 @@ KMError Http2Response::attachStream(H2Connection::Impl* conn, uint32_t stream_id
     if (!stream_) {
         return KMError::INVALID_STATE;
     }
-    stream_->setHeadersCallback([this] (const HeaderVector &headers, bool endHeaders, bool endSteam) {
-        onHeaders(headers, endHeaders, endSteam);
+    stream_->setHeadersCallback([this] (const HeaderVector &headers, bool endSteam) {
+        onHeaders(headers, endSteam);
     });
     stream_->setDataCallback([this] (void *data, size_t len, bool endSteam) {
         onData(data, len, endSteam);
@@ -167,11 +168,12 @@ void Http2Response::forEachHeader(HttpParser::Impl::EnumrateCallback&& cb) {
     }
 }
 
-void Http2Response::onHeaders(const HeaderVector &headers, bool end_headers, bool end_stream)
+void Http2Response::onHeaders(const HeaderVector &headers, bool end_stream)
 {
     if (headers.empty()) {
         return;
     }
+    std::string str_cookie;
     for (auto &kv : headers) {
         auto &name = kv.first;
         auto &value = kv.second;
@@ -185,15 +187,23 @@ void Http2Response::onHeaders(const HeaderVector &headers, bool end_headers, boo
                     req_path_ = std::move(value);
                 }
             } else {
-                req_headers_[std::move(name)] = std::move(value);
+                if (is_equal(name, H2HeaderCookie)) {
+                    if (!str_cookie.empty()) {
+                        str_cookie += "; ";
+                    }
+                    str_cookie += value;
+                } else {
+                    req_headers_[std::move(name)] = std::move(value);
+                }
             }
         }
     }
-    if (end_headers) {
-        DESTROY_DETECTOR_SETUP();
-        if (header_cb_) header_cb_();
-        DESTROY_DETECTOR_CHECK_VOID();
+    if (!str_cookie.empty()) {
+        req_headers_.emplace("Cookie", str_cookie);
     }
+    DESTROY_DETECTOR_SETUP();
+    if (header_cb_) header_cb_();
+    DESTROY_DETECTOR_CHECK_VOID();
     if (end_stream) {
         setState(State::WAIT_FOR_RESPONSE);
         if (request_cb_) request_cb_();

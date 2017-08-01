@@ -58,13 +58,19 @@ FrameParser::ParseState FrameParser::parseInputData(const uint8_t *data, size_t 
             hdr_used_ = 0;
             payload_.clear();
             payload_used_ = 0;
+            if (hdr_.getLength() > max_frame_size_) {
+                bool stream_err = isStreamError(hdr_, H2Error::FRAME_SIZE_ERROR);
+                cb_->onFrameError(hdr_, H2Error::FRAME_SIZE_ERROR, stream_err);
+                return ParseState::FAILURE;
+            }
             read_state_ = ReadState::READ_PAYLOAD;
         }
         if (ReadState::READ_PAYLOAD == read_state_) {
             if (payload_.empty()) {
                 if (sz >= hdr_.getLength()) {
-                    if (!handleFrame(hdr_, ptr)) {
-                        return ParseState::FAILURE;
+                    auto parse_state = parseFrame(hdr_, ptr);
+                    if (parse_state != ParseState::SUCCESS) {
+                        return parse_state;
                     }
                     sz -= hdr_.getLength();
                     ptr += hdr_.getLength();
@@ -85,8 +91,9 @@ FrameParser::ParseState FrameParser::parseInputData(const uint8_t *data, size_t 
                 sz -= copy_len;
                 ptr += copy_len;
                 read_state_ = ReadState::READ_HEADER;
-                if (!handleFrame(hdr_, &payload_[0])) {
-                    return ParseState::FAILURE;
+                auto parse_state = parseFrame(hdr_, &payload_[0]);
+                if (parse_state != ParseState::SUCCESS) {
+                    return parse_state;
                 }
                 payload_.clear();
                 payload_used_ = 0;
@@ -96,7 +103,7 @@ FrameParser::ParseState FrameParser::parseInputData(const uint8_t *data, size_t 
     return ParseState::SUCCESS;
 }
 
-bool FrameParser::handleFrame(const FrameHeader &hdr, const uint8_t *payload)
+FrameParser::ParseState FrameParser::parseFrame(const FrameHeader &hdr, const uint8_t *payload)
 {
     H2Frame *frame = nullptr;
     switch (hdr_.getType()) {
@@ -146,17 +153,42 @@ bool FrameParser::handleFrame(const FrameHeader &hdr, const uint8_t *payload)
     }
     
     if (frame && cb_) {
-        DESTROY_DETECTOR_SETUP();
-        
         H2Error err = frame->decode(hdr, payload);
         if (err == H2Error::NOERR) {
-            cb_->onFrame(frame);
+            DESTROY_DETECTOR_SETUP();
+            auto parse_continue = cb_->onFrame(frame);
+            DESTROY_DETECTOR_CHECK(ParseState::STOPPED);
+            if (!parse_continue) {
+                return ParseState::STOPPED;
+            }
         } else {
-            cb_->onFrameError(hdr, err, false);
+            cb_->onFrameError(hdr, err, isStreamError(hdr, err));
+            return ParseState::FAILURE;
         }
-      
-        DESTROY_DETECTOR_CHECK(false);
     }
 
+    return ParseState::SUCCESS;
+}
+
+bool FrameParser::isStreamError(const FrameHeader &hdr, H2Error err)
+{
+    if (hdr.getStreamId() == 0) {
+        return false;
+    }
+    
+    switch (err) {
+        case H2Error::FRAME_SIZE_ERROR:
+            return (hdr.getType() != H2FrameType::HEADERS &&
+                    hdr.getType() != H2FrameType::SETTINGS &&
+                    hdr.getType() != H2FrameType::PUSH_PROMISE &&
+                    hdr.getType() != H2FrameType::WINDOW_UPDATE);
+            
+        case H2Error::PROTOCOL_ERROR:
+            return false;
+            
+        default:
+            break;
+    }
+    
     return true;
 }

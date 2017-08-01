@@ -205,11 +205,19 @@ public:
     
     const uint8_t* getBlock() { return block_; }
     size_t getBlockSize() { return bsize_; }
+    void setBlock(const uint8_t *block, uint32_t bsize) { block_ = block; bsize_ = bsize; }
+    
+    bool hasEndHeaders() { return !!(hdr_.getFlags() & H2_FRAME_FLAG_END_HEADERS); }
+    void setEndHeaders() { addFlags(H2_FRAME_FLAG_END_HEADERS); }
+    void setHeaders(HeaderVector h, size_t hsize) { headers_ = std::move(h); hsize_ = hsize; }
     
 private:
     uint32_t prom_stream_id_ = 0;
     const uint8_t *block_ = nullptr;
     size_t bsize_ = 0;
+    
+    HeaderVector headers_;
+    size_t hsize_ = 0;
 };
 
 class PingFrame : public H2Frame

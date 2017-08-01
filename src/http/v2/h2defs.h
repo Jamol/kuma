@@ -19,6 +19,7 @@ const size_t H2_WINDOW_UPDATE_FRAME_SIZE = H2_FRAME_HEADER_SIZE + H2_WINDOW_UPDA
 
 const uint32_t H2_DEFAULT_FRAME_SIZE = 16384;
 const uint32_t H2_DEFAULT_WINDOW_SIZE = 65535;
+const uint32_t H2_MAX_FRAME_SIZE = 16777215;
 const uint32_t H2_MAX_WINDOW_SIZE = 2147483647;
 
 const uint8_t H2_FRAME_FLAG_END_STREAM = 0x1;
@@ -73,6 +74,7 @@ const std::string H2HeaderScheme(":scheme");
 const std::string H2HeaderAuthority(":authority");
 const std::string H2HeaderPath(":path");
 const std::string H2HeaderStatus(":status");
+const std::string H2HeaderCookie("cookie");
 
 inline bool isPromisedStream(uint32_t stream_id) {
     return !(stream_id & 1);

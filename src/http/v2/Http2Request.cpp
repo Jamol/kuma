@@ -23,9 +23,11 @@
 #include "http/Uri.h"
 #include "H2ConnectionMgr.h"
 #include "util/kmtrace.h"
+#include "util/util.h"
 
 #include <sstream>
 #include <algorithm>
+#include <string>
 
 using namespace kuma;
 
@@ -69,6 +71,8 @@ KMError Http2Request::sendRequest()
     if (is_equal("https", uri_.getScheme())) {
         ssl_flags_ |= SSL_ENABLE;
         port = 443;
+    } else {
+        ssl_flags_ = SSL_NONE;
     }
     if(!str_port.empty()) {
         port = std::stoi(str_port);
@@ -175,8 +179,8 @@ size_t Http2Request::buildHeaders(HeaderVector &headers)
 KMError Http2Request::sendHeaders()
 {
     stream_ = conn_->createStream();
-    stream_->setHeadersCallback([this] (const HeaderVector &headers, bool endHeaders, bool endSteam) {
-        onHeaders(headers, endHeaders, endSteam);
+    stream_->setHeadersCallback([this] (const HeaderVector &headers, bool endSteam) {
+        onHeaders(headers, endSteam);
     });
     stream_->setDataCallback([this] (void *data, size_t len, bool endSteam) {
         onData(data, len, endSteam);
@@ -298,7 +302,7 @@ int Http2Request::sendData_i()
     return bytes_sent;
 }
 
-void Http2Request::onHeaders(const HeaderVector &headers, bool end_headers, bool end_stream)
+void Http2Request::onHeaders(const HeaderVector &headers, bool end_stream)
 {
     if (headers.empty()) {
         return;
@@ -307,14 +311,23 @@ void Http2Request::onHeaders(const HeaderVector &headers, bool end_headers, bool
         return;
     }
     status_code_ = std::stoi(headers[0].second);
+    std::string str_cookie;
     for (size_t i = 1; i < headers.size(); ++i) {
-        rsp_headers_.emplace(headers[i].first, headers[i].second);
+        if (is_equal(headers[i].first, H2HeaderCookie)) {
+            if (!str_cookie.empty()) {
+                str_cookie += "; ";
+            }
+            str_cookie += headers[i].second;
+        } else {
+            rsp_headers_.emplace(headers[i].first, headers[i].second);
+        }
     }
-    if (end_headers) {
-        DESTROY_DETECTOR_SETUP();
-        if (header_cb_) header_cb_();
-        DESTROY_DETECTOR_CHECK_VOID();
+    if (!str_cookie.empty()) {
+        rsp_headers_.emplace("Cookie", str_cookie);
     }
+    DESTROY_DETECTOR_SETUP();
+    if (header_cb_) header_cb_();
+    DESTROY_DETECTOR_CHECK_VOID();
     if (end_stream) {
         setState(State::COMPLETE);
         if (response_cb_) response_cb_();

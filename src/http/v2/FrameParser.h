@@ -34,8 +34,12 @@ KUMA_NS_BEGIN
 class FrameCallback
 {
 public:
-    virtual void onFrame(H2Frame *frame) = 0;
-    virtual void onFrameError(const FrameHeader &hdr, H2Error err, bool stream) = 0;
+    /**
+     * return false to stop the parsing
+     */
+    virtual bool onFrame(H2Frame *frame) = 0;
+    
+    virtual void onFrameError(const FrameHeader &hdr, H2Error err, bool stream_err) = 0;
 };
 
 class FrameParser : public DestroyDetector
@@ -47,12 +51,15 @@ public:
     enum class ParseState {
         SUCCESS,
         INCOMPLETE,
-        FAILURE
+        FAILURE,
+        STOPPED
     };
+    void setMaxFrameSize(uint32_t max_frame_size) { max_frame_size_ = max_frame_size; }
     ParseState parseInputData(const uint8_t *buf, size_t len);
     
 private:
-    bool handleFrame(const FrameHeader &hdr, const uint8_t *payload);
+    ParseState parseFrame(const FrameHeader &hdr, const uint8_t *payload);
+    bool isStreamError(const FrameHeader &hdr, H2Error err);
 
 private:
     enum class ReadState {
@@ -65,6 +72,7 @@ private:
     uint8_t hdr_used_ = 0;
     ReadState read_state_ = ReadState::READ_HEADER;
     FrameHeader hdr_;
+    uint32_t max_frame_size_ = H2_DEFAULT_FRAME_SIZE;
     
     std::vector<uint8_t> payload_;
     size_t payload_used_ = 0;

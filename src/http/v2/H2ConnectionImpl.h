@@ -33,6 +33,7 @@
 #include "util/DestroyDetector.h"
 
 #include <map>
+#include <vector>
 
 using namespace hpack;
 
@@ -85,9 +86,14 @@ public:
     bool async(EventLoop::Task task, EventLoopToken *token=nullptr);
     bool isInSameThread() const { return std::this_thread::get_id() == thread_id_; }
     
+    void connectionError(H2Error err);
+    void streamError(uint32_t stream_id, H2Error err);
+    void streamOpened(uint32_t stream_id);
+    void streamClosed(uint32_t stream_id);
+    
 public:
-    void onFrame(H2Frame *frame) override;
-    void onFrameError(const FrameHeader &hdr, H2Error err, bool stream) override;
+    bool onFrame(H2Frame *frame) override;
+    void onFrameError(const FrameHeader &hdr, H2Error err, bool stream_err) override;
     
 private:
     void onConnect(KMError err) override;
@@ -103,16 +109,16 @@ private:
     KMError connect_i(const std::string &host, uint16_t port);
     KMError sendHeadersFrame(HeadersFrame *frame);
     KMError parseInputData(const uint8_t *buf, size_t len);
-    void handleDataFrame(DataFrame *frame);
-    void handleHeadersFrame(HeadersFrame *frame);
-    void handlePriorityFrame(PriorityFrame *frame);
-    void handleRSTStreamFrame(RSTStreamFrame *frame);
-    void handleSettingsFrame(SettingsFrame *frame);
-    void handlePushFrame(PushPromiseFrame *frame);
-    void handlePingFrame(PingFrame *frame);
-    void handleGoawayFrame(GoawayFrame *frame);
-    void handleWindowUpdateFrame(WindowUpdateFrame *frame);
-    void handleContinuationFrame(ContinuationFrame *frame);
+    bool handleDataFrame(DataFrame *frame);
+    bool handleHeadersFrame(HeadersFrame *frame);
+    bool handlePriorityFrame(PriorityFrame *frame);
+    bool handleRSTStreamFrame(RSTStreamFrame *frame);
+    bool handleSettingsFrame(SettingsFrame *frame);
+    bool handlePushFrame(PushPromiseFrame *frame);
+    bool handlePingFrame(PingFrame *frame);
+    bool handleGoawayFrame(GoawayFrame *frame);
+    bool handleWindowUpdateFrame(WindowUpdateFrame *frame);
+    bool handleContinuationFrame(ContinuationFrame *frame);
     
     void addStream(H2StreamPtr stream);
     
@@ -143,11 +149,9 @@ private:
     KMError sendWindowUpdate(uint32_t stream_id, uint32_t delta);
     bool isControlFrame(H2Frame *frame);
     
-    void applySettings(const ParamVector &params);
+    bool applySettings(const ParamVector &params);
     void updateInitialWindowSize(uint32_t ws);
     void sendGoaway(H2Error err);
-    void connectionError(H2Error err);
-    void streamError(uint32_t stream_id, H2Error err);
     
     void notifyListeners(KMError err);
     void removeSelf();
@@ -168,13 +172,16 @@ protected:
     HPacker hp_encoder_;
     HPacker hp_decoder_;
     
+    std::vector<uint8_t> headers_block_buf_;
+    
     std::map<uint32_t, H2StreamPtr> streams_;
     std::map<uint32_t, H2StreamPtr> promised_streams_;
     std::map<uint32_t, uint32_t> blocked_streams_;
     
     std::string cmp_preface_; // server only
     
-    uint32_t remote_frame_size_ = H2_DEFAULT_FRAME_SIZE;
+    uint32_t max_local_frame_size_ = 65536;
+    uint32_t max_remote_frame_size_ = H2_DEFAULT_FRAME_SIZE;
     uint32_t init_remote_window_size_ = H2_DEFAULT_WINDOW_SIZE;
     uint32_t init_local_window_size_ = LOCAL_STREAM_INITIAL_WINDOW_SIZE; // initial local stream window size
     
@@ -182,6 +189,12 @@ protected:
     
     uint32_t next_stream_id_ = 0;
     uint32_t last_stream_id_ = 0;
+    
+    uint32_t max_concurrent_streams_ = 128;
+    uint32_t opened_stream_count_ = 0;
+    
+    bool next_frame_must_be_continuation_ = false;
+    uint32_t expected_stream_id_of_continuation_ = 0;
     
     bool preface_received_ = false;
     EventLoopToken loop_token_;

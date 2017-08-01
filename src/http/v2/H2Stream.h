@@ -37,7 +37,7 @@ KUMA_NS_BEGIN
 class H2Stream : public KMObject
 {
 public:
-    using HeadersCallback = std::function<void(const HeaderVector &, bool, bool)>;
+    using HeadersCallback = std::function<void(const HeaderVector &, bool)>;
     using DataCallback = std::function<void(void *, size_t, bool)>;
     using RSTStreamCallback = std::function<void(int)>;
     using WriteCallback = std::function<void(void)>;
@@ -59,18 +59,18 @@ public:
     void setWriteCallback(WriteCallback cb) { write_cb_ = std::move(cb); }
     
 public:
-    void handleDataFrame(DataFrame *frame);
-    void handleHeadersFrame(HeadersFrame *frame);
-    void handlePriorityFrame(PriorityFrame *frame);
-    void handleRSTStreamFrame(RSTStreamFrame *frame);
-    void handlePushFrame(PushPromiseFrame *frame);
-    void handleWindowUpdateFrame(WindowUpdateFrame *frame);
-    void handleContinuationFrame(ContinuationFrame *frame);
+    bool handleDataFrame(DataFrame *frame);
+    bool handleHeadersFrame(HeadersFrame *frame);
+    bool handlePriorityFrame(PriorityFrame *frame);
+    bool handleRSTStreamFrame(RSTStreamFrame *frame);
+    bool handlePushFrame(PushPromiseFrame *frame);
+    bool handleWindowUpdateFrame(WindowUpdateFrame *frame);
+    bool handleContinuationFrame(ContinuationFrame *frame);
     void onWrite();
     void onError(int err);
     void updateRemoteWindowSize(long delta);
+    void streamError(H2Error err);
     
-private:
     enum State {
         IDLE,
         RESERVED_L,
@@ -80,16 +80,21 @@ private:
         HALF_CLOSED_R,
         CLOSED
     };
-    void setState(State state) { state_ = state; }
-    State getState() { return state_; }
+    State getState() const { return state_; }
+    
+protected:
+    void setState(State state);
+    bool isInOpenState(State state);
     
     void endStreamSent();
     void endStreamReceived();
     
-    void sendRSTStream(H2Error err);
-    void streamError(H2Error err);
+    KMError sendRSTStream(H2Error err);
+    bool verifyFrame(H2Frame *frame);
+    
+    void connectionError(H2Error err);
 
-private:
+protected:
     uint32_t stream_id_;
     H2Connection::Impl * conn_;
     State state_ = State::IDLE;
@@ -103,6 +108,11 @@ private:
     bool headers_end_ { false };
     bool tailers_received_ {false };
     bool tailers_end_ {false };
+    
+    bool end_stream_sent_ { false };
+    bool end_stream_received_ { false };
+    bool rst_stream_sent_ { false };
+    bool rst_stream_received_ { false };
     
     FlowControl flow_ctrl_;
 };

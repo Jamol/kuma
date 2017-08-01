@@ -126,6 +126,7 @@ void H2Stream::close()
 
 void H2Stream::endStreamSent()
 {
+    end_stream_sent_ = true;
     if (getState() == State::HALF_CLOSED_R) {
         setState(State::CLOSED);
     } else {
@@ -135,6 +136,7 @@ void H2Stream::endStreamSent()
 
 void H2Stream::endStreamReceived()
 {
+    end_stream_received_ = true;
     if (getState() == State::HALF_CLOSED_L) {
         setState(State::CLOSED);
     } else {
@@ -142,22 +144,39 @@ void H2Stream::endStreamReceived()
     }
 }
 
-void H2Stream::sendRSTStream(H2Error err)
+KMError H2Stream::sendRSTStream(H2Error err)
 {
+    rst_stream_sent_ = true;
+    
     RSTStreamFrame frame;
     frame.setStreamId(stream_id_);
     frame.setErrorCode(uint32_t(err));
-    conn_->sendH2Frame(&frame);
+    return conn_->sendH2Frame(&frame);
+}
+
+void H2Stream::connectionError(H2Error err)
+{
+    if (conn_) {
+        conn_->connectionError(err);
+    }
 }
 
 void H2Stream::streamError(H2Error err)
 {
-    sendRSTStream(err);
     setState(State::CLOSED);
+    sendRSTStream(err);
 }
 
-void H2Stream::handleDataFrame(DataFrame *frame)
+bool H2Stream::handleDataFrame(DataFrame *frame)
 {
+    if (!verifyFrame(frame)) {
+        return false;
+    }
+    if (getState() != State::OPEN && getState() != State::HALF_CLOSED_L) {
+        // RFC 7540, 6.1
+        streamError(H2Error::STREAM_CLOSED);
+        return false;
+    }
     bool end_stream = frame->getFlags() & H2_FRAME_FLAG_END_STREAM;
     if (end_stream) {
         KUMA_INFOXTRACE("handleDataFrame, END_STREAM received");
@@ -167,10 +186,14 @@ void H2Stream::handleDataFrame(DataFrame *frame)
     if (data_cb_) {
         data_cb_((void*)frame->data(), frame->size(), end_stream);
     }
+    return true;
 }
 
-void H2Stream::handleHeadersFrame(HeadersFrame *frame)
+bool H2Stream::handleHeadersFrame(HeadersFrame *frame)
 {
+    if (!verifyFrame(frame)) {
+        return false;
+    }
     bool is_tailer = false;
     if (headers_received_ && (getState() == State::OPEN || getState() == State::HALF_CLOSED_L)) {
         // must be tailer
@@ -191,55 +214,88 @@ void H2Stream::handleHeadersFrame(HeadersFrame *frame)
         KUMA_INFOXTRACE("handleHeadersFrame, END_STREAM received");
         endStreamReceived();
     }
-    if (!is_tailer && headers_cb_) {
-        headers_cb_(frame->getHeaders(), headers_end_, end_stream);
+    if (!is_tailer && headers_end_ && headers_cb_) {
+        headers_cb_(frame->getHeaders(), end_stream);
     }
+    return true;
 }
 
-void H2Stream::handlePriorityFrame(PriorityFrame *frame)
+bool H2Stream::handlePriorityFrame(PriorityFrame *frame)
 {
-    
+    if (!verifyFrame(frame)) {
+        return false;
+    }
+    if (frame->getPriority().stream_id == stream_id_) {
+        // RFC 7540, 5.3.1
+        streamError(H2Error::PROTOCOL_ERROR);
+        return false;
+    }
+    return true;
 }
 
-void H2Stream::handleRSTStreamFrame(RSTStreamFrame *frame)
+bool H2Stream::handleRSTStreamFrame(RSTStreamFrame *frame)
 {
     //KUMA_INFOXTRACE("handleRSTStreamFrame, err="<<frame->getErrorCode()<<", state="<<getState());
+    if (!verifyFrame(frame)) {
+        return false;
+    }
+    if (getState() == State::CLOSED) {
+        return true;
+    }
+    rst_stream_received_ = true;
     setState(State::CLOSED);
     if (reset_cb_) {
         reset_cb_(frame->getErrorCode());
     }
+    return true;
 }
 
-void H2Stream::handlePushFrame(PushPromiseFrame *frame)
+bool H2Stream::handlePushFrame(PushPromiseFrame *frame)
 {
-    KUMA_ASSERT(getState() == State::IDLE);
+    if (!verifyFrame(frame)) {
+        return false;
+    }
+    headers_received_ = true;
+    headers_end_ = frame->hasEndHeaders();
     setState(State::RESERVED_R);
+    return true;
 }
 
-void H2Stream::handleWindowUpdateFrame(WindowUpdateFrame *frame)
+bool H2Stream::handleWindowUpdateFrame(WindowUpdateFrame *frame)
 {
     KUMA_INFOXTRACE("handleWindowUpdateFrame, streamId="<<frame->getStreamId()<<", delta=" << frame->getWindowSizeIncrement()<<", window="<<flow_ctrl_.remoteWindowSize());
+    if (!verifyFrame(frame)) {
+        return false;
+    }
+    if (getState() == State::CLOSED) {
+        return true;
+    }
     if (frame->getWindowSizeIncrement() == 0) {
-        // PROTOCOL_ERROR
+        // RFC 7540, 6.9
         streamError(H2Error::PROTOCOL_ERROR);
-        return;
+        return false;
     }
     bool need_on_write = 0 == flow_ctrl_.remoteWindowSize();
     flow_ctrl_.updateRemoteWindowSize(frame->getWindowSizeIncrement());
     if (need_on_write && getState() != State::IDLE && flow_ctrl_.remoteWindowSize() > 0) {
         onWrite();
     }
+    return true;
 }
 
-void H2Stream::handleContinuationFrame(ContinuationFrame *frame)
+bool H2Stream::handleContinuationFrame(ContinuationFrame *frame)
 {
-    if (getState() != State::OPEN || getState() != State::HALF_CLOSED_L) {
+    if (!verifyFrame(frame)) {
+        return false;
+    }
+    if (getState() != State::OPEN && getState() != State::HALF_CLOSED_L) {
         // invalid status
-        return;
+        return false;
     }
     if ((!headers_received_ || headers_end_) && (!tailers_received_ || tailers_end_)) {
         // PROTOCOL_ERROR
-        return;
+        connectionError(H2Error::PROTOCOL_ERROR);
+        return false;
     }
     bool is_tailer = headers_end_;
     bool end_stream = frame->getFlags() & H2_FRAME_FLAG_END_STREAM;
@@ -255,14 +311,93 @@ void H2Stream::handleContinuationFrame(ContinuationFrame *frame)
             tailers_end_ = true;
         }
     }
-    if (!is_tailer && headers_cb_) {
-        headers_cb_(frame->getHeaders(), headers_end_, end_stream);
+    if (!is_tailer && headers_end_ && headers_cb_) {
+        headers_cb_(frame->getHeaders(), end_stream);
     }
+    return true;
 }
 
 void H2Stream::updateRemoteWindowSize(long delta)
 {
     flow_ctrl_.updateRemoteWindowSize(delta);
+}
+
+bool H2Stream::verifyFrame(H2Frame *frame)
+{
+    // RFC 7540, 5.1
+    switch (getState()) {
+        case State::IDLE:
+            if (frame->type() != H2FrameType::HEADERS &&
+                frame->type() != H2FrameType::PRIORITY &&
+                frame->type() != H2FrameType::PUSH_PROMISE) {
+                connectionError(H2Error::PROTOCOL_ERROR);
+                return false;
+            }
+            break;
+            
+        case State::RESERVED_L:
+            if (frame->type() != H2FrameType::RST_STREAM &&
+                frame->type() != H2FrameType::PRIORITY &&
+                frame->type() != H2FrameType::WINDOW_UPDATE) {
+                connectionError(H2Error::PROTOCOL_ERROR);
+                return false;
+            }
+            break;
+            
+        case State::RESERVED_R:
+            if (frame->type() != H2FrameType::HEADERS &&
+                frame->type() != H2FrameType::RST_STREAM &&
+                frame->type() != H2FrameType::PRIORITY) {
+                connectionError(H2Error::PROTOCOL_ERROR);
+                return false;
+            }
+            break;
+            
+        case State::OPEN:
+        case State::HALF_CLOSED_L:
+            return true;
+            
+        case State::HALF_CLOSED_R:
+            if (frame->type() != H2FrameType::RST_STREAM &&
+                frame->type() != H2FrameType::PRIORITY &&
+                frame->type() != H2FrameType::WINDOW_UPDATE) {
+                streamError(H2Error::STREAM_CLOSED);
+                return false;
+            }
+            break;
+            
+        case State::CLOSED:
+            if (rst_stream_received_ && frame->type() != H2FrameType::PRIORITY) {
+                streamError(H2Error::STREAM_CLOSED);
+                return false;
+            }
+            if (end_stream_received_ && frame->type() != H2FrameType::PRIORITY) {
+                connectionError(H2Error::STREAM_CLOSED);
+                return false;
+            }
+            break;
+            
+        default:
+            break;
+    }
+    return true;
+}
+
+void H2Stream::setState(State state)
+{
+    if (!isInOpenState(state_) && isInOpenState(state)) {
+        conn_->streamOpened(stream_id_);
+    } else if (isInOpenState(state_) && state == State::CLOSED) {
+        conn_->streamClosed(stream_id_);
+    }
+    state_ = state;
+}
+
+bool H2Stream::isInOpenState(State state)
+{
+    return (state == State::OPEN ||
+            state == State::HALF_CLOSED_L ||
+            state == State::HALF_CLOSED_R);
 }
 
 void H2Stream::onWrite()
