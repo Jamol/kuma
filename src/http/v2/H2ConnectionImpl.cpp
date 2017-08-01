@@ -554,7 +554,8 @@ bool H2Connection::Impl::handleContinuationFrame(ContinuationFrame *frame)
                                   frame->getBlock() + frame->getBlockSize());
         if (frame->hasEndHeaders()) {
             HeaderVector headers;
-            if (hp_decoder_.decode(frame->getBlock(), frame->getBlockSize(), headers) < 0) {
+            uint8_t *headers_block = headers_block_buf_.empty()?nullptr:&headers_block_buf_[0];
+            if (hp_decoder_.decode(headers_block, headers_block_buf_.size(), headers) < 0) {
                 KUMA_ERRXTRACE("handleContinuationFrame, hpack decode failed");
                 // RFC 7540, 4.3
                 connectionError(H2Error::COMPRESSION_ERROR);
