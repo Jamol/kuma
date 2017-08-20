@@ -408,6 +408,11 @@ public:
     KMError setSslFlags(uint32_t ssl_flags);
     KMError attachFd(SOCKET_FD fd, const void* init_data=nullptr, size_t init_len=0);
     KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const void* init_data=nullptr, size_t init_len=0);
+    /* associate H2 stream with HttpResponse
+     *
+     * @param stream_id stream ID
+     * @param rsp HttpResponse to be associated
+     */
     KMError attachStream(uint32_t stream_id, HttpResponse* rsp);
     KMError close();
     void setAcceptCallback(AcceptCallback cb);

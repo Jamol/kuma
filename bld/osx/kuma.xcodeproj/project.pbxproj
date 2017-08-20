@@ -42,6 +42,12 @@
 		6F7BBAFF1ED2E4400093BDE3 /* AcceptorBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F7BBAFD1ED2E4400093BDE3 /* AcceptorBase.h */; };
 		6F7BBB371ED57B0A0093BDE3 /* UdpSocketBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7BBB351ED57B0A0093BDE3 /* UdpSocketBase.cpp */; };
 		6F7BBB381ED57B0A0093BDE3 /* UdpSocketBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F7BBB361ED57B0A0093BDE3 /* UdpSocketBase.h */; };
+		6F7FC3B71F4297BD0038360B /* HttpCache.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7FC3B51F4297BD0038360B /* HttpCache.cpp */; };
+		6F7FC3B81F4297BD0038360B /* HttpCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F7FC3B61F4297BD0038360B /* HttpCache.h */; };
+		6F7FC46E1F4880470038360B /* PushClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7FC46C1F4880470038360B /* PushClient.cpp */; };
+		6F7FC46F1F4880470038360B /* PushClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F7FC46D1F4880470038360B /* PushClient.h */; };
+		6F7FC4731F4933B50038360B /* h2utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7FC4711F4933B50038360B /* h2utils.cpp */; };
+		6F7FC4741F4933B50038360B /* h2utils.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F7FC4721F4933B50038360B /* h2utils.h */; };
 		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
 		6F8775FE1EAB4AD0002F1165 /* DnsResolver.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F8775FD1EAB4AD0002F1165 /* DnsResolver.h */; };
 		6F8776001EAB4B18002F1165 /* DnsResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F8775FF1EAB4B18002F1165 /* DnsResolver.cpp */; };
@@ -141,6 +147,12 @@
 		6F7BBAFD1ED2E4400093BDE3 /* AcceptorBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AcceptorBase.h; sourceTree = "<group>"; };
 		6F7BBB351ED57B0A0093BDE3 /* UdpSocketBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UdpSocketBase.cpp; sourceTree = "<group>"; };
 		6F7BBB361ED57B0A0093BDE3 /* UdpSocketBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UdpSocketBase.h; sourceTree = "<group>"; };
+		6F7FC3B51F4297BD0038360B /* HttpCache.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpCache.cpp; sourceTree = "<group>"; };
+		6F7FC3B61F4297BD0038360B /* HttpCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpCache.h; sourceTree = "<group>"; };
+		6F7FC46C1F4880470038360B /* PushClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PushClient.cpp; sourceTree = "<group>"; };
+		6F7FC46D1F4880470038360B /* PushClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PushClient.h; sourceTree = "<group>"; };
+		6F7FC4711F4933B50038360B /* h2utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = h2utils.cpp; sourceTree = "<group>"; };
+		6F7FC4721F4933B50038360B /* h2utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = h2utils.h; sourceTree = "<group>"; };
 		6F852DF11985E33000271D87 /* kuma.dylib */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.dylib"; includeInIndex = 0; path = kuma.dylib; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F852E421985EB2B00271D87 /* kuma-Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "kuma-Prefix.pch"; sourceTree = SOURCE_ROOT; };
 		6F852E441985EB4700271D87 /* kumaProj.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaProj.xcconfig; sourceTree = "<group>"; };
@@ -338,6 +350,10 @@
 				6FE0EEFE1D409863006136B7 /* H2Stream.cpp */,
 				6FE0EEFF1D409863006136B7 /* H2Stream.h */,
 				6FE0EEF01D409838006136B7 /* hpack */,
+				6F7FC46C1F4880470038360B /* PushClient.cpp */,
+				6F7FC46D1F4880470038360B /* PushClient.h */,
+				6F7FC4711F4933B50038360B /* h2utils.cpp */,
+				6F7FC4721F4933B50038360B /* h2utils.h */,
 			);
 			path = v2;
 			sourceTree = "<group>";
@@ -388,8 +404,10 @@
 				6FBB2CA11D139C560024550F /* Uri.h */,
 				6F3731F31E37242200479457 /* HttpHeader.cpp */,
 				6F3731F41E37242200479457 /* HttpHeader.h */,
-				6F37307D1E2F359C00479457 /* HttpMessage.h */,
 				6F37307E1E2F35B500479457 /* HttpMessage.cpp */,
+				6F37307D1E2F359C00479457 /* HttpMessage.h */,
+				6F7FC3B51F4297BD0038360B /* HttpCache.cpp */,
+				6F7FC3B61F4297BD0038360B /* HttpCache.h */,
 			);
 			path = http;
 			sourceTree = "<group>";
@@ -434,6 +452,7 @@
 				6FBB2CAB1D139C560024550F /* HttpRequestImpl.h in Headers */,
 				6FBB2CBD1D139C990024550F /* WebSocketImpl.h in Headers */,
 				6F5C79E21D59CC8700FF8C83 /* DestroyDetector.h in Headers */,
+				6F7FC4741F4933B50038360B /* h2utils.h in Headers */,
 				6FE0EF181D40986D006136B7 /* StaticTable.h in Headers */,
 				6F3731F61E37242200479457 /* HttpHeader.h in Headers */,
 				6F7512941D76C237000BE6EC /* SocketNotifier.h in Headers */,
@@ -441,6 +460,7 @@
 				6F75128F1D76BD46000BE6EC /* PipeNotifier.h in Headers */,
 				6FE0EF051D409863006136B7 /* H2ConnectionMgr.h in Headers */,
 				6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */,
+				6F7FC46F1F4880470038360B /* PushClient.h in Headers */,
 				6FA951421A3808450033C9CF /* kmdefs.h in Headers */,
 				6F8775FE1EAB4AD0002F1165 /* DnsResolver.h in Headers */,
 				6F6208FD1A26BDB1000DAF4B /* kmapi.h in Headers */,
@@ -455,6 +475,7 @@
 				6FF7478E1B29587D0007F34D /* base64.h in Headers */,
 				6F91F1721D782DD3004A95B9 /* Http1xRequest.h in Headers */,
 				6FBB2CB71D139C700024550F /* SioHandler.h in Headers */,
+				6F7FC3B81F4297BD0038360B /* HttpCache.h in Headers */,
 				6F6D12EF1D965A9D008B64E6 /* Http1xResponse.h in Headers */,
 				6F7BBB381ED57B0A0093BDE3 /* UdpSocketBase.h in Headers */,
 				6FBB2CBF1D139C990024550F /* WSHandler.h in Headers */,
@@ -539,6 +560,7 @@
 				6FBB2CAA1D139C560024550F /* HttpRequestImpl.cpp in Sources */,
 				6FBB2C931D139C430024550F /* VPoll.cpp in Sources */,
 				6FF212931B181103006603BB /* kmapi.cpp in Sources */,
+				6F7FC46E1F4880470038360B /* PushClient.cpp in Sources */,
 				6FBB2CBC1D139C990024550F /* WebSocketImpl.cpp in Sources */,
 				6F3731F51E37242200479457 /* HttpHeader.cpp in Sources */,
 				6FF211031B130A2F006603BB /* TcpListenerImpl.cpp in Sources */,
@@ -553,6 +575,8 @@
 				6F7BBB371ED57B0A0093BDE3 /* UdpSocketBase.cpp in Sources */,
 				6FE0EF071D409863006136B7 /* H2Frame.cpp in Sources */,
 				6FF211D91B1556FB006603BB /* EventLoopImpl.cpp in Sources */,
+				6F7FC4731F4933B50038360B /* h2utils.cpp in Sources */,
+				6F7FC3B71F4297BD0038360B /* HttpCache.cpp in Sources */,
 				6FBB2C921D139C430024550F /* SelectPoll.cpp in Sources */,
 				6F2963561A18AB0D00C3C79B /* util.cpp in Sources */,
 				6FE0EF091D409863006136B7 /* Http2Request.cpp in Sources */,

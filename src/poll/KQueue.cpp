@@ -50,8 +50,6 @@ public:
     bool isLevelTriggered() const override { return true; }
     
 private:
-    typedef std::map<int, IOCallback> IOCallbackMap;
-
     int             kqueue_fd_ { -1 };
     NotifierPtr     notifier_ { std::move(Notifier::createNotifier()) };
     

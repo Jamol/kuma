@@ -57,6 +57,7 @@ public:
 protected:
     void onConnect(KMError err);
     void onError(KMError err);
+    void onComplete();
     
     KMError sendRequest() override;
     void checkHeaders() override;
@@ -81,7 +82,8 @@ protected:
     
     // response
     int status_code_ = 0;
-    HeaderMap rsp_headers_;
+    HeaderVector rsp_headers_;
+    HttpBody rsp_cache_body_;
     
     bool write_blocked_ { false };
     KM_Queue<iovec> data_queue_;

@@ -35,9 +35,14 @@ const std::string strContentType = "Content-Type";
 const std::string strContentLength = "Content-Length";
 const std::string strTransferEncoding = "Transfer-Encoding";
 const std::string strChunked = "chunked";
+const std::string strCacheControl = "Cache-Control";
+const std::string strCookie = "Cookie";
+const std::string strHost = "Host";
+const std::string strUpgrade = "Upgrade";
 
 using KeyValuePair = std::pair<std::string, std::string>;
 using HeaderVector = std::vector<KeyValuePair>;
+using HttpBody = std::vector<uint8_t>;
 
 struct CaseIgnoreLess : public std::binary_function<std::string, std::string, bool> {
     bool operator()(const std::string &lhs, const std::string &rhs) const {

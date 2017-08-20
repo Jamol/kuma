@@ -211,6 +211,9 @@ public:
     void setEndHeaders() { addFlags(H2_FRAME_FLAG_END_HEADERS); }
     void setHeaders(HeaderVector h, size_t hsize) { headers_ = std::move(h); hsize_ = hsize; }
     
+    HeaderVector& getHeaders() { return headers_; }
+    size_t getHeadersSize() { return hsize_; }
+    
 private:
     uint32_t prom_stream_id_ = 0;
     const uint8_t *block_ = nullptr;
@@ -300,6 +303,8 @@ private:
     HeaderVector headers_;
     size_t hsize_ = 0;
 };
+
+const std::string& H2FrameTypeToString(H2FrameType type);
 
 KUMA_NS_END
 

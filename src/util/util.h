@@ -24,7 +24,9 @@
 
 #include "kmdefs.h"
 #include "evdefs.h" // for SOCKET_FD
+
 #include <string>
+#include <sstream>
 
 struct addrinfo;
 struct sockaddr;
@@ -84,6 +86,21 @@ std::string& trim_right(std::string& str);
 bool contains_token(const std::string& str, const std::string& token, char delim);
 std::string getExecutablePath();
 std::string getCurrentModulePath();
+
+template<typename LAMBDA> // (std::string &token) -> bool
+void for_each_token(const std::string &tokens, char delim, LAMBDA &&func)
+{
+    std::stringstream ss;
+    ss.str(tokens);
+    std::string token;
+    while (std::getline(ss, token, delim)) {
+        trim_left(token);
+        trim_right(token);
+        if (!func(token)) {
+            break;
+        }
+    }
+}
 
 inline uint32_t decode_u32(const uint8_t *src)
 {

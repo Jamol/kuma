@@ -30,6 +30,7 @@
 # define KUMA_NS_BEGIN   namespace kuma {
 #endif
 #define KUMA_NS_END     }
+#define KUMA_NS_USING   using namespace kuma;
 
 KUMA_NS_BEGIN
 

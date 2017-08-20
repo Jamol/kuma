@@ -1,4 +1,4 @@
-/* Copyright © 2017, Fengping Bao <jamol@live.com>
+/* Copyright © 2014-2017, Fengping Bao <jamol@live.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,40 +19,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __HttpHeader_H__
-#define __HttpHeader_H__
+#ifndef __h2utils_H__
+#define __h2utils_H__
 
-#include "kmdefs.h"
-#include "kmapi.h"
-#include "httpdefs.h"
+#include "h2defs.h"
 
 KUMA_NS_BEGIN
 
-class HttpHeader
-{
-public:
-    virtual ~HttpHeader() {}
-    void addHeader(std::string name, std::string value);
-    void addHeader(std::string name, uint32_t value);
-    bool hasHeader(const std::string &name) const;
-    const std::string& getHeader(const std::string &name) const;
-    std::string buildHeader(const std::string &method, const std::string &url, const std::string &ver);
-    std::string buildHeader(int status_code, const std::string &desc, const std::string &ver);
-    bool hasBody() const { return has_body_; }
-    virtual void reset();
-    
-protected:
-    void processHeader();
-    void processHeader(int status_code);
-    
-protected:
-    HeaderVector            header_vec_;
-    bool                    is_chunked_ = false;
-    bool                    has_content_length_ = false;
-    bool                    has_body_ = false;
-    size_t                  content_length_ = 0;
-};
+bool processH2ResponseHeaders(const HeaderVector &h2_headers, int &status_code, HeaderVector &rsp_headers);
 
 KUMA_NS_END
 
-#endif /* __HttpHeader_H__ */
+#endif /* __h2utils_H__ */

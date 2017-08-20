@@ -25,6 +25,8 @@
 #include "util/util.h"
 #include "H2ConnectionMgr.h"
 #include "Http2Response.h"
+#include "Http2Request.h"
+#include "PushClient.h"
 
 #include <sstream>
 #include <algorithm>
@@ -66,6 +68,7 @@ void H2Connection::Impl::cleanup()
 {
     setState(State::CLOSED);
     TcpConnection::close();
+    push_clients_.clear();
     removeSelf();
 }
 
@@ -155,6 +158,9 @@ KMError H2Connection::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl
 
 KMError H2Connection::Impl::attachStream(uint32_t stream_id, HttpResponse::Impl* rsp)
 {
+    if (isPromisedStream(stream_id)) {
+        return KMError::INVALID_PARAM;
+    }
     return rsp->attachStream(this, stream_id);
 }
 
@@ -179,9 +185,9 @@ KMError H2Connection::Impl::sendH2Frame(H2Frame *frame)
     }
     
     if (isControlFrame(frame)) {
-        KUMA_INFOXTRACE("sendH2Frame, type="<<frame->type()<<", streamId="<<frame->getStreamId()<<", flags="<<int(frame->getFlags()));
+        KUMA_INFOXTRACE("sendH2Frame, type="<<H2FrameTypeToString(frame->type())<<", streamId="<<frame->getStreamId()<<", flags="<<int(frame->getFlags()));
     } else if (frame->getFlags() & H2_FRAME_FLAG_END_STREAM) {
-        KUMA_INFOXTRACE("sendH2Frame, end stream, type="<<frame->type()<<", streamId="<<frame->getStreamId());
+        KUMA_INFOXTRACE("sendH2Frame, end stream, type="<<H2FrameTypeToString(frame->type())<<", streamId="<<frame->getStreamId());
     }
     
     if (frame->type() == H2FrameType::HEADERS) {
@@ -305,8 +311,8 @@ bool H2Connection::Impl::handleHeadersFrame(HeadersFrame *frame)
         }
         frame->setHeaders(std::move(headers), 0);
     } else {
-        next_frame_must_be_continuation_ = true;
-        expected_stream_id_of_continuation_ = frame->getStreamId();
+        expect_continuation_frame_ = true;
+        stream_id_of_expected_continuation_ = frame->getStreamId();
         headers_block_buf_.assign(frame->getBlock(), frame->getBlock() + frame->getBlockSize());
     }
     
@@ -430,13 +436,16 @@ bool H2Connection::Impl::handlePushFrame(PushPromiseFrame *frame)
         }
         frame->setHeaders(std::move(headers), 0);
     } else {
-        next_frame_must_be_continuation_ = true;
-        expected_stream_id_of_continuation_ = frame->getPromisedStreamId();
+        expect_continuation_frame_ = true;
+        stream_id_of_expected_continuation_ = frame->getPromisedStreamId();
         headers_block_buf_.assign(frame->getBlock(), frame->getBlock() + frame->getBlockSize());
     }
     
     H2StreamPtr stream(new H2Stream(frame->getPromisedStreamId(), this, init_local_window_size_, init_remote_window_size_));
     addStream(stream);
+    PushClientPtr client(new PushClient());
+    client->attachStream(this, stream);
+    addPushClient(stream->getStreamId(), std::move(client));
     return stream->handlePushFrame(frame);
 }
 
@@ -542,7 +551,7 @@ bool H2Connection::Impl::handleContinuationFrame(ContinuationFrame *frame)
         connectionError(H2Error::PROTOCOL_ERROR);
         return false;
     }
-    if (!next_frame_must_be_continuation_) {
+    if (!expect_continuation_frame_) {
         // RFC 7540, 6.10
         connectionError(H2Error::PROTOCOL_ERROR);
         return false;
@@ -562,7 +571,7 @@ bool H2Connection::Impl::handleContinuationFrame(ContinuationFrame *frame)
                 return false;
             }
             frame->setHeaders(std::move(headers), 0);
-            next_frame_must_be_continuation_ = false;
+            expect_continuation_frame_ = false;
             headers_block_buf_.clear();
         }
         return stream->handleContinuationFrame(frame);
@@ -634,7 +643,7 @@ bool H2Connection::Impl::onFrame(H2Frame *frame)
     if (getState() == State::HANDSHAKE && frame->type() != H2FrameType::SETTINGS) {
         // RFC 7540, 3.5
         // the first frame must be SETTINGS, otherwise PROTOCOL_ERROR on connection
-        KUMA_ERRXTRACE("onFrame, the first frame is not SETTINGS, type="<<frame->type());
+        KUMA_ERRXTRACE("onFrame, the first frame is not SETTINGS, type="<<H2FrameTypeToString(frame->type()));
         // don't send goaway since connection is not open
         setState(State::CLOSED);
         if (error_cb_) {
@@ -642,9 +651,9 @@ bool H2Connection::Impl::onFrame(H2Frame *frame)
         }
         return false;
     }
-    if (next_frame_must_be_continuation_ &&
+    if (expect_continuation_frame_ &&
         (frame->type() != H2FrameType::CONTINUATION ||
-         frame->getStreamId() != expected_stream_id_of_continuation_)) {
+         frame->getStreamId() != stream_id_of_expected_continuation_)) {
         connectionError(H2Error::PROTOCOL_ERROR);
         return false;
     }
@@ -733,6 +742,16 @@ void H2Connection::Impl::removeStream(uint32_t stream_id)
     } else {
         streams_.erase(stream_id);
     }
+}
+
+void H2Connection::Impl::addPushClient(uint32_t push_id, PushClientPtr client)
+{
+    push_clients_[push_id] = std::move(client);
+}
+
+void H2Connection::Impl::removePushClient(uint32_t push_id)
+{
+    push_clients_.erase(push_id);
 }
 
 void H2Connection::Impl::addConnectListener(long uid, ConnectCallback cb)

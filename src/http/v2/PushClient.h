@@ -1,4 +1,4 @@
-/* Copyright © 2017, Fengping Bao <jamol@live.com>
+/* Copyright © 2014-2017, Fengping Bao <jamol@live.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,40 +19,54 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __HttpHeader_H__
-#define __HttpHeader_H__
+#ifndef __PushClient_H__
+#define __PushClient_H__
 
-#include "kmdefs.h"
-#include "kmapi.h"
-#include "httpdefs.h"
+#include "h2defs.h"
+#include "H2Stream.h"
+
+#include <memory>
 
 KUMA_NS_BEGIN
 
-class HttpHeader
+class PushClient
 {
 public:
-    virtual ~HttpHeader() {}
-    void addHeader(std::string name, std::string value);
-    void addHeader(std::string name, uint32_t value);
-    bool hasHeader(const std::string &name) const;
-    const std::string& getHeader(const std::string &name) const;
-    std::string buildHeader(const std::string &method, const std::string &url, const std::string &ver);
-    std::string buildHeader(int status_code, const std::string &desc, const std::string &ver);
-    bool hasBody() const { return has_body_; }
-    virtual void reset();
+    PushClient();
+    ~PushClient();
+    
+    KMError attachStream(H2Connection::Impl* conn, H2StreamPtr &stream);
     
 protected:
-    void processHeader();
-    void processHeader(int status_code);
+    void onPromise(const HeaderVector &headers);
+    void onHeaders(const HeaderVector &headers, bool end_stream);
+    void onData(void *data, size_t len, bool end_stream);
+    void onRSTStream(int err);
+    void onWrite();
+    
+    void onError(KMError err);
+    void onMessageComplete();
+    
+    void reset();
+    void releaseSelf();
     
 protected:
-    HeaderVector            header_vec_;
-    bool                    is_chunked_ = false;
-    bool                    has_content_length_ = false;
-    bool                    has_body_ = false;
-    size_t                  content_length_ = 0;
+    H2StreamPtr stream_;
+    H2Connection::Impl* conn_ = nullptr;
+    uint32_t push_id_ = 0;
+    
+    std::string req_method_;
+    std::string req_scheme_;
+    std::string req_path_;
+    std::string req_host_;
+    
+    int status_code_ = 0;
+    HeaderVector rsp_headers_;
+    std::vector<uint8_t> rsp_body_;
 };
+
+using PushClientPtr = std::unique_ptr<PushClient>;
 
 KUMA_NS_END
 
-#endif /* __HttpHeader_H__ */
+#endif /* __PushClient_H__ */

@@ -84,7 +84,7 @@ public:
     void setUrl(std::string url);
     void setUrlPath(std::string path);
     void setVersion(std::string ver);
-    void setHeaders(HeaderVector & headers);
+    void setHeaders(const HeaderVector & headers);
     void setHeaders(HeaderVector && headers);
     void addParamValue(std::string name, std::string value);
     void addHeaderValue(std::string name, std::string value);

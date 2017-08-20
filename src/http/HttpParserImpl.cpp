@@ -70,7 +70,7 @@ HttpParser::Impl& HttpParser::Impl::operator=(const Impl& other)
         url_ = other.url_;
         url_path_ = other.url_path_;
         param_map_ = other.param_map_;
-        header_map_ = other.header_map_;
+        header_vec_ = other.header_vec_;
         status_code_ = other.status_code_;
     }
     return *this;
@@ -99,7 +99,7 @@ HttpParser::Impl& HttpParser::Impl::operator=(Impl&& other)
         url_.swap(other.url_);
         url_path_.swap(other.url_path_);
         param_map_.swap(other.param_map_);
-        header_map_.swap(other.header_map_);
+        header_vec_.swap(other.header_vec_);
         status_code_ = other.status_code_;
     }
     return *this;
@@ -108,7 +108,7 @@ HttpParser::Impl& HttpParser::Impl::operator=(Impl&& other)
 HttpParser::Impl::~Impl()
 {
     param_map_.clear();
-    header_map_.clear();
+    header_vec_.clear();
 }
 
 void HttpParser::Impl::reset()
@@ -512,10 +512,10 @@ void HttpParser::Impl::onHeaderComplete()
     if(is_chunked_) {
         KUMA_INFOTRACE("HttpParser::onHeaderComplete, Transfer-Encoding=chunked");
     }
-    auto it = header_map_.find("Upgrade");
-    if(it != header_map_.end()) {
+    auto upgrade_to = HttpHeader::getHeader(strUpgrade);
+    if(!upgrade_to.empty()) {
         upgrade_ = true;
-        KUMA_INFOTRACE("HttpParser::onHeaderComplete, Upgrade="<<it->second);
+        KUMA_INFOTRACE("HttpParser::onHeaderComplete, Upgrade="<<upgrade_to);
     }
     if(event_cb_) event_cb_(HttpEvent::HEADER_COMPLETE);
 }
@@ -638,7 +638,7 @@ void HttpParser::Impl::forEachParam(EnumrateCallback cb)
 
 void HttpParser::Impl::forEachHeader(EnumrateCallback cb)
 {
-    for (auto &kv : header_map_) {
+    for (auto &kv : header_vec_) {
         cb(kv.first, kv.second);
     }
 }
@@ -663,18 +663,14 @@ void HttpParser::Impl::setVersion(std::string ver)
     version_ = std::move(ver);
 }
 
-void HttpParser::Impl::setHeaders(HeaderVector & headers)
+void HttpParser::Impl::setHeaders(const HeaderVector & headers)
 {
-    for (auto &kv : headers) {
-        header_map_.emplace(kv.first, kv.second);
-    }
+    header_vec_ = headers;
 }
 
 void HttpParser::Impl::setHeaders(HeaderVector && headers)
 {
-    for (auto &kv : headers) {
-        header_map_.emplace(std::move(kv.first), std::move(kv.second));
-    }
+    header_vec_ = std::move(headers);
 }
 
 bool HttpParser::Impl::getLine(char*& cur_pos, char* end, const char*& line, const char*& line_end)

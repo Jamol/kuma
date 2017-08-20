@@ -27,7 +27,13 @@ using namespace kuma;
 void HttpHeader::addHeader(std::string name, std::string value)
 {
     if(!name.empty()) {
-        header_map_.emplace(std::move(name), std::move(value));
+        if (is_equal(name, strContentLength)) {
+            has_content_length_ = true;
+            content_length_ = std::stol(value);
+        } else if (is_equal(name, strTransferEncoding)) {
+            is_chunked_ = is_equal(strChunked, value);
+        }
+        header_vec_.emplace_back(std::move(name), std::move(value));
     }
 }
 
@@ -38,36 +44,26 @@ void HttpHeader::addHeader(std::string name, uint32_t value)
 
 bool HttpHeader::hasHeader(const std::string &name) const
 {
-    return header_map_.find(name) != header_map_.end();
+    for (auto const &kv : header_vec_) {
+        if (is_equal(kv.first, name)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 const std::string& HttpHeader::getHeader(const std::string &name) const
 {
-    auto it = header_map_.find(name);
-    if (it != header_map_.end()) {
-        return (*it).second;
+    for (auto const &kv : header_vec_) {
+        if (is_equal(kv.first, name)) {
+            return kv.second;
+        }
     }
     return EmptyString;
 }
 
 void HttpHeader::processHeader()
 {
-    auto it = header_map_.find(strContentLength);
-    if (it != header_map_.end()) {
-        has_content_length_ = true;
-        content_length_ = std::stol(it->second);
-    } else {
-        has_content_length_ = false;
-        content_length_ = 0;
-    }
-    
-    it = header_map_.find(strTransferEncoding);
-    if (it != header_map_.end()) {
-        is_chunked_ = is_equal(strChunked, it->second);
-    } else {
-        is_chunked_ = false;
-    }
-    
     has_body_ = is_chunked_ || (has_content_length_ && content_length_ > 0);
 }
 
@@ -83,7 +79,7 @@ std::string HttpHeader::buildHeader(const std::string &method, const std::string
     processHeader();
     std::string req = method + " " + url + " " + (!ver.empty()?ver:VersionHTTP1_1);
     req += "\r\n";
-    for (auto &kv : header_map_) {
+    for (auto &kv : header_vec_) {
         req += kv.first + ": " + kv.second + "\r\n";
     }
     req += "\r\n";
@@ -98,7 +94,7 @@ std::string HttpHeader::buildHeader(int status_code, const std::string &desc, co
         rsp += " " + desc;
     }
     rsp += "\r\n";
-    for (auto &kv : header_map_) {
+    for (auto &kv : header_vec_) {
         rsp += kv.first + ": " + kv.second + "\r\n";
     }
     rsp += "\r\n";
@@ -107,7 +103,7 @@ std::string HttpHeader::buildHeader(int status_code, const std::string &desc, co
 
 void HttpHeader::reset()
 {
-    header_map_.clear();
+    header_vec_.clear();
     has_content_length_ = false;
     content_length_ = 0;
     is_chunked_ = false;

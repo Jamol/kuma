@@ -1,4 +1,4 @@
-/* Copyright © 2017, Fengping Bao <jamol@live.com>
+/* Copyright © 2014-2017, Fengping Bao <jamol@live.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -19,40 +19,40 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __HttpHeader_H__
-#define __HttpHeader_H__
-
-#include "kmdefs.h"
-#include "kmapi.h"
-#include "httpdefs.h"
+#include "h2utils.h"
 
 KUMA_NS_BEGIN
 
-class HttpHeader
+bool processH2ResponseHeaders(const HeaderVector &h2_headers, int &status_code, HeaderVector &rsp_headers)
 {
-public:
-    virtual ~HttpHeader() {}
-    void addHeader(std::string name, std::string value);
-    void addHeader(std::string name, uint32_t value);
-    bool hasHeader(const std::string &name) const;
-    const std::string& getHeader(const std::string &name) const;
-    std::string buildHeader(const std::string &method, const std::string &url, const std::string &ver);
-    std::string buildHeader(int status_code, const std::string &desc, const std::string &ver);
-    bool hasBody() const { return has_body_; }
-    virtual void reset();
+    if (h2_headers.empty()) {
+        return false;
+    }
+    if (!is_equal(h2_headers[0].first, H2HeaderStatus)) {
+        return false;
+    }
+    status_code = std::stoi(h2_headers[0].second);
+    std::string str_cookie;
+    for (auto const &kv : h2_headers) {
+        auto const &name = kv.first;
+        auto const &value = kv.second;
+        if (!name.empty()) {
+            if (is_equal(name, H2HeaderCookie)) {
+                // reassemble cookie
+                if (!str_cookie.empty()) {
+                    str_cookie += "; ";
+                }
+                str_cookie += value;
+            } else if (name[0] != ':') {
+                rsp_headers.emplace_back(name, value);
+            }
+        }
+    }
+    if (!str_cookie.empty()) {
+        rsp_headers.emplace_back(strCookie, std::move(str_cookie));
+    }
     
-protected:
-    void processHeader();
-    void processHeader(int status_code);
-    
-protected:
-    HeaderVector            header_vec_;
-    bool                    is_chunked_ = false;
-    bool                    has_content_length_ = false;
-    bool                    has_body_ = false;
-    size_t                  content_length_ = 0;
-};
+    return true;
+}
 
 KUMA_NS_END
-
-#endif /* __HttpHeader_H__ */

@@ -38,6 +38,7 @@ class H2Stream : public KMObject
 {
 public:
     using HeadersCallback = std::function<void(const HeaderVector &, bool)>;
+    using PromiseCallback = std::function<void(const HeaderVector &)>;
     using DataCallback = std::function<void(void *, size_t, bool)>;
     using RSTStreamCallback = std::function<void(int)>;
     using WriteCallback = std::function<void(void)>;
@@ -47,13 +48,15 @@ public:
     
     uint32_t getStreamId() { return stream_id_; }
     
-    KMError sendHeaders(const HeaderVector &headers, size_t headers_size,bool end_stream);
+    KMError sendPushPromise(const HeaderVector &headers, size_t headers_size, uint32_t stream_id);
+    KMError sendHeaders(const HeaderVector &headers, size_t headers_size, bool end_stream);
     int sendData(const void *data, size_t len, bool end_stream = false);
     KMError sendWindowUpdate(uint32_t delta);
     
     void close();
     
     void setHeadersCallback(HeadersCallback cb) { headers_cb_ = std::move(cb); }
+    void setPromiseCallback(PromiseCallback cb) { promise_cb_ = std::move(cb); }
     void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
     void setRSTStreamCallback(RSTStreamCallback cb) { reset_cb_ = std::move(cb); }
     void setWriteCallback(WriteCallback cb) { write_cb_ = std::move(cb); }
@@ -88,6 +91,7 @@ protected:
     
     void endStreamSent();
     void endStreamReceived();
+    void onHeaderCompleted(HeaderVector &headers, bool end_stream);
     
     KMError sendRSTStream(H2Error err);
     bool verifyFrame(H2Frame *frame);
@@ -98,6 +102,8 @@ protected:
     uint32_t stream_id_;
     H2Connection::Impl * conn_;
     State state_ = State::IDLE;
+    
+    PromiseCallback promise_cb_;
     HeadersCallback headers_cb_;
     DataCallback data_cb_;
     RSTStreamCallback reset_cb_;

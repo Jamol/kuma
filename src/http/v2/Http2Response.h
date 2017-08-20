@@ -66,7 +66,7 @@ private:
     size_t                  body_bytes_sent_ = 0;
     
     // request
-    HeaderMap               req_headers_;
+    HeaderVector            req_headers_;
     std::string             req_method_;
     std::string             req_path_;
     

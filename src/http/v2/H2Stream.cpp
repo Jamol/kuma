@@ -37,6 +37,24 @@ H2Stream::H2Stream(uint32_t stream_id, H2Connection::Impl* conn, uint32_t init_l
     KM_SetObjKey("H2Stream_"<<stream_id);
 }
 
+KMError H2Stream::sendPushPromise(const HeaderVector &headers, size_t headers_size, uint32_t stream_id)
+{
+    if (!isPromisedStream(getStreamId())) {
+        return KMError::INVALID_STATE;
+    }
+    if (getState() != State::IDLE) {
+        return KMError::INVALID_STATE;
+    }
+    PushPromiseFrame frame;
+    frame.setStreamId(stream_id);
+    frame.setPromisedStreamId(getStreamId());
+    frame.addFlags(H2_FRAME_FLAG_END_HEADERS);
+    frame.setHeaders(std::move(headers), headers_size);
+    auto ret = conn_->sendH2Frame(&frame);
+    setState(State::RESERVED_L);
+    return ret;
+}
+
 KMError H2Stream::sendHeaders(const HeaderVector &headers, size_t headers_size, bool end_stream)
 {
     HeadersFrame frame;
@@ -118,6 +136,9 @@ KMError H2Stream::sendWindowUpdate(uint32_t delta)
 
 void H2Stream::close()
 {
+    if (getState() == State::CLOSED || getState() == State::IDLE) {
+        return;
+    }
     streamError(H2Error::CANCEL);
     if (conn_) {
         conn_->removeStream(getStreamId());
@@ -141,6 +162,29 @@ void H2Stream::endStreamReceived()
         setState(State::CLOSED);
     } else {
         setState(State::HALF_CLOSED_R);
+    }
+}
+
+void H2Stream::onHeaderCompleted(HeaderVector &headers, bool end_stream)
+{
+    if (isPromisedStream(getStreamId())) {
+        if (getState() == State::RESERVED_R) {
+            // headers of server push request
+            headers_received_ = false;
+            headers_end_ = false;
+            if (promise_cb_) {
+                promise_cb_(headers);
+            }
+        } else if (getState() == State::HALF_CLOSED_L) {
+            // headers of server push response
+            if (headers_cb_) {
+                headers_cb_(headers, end_stream);
+            }
+        }
+    } else {
+        if (headers_cb_) {
+            headers_cb_(headers, end_stream);
+        }
     }
 }
 
@@ -170,6 +214,12 @@ void H2Stream::streamError(H2Error err)
 bool H2Stream::handleDataFrame(DataFrame *frame)
 {
     if (!verifyFrame(frame)) {
+        return false;
+    }
+    if (isPromisedStream(getStreamId()) && getState() == State::RESERVED_R) {
+        // RFC 7540, 8.2
+        // Promised request MUST NOT include a request body
+        streamError(H2Error::PROTOCOL_ERROR);
         return false;
     }
     if (getState() != State::OPEN && getState() != State::HALF_CLOSED_L) {
@@ -214,8 +264,8 @@ bool H2Stream::handleHeadersFrame(HeadersFrame *frame)
         KUMA_INFOXTRACE("handleHeadersFrame, END_STREAM received");
         endStreamReceived();
     }
-    if (!is_tailer && headers_end_ && headers_cb_) {
-        headers_cb_(frame->getHeaders(), end_stream);
+    if (!is_tailer && headers_end_) {
+        onHeaderCompleted(frame->getHeaders(), end_stream);
     }
     return true;
 }
@@ -258,6 +308,9 @@ bool H2Stream::handlePushFrame(PushPromiseFrame *frame)
     headers_received_ = true;
     headers_end_ = frame->hasEndHeaders();
     setState(State::RESERVED_R);
+    if (headers_end_) {
+        onHeaderCompleted(frame->getHeaders(), false);
+    }
     return true;
 }
 
@@ -311,8 +364,8 @@ bool H2Stream::handleContinuationFrame(ContinuationFrame *frame)
             tailers_end_ = true;
         }
     }
-    if (!is_tailer && headers_end_ && headers_cb_) {
-        headers_cb_(frame->getHeaders(), end_stream);
+    if (!is_tailer && headers_end_) {
+        onHeaderCompleted(frame->getHeaders(), end_stream);
     }
     return true;
 }

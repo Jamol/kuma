@@ -44,7 +44,6 @@ void Http2Response::cleanup()
 KMError Http2Response::attachStream(H2Connection::Impl* conn, uint32_t stream_id)
 {
     loop_token_.eventLoop(conn->eventLoop());
-    //stream_ = conn->createStream(streamId);
     stream_ = conn->getStream(stream_id);
     if (!stream_) {
         return KMError::INVALID_STATE;
@@ -143,9 +142,9 @@ size_t Http2Response::buildHeaders(int status_code, HeaderVector &headers)
     std::string str_status_code = std::to_string(status_code);
     headers.emplace_back(std::make_pair(H2HeaderStatus, str_status_code));
     headers_size += H2HeaderStatus.size() + str_status_code.size();
-    for (auto it : header_map_) {
-        headers.emplace_back(std::make_pair(it.first, it.second));
-        headers_size += it.first.size() + it.second.size();
+    for (auto const &kv : header_vec_) {
+        headers.emplace_back(kv.first, kv.second);
+        headers_size += kv.first.size() + kv.second.size();
     }
     return headers_size;
 }
@@ -155,9 +154,10 @@ const std::string& Http2Response::getParamValue(std::string name) const {
 }
 
 const std::string& Http2Response::getHeaderValue(std::string name) const {
-    auto it = req_headers_.find(name);
-    if (it != req_headers_.end()) {
-        return (*it).second;
+    for (auto const &kv : req_headers_) {
+        if (is_equal(kv.first, name)) {
+            return kv.second;
+        }
     }
     return EmptyString;
 }
@@ -174,32 +174,33 @@ void Http2Response::onHeaders(const HeaderVector &headers, bool end_stream)
         return;
     }
     std::string str_cookie;
-    for (auto &kv : headers) {
-        auto &name = kv.first;
-        auto &value = kv.second;
+    for (auto const &kv : headers) {
+        auto const &name = kv.first;
+        auto const &value = kv.second;
         if (!name.empty()) {
             if (name[0] == ':') { // pseudo header
                 if (name == H2HeaderMethod) {
-                    req_method_ = std::move(value);
+                    req_method_ = value;
                 } else if (name == H2HeaderAuthority) {
-                    req_headers_["host"] = std::move(value);
+                    req_headers_.emplace_back(strHost, value);
                 } else if (name == H2HeaderPath) {
-                    req_path_ = std::move(value);
+                    req_path_ = value;
                 }
             } else {
                 if (is_equal(name, H2HeaderCookie)) {
+                    // reassemble cookie
                     if (!str_cookie.empty()) {
                         str_cookie += "; ";
                     }
                     str_cookie += value;
                 } else {
-                    req_headers_[std::move(name)] = std::move(value);
+                    req_headers_.emplace_back(name, value);
                 }
             }
         }
     }
     if (!str_cookie.empty()) {
-        req_headers_.emplace("Cookie", str_cookie);
+        req_headers_.emplace_back(strCookie, std::move(str_cookie));
     }
     DESTROY_DETECTOR_SETUP();
     if (header_cb_) header_cb_();

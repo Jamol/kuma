@@ -548,3 +548,30 @@ H2Error ContinuationFrame::decode(const FrameHeader &hdr, const uint8_t *payload
     bsize_ = len;
     return H2Error::NOERR;
 }
+
+KUMA_NS_BEGIN
+const std::string& H2FrameTypeToString(H2FrameType type)
+{
+#define CASE_FRAME_TYPE(TYPE) \
+    case H2FrameType::TYPE: { \
+    static const std::string str_frame_type(#TYPE); \
+        return str_frame_type; \
+    }
+
+    switch (type) {
+        CASE_FRAME_TYPE(DATA);
+        CASE_FRAME_TYPE(HEADERS);
+        CASE_FRAME_TYPE(PRIORITY);
+        CASE_FRAME_TYPE(RST_STREAM);
+        CASE_FRAME_TYPE(SETTINGS);
+        CASE_FRAME_TYPE(PUSH_PROMISE);
+        CASE_FRAME_TYPE(PING);
+        CASE_FRAME_TYPE(GOAWAY);
+        CASE_FRAME_TYPE(WINDOW_UPDATE);
+        CASE_FRAME_TYPE(CONTINUATION);
+    }
+
+#undef CASE_FRAME_TYPE
+}
+
+KUMA_NS_END

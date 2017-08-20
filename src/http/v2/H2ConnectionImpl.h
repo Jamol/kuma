@@ -26,6 +26,7 @@
 #include "FrameParser.h"
 #include "hpack/HPacker.h"
 #include "H2Stream.h"
+#include "PushClient.h"
 #include "TcpSocketImpl.h"
 #include "TcpConnection.h"
 #include "http/HttpParserImpl.h"
@@ -76,6 +77,7 @@ public:
     H2StreamPtr createStream(uint32_t stream_id);
     H2StreamPtr getStream(uint32_t stream_id);
     void removeStream(uint32_t stream_id);
+    void removePushClient(uint32_t push_id);
     
     uint32_t remoteWindowSize() { return flow_ctrl_.remoteWindowSize(); }
     void appendBlockedStream(uint32_t stream_id);
@@ -121,6 +123,7 @@ private:
     bool handleContinuationFrame(ContinuationFrame *frame);
     
     void addStream(H2StreamPtr stream);
+    void addPushClient(uint32_t push_id, PushClientPtr client);
     
     std::string buildUpgradeRequest();
     std::string buildUpgradeResponse();
@@ -178,6 +181,8 @@ protected:
     std::map<uint32_t, H2StreamPtr> promised_streams_;
     std::map<uint32_t, uint32_t> blocked_streams_;
     
+    std::map<uint32_t, PushClientPtr> push_clients_;
+    
     std::string cmp_preface_; // server only
     
     uint32_t max_local_frame_size_ = 65536;
@@ -193,8 +198,8 @@ protected:
     uint32_t max_concurrent_streams_ = 128;
     uint32_t opened_stream_count_ = 0;
     
-    bool next_frame_must_be_continuation_ = false;
-    uint32_t expected_stream_id_of_continuation_ = 0;
+    bool expect_continuation_frame_ = false;
+    uint32_t stream_id_of_expected_continuation_ = 0;
     
     bool preface_received_ = false;
     EventLoopToken loop_token_;
