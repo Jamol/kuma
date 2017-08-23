@@ -55,6 +55,16 @@ KMError HttpRequest::Impl::sendRequest(std::string method, std::string url)
     return sendRequest();
 }
 
+std::string HttpRequest::Impl::getCacheKey()
+{
+    std::string cache_key = uri_.getHost() + uri_.getPath();
+    if (!uri_.getQuery().empty()) {
+        cache_key += "?";
+        cache_key += uri_.getQuery();
+    }
+    return cache_key;
+}
+
 void HttpRequest::Impl::reset()
 {
     

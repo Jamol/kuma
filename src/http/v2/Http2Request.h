@@ -32,6 +32,15 @@
 
 KUMA_NS_BEGIN
 
+/**
+ * this class implement HTTP2 request
+ *
+ * the first Http2Request is responsible for create H2Connection, and H2Connection run on same EventLoop as
+ * Http2Request. other Http2Requests to same host will reuse this H2Connection. if Http2Request EventLoop 
+ * is different with H2Connection's, thread switch and data copy(if any) occur.
+ * Http2Request will check HTTP cache firstly, and then check if there is push promise for this request. 
+ * if none of them hit, a HTTP2 stream will be launched to complete the request.
+ */
 class Http2Request : public KMObject, public DestroyDetector, public HttpRequest::Impl, public HttpHeader
 {
 public:
@@ -48,27 +57,50 @@ public:
     const std::string& getHeaderValue(std::string name) const override;
     void forEachHeader(EnumrateCallback cb) override;
     
-public:
+protected:
+    //{ on conn_ thread
+    void onConnect(KMError err);
+    void onError(KMError err);
     void onHeaders(const HeaderVector &headers, bool end_stream);
     void onData(void *data, size_t len, bool end_stream);
     void onRSTStream(int err);
     void onWrite();
-    
-protected:
-    void onConnect(KMError err);
-    void onError(KMError err);
-    void onComplete();
+    //}
     
     KMError sendRequest() override;
     void checkHeaders() override;
+    void setupStreamCallbacks();
     
-    //{ in H2Connection thread
+    /*
+     * check if HTTP cache is available
+     */
+    bool processHttpCache(const EventLoopPtr &loop);
+    void saveRequestData(const void *data, size_t len);
+    void saveResponseData(const void *data, size_t len);
+    
+    //{ on conn_ thread
     size_t buildHeaders(HeaderVector &headers);
     KMError sendRequest_i();
     KMError sendHeaders();
     int sendData_i(const void* data, size_t len);
     int sendData_i();
     void close_i();
+    
+    /*
+     * check if server push is available
+     */
+    bool processPushPromise();
+    //}
+    
+    //{ on loop_ thread
+    void onHeaders();
+    void onData();
+    void onCacheComplete();
+    void onPushPromise();
+    void onComplete();
+    void onWrite_i();
+    void onError_i(KMError err);
+    void checkResponseStatus();
     //}
     
 protected:
@@ -83,12 +115,16 @@ protected:
     // response
     int status_code_ = 0;
     HeaderVector rsp_headers_;
-    HttpBody rsp_cache_body_;
+    KM_Queue<iovec> rsp_queue_;
+    bool header_complete_ = false;
+    bool response_complete_ = false;
     
+    bool closing_ = { false };
     bool write_blocked_ { false };
-    KM_Queue<iovec> data_queue_;
+    KM_Queue<iovec> req_queue_;
     
     EventLoopToken loop_token_;
+    EventLoopToken conn_token_;
 };
 
 KUMA_NS_END

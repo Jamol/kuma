@@ -198,6 +198,15 @@
     <ClCompile Include="..\..\src\iocp\IocpUdpSocket.cpp">
       <Filter>Source Files\iocp</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\http\v2\PushClient.cpp">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\http\HttpCache.cpp">
+      <Filter>Source Files\http</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\http\v2\h2utils.cpp">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\kmconf.h">
@@ -364,6 +373,15 @@
     </ClInclude>
     <ClInclude Include="..\..\src\iocp\IocpUdpSocket.h">
       <Filter>Header Files\iocp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\PushClient.h">
+      <Filter>Header Files\http\v2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\HttpCache.h">
+      <Filter>Header Files\http</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\h2utils.h">
+      <Filter>Header Files\http\v2</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

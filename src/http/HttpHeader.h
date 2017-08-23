@@ -40,6 +40,7 @@ public:
     std::string buildHeader(int status_code, const std::string &desc, const std::string &ver);
     bool hasBody() const { return has_body_; }
     virtual void reset();
+    HeaderVector& getHeaders() { return header_vec_; }
     
 protected:
     void processHeader();

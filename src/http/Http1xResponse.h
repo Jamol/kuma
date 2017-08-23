@@ -50,17 +50,17 @@ public:
     void reset() override; // reset for connection reuse
     KMError close() override;
     
-    const std::string& getMethod() const override { return http_parser_.getMethod(); }
-    const std::string& getPath() const override { return http_parser_.getUrlPath(); }
-    const std::string& getVersion() const override { return http_parser_.getVersion(); }
+    const std::string& getMethod() const override { return req_parser_.getMethod(); }
+    const std::string& getPath() const override { return req_parser_.getUrlPath(); }
+    const std::string& getVersion() const override { return req_parser_.getVersion(); }
     const std::string& getParamValue(std::string name) const override {
-        return http_parser_.getParamValue(std::move(name));
+        return req_parser_.getParamValue(std::move(name));
     }
     const std::string& getHeaderValue(std::string name) const override {
-        return http_parser_.getHeaderValue(std::move(name));
+        return req_parser_.getHeaderValue(std::move(name));
     }
     void forEachHeader(HttpParser::Impl::EnumrateCallback&& cb) override {
-        return http_parser_.forEachHeader(std::move(cb));
+        return req_parser_.forEachHeader(std::move(cb));
     }
     
 protected:
@@ -80,8 +80,8 @@ protected:
     void cleanup();
     
 protected:
-    HttpParser::Impl        http_parser_;
-    HttpMessage             http_message_;
+    HttpParser::Impl        req_parser_;
+    HttpMessage             rsp_message_;
     EventLoopToken          loop_token_;
 };
 

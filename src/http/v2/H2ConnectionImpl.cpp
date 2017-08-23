@@ -754,6 +754,16 @@ void H2Connection::Impl::removePushClient(uint32_t push_id)
     push_clients_.erase(push_id);
 }
 
+PushClient* H2Connection::Impl::getPushClient(const std::string &cache_key)
+{
+    for (auto &it : push_clients_) {
+        if (is_equal(cache_key, it.second->getCacheKey())) {
+            return it.second.get();
+        }
+    }
+    return nullptr;
+}
+
 void H2Connection::Impl::addConnectListener(long uid, ConnectCallback cb)
 {
     connect_listeners_[uid] = std::move(cb);

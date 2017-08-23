@@ -80,6 +80,13 @@ KMError PushClient::attachStream(H2Connection::Impl* conn, H2StreamPtr &stream)
     return KMError::NOERR;
 }
 
+H2StreamPtr PushClient::release()
+{
+    auto stream = std::move(stream_);
+    releaseSelf();
+    return stream;
+}
+
 void PushClient::onPromise(const HeaderVector &headers)
 {
     for (auto &kv : headers) {
@@ -109,9 +116,9 @@ void PushClient::onHeaders(const HeaderVector &headers, bool end_stream)
     if (!processH2ResponseHeaders(headers, status_code_, rsp_headers_)) {
         onError(KMError::INVALID_PARAM);
     }
-    
+    header_complete_ = true;
     if (end_stream) {
-        onMessageComplete();
+        onComplete();
     }
 }
 
@@ -122,7 +129,7 @@ void PushClient::onData(void *data, size_t len, bool end_stream)
         rsp_body_.insert(rsp_body_.end(), ptr, ptr + len);
     }
     if (end_stream) {
-        onMessageComplete();
+        onComplete();
     }
 }
 
@@ -141,9 +148,22 @@ void PushClient::onError(KMError err)
     releaseSelf();
 }
 
-void PushClient::onMessageComplete()
+void PushClient::onComplete()
 {
-    std::string cache_key = req_host_ + ":" + req_path_;
-    HttpCache::get().setCache(cache_key, status_code_, std::move(rsp_headers_), std::move(rsp_body_));
-    releaseSelf();
+    complete_ = true;
+}
+
+std::string PushClient::getCacheKey() const
+{
+    return req_host_ + req_path_;
+}
+
+void PushClient::getResponseHeaders(HeaderVector &rsp_headers)
+{
+    rsp_headers = std::move(rsp_headers_);
+}
+
+void PushClient::getResponseBody(HttpBody &rsp_body)
+{
+    rsp_body = std::move(rsp_body_);
 }

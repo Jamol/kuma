@@ -169,6 +169,7 @@
     <ClCompile Include="..\..\src\EventLoopImpl.cpp" />
     <ClCompile Include="..\..\src\http\Http1xRequest.cpp" />
     <ClCompile Include="..\..\src\http\Http1xResponse.cpp" />
+    <ClCompile Include="..\..\src\http\HttpCache.cpp" />
     <ClCompile Include="..\..\src\http\HttpHeader.cpp" />
     <ClCompile Include="..\..\src\http\HttpMessage.cpp" />
     <ClCompile Include="..\..\src\http\HttpParserImpl.cpp" />
@@ -181,10 +182,12 @@
     <ClCompile Include="..\..\src\http\v2\H2ConnectionMgr.cpp" />
     <ClCompile Include="..\..\src\http\v2\H2Frame.cpp" />
     <ClCompile Include="..\..\src\http\v2\H2Stream.cpp" />
+    <ClCompile Include="..\..\src\http\v2\h2utils.cpp" />
     <ClCompile Include="..\..\src\http\v2\hpack\HPacker.cpp" />
     <ClCompile Include="..\..\src\http\v2\hpack\HPackTable.cpp" />
     <ClCompile Include="..\..\src\http\v2\Http2Request.cpp" />
     <ClCompile Include="..\..\src\http\v2\Http2Response.cpp" />
+    <ClCompile Include="..\..\src\http\v2\PushClient.cpp" />
     <ClCompile Include="..\..\src\iocp\IocpAcceptor.cpp" />
     <ClCompile Include="..\..\src\iocp\IocpSocket.cpp" />
     <ClCompile Include="..\..\src\iocp\IocpUdpSocket.cpp" />
@@ -217,6 +220,7 @@
     <ClInclude Include="..\..\src\EventLoopImpl.h" />
     <ClInclude Include="..\..\src\http\Http1xRequest.h" />
     <ClInclude Include="..\..\src\http\Http1xResponse.h" />
+    <ClInclude Include="..\..\src\http\HttpCache.h" />
     <ClInclude Include="..\..\src\http\HttpHeader.h" />
     <ClInclude Include="..\..\src\http\HttpMessage.h" />
     <ClInclude Include="..\..\src\http\HttpParserImpl.h" />
@@ -230,12 +234,14 @@
     <ClInclude Include="..\..\src\http\v2\h2defs.h" />
     <ClInclude Include="..\..\src\http\v2\H2Frame.h" />
     <ClInclude Include="..\..\src\http\v2\H2Stream.h" />
+    <ClInclude Include="..\..\src\http\v2\h2utils.h" />
     <ClInclude Include="..\..\src\http\v2\hpack\HPacker.h" />
     <ClInclude Include="..\..\src\http\v2\hpack\HPackTable.h" />
     <ClInclude Include="..\..\src\http\v2\hpack\hpack_huffman_table.h" />
     <ClInclude Include="..\..\src\http\v2\hpack\StaticTable.h" />
     <ClInclude Include="..\..\src\http\v2\Http2Request.h" />
     <ClInclude Include="..\..\src\http\v2\Http2Response.h" />
+    <ClInclude Include="..\..\src\http\v2\PushClient.h" />
     <ClInclude Include="..\..\src\iocp\Iocp.h" />
     <ClInclude Include="..\..\src\iocp\IocpAcceptor.h" />
     <ClInclude Include="..\..\src\iocp\IocpBase.h" />

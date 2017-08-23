@@ -673,6 +673,11 @@ void HttpParser::Impl::setHeaders(HeaderVector && headers)
     header_vec_ = std::move(headers);
 }
 
+void HttpParser::Impl::setStatusCode(int status_code)
+{
+    status_code_ = status_code;
+}
+
 bool HttpParser::Impl::getLine(char*& cur_pos, char* end, const char*& line, const char*& line_end)
 {
     char* lf = std::find(cur_pos, end, LF);

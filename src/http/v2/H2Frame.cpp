@@ -558,6 +558,7 @@ const std::string& H2FrameTypeToString(H2FrameType type)
         return str_frame_type; \
     }
 
+    static const std::string unknown_type = "Unknown";
     switch (type) {
         CASE_FRAME_TYPE(DATA);
         CASE_FRAME_TYPE(HEADERS);
@@ -569,6 +570,8 @@ const std::string& H2FrameTypeToString(H2FrameType type)
         CASE_FRAME_TYPE(GOAWAY);
         CASE_FRAME_TYPE(WINDOW_UPDATE);
         CASE_FRAME_TYPE(CONTINUATION);
+    default:
+        return unknown_type;
     }
 
 #undef CASE_FRAME_TYPE

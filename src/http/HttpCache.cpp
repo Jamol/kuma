@@ -37,10 +37,10 @@ bool HttpCache::getCache(const std::string &key, int &status_code, HeaderVector 
         return false;
     }
     status_code = it->second.status_code;
-    auto age = duration_cast<std::chrono::seconds>(now_time - it->second.receive_time).count();
     headers = it->second.headers;
-    headers.emplace_back("Age", std::to_string(age));
     body = it->second.body;
+    auto age = duration_cast<std::chrono::seconds>(now_time - it->second.receive_time).count();
+    headers.emplace_back("Age", std::to_string(age));
     return true;
 }
 
@@ -64,14 +64,17 @@ void HttpCache::setCache(const std::string &key, int status_code, HeaderVector h
     caches_[key] = {status_code, std::move(headers), std::move(body), max_age};
 }
 
-HttpCache& HttpCache::get()
+HttpCache& HttpCache::instance()
 {
     static HttpCache inst;
     return inst;
 }
 
-bool HttpCache::isCacheable(const HeaderVector &headers)
+bool HttpCache::isCacheable(const std::string &method, const HeaderVector &headers)
 {
+    if (is_equal(method, "POST") || is_equal(method, "PUT")) {
+        return false;
+    }
     bool cacheable = true;
     for (auto &kv : headers) {
         if (is_equal(kv.first, strCacheControl)) {
@@ -83,6 +86,8 @@ bool HttpCache::isCacheable(const HeaderVector &headers)
                 }
                 return true;
             });
+        } else if (is_equal(kv.first, strUpgrade)) {
+            return false;
         }
     }
     return cacheable;

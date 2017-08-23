@@ -41,32 +41,32 @@ public:
     void setCache(const std::string &key, int status_code, HeaderVector headers, const uint8_t *body, size_t body_size);
     void setCache(const std::string &key, int status_code, HeaderVector headers, HttpBody body);
     
-    static HttpCache& get();
-    static bool isCacheable(const HeaderVector &headers);
+    static HttpCache& instance();
+    static bool isCacheable(const std::string &method, const HeaderVector &headers);
     static int getMaxAgeOfCache(const HeaderVector &headers);
     
 protected:
     HttpCache() {}
     
 protected:
-    class CacheItem
+    class CacheRecord
     {
     public:
-        CacheItem() = default;
-        CacheItem(int code, HeaderVector &&h, HttpBody &&b, int max_age)
-            : status_code(code), headers(std::move(h)), body(std::move(b))
+        CacheRecord() = default;
+        CacheRecord(int code, HeaderVector &&h, HttpBody &&b, int max_age)
+            : status_code(code), headers(std::move(h)), body(std::move(b)), max_age(max_age)
         {
             receive_time = steady_clock::now();
             expire_time = receive_time + seconds(max_age);
         }
-        CacheItem(CacheItem &&other)
+        CacheRecord(CacheRecord &&other)
         {
             headers = std::move(other.headers);
             body = std::move(other.body);
             receive_time = std::move(other.receive_time);
             expire_time = std::move(other.expire_time);
         }
-        CacheItem& operator=(CacheItem &&other)
+        CacheRecord& operator=(CacheRecord &&other)
         {
             if (this != &other) {
                 headers = std::move(other.headers);
@@ -76,13 +76,14 @@ protected:
             }
             return *this;
         }
-        int status_code;
+        int status_code = 0;
         HeaderVector headers;
         HttpBody body;
+        int max_age = 0;
         time_point<steady_clock> receive_time;
         time_point<steady_clock> expire_time;
     };
-    using CacheMap = std::map<std::string, CacheItem>;
+    using CacheMap = std::map<std::string, CacheRecord>;
     
     CacheMap caches_;
     std::mutex mutex_;

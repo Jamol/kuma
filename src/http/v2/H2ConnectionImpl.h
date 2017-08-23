@@ -43,8 +43,6 @@ KUMA_NS_BEGIN
 const uint32_t LOCAL_CONN_INITIAL_WINDOW_SIZE = 20*1024*1024;
 const uint32_t LOCAL_STREAM_INITIAL_WINDOW_SIZE = 6*1024*1024;
 
-class Http2Response;
-
 class H2Connection::Impl : public KMObject, public DestroyDetector, public FrameCallback, public TcpConnection
 {
 public:
@@ -60,6 +58,7 @@ public:
     KMError attachFd(SOCKET_FD fd, const void* init_data, size_t init_len);
     KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len);
     KMError attachStream(uint32_t stream_id, HttpResponse::Impl* rsp);
+    PushClient* getPushClient(const std::string &cache_key);
     KMError close();
     void setAcceptCallback(AcceptCallback cb) { accept_cb_ = std::move(cb); }
     void setErrorCallback(ErrorCallback cb) { error_cb_ = std::move(cb); }

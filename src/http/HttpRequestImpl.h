@@ -55,6 +55,8 @@ public:
     virtual const std::string& getHeaderValue(std::string name) const = 0;
     virtual void forEachHeader(EnumrateCallback cb) = 0;
     
+    std::string getCacheKey();
+    
     void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
     void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
     void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }

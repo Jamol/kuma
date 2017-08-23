@@ -53,6 +53,7 @@ SRCS =  \
     http/Http1xRequest.cpp \
     http/HttpResponseImpl.cpp \
     http/Http1xResponse.cpp \
+    http/HttpCache.cpp \
     http/v2/H2Frame.cpp \
     http/v2/FrameParser.cpp \
     http/v2/FlowControl.cpp \
@@ -61,6 +62,8 @@ SRCS =  \
     http/v2/Http2Response.cpp \
     http/v2/H2ConnectionImpl.cpp \
     http/v2/H2ConnectionMgr.cpp \
+    http/v2/h2utils.cpp \
+    http/v2/PushClient.cpp \
     http/v2/hpack/HPackTable.cpp \
     http/v2/hpack/HPacker.cpp \
     ws/WSHandler.cpp \

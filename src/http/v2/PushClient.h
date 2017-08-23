@@ -29,13 +29,21 @@
 
 KUMA_NS_BEGIN
 
-class PushClient
+class PushClient final
 {
 public:
     PushClient();
     ~PushClient();
     
     KMError attachStream(H2Connection::Impl* conn, H2StreamPtr &stream);
+    bool isHeaderComplete() const { return header_complete_; }
+    bool isComplete() const { return complete_; }
+    
+    std::string getCacheKey() const;
+    void getResponseHeaders(HeaderVector &rsp_headers);
+    void getResponseBody(HttpBody &rsp_body);
+    
+    H2StreamPtr release();
     
 protected:
     void onPromise(const HeaderVector &headers);
@@ -45,7 +53,7 @@ protected:
     void onWrite();
     
     void onError(KMError err);
-    void onMessageComplete();
+    void onComplete();
     
     void reset();
     void releaseSelf();
@@ -60,6 +68,8 @@ protected:
     std::string req_path_;
     std::string req_host_;
     
+    bool header_complete_ = false;
+    bool complete_ = false;
     int status_code_ = 0;
     HeaderVector rsp_headers_;
     std::vector<uint8_t> rsp_body_;

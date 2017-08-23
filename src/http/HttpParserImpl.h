@@ -86,6 +86,7 @@ public:
     void setVersion(std::string ver);
     void setHeaders(const HeaderVector & headers);
     void setHeaders(HeaderVector && headers);
+    void setStatusCode(int status_code);
     void addParamValue(std::string name, std::string value);
     void addHeaderValue(std::string name, std::string value);
     

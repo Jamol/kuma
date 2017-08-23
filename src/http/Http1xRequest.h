@@ -45,10 +45,10 @@ public:
     void reset() override; // reset for connection reuse
     KMError close() override;
     
-    int getStatusCode() const override { return http_parser_.getStatusCode(); }
-    const std::string& getVersion() const override { return http_parser_.getVersion(); }
-    const std::string& getHeaderValue(std::string name) const override { return http_parser_.getHeaderValue(std::move(name)); }
-    void forEachHeader(HttpParser::Impl::EnumrateCallback cb) override { return http_parser_.forEachHeader(std::move(cb)); }
+    int getStatusCode() const override { return rsp_parser_.getStatusCode(); }
+    const std::string& getVersion() const override { return rsp_parser_.getVersion(); }
+    const std::string& getHeaderValue(std::string name) const override { return rsp_parser_.getHeaderValue(std::move(name)); }
+    void forEachHeader(HttpParser::Impl::EnumrateCallback cb) override { return rsp_parser_.forEachHeader(std::move(cb)); }
     
 protected: // callbacks of tcp_socket
     void onConnect(KMError err) override;
@@ -63,13 +63,19 @@ private:
     void cleanup();
     void sendRequestHeader();
     bool isVersion2() override { return false; }
+    bool processHttpCache();
     
     void onHttpData(void* data, size_t len);
     void onHttpEvent(HttpEvent ev);
+    void onComplete();
+    void onCacheComplete();
     
 private:
-    HttpParser::Impl        http_parser_;
-    HttpMessage             http_message_;
+    HttpMessage             req_message_;
+    HttpParser::Impl        rsp_parser_;
+    HttpBody                rsp_cache_body_;
+    
+    EventLoopToken          loop_token_;
 };
 
 KUMA_NS_END

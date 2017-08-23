@@ -25,6 +25,7 @@
 #include "H2ConnectionMgr.h"
 #include "util/kmtrace.h"
 #include "util/util.h"
+#include "h2utils.h"
 
 #include <sstream>
 #include <algorithm>
@@ -35,15 +36,20 @@ using namespace kuma;
 Http2Request::Http2Request(const EventLoopPtr &loop, std::string ver)
 : HttpRequest::Impl(std::move(ver)), loop_(loop)
 {
+    loop_token_.eventLoop(loop);
     KM_SetObjKey("Http2Request");
 }
 
 Http2Request::~Http2Request()
 {
     iovec iov;
-    while (data_queue_.dequeue(iov)) {
+    while (req_queue_.dequeue(iov)) {
         delete [] (uint8_t*)iov.iov_base;
     }
+    while (rsp_queue_.dequeue(iov)) {
+        delete [] (uint8_t*)iov.iov_base;
+    }
+    conn_token_.reset();
     loop_token_.reset();
 }
 
@@ -85,35 +91,9 @@ KMError Http2Request::sendRequest()
         return KMError::INVALID_STATE;
     }
     
-    // check HTTP cache
-    if (HttpCache::isCacheable(header_vec_)) {
-        std::string cache_key = uri_.getHost() + ":" + uri_.getPath();
-        if (!uri_.getQuery().empty()) {
-            cache_key += "?";
-            cache_key += uri_.getQuery();
-        }
-        
-        int status_code = 0;
-        HeaderVector rsp_headers;
-        HttpBody rsp_body;
-        if (HttpCache::get().getCache(cache_key, status_code, rsp_headers, rsp_body)) {
-            // cache hit
-            status_code_ = status_code;
-            rsp_headers_.swap(rsp_headers);
-            rsp_cache_body_.swap(rsp_body);
-            loop->post([this] {
-                DESTROY_DETECTOR_SETUP();
-                if (header_cb_) header_cb_();
-                DESTROY_DETECTOR_CHECK_VOID();
-                if (!rsp_cache_body_.empty() && data_cb_) {
-                    DESTROY_DETECTOR_SETUP();
-                    data_cb_(&rsp_cache_body_[0], rsp_cache_body_.size());
-                    DESTROY_DETECTOR_CHECK_VOID();
-                }
-                onComplete();
-            });
-            return KMError::NOERR;
-        }
+    if (processHttpCache(loop)) {
+        // cache hit
+        return KMError::NOERR;
     }
     
     auto &conn_mgr = H2ConnectionMgr::getRequestConnMgr(ssl_flags_ != SSL_NONE);
@@ -122,7 +102,7 @@ KMError Http2Request::sendRequest()
         KUMA_ERRXTRACE("sendRequest, failed to get H2Connection");
         return KMError::INVALID_PARAM;
     } else {
-        loop_token_.eventLoop(conn_->eventLoop());
+        conn_token_.eventLoop(conn_->eventLoop());
         if (conn_->isInSameThread()) {
             return sendRequest_i();
         } else if (!conn_->async([this] {
@@ -130,7 +110,7 @@ KMError Http2Request::sendRequest()
             if (err != KMError::NOERR) {
                 onError(err);
             }
-        }, &loop_token_)) {
+        }, &conn_token_)) {
             KUMA_ERRXTRACE("sendRequest, failed to run in H2Connection, key="<<conn_->getConnectionKey());
             return KMError::INVALID_STATE;
         }
@@ -139,7 +119,7 @@ KMError Http2Request::sendRequest()
 }
 
 KMError Http2Request::sendRequest_i()
-{
+{// on conn_ thread
     if (!conn_) {
         return KMError::INVALID_STATE;
     }
@@ -147,8 +127,83 @@ KMError Http2Request::sendRequest_i()
         conn_->addConnectListener(getObjId(), [this] (KMError err) { onConnect(err); });
         return KMError::NOERR;
     } else {
-        return sendHeaders();
+        if (processPushPromise()) {
+            // server push is available
+            return KMError::NOERR;
+        } else {
+            return sendHeaders();
+        }
     }
+}
+
+bool Http2Request::processHttpCache(const EventLoopPtr &loop)
+{
+    if (!HttpCache::isCacheable(method_, header_vec_)) {
+        return false;
+    }
+    std::string cache_key = getCacheKey();
+    
+    int status_code = 0;
+    HeaderVector rsp_headers;
+    HttpBody rsp_body;
+    if (HttpCache::instance().getCache(cache_key, status_code, rsp_headers, rsp_body)) {
+        // cache hit
+        setState(State::RECVING_RESPONSE);
+        status_code_ = status_code;
+        rsp_headers_.swap(rsp_headers);
+        if (!rsp_body.empty()) {
+            saveResponseData(&rsp_body[0], rsp_body.size());
+        }
+        header_complete_ = true;
+        response_complete_ = true;
+        loop->post([this] {
+            onCacheComplete();
+        }, &loop_token_);
+        return true;
+    }
+    return false;
+}
+
+bool Http2Request::processPushPromise()
+{// on conn_ thread
+    if (!is_equal(method_, "GET")) {
+        return false;
+    }
+    if (HttpHeader::hasBody()) {
+        return false;
+    }
+    std::string cache_key = getCacheKey();
+    auto push_client = conn_->getPushClient(cache_key);
+    if (!push_client) {
+        return false;
+    }
+
+    setState(State::RECVING_RESPONSE);
+    
+    HeaderVector h2_headers;
+    push_client->getResponseHeaders(h2_headers);
+    HttpBody rsp_body;
+    push_client->getResponseBody(rsp_body);
+    header_complete_ = push_client->isHeaderComplete();
+    response_complete_ = push_client->isComplete();
+    if (header_complete_ && !processH2ResponseHeaders(h2_headers, status_code_, rsp_headers_)) {
+        return false;
+    }
+    if (!rsp_body.empty()) {
+        saveResponseData(&rsp_body[0], rsp_body.size());
+    }
+    auto stream = push_client->release();
+    if (stream) {
+        if (!response_complete_) {
+            stream_ = std::move(stream);
+            setupStreamCallbacks();
+        } else {
+            stream->close();
+        }
+    }
+    auto loop = loop_.lock();
+    loop->post([this] { onPushPromise(); });
+    return true;
 }
 
 const std::string& Http2Request::getHeaderValue(std::string name) const
@@ -214,20 +269,9 @@ size_t Http2Request::buildHeaders(HeaderVector &headers)
 }
 
 KMError Http2Request::sendHeaders()
-{
+{// on conn_ thread
     stream_ = conn_->createStream();
-    stream_->setHeadersCallback([this] (const HeaderVector &headers, bool endSteam) {
-        onHeaders(headers, endSteam);
-    });
-    stream_->setDataCallback([this] (void *data, size_t len, bool endSteam) {
-        onData(data, len, endSteam);
-    });
-    stream_->setRSTStreamCallback([this] (int err) {
-        onRSTStream(err);
-    });
-    stream_->setWriteCallback([this] {
-        onWrite();
-    });
+    setupStreamCallbacks();
     setState(State::SENDING_HEADER);
     
     HeaderVector headers;
@@ -241,15 +285,31 @@ KMError Http2Request::sendHeaders()
             setState(State::SENDING_BODY);
             auto loop = conn_->eventLoop();
             if (loop) {
-                loop->post([this] { onWrite(); }, &loop_token_);
+                loop->post([this] { onWrite(); }, &conn_token_);
             }
         }
     }
     return ret;
 }
 
-void Http2Request::onConnect(KMError err)
+void Http2Request::setupStreamCallbacks()
 {
+    stream_->setHeadersCallback([this] (const HeaderVector &headers, bool endSteam) {
+        onHeaders(headers, endSteam);
+    });
+    stream_->setDataCallback([this] (void *data, size_t len, bool endSteam) {
+        onData(data, len, endSteam);
+    });
+    stream_->setRSTStreamCallback([this] (int err) {
+        onRSTStream(err);
+    });
+    stream_->setWriteCallback([this] {
+        onWrite();
+    });
+}
+
+void Http2Request::onConnect(KMError err)
+{// on conn_ thread
     if(err != KMError::NOERR) {
         onError(err);
         return ;
@@ -259,7 +319,12 @@ void Http2Request::onConnect(KMError err)
 
 void Http2Request::onError(KMError err)
 {
-    if(error_cb_) error_cb_(err);
+    auto loop = loop_.lock();
+    if (!loop || loop->inSameThread()) {
+        onError_i(err);
+    } else {
+        loop->post([this, err] { onError_i(err); }, &loop_token_);
+    }
 }
 
 int Http2Request::sendData(const void* data, size_t len)
@@ -273,27 +338,19 @@ int Http2Request::sendData(const void* data, size_t len)
     if (write_blocked_) {
         return 0;
     }
-    if (conn_->isInSameThread() && data_queue_.empty()) {
+    if (conn_->isInSameThread() && req_queue_.empty()) {
         return sendData_i(data, len); // return the bytes sent directly
     } else {
-        uint8_t *d = nullptr;
-        if (data && len) {
-            d = new uint8_t[len];
-            memcpy(d, data, len);
-        }
-        iovec iov;
-        iov.iov_base = (char*)d;
-        iov.iov_len = len;
-        data_queue_.enqueue(iov);
-        if (data_queue_.size() <= 1) {
-            conn_->async([=] { sendData_i(); }, &loop_token_);
+        saveRequestData(data, len);
+        if (req_queue_.size() <= 1) {
+            conn_->async([this] { sendData_i(); }, &conn_token_);
         }
         return int(len);
     }
 }
 
 int Http2Request::sendData_i(const void* data, size_t len)
-{
+{// on conn_ thread
     if (getState() != State::SENDING_BODY) {
         return 0;
     }
@@ -320,15 +377,15 @@ int Http2Request::sendData_i(const void* data, size_t len)
 }
 
 int Http2Request::sendData_i()
-{
+{// on conn_ thread
     int bytes_sent = 0;
-    while (!data_queue_.empty()) {
-        auto &iov = data_queue_.front();
+    while (!req_queue_.empty()) {
+        auto &iov = req_queue_.front();
         int ret = sendData_i(iov.iov_base, iov.iov_len);
         if (ret > 0) {
             bytes_sent += ret;
-            data_queue_.pop_front();
             delete [] (uint8_t*)iov.iov_base;
+            req_queue_.pop_front();
         } else if (ret == 0) {
             break;
         } else {
@@ -340,84 +397,173 @@ int Http2Request::sendData_i()
 }
 
 void Http2Request::onHeaders(const HeaderVector &headers, bool end_stream)
-{
-    if (headers.empty()) {
+{// on conn_ thread
+    if (!processH2ResponseHeaders(headers, status_code_, rsp_headers_)) {
         return;
     }
-    if (!is_equal(headers[0].first, H2HeaderStatus)) {
-        return;
-    }
-    status_code_ = std::stoi(headers[0].second);
-    std::string str_cookie;
-    for (auto const &kv : headers) {
-        auto const &name = kv.first;
-        auto const &value = kv.second;
-        if (!name.empty()) {
-            if (is_equal(name, H2HeaderCookie)) {
-                // reassemble cookie
-                if (!str_cookie.empty()) {
-                    str_cookie += "; ";
-                }
-                str_cookie += value;
-            } else if (name[0] != ':') {
-                rsp_headers_.emplace_back(name, value);
-            }
-        }
-    }
-    if (!str_cookie.empty()) {
-        rsp_headers_.emplace_back(strCookie, std::move(str_cookie));
-    }
-    DESTROY_DETECTOR_SETUP();
-    if (header_cb_) header_cb_();
-    DESTROY_DETECTOR_CHECK_VOID();
-    if (end_stream) {
-        onComplete();
+    header_complete_ = true;
+    response_complete_ = end_stream;
+    auto loop = loop_.lock();
+    if (!loop || loop->inSameThread()) {
+        onHeaders();
+    } else {
+        loop->post([this]{ onHeaders(); }, &loop_token_);
     }
 }
 
 void Http2Request::onData(void *data, size_t len, bool end_stream)
-{
-    DESTROY_DETECTOR_SETUP();
-    if (data_cb_ && len > 0) data_cb_(data, len);
-    DESTROY_DETECTOR_CHECK_VOID();
-    
-    if (end_stream) {
-        onComplete();
+{// on conn_ thread
+    response_complete_ = end_stream;
+    auto loop = loop_.lock();
+    if (!loop || (loop->inSameThread() && rsp_queue_.empty())) {
+        DESTROY_DETECTOR_SETUP();
+        if (data_cb_ && len > 0) data_cb_(data, len);
+        DESTROY_DETECTOR_CHECK_VOID();
+        
+        if (end_stream) {
+            onComplete();
+        }
+    } else {
+        saveResponseData(data, len);
+        if (rsp_queue_.size() <= 1) {
+            loop->post([this] { onData(); }, &loop_token_);
+        }
     }
 }
 
 void Http2Request::onRSTStream(int err)
-{
+{// on conn_ thread
     onError(KMError::FAILED);
 }
 
 void Http2Request::onWrite()
-{
-    if (sendData_i() < 0 || !data_queue_.empty()) {
+{// on conn_ thread
+    if (sendData_i() < 0 || !req_queue_.empty()) {
         return;
     }
     write_blocked_ = false;
-    if(write_cb_) write_cb_(KMError::NOERR);
+    
+    auto loop = loop_.lock();
+    if (!loop || loop->inSameThread()) {
+        onWrite_i();
+    } else {
+        loop->post([this] { onWrite_i(); }, &loop_token_);
+    }
+}
+
+void Http2Request::saveRequestData(const void *data, size_t len)
+{
+    uint8_t *d = nullptr;
+    if (data && len) {
+        d = new uint8_t[len];
+        memcpy(d, data, len);
+    }
+    iovec iov;
+    iov.iov_base = (char*)d;
+    iov.iov_len = len;
+    req_queue_.enqueue(iov);
+}
+
+void Http2Request::saveResponseData(const void *data, size_t len)
+{
+    uint8_t *d = nullptr;
+    if (data && len) {
+        d = new uint8_t[len];
+        memcpy(d, data, len);
+    }
+    iovec iov;
+    iov.iov_base = (char*)d;
+    iov.iov_len = len;
+    rsp_queue_.enqueue(iov);
+}
+
+void Http2Request::onHeaders()
+{// on loop_ thread
+    if (getState() != State::RECVING_RESPONSE) {
+        return;
+    }
+    if (header_complete_ && header_cb_) {
+        DESTROY_DETECTOR_SETUP();
+        header_cb_();
+        DESTROY_DETECTOR_CHECK_VOID();
+    }
+    if (response_complete_) {
+        onComplete();
+    }
+}
+
+void Http2Request::onData()
+{// on loop_ thread
+    if (getState() != State::RECVING_RESPONSE) {
+        return;
+    }
+    
+    while (!rsp_queue_.empty()) {
+        auto &iov = rsp_queue_.front();
+        DESTROY_DETECTOR_SETUP();
+        if (iov.iov_len > 0 && data_cb_) data_cb_(iov.iov_base, iov.iov_len);
+        DESTROY_DETECTOR_CHECK_VOID();
+        delete [] (uint8_t*)iov.iov_base;
+        rsp_queue_.pop_front();
+    }
+    if (response_complete_) {
+        onComplete();
+    }
 }
 
 void Http2Request::onComplete()
-{
+{// on loop_ thread
     setState(State::COMPLETE);
     if (response_cb_) response_cb_();
 }
 
+void Http2Request::onCacheComplete()
+{// on loop_ thread
+    checkResponseStatus();
+}
+
+void Http2Request::onPushPromise()
+{// on loop_ thread
+    checkResponseStatus();
+}
+
+void Http2Request::checkResponseStatus()
+{// on loop_ thread
+    if (getState() != State::RECVING_RESPONSE) {
+        return;
+    }
+    if (header_complete_ && header_cb_) {
+        DESTROY_DETECTOR_SETUP();
+        header_cb_();
+        DESTROY_DETECTOR_CHECK_VOID();
+    }
+    onData();
+}
+
+void Http2Request::onWrite_i()
+{// on loop_ thread
+    if(write_cb_) write_cb_(KMError::NOERR);
+}
+
+void Http2Request::onError_i(KMError err)
+{// on loop_ thread
+    if(error_cb_) error_cb_(err);
+}
+
 KMError Http2Request::close()
 {
+    closing_ = true;
     if (conn_) {
         conn_->sync([this] { close_i(); });
     }
     conn_.reset();
+    conn_token_.reset();
     loop_token_.reset();
     return KMError::NOERR;
 }
 
 void Http2Request::close_i()
-{
+{// on conn_ thread
     if (getState() == State::CONNECTING && conn_) {
         conn_->removeConnectListener(getObjId());
     }
@@ -425,4 +571,5 @@ void Http2Request::close_i()
         stream_->close();
         stream_.reset();
     }
+    setState(State::CLOSED);
 }

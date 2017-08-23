@@ -22,6 +22,7 @@
 #include "Http1xRequest.h"
 #include "util/kmtrace.h"
 #include "util/util.h"
+#include "HttpCache.h"
 
 #include <sstream>
 #include <iterator>
@@ -30,12 +31,13 @@ using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
 Http1xRequest::Http1xRequest(const EventLoopPtr &loop, std::string ver)
-: HttpRequest::Impl(std::move(ver)), TcpConnection(loop), http_parser_()
+: HttpRequest::Impl(std::move(ver)), TcpConnection(loop), rsp_parser_()
 {
-    http_message_.setSender([this] (const void* data, size_t len) -> int {
+    loop_token_.eventLoop(loop);
+    req_message_.setSender([this] (const void* data, size_t len) -> int {
         return TcpConnection::send(data, len);
     });
-    http_message_.setVSender([this] (iovec* iovs, int count) -> int {
+    req_message_.setVSender([this] (iovec* iovs, int count) -> int {
         return TcpConnection::send(iovs, count);
     });
     KM_SetObjKey("Http1xRequest");
@@ -43,35 +45,36 @@ Http1xRequest::Http1xRequest(const EventLoopPtr &loop, std::string ver)
 
 Http1xRequest::~Http1xRequest()
 {
-    
+    loop_token_.reset();
 }
 
 void Http1xRequest::cleanup()
 {
     TcpConnection::close();
+    loop_token_.reset();
 }
 
 void Http1xRequest::addHeader(std::string name, std::string value)
 {
-    http_message_.addHeader(std::move(name), std::move(value));
+    req_message_.addHeader(std::move(name), std::move(value));
 }
 
 void Http1xRequest::checkHeaders()
 {
-    if(!http_message_.hasHeader("Accept")) {
+    if(!req_message_.hasHeader("Accept")) {
         addHeader("Accept", "*/*");
     }
-    if(!http_message_.hasHeader(strContentType)) {
+    if(!req_message_.hasHeader(strContentType)) {
         addHeader(strContentType, "application/octet-stream");
     }
-    if(!http_message_.hasHeader("User-Agent")) {
+    if(!req_message_.hasHeader("User-Agent")) {
         addHeader("User-Agent", UserAgent);
     }
     addHeader("Host", uri_.getHost());
-    if(!http_message_.hasHeader("Cache-Control")) {
+    if(!req_message_.hasHeader("Cache-Control")) {
         addHeader("Cache-Control", "no-cache");
     }
-    if(!http_message_.hasHeader("Pragma")) {
+    if(!req_message_.hasHeader("Pragma")) {
         addHeader("Pragma", "no-cache");
     }
 }
@@ -87,12 +90,15 @@ void Http1xRequest::buildRequest()
         ss << "#" << uri_.getFragment();
     }
     auto url(ss.str());
-    auto req = http_message_.buildHeader(method_, url, version_);
+    auto req = req_message_.buildHeader(method_, url, version_);
     send_buffer_.write(req);
 }
 
 KMError Http1xRequest::sendRequest()
 {
+    if (processHttpCache()) {
+        return KMError::NOERR;
+    }
     if (getState() == State::IDLE) {
         setState(State::CONNECTING);
         std::string str_port = uri_.getPort();
@@ -113,14 +119,37 @@ KMError Http1xRequest::sendRequest()
     }
 }
 
+bool Http1xRequest::processHttpCache()
+{
+    if (!HttpCache::isCacheable(method_, req_message_.getHeaders())) {
+        return false;
+    }
+    std::string cache_key = getCacheKey();
+    
+    int status_code = 0;
+    HeaderVector rsp_headers;
+    HttpBody rsp_body;
+    if (HttpCache::instance().getCache(cache_key, status_code, rsp_headers, rsp_body)) {
+        // cache hit
+        setState(State::RECVING_RESPONSE);
+        rsp_parser_.setHeaders(std::move(rsp_headers));
+        rsp_parser_.setStatusCode(status_code);
+        rsp_cache_body_.swap(rsp_body);
+        auto loop = TcpConnection::eventLoop();
+        loop->post([this] { onCacheComplete(); }, &loop_token_);
+        return true;
+    }
+    return false;
+}
+
 int Http1xRequest::sendData(const void* data, size_t len)
 {
     if(!sendBufferEmpty() || getState() != State::SENDING_BODY) {
         return 0;
     }
-    auto ret = http_message_.sendData(data, len);
+    auto ret = req_message_.sendData(data, len);
     if (ret >= 0) {
-        if (http_message_.isCompleted() && sendBufferEmpty()) {
+        if (req_message_.isCompleted() && sendBufferEmpty()) {
             setState(State::RECVING_RESPONSE);
         }
     } else if(ret < 0) {
@@ -132,8 +161,9 @@ int Http1xRequest::sendData(const void* data, size_t len)
 void Http1xRequest::reset()
 {
     HttpRequest::Impl::reset();
-    http_message_.reset();
-    http_parser_.reset();
+    req_message_.reset();
+    rsp_parser_.reset();
+    rsp_cache_body_.clear();
     if (getState() == State::COMPLETE) {
         setState(State::WAIT_FOR_REUSE);
     }
@@ -149,8 +179,8 @@ KMError Http1xRequest::close()
 
 void Http1xRequest::sendRequestHeader()
 {
-    http_parser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
-    http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
+    rsp_parser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
+    rsp_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     buildRequest();
     setState(State::SENDING_HEADER);
     auto ret = sendBufferedData();
@@ -160,7 +190,7 @@ void Http1xRequest::sendRequestHeader()
         if(error_cb_) error_cb_(KMError::SOCK_ERROR);
         return;
     } else if (sendBufferEmpty()) {
-        if(!http_message_.hasBody()) {
+        if(!req_message_.hasBody()) {
             setState(State::RECVING_RESPONSE);
         } else {
             setState(State::SENDING_BODY);
@@ -183,7 +213,7 @@ void Http1xRequest::onConnect(KMError err)
 KMError Http1xRequest::handleInputData(uint8_t *src, size_t len)
 {
     DESTROY_DETECTOR_SETUP();
-    int bytes_used = http_parser_.parse((char*)src, len);
+    int bytes_used = rsp_parser_.parse((char*)src, len);
     DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
     if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
         return KMError::FAILED;
@@ -197,14 +227,14 @@ KMError Http1xRequest::handleInputData(uint8_t *src, size_t len)
 void Http1xRequest::onWrite()
 {
     if (getState() == State::SENDING_HEADER) {
-        if(!http_message_.hasBody()) {
+        if(!req_message_.hasBody()) {
             setState(State::RECVING_RESPONSE);
             return;
         } else {
             setState(State::SENDING_BODY);
         }
     } else if (getState() == State::SENDING_BODY) {
-        if (http_message_.isCompleted()) {
+        if (req_message_.isCompleted()) {
             setState(State::RECVING_RESPONSE);
             return;
         }
@@ -218,7 +248,7 @@ void Http1xRequest::onError(KMError err)
     KUMA_INFOXTRACE("onError, err="<<int(err));
     if (getState() == State::RECVING_RESPONSE) {
         DESTROY_DETECTOR_SETUP();
-        bool completed = http_parser_.setEOF();
+        bool completed = rsp_parser_.setEOF();
         DESTROY_DETECTOR_CHECK_VOID();
         if(completed) {
             cleanup();
@@ -248,8 +278,7 @@ void Http1xRequest::onHttpEvent(HttpEvent ev)
             break;
             
         case HttpEvent::COMPLETE:
-            setState(State::COMPLETE);
-            if(response_cb_) response_cb_();
+            onComplete();
             break;
             
         case HttpEvent::HTTP_ERROR:
@@ -261,4 +290,27 @@ void Http1xRequest::onHttpEvent(HttpEvent ev)
         default:
             break;
     }
+}
+
+void Http1xRequest::onComplete()
+{
+    setState(State::COMPLETE);
+    if(response_cb_) response_cb_();
+}
+
+void Http1xRequest::onCacheComplete()
+{
+    if (getState() != State::RECVING_RESPONSE) {
+        return;
+    }
+    DESTROY_DETECTOR_SETUP();
+    if (header_cb_) header_cb_();
+    DESTROY_DETECTOR_CHECK_VOID();
+    if (!rsp_cache_body_.empty() && data_cb_) {
+        DESTROY_DETECTOR_SETUP();
+        data_cb_(&rsp_cache_body_[0], rsp_cache_body_.size());
+        DESTROY_DETECTOR_CHECK_VOID();
+        rsp_cache_body_.clear();
+    }
+    onComplete();
 }

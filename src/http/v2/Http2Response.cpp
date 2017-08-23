@@ -29,6 +29,7 @@ using namespace kuma;
 Http2Response::Http2Response(const EventLoopPtr &loop, std::string ver)
 : HttpResponse::Impl(std::move(ver)), loop_(loop)
 {
+    loop_token_.eventLoop(loop);
     KM_SetObjKey("Http2Response");
 }
 
@@ -43,7 +44,6 @@ void Http2Response::cleanup()
 
 KMError Http2Response::attachStream(H2Connection::Impl* conn, uint32_t stream_id)
 {
-    loop_token_.eventLoop(conn->eventLoop());
     stream_ = conn->getStream(stream_id);
     if (!stream_) {
         return KMError::INVALID_STATE;
