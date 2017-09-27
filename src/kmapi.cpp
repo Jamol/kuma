@@ -76,7 +76,7 @@ using EventLoopHelper = ImplHelper<EventLoop::Impl>;
 
 EventLoop::EventLoop(PollType poll_type)
 {
-    auto h = new EventLoopHelper(std::move(poll_type));
+    auto h = new EventLoopHelper(poll_type);
     pimpl_ = reinterpret_cast<Impl*>(h);
     h->ptr.reset(pimpl_, [](Impl* p){
         auto h = reinterpret_cast<EventLoopHelper*>(p);

@@ -550,6 +550,35 @@ void Http2Request::onError_i(KMError err)
     if(error_cb_) error_cb_(err);
 }
 
+void Http2Request::reset()
+{
+    HttpRequest::Impl::reset();
+    
+    iovec iov;
+    while (req_queue_.dequeue(iov)) {
+        delete [] (uint8_t*)iov.iov_base;
+    }
+    while (rsp_queue_.dequeue(iov)) {
+        delete [] (uint8_t*)iov.iov_base;
+    }
+    
+    rsp_headers_.clear();
+    stream_->close();
+    stream_.reset();
+    
+    body_bytes_sent_ = 0;
+    ssl_flags_ = 0;
+    status_code_ = 0;
+    header_complete_ = false;
+    response_complete_ = false;
+    closing_ = false;
+    write_blocked_ = false;
+    
+    if (getState() == State::COMPLETE) {
+        setState(State::WAIT_FOR_REUSE);
+    }
+}
+
 KMError Http2Request::close()
 {
     closing_ = true;

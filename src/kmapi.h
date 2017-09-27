@@ -109,7 +109,8 @@ public:
      */
     KMError post(Task task, Token *token=nullptr);
     
-    /* cancel the tasks that are scheduled with token. you cannot cancel the task that is in running
+    /* cancel the tasks that are scheduled with token. you cannot cancel the task that is in running,
+     * but will wait untill the task completion
      *
      * @param token token of the tasks
      */

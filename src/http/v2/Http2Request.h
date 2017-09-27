@@ -50,6 +50,7 @@ public:
     KMError setSslFlags(uint32_t ssl_flags) override;
     void addHeader(std::string name, std::string value) override;
     int sendData(const void* data, size_t len) override;
+    void reset() override; // reset for connection reuse
     KMError close() override;
     
     int getStatusCode() const override { return status_code_; }

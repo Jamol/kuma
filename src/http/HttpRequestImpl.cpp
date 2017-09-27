@@ -43,6 +43,9 @@ void HttpRequest::Impl::addHeader(std::string name, uint32_t value)
 
 KMError HttpRequest::Impl::sendRequest(std::string method, std::string url)
 {
+    if (getState() == State::COMPLETE) {
+        reset(); // reuse case
+    }
     if (getState() != State::IDLE && getState() != State::WAIT_FOR_REUSE) {
         return KMError::INVALID_STATE;
     }
