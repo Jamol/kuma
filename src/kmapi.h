@@ -24,6 +24,7 @@
 
 #include "kmdefs.h"
 #include "evdefs.h"
+#include "kmbuffer.h"
 
 #include <stdint.h>
 #ifdef KUMA_OS_WIN

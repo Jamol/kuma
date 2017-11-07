@@ -26,7 +26,6 @@
 #include "kmapi.h"
 #include "evdefs.h"
 #include "UdpSocketBase.h"
-#include "util/kmbuffer.h"
 #include "IocpBase.h"
 
 KUMA_NS_BEGIN

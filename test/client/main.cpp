@@ -1,7 +1,7 @@
 #include "kmapi.h"
 #include "util/util.h"
 #include "LoopPool.h"
-#include "util/AutoCleaner.h"
+#include "util/defer.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
     }
     
     kuma::init();
-    AUTO_CLEAN([]{ kuma::fini(); });
+    DEFER([]{ kuma::fini(); });
     
     char proto[16] = {0};
     char host[64] = {0};

@@ -18,7 +18,7 @@
 
 #include "kmdefs.h"
 #include "util/kmtrace.h"
-#include "util/kmbuffer.h"
+#include "util/skbuffer.h"
 #include "EventLoopImpl.h"
 
 #include <MSWSock.h>
@@ -47,7 +47,7 @@ struct IocpContext
 
     OVERLAPPED      ol;
     Op              op = Op::NONE;
-    KMBuffer        buf;
+    SKBuffer        buf;
     WSABUF          wbuf{ 0, nullptr };
 
     bool bufferEmpty() const
@@ -279,7 +279,7 @@ public:
         }
     }
 
-    KMBuffer& sendBuffer()
+    SKBuffer& sendBuffer()
     {
         if (!send_ctx_) {
             send_ctx_.reset(new IocpContext);
@@ -287,7 +287,7 @@ public:
         return send_ctx_->buf;
     }
 
-    KMBuffer& recvBuffer()
+    SKBuffer& recvBuffer()
     {
         if (!recv_ctx_) {
             recv_ctx_.reset(new IocpContext);

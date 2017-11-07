@@ -25,7 +25,7 @@
 #ifdef KUMA_HAS_OPENSSL
 
 #include "SslHandler.h"
-#include "util/kmbuffer.h"
+#include "util/skbuffer.h"
 
 #ifndef KUMA_OS_WIN
 struct iovec;
@@ -69,10 +69,10 @@ protected:
     int readAppData(void* data, size_t size);
     int writeSslData(const void* data, size_t size);
     int readSslData(void* data, size_t size);
-    int readSslData(KMBuffer &buf);
-    int writeSslData(KMBuffer &buf);
-    int sendData(KMBuffer &buf);
-    int recvData(KMBuffer &buf);
+    int readSslData(SKBuffer &buf);
+    int writeSslData(SKBuffer &buf);
+    int sendData(SKBuffer &buf);
+    int recvData(SKBuffer &buf);
     
 protected:
     void cleanup() override;
@@ -80,8 +80,8 @@ protected:
 protected:
     BIO*        net_bio_ = nullptr;
     
-    KMBuffer    send_buf_;
-    KMBuffer    recv_buf_;
+    SKBuffer    send_buf_;
+    SKBuffer    recv_buf_;
     
     SendFunc    send_func_;
     RecvFunc    recv_func_;

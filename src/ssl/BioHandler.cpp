@@ -522,7 +522,7 @@ KMError BioHandler::trySslHandshake()
     return KMError::AGAIN;
 }
 
-int BioHandler::readSslData(KMBuffer &buf)
+int BioHandler::readSslData(SKBuffer &buf)
 {
     auto ret = readSslData(buf.wr_ptr(), buf.space());
     if (ret > 0) {
@@ -531,7 +531,7 @@ int BioHandler::readSslData(KMBuffer &buf)
     return ret;
 }
 
-int BioHandler::writeSslData(KMBuffer &buf)
+int BioHandler::writeSslData(SKBuffer &buf)
 {
     auto ret = writeSslData(buf.ptr(), buf.size());
     if (ret > 0) {
@@ -540,7 +540,7 @@ int BioHandler::writeSslData(KMBuffer &buf)
     return ret;
 }
 
-int BioHandler::sendData(KMBuffer &buf)
+int BioHandler::sendData(SKBuffer &buf)
 {
     auto ret = send_func_(buf.ptr(), buf.size());
     if (ret > 0) {
@@ -549,7 +549,7 @@ int BioHandler::sendData(KMBuffer &buf)
     return ret;
 }
 
-int BioHandler::recvData(KMBuffer &buf)
+int BioHandler::recvData(SKBuffer &buf)
 {
     auto ret = recv_func_(buf.wr_ptr(), buf.space());
     if (ret > 0) {

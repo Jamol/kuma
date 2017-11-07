@@ -344,9 +344,6 @@
     <ClInclude Include="..\..\src\poll\Notifier.h">
       <Filter>Header Files\poll</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\util\kmbuffer.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\util\kmobject.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
@@ -382,6 +379,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\http\v2\h2utils.h">
       <Filter>Header Files\http\v2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\util\skbuffer.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\kmbuffer.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

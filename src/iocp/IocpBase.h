@@ -61,12 +61,12 @@ public:
 
     virtual void ioReady(IocpContext::Op op, size_t io_size) = 0;
 
-    KMBuffer& sendBuffer()
+    SKBuffer& sendBuffer()
     {
         return iocp_ctx_->sendBuffer();
     }
 
-    KMBuffer& recvBuffer()
+    SKBuffer& recvBuffer()
     {
         return iocp_ctx_->recvBuffer();
     }

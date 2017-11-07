@@ -23,7 +23,7 @@
 #define __SocketNotifier_H__
 
 #include "util/util.h"
-#include "util/AutoCleaner.h"
+#include "util/defer.h"
 #include "Notifier.h"
 
 KUMA_NS_BEGIN
@@ -50,7 +50,7 @@ public:
             return false;
         }
         auto lfd = ::socket(AF_INET, SOCK_STREAM, 0);
-        AUTO_CLEAN([lfd]{ closeFd(lfd); });
+        DEFER([lfd]{ closeFd(lfd); });
         if(::bind(lfd, (const sockaddr*)&ss_addr, sizeof(sockaddr_in)) != 0) {
             return false;
         }

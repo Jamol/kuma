@@ -1,13 +1,13 @@
 //
-//  kmbuffer.h
+//  skbuffer.h
 //  kuma
 //
 //  Created by Fengping Bao <jamol@live.com> on 7/17/16.
 //  Copyright © 2016 kuma. All rights reserved.
 //
 
-#ifndef __KMBuffer_H__
-#define __KMBuffer_H__
+#ifndef __SKBuffer_H__
+#define __SKBuffer_H__
 
 #include "kmdefs.h"
 #include <vector>
@@ -17,13 +17,9 @@
 
 KUMA_NS_BEGIN
 
-class KMBuffer
+class SKBuffer
 {
 public:
-    KMBuffer() {
-        
-    }
-    
     bool empty() const
     {
         return buf_.empty() || length_ <= offset_;
@@ -127,4 +123,4 @@ protected:
 
 KUMA_NS_END
 
-#endif /* __KMBuffer_H__ */
+#endif /* __SKBuffer_H__ */

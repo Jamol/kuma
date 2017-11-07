@@ -27,7 +27,6 @@
 #include "EventLoopImpl.h"
 #include "DnsResolver.h"
 #include "SocketBase.h"
-#include "util/kmbuffer.h"
 #include "IocpBase.h"
 
 KUMA_NS_BEGIN
