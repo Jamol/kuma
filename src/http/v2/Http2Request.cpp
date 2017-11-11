@@ -460,7 +460,7 @@ void Http2Request::saveRequestData(const void *data, size_t len)
     }
     iovec iov;
     iov.iov_base = (char*)d;
-    iov.iov_len = len;
+    iov.iov_len = static_cast<decltype(iov.iov_len)>(len);
     req_queue_.enqueue(iov);
 }
 
@@ -473,7 +473,7 @@ void Http2Request::saveResponseData(const void *data, size_t len)
     }
     iovec iov;
     iov.iov_base = (char*)d;
-    iov.iov_len = len;
+    iov.iov_len = static_cast<decltype(iov.iov_len)>(len);
     rsp_queue_.enqueue(iov);
 }
 

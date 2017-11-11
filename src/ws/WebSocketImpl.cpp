@@ -141,6 +141,34 @@ int WebSocket::Impl::send(const void* data, size_t len, bool is_text, bool fin)
     return ret == KMError::NOERR ? (int)len : -1;
 }
 
+int WebSocket::Impl::send(const KMBuffer &buf, bool is_text, bool fin)
+{
+    if(getState() != State::OPEN) {
+        return -1;
+    }
+    if(!sendBufferEmpty()) {
+        return 0;
+    }
+    WSHandler::WSOpcode opcode = WSHandler::WSOpcode::WS_OPCODE_BINARY;
+    if(is_text) {
+        opcode = WSHandler::WSOpcode::WS_OPCODE_TEXT;
+    }
+    if (fin) {
+        if (fragmented_) {
+            fragmented_ = false;
+            opcode = WSHandler::WSOpcode::WS_OPCODE_CONTINUE;
+        }
+    } else {
+        if (fragmented_) {
+            opcode = WSHandler::WSOpcode::WS_OPCODE_CONTINUE;
+        }
+        fragmented_ = true;
+    }
+    auto chainSize = buf.chainLength();
+    auto ret = sendWsFrame(opcode, fin, buf);
+    return ret == KMError::NOERR ? static_cast<int>(chainSize) : -1;
+}
+
 KMError WebSocket::Impl::close()
 {
     KUMA_INFOXTRACE("close");
@@ -288,10 +316,33 @@ KMError WebSocket::Impl::sendWsFrame(WSHandler::WSOpcode opcode, bool fin, uint8
     ++cnt;
     if (plen > 0) {
         iovs[1].iov_base = (char*)payload;
-        iovs[1].iov_len = plen;
+        iovs[1].iov_len = static_cast<decltype(iovs[1].iov_len)>(plen);
         ++cnt;
     }
     auto ret = TcpConnection::send(iovs, cnt);
+    return ret < 0 ? KMError::SOCK_ERROR : KMError::NOERR;
+}
+
+KMError WebSocket::Impl::sendWsFrame(WSHandler::WSOpcode opcode, bool fin, const KMBuffer &buf)
+{
+    size_t plen = buf.chainLength();
+    uint8_t hdr_buf[WS_MAX_HEADER_SIZE];
+    int hdr_len = 0;
+    if (ws_handler_.getMode() == WSHandler::WSMode::CLIENT && plen > 0) {
+        uint8_t mask_key[WS_MASK_KEY_SIZE];
+        generateRandomBytes(mask_key, WS_MASK_KEY_SIZE);
+        WSHandler::handleDataMask(mask_key, const_cast<KMBuffer&>(buf));
+        hdr_len = ws_handler_.encodeFrameHeader(opcode, fin, &mask_key, plen, hdr_buf);
+    } else {
+        hdr_len = ws_handler_.encodeFrameHeader(opcode, fin, nullptr, plen, hdr_buf);
+    }
+    IOVEC iovs;
+    iovec iov;
+    iov.iov_base = (char*)hdr_buf;
+    iov.iov_len = hdr_len;
+    iovs.emplace_back(iov);
+    buf.fillIov(iovs);
+    auto ret = TcpConnection::send(&iovs[0], static_cast<int>(iovs.size()));
     return ret < 0 ? KMError::SOCK_ERROR : KMError::NOERR;
 }
 

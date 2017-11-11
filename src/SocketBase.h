@@ -43,7 +43,8 @@ public:
     virtual KMError attachFd(SOCKET_FD fd);
     virtual KMError detachFd(SOCKET_FD &fd);
     virtual int send(const void* data, size_t length);
-    virtual int send(iovec* iovs, int count);
+    virtual int send(const iovec* iovs, int count);
+    virtual int send(const KMBuffer &buf);
     virtual int receive(void* data, size_t length);
     virtual KMError pause();
     virtual KMError resume();

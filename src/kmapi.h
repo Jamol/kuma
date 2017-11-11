@@ -35,7 +35,9 @@
 
 KUMA_NS_BEGIN
 
+class KMBuffer;
 class EventLoopToken;
+
 class KUMA_API EventLoop
 {
 public:
@@ -147,7 +149,8 @@ public:
     KMError startSslHandshake(SslRole ssl_role);
     KMError getAlpnSelected(char *buf, size_t len);
     int send(const void* data, size_t length);
-    int send(iovec* iovs, int count);
+    int send(const iovec* iovs, int count);
+    int send(const KMBuffer &buf);
     int receive(void* data, size_t length);
     KMError close();
     
@@ -202,7 +205,8 @@ public:
     
     KMError bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags=0);
     int send(const void* data, size_t length, const char* host, uint16_t port);
-    int send(iovec* iovs, int count, const char* host, uint16_t port);
+    int send(const iovec* iovs, int count, const char* host, uint16_t port);
+    int send(const KMBuffer &buf, const char* host, uint16_t port);
     int receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port);
     KMError close();
     
@@ -248,7 +252,8 @@ public:
     ~HttpParser();
     
     // return bytes parsed
-    int parse(char* data, size_t len);
+    int parse(const char* data, size_t len);
+    int parse(const KMBuffer &buf);
     void pause();
     void resume();
     
@@ -302,6 +307,7 @@ public:
     void addHeader(const char* name, uint32_t value);
     KMError sendRequest(const char* method, const char* url);
     int sendData(const void* data, size_t len);
+    int sendData(const KMBuffer &buf);
     void reset(); // reset for connection reuse
     KMError close();
     
@@ -343,6 +349,7 @@ public:
     void addHeader(const char* name, uint32_t value);
     KMError sendResponse(int status_code, const char* desc = nullptr);
     int sendData(const void* data, size_t len);
+    int sendData(const KMBuffer &buf);
     void reset(); // reset for connection reuse
     KMError close();
     
@@ -385,6 +392,7 @@ public:
     KMError attachFd(SOCKET_FD fd, const void* init_data=nullptr, size_t init_len=0);
     KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const void* init_data=nullptr, size_t init_len=0);
     int send(const void* data, size_t len, bool is_text, bool fin=true);
+    int send(const KMBuffer &buf, bool is_text, bool fin=true);
     KMError close();
     
     void setDataCallback(DataCallback cb);

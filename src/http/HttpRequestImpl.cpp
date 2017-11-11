@@ -58,6 +58,22 @@ KMError HttpRequest::Impl::sendRequest(std::string method, std::string url)
     return sendRequest();
 }
 
+int HttpRequest::Impl::sendData(const KMBuffer &buf)
+{
+    int bytes_sent = 0;
+    for (auto it = buf.begin(); it != buf.end(); ++it) {
+        auto ret = sendData(it->readPtr(), it->length());
+        if (ret < 0) {
+            return ret;
+        }
+        bytes_sent += static_cast<int>(it->length());
+        if (ret < it->length()) {
+            return bytes_sent;
+        }
+    }
+    return bytes_sent;
+}
+
 std::string HttpRequest::Impl::getCacheKey()
 {
     std::string cache_key = uri_.getHost() + uri_.getPath();

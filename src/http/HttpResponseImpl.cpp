@@ -57,6 +57,22 @@ KMError HttpResponse::Impl::sendResponse(int status_code, const std::string& des
     return sendResponse(status_code, desc, version_);
 }
 
+int HttpResponse::Impl::sendData(const KMBuffer &buf)
+{
+    int bytes_sent = 0;
+    for (auto it = buf.begin(); it != buf.end(); ++it) {
+        auto ret = sendData(it->readPtr(), it->length());
+        if (ret < 0) {
+            return ret;
+        }
+        bytes_sent += static_cast<int>(it->length());
+        if (ret < it->length()) {
+            return bytes_sent;
+        }
+    }
+    return bytes_sent;
+}
+
 void HttpResponse::Impl::reset()
 {
     

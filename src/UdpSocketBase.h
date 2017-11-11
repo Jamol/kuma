@@ -47,7 +47,8 @@ public:
     
     virtual KMError bind(const std::string &bind_host, uint16_t bind_port, uint32_t udp_flags);
     virtual int send(const void* data, size_t length, const std::string &host, uint16_t port);
-    virtual int send(iovec* iovs, int count, const std::string &host, uint16_t port);
+    virtual int send(const iovec* iovs, int count, const std::string &host, uint16_t port);
+    virtual int send(const KMBuffer &buf, const char* host, uint16_t port);
     virtual int receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port);
     virtual KMError close();
     

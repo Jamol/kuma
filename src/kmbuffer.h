@@ -21,17 +21,21 @@
 
 #ifndef __KMBuffer_H__
 #define __KMBuffer_H__
-#include "kmconf.h"
 #include "kmdefs.h"
 #include <vector>
 #include <atomic>
+
+#ifndef KUMA_OS_WIN
+#include <sys/uio.h> // for struct iovec
+#endif
 
 namespace {
     class _SharedBase
     {
     public:
         virtual ~_SharedBase() {}
-        virtual char* data() = 0;
+        virtual void* data() = 0;
+        virtual const void* data() const = 0;
         virtual size_t size() const = 0;
         virtual long increment() = 0;
         virtual long decrement() = 0;
@@ -77,13 +81,13 @@ namespace {
         }
         _SharedBasePtr& operator=(_SharedBase *ptr)
         {
+            if (ptr) {
+                ptr->increment();
+            }
             if (base_ptr_) {
                 base_ptr_->decrement();
             }
             base_ptr_ = ptr;
-            if (base_ptr_) {
-                base_ptr_->increment();
-            }
             return *this;
         }
         operator bool () const
@@ -101,17 +105,15 @@ namespace {
         }
     };
     
-    template<typename MyDeleter, typename DataDeleter>
+    template<typename Deleter, typename DataDeleter>
     class _SharedData final : public _SharedBase
     {
     public:
-        _SharedData(char *d, size_t s, size_t o, size_t alloc_size, MyDeleter md, DataDeleter dd)
-        : data_(d), size_(s), offset_(o), alloc_size_(alloc_size)
+        _SharedData(void *data, size_t size, size_t alloc_size, Deleter md, DataDeleter dd)
+        : data_(data), size_(size), alloc_size_(alloc_size)
         , deleter_(std::move(md)), data_deleter_(std::move(dd))
         {
-            if (offset_ > size_) {
-                offset_ = size_;
-            }
+            
         }
         ~_SharedData()
         {
@@ -121,18 +123,19 @@ namespace {
             }
         }
         
-        char* data() override
+        void* data() override
         {
-            if (data_) {
-                return data_ + offset_;
-            } else {
-                return nullptr;
-            }
+            return data_;
+        }
+        
+        const void* data() const override
+        {
+            return data_;
         }
         
         size_t size() const override
         {
-            return size_ - offset_;
+            return size_;
         }
         
         long increment() override
@@ -151,14 +154,13 @@ namespace {
         }
         
     private:
-        char* data_ = nullptr;
+        void* data_ = nullptr;
         size_t size_ = 0;
-        size_t offset_ = 0;
         
         std::atomic_long ref_count_{0};
         
         size_t alloc_size_ = 0;
-        MyDeleter deleter_;
+        Deleter deleter_;
         DataDeleter data_deleter_;
     };
 }
@@ -171,49 +173,37 @@ using IOVEC = std::vector<iovec>;
 class KMBuffer
 {
 public:
-    enum {
-        KMB_FLAG_NONE            = 0,
-        KMB_FLAG_LIFCYC_STACK    = 0x01,
-    };
-    using KMB_FLAG = uint32_t;
-
-public:
-    KMBuffer(KMB_FLAG flags = KMB_FLAG_NONE) : flags_(flags) {};
-
-    KMBuffer(KMBuffer &&other)
-    : flags_(other.flags_), begin_ptr_(other.begin_ptr_), end_ptr_(other.end_ptr_)
-    , rd_ptr_(other.rd_ptr_), wr_ptr_(other.wr_ptr_), shared_data_(std::move(other.shared_data_))
+    class Iterator;
+    enum class StorageType
     {
-        other.flags_ = KMB_FLAG_NONE;
-        other.begin_ptr_ = nullptr;
-        other.end_ptr_ = nullptr;
-        other.rd_ptr_ = nullptr;
-        other.wr_ptr_ = nullptr;
-        
-        if (other.prev_ != &other) {
-            next_ = other.next_;
-            next_->prev_ = this;
-            other.next_ = &other;
-            
-            prev_ = other.prev_;
-            prev_->next_ = this;
-            other.prev_ = &other;
-        }
+        AUTO,
+        OTHER
+    };
+    KMBuffer(StorageType type = StorageType::OTHER) : storage_type_(type) {}
+
+    KMBuffer(const KMBuffer &other)
+    {
+        *this = other;
+    }
+    
+    KMBuffer(KMBuffer &&other)
+    {
+        *this = std::move(other);
     }
     
     template<typename Allocator>
-    KMBuffer(size_t len, Allocator &a)
+    KMBuffer(size_t size, Allocator &a)
     {
-        allocBuffer(len, a);
+        allocBuffer(size, a);
     }
     
-    KMBuffer(size_t len)
+    KMBuffer(size_t size)
     {
-        allocBuffer(len);
+        allocBuffer(size);
     }
     
     template<typename DataDeleter> // DataDeleter = void(void*, size_t)
-    KMBuffer(void *data, size_t len, size_t offset, DataDeleter &dd)
+    KMBuffer(void *data, size_t capacity, size_t size, size_t offset, DataDeleter &dd)
     {
         std::allocator<char> a;
         auto deleter = [a](void *ptr, size_t size) {
@@ -224,35 +214,36 @@ public:
         size_t shared_size = sizeof(_MySharedData);
         size_t alloc_size = shared_size;
         auto buf = a.allocate(alloc_size);
-        auto *sd = new (buf) _MySharedData(static_cast<char*>(data), len, offset, alloc_size, deleter, dd);
+        auto *sd = new (buf) _MySharedData(data, capacity, alloc_size, deleter, dd);
         shared_data_ = sd;
         
         begin_ptr_ = static_cast<char*>(data);
-        end_ptr_ = begin_ptr_ + len;
-        rd_ptr_ = wr_ptr_ = begin_ptr_ + offset;
+        end_ptr_ = begin_ptr_ + capacity;
+        rd_ptr_ = begin_ptr_ + offset;
+        wr_ptr_ = rd_ptr_ + size;
+        if (rd_ptr_ > end_ptr_) {
+            rd_ptr_ = end_ptr_;
+        }
+        if (wr_ptr_ > end_ptr_) {
+            wr_ptr_ = end_ptr_;
+        }
     }
     
-    KMBuffer(void *data, size_t len, KMB_FLAG flags=KMB_FLAG_LIFCYC_STACK)
-    : flags_(flags)
+    KMBuffer(void *data, size_t size, StorageType type = StorageType::AUTO)
+    : storage_type_(type)
     {// we are not the owner of data
         begin_ptr_ = static_cast<char*>(data);
-        end_ptr_ = begin_ptr_ + len;
+        end_ptr_ = begin_ptr_ + size;
         rd_ptr_ = wr_ptr_ = begin_ptr_;
     }
     
-    virtual ~KMBuffer()
+    ~KMBuffer()
     {
-        while (next_ != this) {
-            next_->releaseSelf();
-        }
-        shared_data_.reset();
-        begin_ptr_ = end_ptr_ = nullptr;
-        rd_ptr_ = wr_ptr_ = nullptr;
-        prev_ = next_ = this;
+        reset();
     }
     
     template<typename Allocator>
-    bool allocBuffer(size_t len, Allocator &a)
+    bool allocBuffer(size_t size, Allocator &a)
     {
         shared_data_.reset();
         static auto null_deleter = [](void*, size_t){};
@@ -262,23 +253,65 @@ public:
         };
         using _MySharedData = _SharedData<decltype(deleter), decltype(null_deleter)>;
         size_t shared_size = sizeof(_MySharedData);
-        size_t alloc_size = len + shared_size;
+        size_t alloc_size = size + shared_size;
         auto buf = a.allocate(alloc_size);
         auto data = buf + shared_size;
-        auto *sd = new (buf) _MySharedData(data, len, 0, alloc_size, deleter, null_deleter);
+        auto *sd = new (buf) _MySharedData(data, size, alloc_size, deleter, null_deleter);
         shared_data_ = sd;
         
         begin_ptr_ = static_cast<char*>(data);
-        end_ptr_ = begin_ptr_ + len;
+        end_ptr_ = begin_ptr_ + size;
         rd_ptr_ = wr_ptr_ = begin_ptr_;
         
         return true;
     }
     
-    bool allocBuffer(size_t len)
+    bool allocBuffer(size_t size)
     {
         std::allocator<char> a;
-        return allocBuffer(len, a);
+        return allocBuffer(size, a);
+    }
+    
+    KMBuffer& operator= (const KMBuffer &other)
+    {
+        if (this != &other) {
+            reset();
+            other.cloneSelf(*this);
+            auto *kmb = other.next_;
+            while (kmb != &other) {
+                append(kmb->cloneSelf());
+                kmb = kmb->next_;
+            }
+        }
+        return *this;
+    }
+    
+    KMBuffer& operator= (KMBuffer &&other)
+    {
+        if (this != &other) {
+            reset();
+            begin_ptr_ = other.begin_ptr_;
+            end_ptr_ = other.end_ptr_;
+            rd_ptr_ = other.rd_ptr_;
+            wr_ptr_ = other.wr_ptr_;
+            shared_data_ = std::move(other.shared_data_);
+            
+            other.begin_ptr_ = nullptr;
+            other.end_ptr_ = nullptr;
+            other.rd_ptr_ = nullptr;
+            other.wr_ptr_ = nullptr;
+            
+            if (other.prev_ != &other) {
+                next_ = other.next_;
+                next_->prev_ = this;
+                other.next_ = &other;
+                
+                prev_ = other.prev_;
+                prev_->next_ = this;
+                other.prev_ = &other;
+            }
+        }
+        return *this;
     }
 
     size_t space() const
@@ -288,6 +321,11 @@ public:
     }
     
     size_t length() const
+    {
+        return size();
+    }
+    
+    size_t size() const
     {
         if(rd_ptr_ > wr_ptr_) return 0;
         return wr_ptr_ - rd_ptr_;
@@ -346,16 +384,28 @@ public:
         }
     }
 
-    size_t totalLength() const
+    size_t chainLength() const
     {
-        size_t total_len = 0;
+        size_t chain_size = 0;
         auto *kmb = this;
         do {
-            total_len += kmb->length();
+            chain_size += kmb->length();
             kmb = kmb->next_;
         } while (kmb != this);
         
-        return total_len;
+        return chain_size;
+    }
+    
+    bool empty() const
+    {
+        auto *kmb = this;
+        do {
+            if (kmb->length() > 0) {
+                return false;
+            }
+            kmb = kmb->next_;
+        } while (kmb != this);
+        return true;
     }
     
     size_t readChained(void *buf, size_t len)
@@ -408,9 +458,7 @@ public:
                 size_t copy_len = offset+len <= kmb_len ? len : kmb_len - offset;
                 KMBuffer *dd = nullptr;
                 if(!shared_data_) {
-                    KMB_FLAG flags = flags_;
-                    flags &= ~KMB_FLAG_LIFCYC_STACK;
-                    dd = new KMBuffer(flags);
+                    dd = new KMBuffer();
                     std::allocator<char> a;
                     dd->allocBuffer(copy_len, a);
                     dd->write(kmb->readPtr() + offset, copy_len);
@@ -440,7 +488,7 @@ public:
             return ;
         }
         while(next_ != this && next_->length() == 0) {
-            next_->releaseSelf();
+            next_->destroySelf();
         }
         shared_data_ = nullptr;
         begin_ptr_ = end_ptr_ = nullptr;
@@ -454,8 +502,8 @@ public:
             if (kmb->length() > 0) {
                 iovec v;
                 v.iov_base = (char*)kmb->readPtr();
-                v.iov_len = kmb->length();
-                iovs.push_back(v);
+                v.iov_len = static_cast<decltype(v.iov_len)>(kmb->length());
+                iovs.emplace_back(v);
                 ++cnt;
             }
             kmb = kmb->next_;
@@ -464,42 +512,51 @@ public:
         return cnt;
     }
     
-    void release()
+    void reset()
     {
         while (next_ != this) {
-            next_->releaseSelf();
+            next_->destroySelf();
         }
-        releaseSelf();
+        prev_ = next_ = this;
+        
+        shared_data_ = nullptr;
+        begin_ptr_ = end_ptr_ = nullptr;
+        rd_ptr_ = wr_ptr_ = nullptr;
+    }
+    
+    void destroy()
+    {
+        reset();
+        if(storage_type_ != StorageType::AUTO) {
+            delete this;
+        }
     }
 
 private:
-    KMBuffer &operator= (const KMBuffer &) = delete;
-    KMBuffer (const KMBuffer &) = delete;
-
     KMBuffer* cloneSelf() const {
-        KMBuffer* dup = nullptr;
-        KMB_FLAG flags = flags_;
-        flags &= ~KMB_FLAG_LIFCYC_STACK;
+        KMBuffer* kmb = new KMBuffer();
+        cloneSelf(*kmb);
+        return kmb;
+    }
+    
+    void cloneSelf(KMBuffer &buf) const {
         if (!shared_data_) {
-            dup = new KMBuffer(flags);
-            if (length() > 0) {
-                std::allocator<char> a;
-                if(dup->allocBuffer(length(), a)) {
-                    dup->write(readPtr(), length());
-                }
+            if (length() > 0 && buf.allocBuffer(length())) {
+                buf.write(readPtr(), length());
             }
         } else {
-            dup = new KMBuffer(flags);
-            dup->shared_data_ = shared_data_;
-            dup->begin_ptr_ = begin_ptr_;
-            dup->end_ptr_ = end_ptr_;
-            dup->rd_ptr_ = rd_ptr_;
-            dup->wr_ptr_ = wr_ptr_;
+            buf.shared_data_ = shared_data_;
+            buf.begin_ptr_ = begin_ptr_;
+            buf.end_ptr_ = end_ptr_;
+            buf.rd_ptr_ = rd_ptr_;
+            buf.wr_ptr_ = wr_ptr_;
         }
-
-        return dup;
     }
-    virtual void releaseSelf() {
+    
+    /**
+     * don't call destroySelf from chain head
+     */
+    void destroySelf() {
         next_->prev_ = prev_;
         prev_->next_ = next_;
         prev_ = next_ = this;
@@ -507,13 +564,13 @@ private:
         shared_data_ = nullptr;
         begin_ptr_ = end_ptr_ = nullptr;
         rd_ptr_ = wr_ptr_ = nullptr;
-        if(!(flags_ & KMB_FLAG_LIFCYC_STACK)) {
+        if(storage_type_ != StorageType::AUTO) {
             delete this;
         }
     }
 
 private:
-    KMB_FLAG flags_{ KMB_FLAG_NONE };
+    StorageType storage_type_{ StorageType::OTHER };
     char* begin_ptr_{ nullptr };
     char* end_ptr_{ nullptr };
     char* rd_ptr_{ nullptr };
@@ -522,6 +579,69 @@ private:
 
     KMBuffer* prev_{ this };
     KMBuffer* next_{ this };
+    
+public:
+    class Iterator : public std::iterator<std::forward_iterator_tag, KMBuffer>
+    {
+    public:
+        Iterator(const KMBuffer* pos, const KMBuffer* end)
+        : pos_(pos), end_(end)
+        {
+            
+        }
+        Iterator(const Iterator &other)
+        : pos_(other.pos_), end_(other.end_)
+        {
+            
+        }
+        
+        Iterator& operator++()
+        {
+            pos_ = pos_->next_;
+            if (pos_ == end_) {
+                pos_ = nullptr;
+                end_ = nullptr;
+            }
+            return *this;
+        }
+        Iterator operator++(int)
+        {
+            Iterator ret(*this);
+            ++(*this);
+            return ret;
+        }
+        
+        const KMBuffer& operator*() const
+        {
+            return *pos_;
+        }
+        const KMBuffer* operator->() const
+        {
+            return pos_;
+        }
+        
+        friend bool operator==(const Iterator& it1, const Iterator& it2)
+        {
+            return it1.pos_ == it2.pos_ && it1.end_ == it2.end_;
+        }
+        friend bool operator!=(const Iterator& it1, const Iterator& it2)
+        {
+            return !(it1 == it2);
+        }
+        
+    protected:
+        const KMBuffer* pos_{nullptr};
+        const KMBuffer* end_{nullptr};
+    };
+    
+    Iterator begin() const
+    {
+        return Iterator(this, this);
+    }
+    Iterator end() const
+    {
+        return Iterator(nullptr, nullptr);
+    }
 };
 
 KUMA_NS_END

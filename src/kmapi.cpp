@@ -304,9 +304,14 @@ int TcpSocket::send(const void* data, size_t length)
     return pimpl_->send(data, length);
 }
 
-int TcpSocket::send(iovec* iovs, int count)
+int TcpSocket::send(const iovec* iovs, int count)
 {
     return pimpl_->send(iovs, count);
+}
+
+int TcpSocket::send(const KMBuffer &buf)
+{
+    return pimpl_->send(buf);
 }
 
 int TcpSocket::receive(void* data, size_t length)
@@ -423,9 +428,14 @@ int UdpSocket::send(const void* data, size_t length, const char* host, uint16_t 
     return pimpl_->send(data, length, host, port);
 }
 
-int UdpSocket::send(iovec* iovs, int count, const char* host, uint16_t port)
+int UdpSocket::send(const iovec* iovs, int count, const char* host, uint16_t port)
 {
     return pimpl_->send(iovs, count, host, port);
+}
+
+int UdpSocket::send(const KMBuffer &buf, const char* host, uint16_t port)
+{
+    return pimpl_->send(buf, host, port);
 }
 
 int UdpSocket::receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port)
@@ -510,9 +520,14 @@ HttpParser::~HttpParser()
 }
 
 // return bytes parsed
-int HttpParser::parse(char* data, size_t len)
+int HttpParser::parse(const char* data, size_t len)
 {
     return pimpl_->parse(data, len);
+}
+
+int HttpParser::parse(const KMBuffer &buf)
+{
+    return pimpl_->parse(buf);
 }
 
 void HttpParser::pause()
@@ -679,6 +694,11 @@ int HttpRequest::sendData(const void* data, size_t len)
     return pimpl_->sendData(data, len);
 }
 
+int HttpRequest::sendData(const KMBuffer &buf)
+{
+    return pimpl_->sendData(buf);
+}
+
 void HttpRequest::reset()
 {
     pimpl_->reset();
@@ -797,6 +817,11 @@ KMError HttpResponse::sendResponse(int status_code, const char* desc)
 int HttpResponse::sendData(const void* data, size_t len)
 {
     return pimpl_->sendData(data, len);
+}
+
+int HttpResponse::sendData(const KMBuffer &buf)
+{
+    return pimpl_->sendData(buf);
 }
 
 void HttpResponse::reset()
@@ -941,6 +966,11 @@ KMError WebSocket::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const void
 int WebSocket::send(const void* data, size_t len, bool is_text, bool fin)
 {
     return pimpl_->send(data, len, is_text, fin);
+}
+
+int WebSocket::send(const KMBuffer &buf, bool is_text, bool fin)
+{
+    return pimpl_->send(buf, is_text, fin);
 }
 
 KMError WebSocket::close()

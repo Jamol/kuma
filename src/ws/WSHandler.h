@@ -81,6 +81,7 @@ public:
     void setHandshakeCallback(HandshakeCallback cb) { handshake_cb_ = std::move(cb); }
     
     static void handleDataMask(const uint8_t mask_key[WS_MASK_KEY_SIZE], uint8_t* data, size_t len);
+    static void handleDataMask(const uint8_t mask_key[WS_MASK_KEY_SIZE], KMBuffer &buf);
     static bool isControlFrame(uint8_t opcode) {
         return opcode == WS_OPCODE_PING || opcode == WS_OPCODE_PONG || opcode == WS_OPCODE_CLOSE;
     }
@@ -127,6 +128,7 @@ private:
     void cleanup();
     
     void handleDataMask(const FrameHeader& hdr, uint8_t* data, size_t len);
+    void handleDataMask(const FrameHeader& hdr, KMBuffer &buf);
     WSError decodeFrame(uint8_t* data, size_t len);
     
     void onHttpData(void* data, size_t len);

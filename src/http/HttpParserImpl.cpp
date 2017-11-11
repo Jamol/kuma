@@ -188,29 +188,36 @@ bool HttpParser::Impl::hasBody()
     return HttpHeader::hasBody();
 }
 
-int HttpParser::Impl::parse(char* data, size_t len)
+int HttpParser::Impl::parse(const char* data, size_t len)
 {
-    if(HTTP_READ_DONE == read_state_ || HTTP_READ_ERROR == read_state_) {
-        KUMA_WARNTRACE("HttpParser::parse, invalid state="<<read_state_);
-        return 0;
-    }
-    if(HTTP_READ_BODY == read_state_ && !is_chunked_ && !has_content_length_)
-    {// return directly, read untill EOF
-        total_bytes_read_ += len;
-        if(data_cb_) data_cb_(data, len);
-        return (int)len;
-    }
-    char* pos = data;
-    char* end = data + len;
-    ParseState parse_state = parseHttp(pos, end);
-    int parsed_len = (int)(pos - data);
+    int bytes_parsed = 0;
+    auto parse_state = parse(data, len, &bytes_parsed);
     if(PARSE_STATE_DESTROYED == parse_state) {
-        return parsed_len;
+        return bytes_parsed;
     }
     if(PARSE_STATE_ERROR == parse_state && event_cb_) {
         event_cb_(HttpEvent::HTTP_ERROR);
     }
-    return parsed_len;
+    return bytes_parsed;
+}
+
+int HttpParser::Impl::parse(const KMBuffer &buf)
+{
+    int total_parsed = 0;
+    for (auto it = buf.begin(); it != buf.end(); ++it) {
+        if (it->length() > 0) {
+            int bytes_parsed = 0;
+            auto parse_state = parse(it->readPtr(), it->length(), &bytes_parsed);
+            total_parsed += bytes_parsed;
+            if(PARSE_STATE_CONTINUE != parse_state) {
+                if(PARSE_STATE_ERROR == parse_state && event_cb_) {
+                    event_cb_(HttpEvent::HTTP_ERROR);
+                }
+                return total_parsed;
+            }
+        }
+    }
+    return total_parsed;
 }
 
 bool HttpParser::Impl::setEOF()
@@ -236,7 +243,30 @@ KMError HttpParser::Impl::saveData(const char* cur_pos, const char* end)
     return KMError::NOERR;
 }
 
-HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(char*& cur_pos, char* end)
+HttpParser::Impl::ParseState HttpParser::Impl::parse(const char* data, size_t len, int *bytes_read)
+{
+    if(HTTP_READ_DONE == read_state_ || HTTP_READ_ERROR == read_state_) {
+        KUMA_WARNTRACE("HttpParser::parse, invalid state="<<read_state_);
+        *bytes_read = 0;
+        return PARSE_STATE_DONE;
+    }
+    if(HTTP_READ_BODY == read_state_ && !is_chunked_ && !has_content_length_)
+    {// return directly, read untill EOF
+        total_bytes_read_ += len;
+        *bytes_read = static_cast<int>(len);
+        DESTROY_DETECTOR_SETUP();
+        if(data_cb_) data_cb_(const_cast<char*>(data), len);
+        DESTROY_DETECTOR_CHECK(PARSE_STATE_DESTROYED);
+        return PARSE_STATE_DONE;
+    }
+    const char* pos = data;
+    const char* end = data + len;
+    ParseState parse_state = parseHttp(pos, end);
+    *bytes_read = static_cast<int>(pos - data);
+    return parse_state;
+}
+
+HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(const char*& cur_pos, const char* end)
 {
     const char* line = nullptr;
     const char* line_end = nullptr;
@@ -301,7 +331,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(char*& cur_pos, char* e
             size_t cur_len = end - cur_pos;
             if(has_content_length_ && (content_length_ - total_bytes_read_) <= cur_len)
             {// data enough
-                char* notify_data = cur_pos;
+                char* notify_data = const_cast<char*>(cur_pos);
                 size_t notify_len = content_length_ - total_bytes_read_;
                 cur_pos += notify_len;
                 total_bytes_read_ = content_length_;
@@ -314,7 +344,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(char*& cur_pos, char* e
             }
             else
             {// need more data, or read untill EOF
-                char* notify_data = cur_pos;
+                char* notify_data = const_cast<char*>(cur_pos);
                 total_bytes_read_ += cur_len;
                 cur_pos = end;
                 if(data_cb_) data_cb_(notify_data, cur_len);
@@ -390,7 +420,7 @@ bool HttpParser::Impl::parseHeaderLine(const char* line, const char* line_end)
     return true;
 }
 
-HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(char*& cur_pos, char* end)
+HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(const char*& cur_pos, const char* end)
 {
     const char* p_line = nullptr;
     const char* p_end = nullptr;
@@ -432,7 +462,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(char*& cur_pos, char* 
             {
                 size_t cur_len = end - cur_pos;
                 if(chunk_size_ - chunk_bytes_read_ <= cur_len) {// data enough
-                    char* notify_data = cur_pos;
+                    char* notify_data = const_cast<char*>(cur_pos);
                     size_t notify_len = chunk_size_ - chunk_bytes_read_;
                     total_bytes_read_ += notify_len;
                     chunk_bytes_read_ = chunk_size_ = 0; // reset
@@ -442,7 +472,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(char*& cur_pos, char* 
                     if(data_cb_) data_cb_(notify_data, notify_len);
                     DESTROY_DETECTOR_CHECK(PARSE_STATE_DESTROYED);
                 } else {// need more data
-                    char* notify_data = cur_pos;
+                    char* notify_data = const_cast<char*>(cur_pos);
                     total_bytes_read_ += cur_len;
                     chunk_bytes_read_ += cur_len;
                     cur_pos += cur_len;
@@ -678,9 +708,9 @@ void HttpParser::Impl::setStatusCode(int status_code)
     status_code_ = status_code;
 }
 
-bool HttpParser::Impl::getLine(char*& cur_pos, char* end, const char*& line, const char*& line_end)
+bool HttpParser::Impl::getLine(const char*& cur_pos, const char* end, const char*& line, const char*& line_end)
 {
-    char* lf = std::find(cur_pos, end, LF);
+    const char* lf = std::find(cur_pos, end, LF);
     if(lf == end) {
         return false;
     }

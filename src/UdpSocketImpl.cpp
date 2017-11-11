@@ -110,9 +110,14 @@ int UdpSocket::Impl::send(const void* data, size_t length, const std::string &ho
     return socket_->send(data, length, host, port);
 }
 
-int UdpSocket::Impl::send(iovec* iovs, int count, const std::string &host, uint16_t port)
+int UdpSocket::Impl::send(const iovec* iovs, int count, const std::string &host, uint16_t port)
 {
     return socket_->send(iovs, count, host, port);
+}
+
+int UdpSocket::Impl::send(const KMBuffer &buf, const char* host, uint16_t port)
+{
+    return socket_->send(buf, host, port);
 }
 
 int UdpSocket::Impl::receive(void *data, size_t length, char *ip, size_t ip_len, uint16_t &port)

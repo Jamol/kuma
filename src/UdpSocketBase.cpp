@@ -325,7 +325,7 @@ int UdpSocketBase::send(const void* data, size_t length, const std::string &host
         }
     }
     int addr_len = km_get_addr_length(ss_addr);
-    int ret = (int)::sendto(fd_, (const char*)data, length, 0, (struct sockaddr*)&ss_addr, addr_len);
+    int ret = (int)::sendto(fd_, (const char*)data, (int)length, 0, (struct sockaddr*)&ss_addr, addr_len);
     if(0 == ret) {
         KUMA_ERRXTRACE("send, peer closed, err="<<getLastError()<<", host="<<host<<", port="<<port);
         ret = -1;
@@ -352,7 +352,7 @@ int UdpSocketBase::send(const void* data, size_t length, const std::string &host
     return ret;
 }
 
-int UdpSocketBase::send(iovec* iovs, int count, const std::string &host, uint16_t port)
+int UdpSocketBase::send(const iovec* iovs, int count, const std::string &host, uint16_t port)
 {
     if(INVALID_FD == fd_) {
         KUMA_ERRXTRACE("send 2, invalid fd");
@@ -422,6 +422,16 @@ int UdpSocketBase::send(iovec* iovs, int count, const std::string &host, uint16_
     return ret;
 }
 
+int UdpSocketBase::send(const KMBuffer &buf, const char* host, uint16_t port)
+{
+    IOVEC iovs;
+    buf.fillIov(iovs);
+    if (iovs.empty()) {
+        return 0;
+    }
+    return send(&iovs[0], static_cast<int>(iovs.size()), host, port);
+}
+
 int UdpSocketBase::receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port)
 {
     if(INVALID_FD == fd_) {
@@ -436,7 +446,7 @@ int UdpSocketBase::receive(void* data, size_t length, char* ip, size_t ip_len, u
 #else
     int addr_len = sizeof(ss_addr);
 #endif
-    ret = (int)::recvfrom(fd_, (char*)data, length, 0, (struct sockaddr*)&ss_addr, &addr_len);
+    ret = (int)::recvfrom(fd_, (char*)data, (int)length, 0, (struct sockaddr*)&ss_addr, &addr_len);
     if(0 == ret) {
         KUMA_ERRXTRACE("recv, peer closed, err"<<getLastError());
         ret = -1;

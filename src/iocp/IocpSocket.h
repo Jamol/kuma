@@ -40,7 +40,7 @@ public:
     KMError attachFd(SOCKET_FD fd) override;
     KMError detachFd(SOCKET_FD &fd) override;
     int send(const void* data, size_t length) override;
-    int send(iovec* iovs, int count) override;
+    int send(const iovec* iovs, int count) override;
     int receive(void* data, size_t length) override;
     KMError pause() override;
     KMError resume() override;

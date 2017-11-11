@@ -72,7 +72,8 @@ public:
     KMError startSslHandshake(SslRole ssl_role);
 #endif
     int send(const void* data, size_t length);
-    int send(iovec* iovs, int count);
+    int send(const iovec* iovs, int count);
+    int send(const KMBuffer &buf);
     int receive(void* data, size_t length);
     KMError close();
     
@@ -99,7 +100,7 @@ private:
     KMError checkSslHandshake(KMError err);
 #endif
     int sendData(const void *data, size_t length);
-    int sendData(iovec *iovs, int count);
+    int sendData(const iovec *iovs, int count);
     int recvData(void *data, size_t length);
     
 private:

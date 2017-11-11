@@ -435,11 +435,29 @@ void WSHandler::handleDataMask(const FrameHeader& hdr, uint8_t* data, size_t len
     handleDataMask(hdr.maskey, data, len);
 }
 
+void WSHandler::handleDataMask(const FrameHeader& hdr, KMBuffer &buf)
+{
+    if(0 == hdr.mask) return ;
+    handleDataMask(hdr.maskey, buf);
+}
+
 void WSHandler::handleDataMask(const uint8_t mask_key[WS_MASK_KEY_SIZE], uint8_t* data, size_t len)
 {
     if(nullptr == data || 0 == len) return ;
     
     for(size_t i=0; i < len; ++i) {
         data[i] = data[i] ^ mask_key[i%4];
+    }
+}
+
+void WSHandler::handleDataMask(const uint8_t mask_key[WS_MASK_KEY_SIZE], KMBuffer &buf)
+{
+    size_t pos = 0;
+    for (auto it = buf.begin(); it != buf.end(); ++it) {
+        auto *data = it->readPtr();
+        auto len = it->length();
+        for (size_t i = 0; i < len; ++i, ++pos) {
+            data[i] = data[i] ^ mask_key[pos%4];
+        }
     }
 }

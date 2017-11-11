@@ -311,7 +311,7 @@ int SocketBase::send(const void* data, size_t length)
     return ret;
 }
 
-int SocketBase::send(iovec* iovs, int count)
+int SocketBase::send(const iovec* iovs, int count)
 {
     if (!isReady()) {
         KUMA_WARNXTRACE("send 2, invalid state=" << getState());
@@ -362,6 +362,16 @@ int SocketBase::send(iovec* iovs, int count)
 
     //KUMA_INFOXTRACE("send, ret="<<ret);
     return ret;
+}
+
+int SocketBase::send(const KMBuffer &buf)
+{
+    IOVEC iovs;
+    buf.fillIov(iovs);
+    if (iovs.empty()) {
+        return 0;
+    }
+    return send(&iovs[0], static_cast<int>(iovs.size()));
 }
 
 int SocketBase::receive(void* data, size_t length)

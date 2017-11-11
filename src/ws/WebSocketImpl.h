@@ -48,6 +48,7 @@ public:
     KMError attachFd(SOCKET_FD fd, const void* init_data, size_t init_len);
     KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len);
     int send(const void* data, size_t len, bool is_text, bool fin);
+    int send(const KMBuffer &buf, bool is_text, bool fin);
     KMError close();
     
     void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
@@ -75,6 +76,7 @@ private:
     void onWsHandshake(KMError err);
     void onStateOpen();
     KMError sendWsFrame(WSHandler::WSOpcode opcode, bool fin, uint8_t *payload, size_t plen);
+    KMError sendWsFrame(WSHandler::WSOpcode opcode, bool fin, const KMBuffer &buf);
     KMError sendCloseFrame(uint16_t statusCode);
     KMError sendPingFrame(uint8_t *payload, size_t plen);
     KMError sendPongFrame(uint8_t *payload, size_t plen);

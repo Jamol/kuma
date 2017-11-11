@@ -50,7 +50,8 @@ public:
     Impl& operator=(Impl&& other);
     
     // return bytes parsed
-    int parse(char* data, size_t len);
+    int parse(const char* data, size_t len);
+    int parse(const KMBuffer &buf);
     void pause();
     void resume();
     // true - http completed
@@ -116,11 +117,12 @@ private:
     }ChunkReadState;
     
 private:
-    ParseState parseHttp(char*& cur_pos, char* end);
+    ParseState parse(const char* data, size_t len, int *bytes_read);
+    ParseState parseHttp(const char*& cur_pos, const char* end);
     bool parseStartLine(const char* line, const char* line_end);
     bool parseHeaderLine(const char* line, const char* line_end);
-    ParseState parseChunk(char*& cur_pos, char* end);
-    bool getLine(char*& cur_pos, char* end, const char*& line, const char*& line_end);
+    ParseState parseChunk(const char*& cur_pos, const char* end);
+    bool getLine(const char*& cur_pos, const char* end, const char*& line, const char*& line_end);
     
     bool decodeUrl();
     bool parseUrl();

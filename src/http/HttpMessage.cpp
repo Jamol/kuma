@@ -60,9 +60,9 @@ int HttpMessage::sendChunk(const void* data, size_t len)
         str += "\r\n";
         iovec iovs[3];
         iovs[0].iov_base = (char*)str.c_str();
-        iovs[0].iov_len = str.length();
+        iovs[0].iov_len = static_cast<decltype(iovs[0].iov_len)>(str.length());
         iovs[1].iov_base = (char*)data;
-        iovs[1].iov_len = len;
+        iovs[1].iov_len = static_cast<decltype(iovs[1].iov_len)>(len);
         iovs[2].iov_base = (char*)"\r\n";
         iovs[2].iov_len = 2;
         int ret = vsender_(iovs, 3);

@@ -127,7 +127,7 @@ int IocpSocket::send(const void* data, size_t length)
     return send(&iov, 1);
 }
 
-int IocpSocket::send(iovec* iovs, int count)
+int IocpSocket::send(const iovec* iovs, int count)
 {
     if (!isReady()) {
         KUMA_WARNXTRACE("send, invalid state=" << getState());
