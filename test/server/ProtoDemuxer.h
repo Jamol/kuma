@@ -22,13 +22,13 @@ public:
     void onReceive(KMError err);
     void onClose(KMError err);
     
-    void onHttpData(void*, size_t);
+    void onHttpData(KMBuffer &buf);
     void onHttpEvent(HttpEvent ev);
     
 private:
     void cleanup();
     bool checkHttp2();
-    void demuxHttp(void *init_data, size_t len);
+    void demuxHttp(const KMBuffer *init_buf);
     
 private:
     TestLoop*       loop_;

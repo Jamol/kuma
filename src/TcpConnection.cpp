@@ -35,7 +35,7 @@ TcpConnection::TcpConnection(const EventLoopPtr &loop)
 
 TcpConnection::~TcpConnection()
 {
-    
+    send_buffer_.reset();
 }
 
 void TcpConnection::cleanup()
@@ -65,27 +65,29 @@ KMError TcpConnection::connect(const std::string &host, uint16_t port)
     return tcp_.connect(host.c_str(), port, [this] (KMError err) { onConnect(err); });
 }
 
-void TcpConnection::saveInitData(const void* init_data, size_t init_len)
+void TcpConnection::saveInitData(const KMBuffer *init_buf)
 {
-    if(init_data && init_len > 0) {
-        initData_.assign((const char*)init_data, (const char*)init_data + init_len);
+    if(init_buf && init_buf->chainLength() > 0) {
+        auto chain_size = init_buf->chainLength();
+        initData_.resize(chain_size);
+        init_buf->readChained(&initData_[0], initData_.size());
     }
 }
 
-KMError TcpConnection::attachFd(SOCKET_FD fd, const void* init_data, size_t init_len)
+KMError TcpConnection::attachFd(SOCKET_FD fd, const KMBuffer *init_buf)
 {
     isServer_ = true;
     setupCallbacks();
-    saveInitData(init_data, init_len);
+    saveInitData(init_buf);
     
     return tcp_.attachFd(fd);
 }
 
-KMError TcpConnection::attachSocket(TcpSocket::Impl &&tcp, const void* init_data, size_t init_len)
+KMError TcpConnection::attachSocket(TcpSocket::Impl &&tcp, const KMBuffer *init_buf)
 {
     isServer_ = true;
     setupCallbacks();
-    saveInitData(init_data, init_len);
+    saveInitData(init_buf);
     
     return tcp_.attach(std::move(tcp));
 }
@@ -104,14 +106,15 @@ int TcpConnection::send(const void* data, size_t len)
     int ret = tcp_.send(data, len);
     if (ret > 0) {
         if (ret < len) {
-            send_buffer_.write((const uint8_t*)data + ret, len - ret);
+            KMBuffer buf((char*)data + ret, len - ret, len - ret);
+            appendSendBuffer(buf);
         }
         return int(len);
     }
     return ret;
 }
 
-int TcpConnection::send(iovec* iovs, int count)
+int TcpConnection::send(const iovec* iovs, int count)
 {
     if(!sendBufferEmpty()) {
         return 0;
@@ -124,13 +127,40 @@ int TcpConnection::send(iovec* iovs, int count)
             const uint8_t* first = ((uint8_t*)iovs[i].iov_base) + ret;
             const uint8_t* last = ((uint8_t*)iovs[i].iov_base) + iovs[i].iov_len;
             if(first < last) {
-                send_buffer_.write(first, last - first);
+                KMBuffer buf(first, last - first, last - first);
+                appendSendBuffer(buf);
                 ret = 0;
             } else {
                 ret -= iovs[i].iov_len;
             }
         }
         return int(total_len);
+    }
+    return ret;
+}
+
+int TcpConnection::send(const KMBuffer &buf)
+{
+    if(!sendBufferEmpty()) {
+        // try to send buffered data
+        auto ret = sendBufferedData();
+        if (ret != KMError::NOERR) {
+            return -1;
+        } else if (!sendBufferEmpty()) {
+            return 0;
+        }
+    }
+    int chain_len = static_cast<int>(buf.chainLength());
+    int ret = tcp_.send(buf);
+    if (ret > 0) {
+        if (ret < chain_len) {
+            if (send_buffer_) {
+                send_buffer_->append(buf.subbuffer(ret, chain_len - ret));
+            } else {
+                send_buffer_.reset(buf.subbuffer(ret, chain_len - ret));
+            }
+        }
+        return chain_len;
     }
     return ret;
 }
@@ -144,15 +174,33 @@ KMError TcpConnection::close()
 
 KMError TcpConnection::sendBufferedData()
 {
-    if(!send_buffer_.empty()) {
-        int ret = tcp_.send(send_buffer_.ptr(), send_buffer_.size());
+    if(send_buffer_ && !send_buffer_->empty()) {
+        int ret = tcp_.send(*send_buffer_);
         if(ret < 0) {
             return KMError::SOCK_ERROR;
         } else {
-            send_buffer_.bytes_read(ret);
+            send_buffer_->bytesRead(ret);
+            if (send_buffer_->empty()) {
+                send_buffer_.reset();
+            }
         }
     }
     return KMError::NOERR;
+}
+
+void TcpConnection::appendSendBuffer(const KMBuffer &buf)
+{
+    if (send_buffer_) {
+        send_buffer_->append(buf.clone());
+    } else {
+        send_buffer_.reset(buf.clone());
+    }
+}
+
+void TcpConnection::reset()
+{
+    send_buffer_.reset();
+    initData_.clear();
 }
 
 void TcpConnection::onSend(KMError err)

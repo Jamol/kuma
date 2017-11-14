@@ -42,6 +42,7 @@ public:
     KMError setSslFlags(uint32_t ssl_flags) override { return TcpConnection::setSslFlags(ssl_flags); }
     void addHeader(std::string name, std::string value) override;
     int sendData(const void* data, size_t len) override;
+    int sendData(const KMBuffer &buf) override;
     void reset() override; // reset for connection reuse
     KMError close() override;
     
@@ -65,7 +66,7 @@ private:
     bool isVersion2() override { return false; }
     bool processHttpCache();
     
-    void onHttpData(void* data, size_t len);
+    void onHttpData(KMBuffer &buf);
     void onHttpEvent(HttpEvent ev);
     void onComplete();
     void onCacheComplete();
@@ -73,7 +74,7 @@ private:
 private:
     HttpMessage             req_message_;
     HttpParser::Impl        rsp_parser_;
-    HttpBody                rsp_cache_body_;
+    KMBuffer::Ptr           rsp_cache_body_;
     
     EventLoopToken          loop_token_;
 };

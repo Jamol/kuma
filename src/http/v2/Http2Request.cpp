@@ -42,12 +42,11 @@ Http2Request::Http2Request(const EventLoopPtr &loop, std::string ver)
 
 Http2Request::~Http2Request()
 {
-    iovec iov;
-    while (req_queue_.dequeue(iov)) {
-        delete [] (uint8_t*)iov.iov_base;
+    while (!req_queue_.empty()) {
+        req_queue_.pop_front();
     }
-    while (rsp_queue_.dequeue(iov)) {
-        delete [] (uint8_t*)iov.iov_base;
+    while (!rsp_queue_.empty()) {
+        rsp_queue_.pop_front();
     }
     conn_token_.reset();
     loop_token_.reset();
@@ -145,14 +144,14 @@ bool Http2Request::processHttpCache(const EventLoopPtr &loop)
     
     int status_code = 0;
     HeaderVector rsp_headers;
-    HttpBody rsp_body;
+    KMBuffer rsp_body;
     if (HttpCache::instance().getCache(cache_key, status_code, rsp_headers, rsp_body)) {
         // cache hit
         setState(State::RECVING_RESPONSE);
         status_code_ = status_code;
         rsp_headers_.swap(rsp_headers);
         if (!rsp_body.empty()) {
-            saveResponseData(&rsp_body[0], rsp_body.size());
+            saveResponseData(rsp_body);
         }
         header_complete_ = true;
         response_complete_ = true;
@@ -182,7 +181,7 @@ bool Http2Request::processPushPromise()
     
     HeaderVector h2_headers;
     push_client->getResponseHeaders(h2_headers);
-    HttpBody rsp_body;
+    KMBuffer rsp_body;
     push_client->getResponseBody(rsp_body);
     header_complete_ = push_client->isHeaderComplete();
     response_complete_ = push_client->isComplete();
@@ -190,7 +189,7 @@ bool Http2Request::processPushPromise()
         return false;
     }
     if (!rsp_body.empty()) {
-        saveResponseData(&rsp_body[0], rsp_body.size());
+        saveResponseData(rsp_body);
     }
     auto stream = push_client->release();
     if (stream) {
@@ -297,8 +296,8 @@ void Http2Request::setupStreamCallbacks()
     stream_->setHeadersCallback([this] (const HeaderVector &headers, bool endSteam) {
         onHeaders(headers, endSteam);
     });
-    stream_->setDataCallback([this] (void *data, size_t len, bool endSteam) {
-        onData(data, len, endSteam);
+    stream_->setDataCallback([this] (KMBuffer &buf, bool endSteam) {
+        onData(buf, endSteam);
     });
     stream_->setRSTStreamCallback([this] (int err) {
         onRSTStream(err);
@@ -349,6 +348,28 @@ int Http2Request::sendData(const void* data, size_t len)
     }
 }
 
+int Http2Request::sendData(const KMBuffer &buf)
+{
+    if (!conn_) {
+        return -1;
+    }
+    if (getState() != State::SENDING_BODY) {
+        return 0;
+    }
+    if (write_blocked_) {
+        return 0;
+    }
+    if (conn_->isInSameThread() && req_queue_.empty()) {
+        return sendData_i(buf); // return the bytes sent directly
+    } else {
+        saveRequestData(buf);
+        if (req_queue_.size() <= 1) {
+            conn_->async([this] { sendData_i(); }, &conn_token_);
+        }
+        return int(buf.chainLength());
+    }
+}
+
 int Http2Request::sendData_i(const void* data, size_t len)
 {// on conn_ thread
     if (getState() != State::SENDING_BODY) {
@@ -376,15 +397,42 @@ int Http2Request::sendData_i(const void* data, size_t len)
     return ret;
 }
 
+int Http2Request::sendData_i(const KMBuffer &buf)
+{// on conn_ thread
+    if (getState() != State::SENDING_BODY) {
+        return 0;
+    }
+    int ret = 0;
+    auto chain_len = buf.chainLength();
+    size_t send_len = chain_len;
+    if (send_len) {
+        if (has_content_length_ && body_bytes_sent_ + send_len > content_length_) {
+            send_len = content_length_ - body_bytes_sent_;
+        }
+        ret = stream_->sendData(buf, false);
+        if (ret > 0) {
+            body_bytes_sent_ += ret;
+        }
+    }
+    bool end_stream = (!chain_len) || (has_content_length_ && body_bytes_sent_ >= content_length_);
+    if (end_stream) {
+        stream_->sendData(nullptr, 0, true);
+        setState(State::RECVING_RESPONSE);
+    }
+    if (ret == 0) {
+        write_blocked_ = true;
+    }
+    return ret;
+}
+
 int Http2Request::sendData_i()
 {// on conn_ thread
     int bytes_sent = 0;
     while (!req_queue_.empty()) {
-        auto &iov = req_queue_.front();
-        int ret = sendData_i(iov.iov_base, iov.iov_len);
+        auto &kmb = req_queue_.front();
+        int ret = sendData_i(*kmb);
         if (ret > 0) {
             bytes_sent += ret;
-            delete [] (uint8_t*)iov.iov_base;
             req_queue_.pop_front();
         } else if (ret == 0) {
             break;
@@ -411,20 +459,20 @@ void Http2Request::onHeaders(const HeaderVector &headers, bool end_stream)
     }
 }
 
-void Http2Request::onData(void *data, size_t len, bool end_stream)
+void Http2Request::onData(KMBuffer &buf, bool end_stream)
 {// on conn_ thread
     response_complete_ = end_stream;
     auto loop = loop_.lock();
     if (!loop || (loop->inSameThread() && rsp_queue_.empty())) {
         DESTROY_DETECTOR_SETUP();
-        if (data_cb_ && len > 0) data_cb_(data, len);
+        if (data_cb_ && buf.chainLength() > 0) data_cb_(buf);
         DESTROY_DETECTOR_CHECK_VOID();
         
         if (end_stream) {
             onComplete();
         }
     } else {
-        saveResponseData(data, len);
+        saveResponseData(buf);
         if (rsp_queue_.size() <= 1) {
             loop->post([this] { onData(); }, &loop_token_);
         }
@@ -453,28 +501,28 @@ void Http2Request::onWrite()
 
 void Http2Request::saveRequestData(const void *data, size_t len)
 {
-    uint8_t *d = nullptr;
-    if (data && len) {
-        d = new uint8_t[len];
-        memcpy(d, data, len);
-    }
-    iovec iov;
-    iov.iov_base = (char*)d;
-    iov.iov_len = static_cast<decltype(iov.iov_len)>(len);
-    req_queue_.enqueue(iov);
+    KMBuffer buf(data, len, len);
+    KMBuffer::Ptr kmb(buf.clone());
+    req_queue_.enqueue(std::move(kmb));
+}
+
+void Http2Request::saveRequestData(const KMBuffer &buf)
+{
+    KMBuffer::Ptr kmb(buf.clone());
+    req_queue_.enqueue(std::move(kmb));
 }
 
 void Http2Request::saveResponseData(const void *data, size_t len)
 {
-    uint8_t *d = nullptr;
-    if (data && len) {
-        d = new uint8_t[len];
-        memcpy(d, data, len);
-    }
-    iovec iov;
-    iov.iov_base = (char*)d;
-    iov.iov_len = static_cast<decltype(iov.iov_len)>(len);
-    rsp_queue_.enqueue(iov);
+    KMBuffer buf(data, len, len);
+    KMBuffer::Ptr kmb(buf.clone());
+    rsp_queue_.enqueue(std::move(kmb));
+}
+
+void Http2Request::saveResponseData(const KMBuffer &buf)
+{
+    KMBuffer::Ptr kmb(buf.clone());
+    rsp_queue_.enqueue(std::move(kmb));
 }
 
 void Http2Request::onHeaders()
@@ -499,11 +547,10 @@ void Http2Request::onData()
     }
     
     while (!rsp_queue_.empty()) {
-        auto &iov = rsp_queue_.front();
+        auto &kmb = rsp_queue_.front();
         DESTROY_DETECTOR_SETUP();
-        if (iov.iov_len > 0 && data_cb_) data_cb_(iov.iov_base, iov.iov_len);
+        if (kmb) data_cb_(*kmb);
         DESTROY_DETECTOR_CHECK_VOID();
-        delete [] (uint8_t*)iov.iov_base;
         rsp_queue_.pop_front();
     }
     if (response_complete_) {
@@ -554,12 +601,11 @@ void Http2Request::reset()
 {
     HttpRequest::Impl::reset();
     
-    iovec iov;
-    while (req_queue_.dequeue(iov)) {
-        delete [] (uint8_t*)iov.iov_base;
+    while (!req_queue_.empty()) {
+        req_queue_.pop_front();
     }
-    while (rsp_queue_.dequeue(iov)) {
-        delete [] (uint8_t*)iov.iov_base;
+    while (!rsp_queue_.empty()) {
+        rsp_queue_.pop_front();
     }
     
     rsp_headers_.clear();

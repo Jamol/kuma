@@ -38,10 +38,11 @@ public:
     uint32_t getSslFlags() const { return tcp_.getSslFlags(); }
     bool sslEnabled() const { return tcp_.sslEnabled(); }
     KMError connect(const std::string &host, uint16_t port);
-    KMError attachFd(SOCKET_FD fd, const void* init_data, size_t init_len);
-    KMError attachSocket(TcpSocket::Impl &&tcp, const void* init_data, size_t init_len);
+    KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf);
+    KMError attachSocket(TcpSocket::Impl &&tcp, const KMBuffer *init_buf);
     int send(const void* data, size_t len);
-    int send(iovec* iovs, int count);
+    int send(const iovec* iovs, int count);
+    int send(const KMBuffer &buf);
     KMError close();
     
     EventLoopPtr eventLoop() { return tcp_.eventLoop(); }
@@ -54,8 +55,10 @@ protected:
     virtual void onWrite() = 0;
     virtual void onError(KMError err) = 0;
     bool isServer() { return isServer_; }
-    bool sendBufferEmpty() { return send_buffer_.empty(); }
+    bool sendBufferEmpty() { return !send_buffer_ || send_buffer_->empty(); }
     KMError sendBufferedData();
+    void appendSendBuffer(const KMBuffer &buf);
+    void reset();
     
 private:
     void onSend(KMError err);
@@ -65,13 +68,13 @@ private:
 private:
     void cleanup();
     void setupCallbacks();
-    void saveInitData(const void* init_data, size_t init_len);
+    void saveInitData(const KMBuffer *init_buf);
     
 protected:
     TcpSocket::Impl tcp_;
     std::string host_;
     uint16_t port_{ 0 };
-    SKBuffer send_buffer_;
+    KMBuffer::Ptr send_buffer_;
     
 private:
     std::vector<uint8_t>    initData_;

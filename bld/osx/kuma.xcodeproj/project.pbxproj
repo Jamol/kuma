@@ -392,9 +392,9 @@
 			isa = PBXGroup;
 			children = (
 				6FE0EEEF1D40982B006136B7 /* v2 */,
-				6F9E76791D36758B005E04B2 /* httpdefs.h */,
 				6F91F16F1D782DD3004A95B9 /* Http1xRequest.cpp */,
 				6F91F1701D782DD3004A95B9 /* Http1xRequest.h */,
+				6F9E76791D36758B005E04B2 /* httpdefs.h */,
 				6F6D12EC1D965A9D008B64E6 /* Http1xResponse.cpp */,
 				6F6D12ED1D965A9D008B64E6 /* Http1xResponse.h */,
 				6FBB2C9A1D139C560024550F /* HttpParserImpl.cpp */,

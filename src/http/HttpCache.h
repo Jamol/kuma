@@ -23,6 +23,7 @@
 #define __HttpCache_H__
 
 #include "httpdefs.h"
+#include "kmbuffer.h"
 
 #include <memory>
 #include <map>
@@ -37,9 +38,9 @@ KUMA_NS_BEGIN
 class HttpCache
 {
 public:
-    bool getCache(const std::string &key, int &status_code, HeaderVector &headers, HttpBody &body);
-    void setCache(const std::string &key, int status_code, HeaderVector headers, const uint8_t *body, size_t body_size);
-    void setCache(const std::string &key, int status_code, HeaderVector headers, HttpBody body);
+    bool getCache(const std::string &key, int &status_code, HeaderVector &headers, KMBuffer &body);
+    //void setCache(const std::string &key, int status_code, HeaderVector headers, const uint8_t *body, size_t body_size);
+    void setCache(const std::string &key, int status_code, HeaderVector headers, KMBuffer &body);
     
     static HttpCache& instance();
     static bool isCacheable(const std::string &method, const HeaderVector &headers);
@@ -53,8 +54,8 @@ protected:
     {
     public:
         CacheRecord() = default;
-        CacheRecord(int code, HeaderVector &&h, HttpBody &&b, int max_age)
-            : status_code(code), headers(std::move(h)), body(std::move(b)), max_age(max_age)
+        CacheRecord(int code, HeaderVector &&h, KMBuffer &b, int max_age)
+            : status_code(code), headers(std::move(h)), body(b.clone()), max_age(max_age)
         {
             receive_time = steady_clock::now();
             expire_time = receive_time + seconds(max_age);
@@ -78,7 +79,7 @@ protected:
         }
         int status_code = 0;
         HeaderVector headers;
-        HttpBody body;
+        KMBuffer::Ptr body;
         int max_age = 0;
         time_point<steady_clock> receive_time;
         time_point<steady_clock> expire_time;

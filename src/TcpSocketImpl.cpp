@@ -207,8 +207,8 @@ KMError TcpSocket::Impl::attach(Impl &&other)
     if (ssl_handler_) {
         if (is_bio_handler_) {
             auto bio_handler = (BioHandler*)ssl_handler_.get();
-            bio_handler->setSendFunc([this](const void *data, size_t length) -> int {
-                return sendData(data, length);
+            bio_handler->setSendFunc([this](const KMBuffer &buf) -> int {
+                return sendData(buf);
             });
             bio_handler->setRecvFunc([this](void *data, size_t length) -> int {
                 return recvData(data, length);
@@ -565,8 +565,8 @@ bool TcpSocket::Impl::createSslHandler()
     if (loop) {
         if (loop->getPollType() == PollType::IOCP) {
             auto bio_handler = new BioHandler();
-            bio_handler->setSendFunc([this](const void *data, size_t length) -> int {
-                return sendData(data, length);
+            bio_handler->setSendFunc([this](const KMBuffer &buf) -> int {
+                return sendData(buf);
             });
             bio_handler->setRecvFunc([this](void *data, size_t length) -> int {
                 return recvData(data, length);
@@ -622,6 +622,11 @@ int TcpSocket::Impl::sendData(const void* data, size_t length)
 int TcpSocket::Impl::sendData(const iovec* iovs, int count)
 {
     return socket_->send(iovs, count);
+}
+
+int TcpSocket::Impl::sendData(const KMBuffer &buf)
+{
+    return socket_->send(buf);
 }
 
 int TcpSocket::Impl::recvData(void *data, size_t length)

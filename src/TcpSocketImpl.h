@@ -101,6 +101,7 @@ private:
 #endif
     int sendData(const void *data, size_t length);
     int sendData(const iovec *iovs, int count);
+    int sendData(const KMBuffer &buf);
     int recvData(void *data, size_t length);
     
 private:

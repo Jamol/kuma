@@ -55,8 +55,8 @@ public:
     
     //KMError connect(const std::string &host, uint16_t port, ConnectCallback cb);
     KMError connect(const std::string &host, uint16_t port);
-    KMError attachFd(SOCKET_FD fd, const void* init_data, size_t init_len);
-    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len);
+    KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf);
+    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf);
     KMError attachStream(uint32_t stream_id, HttpResponse::Impl* rsp);
     PushClient* getPushClient(const std::string &cache_key);
     KMError close();
@@ -103,7 +103,7 @@ private:
     void onError(KMError err) override;
     
 private:
-    void onHttpData(void* data, size_t len);
+    void onHttpData(KMBuffer &buf);
     void onHttpEvent(HttpEvent ev);
     
 private:

@@ -42,6 +42,25 @@ int HttpMessage::sendData(const void* data, size_t len)
     return ret;
 }
 
+int HttpMessage::sendData(const KMBuffer &buf)
+{
+    if(is_chunked_) {
+        return sendChunk(buf);
+    }
+    auto chain_len = buf.chainLength();
+    if(0 == chain_len) {
+        return 0;
+    }
+    int ret = bsender_(buf);
+    if(ret > 0) {
+        body_bytes_sent_ += ret;
+        if (body_bytes_sent_ >= content_length_) {
+            completed_ = true;
+        }
+    }
+    return ret;
+}
+
 int HttpMessage::sendChunk(const void* data, size_t len)
 {
     if(nullptr == data && 0 == len) { // chunk end
@@ -69,6 +88,42 @@ int HttpMessage::sendChunk(const void* data, size_t len)
         if(ret > 0) {
             body_bytes_sent_ += ret;
             return int(len);
+        }
+        return ret;
+    }
+}
+
+int HttpMessage::sendChunk(const KMBuffer &buf)
+{
+    auto chain_len = buf.chainLength();
+    if(chain_len == 0) { // chunk end
+        static const std::string _chunk_end_token_ = "0\r\n\r\n";
+        int ret = sender_(_chunk_end_token_.c_str(), _chunk_end_token_.length());
+        if(ret > 0) {
+            completed_ = true;
+            return 0;
+        }
+        return ret;
+    } else {
+        std::stringstream ss;
+        ss << std::hex << chain_len;
+        std::string str;
+        ss >> str;
+        str += "\r\n";
+        KMBuffer hdr(str.c_str(), str.size(), str.size());
+        
+        // temporary link to hdr
+        hdr.append(const_cast<KMBuffer*>(&buf));
+        
+        KMBuffer tail("\r\n", 2, 2);
+        hdr.append(&tail);
+        
+        int ret = bsender_(hdr);
+        hdr.unlink();
+        tail.unlink();
+        if(ret > 0) {
+            body_bytes_sent_ += ret;
+            return int(chain_len);
         }
         return ret;
     }

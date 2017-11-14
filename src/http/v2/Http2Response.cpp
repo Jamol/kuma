@@ -51,8 +51,8 @@ KMError Http2Response::attachStream(H2Connection::Impl* conn, uint32_t stream_id
     stream_->setHeadersCallback([this] (const HeaderVector &headers, bool endSteam) {
         onHeaders(headers, endSteam);
     });
-    stream_->setDataCallback([this] (void *data, size_t len, bool endSteam) {
-        onData(data, len, endSteam);
+    stream_->setDataCallback([this] (KMBuffer &buf, bool endSteam) {
+        onData(buf, endSteam);
     });
     stream_->setRSTStreamCallback([this] (int err) {
         onRSTStream(err);
@@ -119,6 +119,36 @@ int Http2Response::sendData(const void* data, size_t len)
         }
     }
     bool endStream = (!data && !len) || (has_content_length_ && body_bytes_sent_ >= content_length_);
+    if (endStream) { // end stream
+        stream_->sendData(nullptr, 0, true);
+        setState(State::COMPLETE);
+        auto loop = loop_.lock();
+        if (loop) {
+            loop->post([this] { notifyComplete(); }, &loop_token_);
+        }
+    }
+    return ret;
+}
+
+int Http2Response::sendData(const KMBuffer &buf)
+{
+    if (getState() != State::SENDING_BODY) {
+        return 0;
+    }
+    
+    auto chain_len = buf.chainLength();
+    int ret = 0;
+    if (chain_len) {
+        size_t send_len = chain_len;
+        if (has_content_length_ && body_bytes_sent_ + send_len > content_length_) {
+            send_len = content_length_ - body_bytes_sent_;
+        }
+        ret = stream_->sendData(buf, false);
+        if (ret > 0) {
+            body_bytes_sent_ += ret;
+        }
+    }
+    bool endStream = (!chain_len) || (has_content_length_ && body_bytes_sent_ >= content_length_);
     if (endStream) { // end stream
         stream_->sendData(nullptr, 0, true);
         setState(State::COMPLETE);
@@ -211,10 +241,10 @@ void Http2Response::onHeaders(const HeaderVector &headers, bool end_stream)
     }
 }
 
-void Http2Response::onData(void *data, size_t len, bool end_stream)
+void Http2Response::onData(KMBuffer &buf, bool end_stream)
 {
     DESTROY_DETECTOR_SETUP();
-    if (data_cb_ && len > 0) data_cb_(data, len);
+    if (data_cb_ && buf.chainLength() > 0) data_cb_(buf);
     DESTROY_DETECTOR_CHECK_VOID();
     
     if (end_stream) {

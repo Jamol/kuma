@@ -14,15 +14,15 @@ class HttpTest : public TestObject
 public:
     HttpTest(ObjectManager* obj_mgr, long conn_id, const std::string &ver);
 
-    KMError attachFd(SOCKET_FD fd, uint32_t ssl_flags, void *init, size_t len);
-    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, void *init, size_t len);
+    KMError attachFd(SOCKET_FD fd, uint32_t ssl_flags, const KMBuffer *init_buf);
+    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf);
     KMError attachStream(H2Connection* conn, uint32_t streamId);
     int close();
     
     void onSend(KMError err);
     void onClose(KMError err);
     
-    void onHttpData(void*, size_t);
+    void onHttpData(KMBuffer &buf);
     void onHeaderComplete();
     void onRequestComplete();
     void onResponseComplete();

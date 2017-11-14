@@ -21,23 +21,23 @@ void HttpTest::setupCallbacks()
     http_.setWriteCallback([this] (KMError err) { onSend(err); });
     http_.setErrorCallback([this] (KMError err) { onClose(err); });
     
-    http_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
+    http_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
     http_.setHeaderCompleteCallback([this] () { onHeaderComplete(); });
     http_.setRequestCompleteCallback([this] () { onRequestComplete(); });
     http_.setResponseCompleteCallback([this] () { onResponseComplete(); });
 }
 
-KMError HttpTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags, void *init, size_t len)
+KMError HttpTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags, const KMBuffer *init_buf)
 {
     setupCallbacks();
     http_.setSslFlags(ssl_flags);
-    return http_.attachFd(fd, init, len);
+    return http_.attachFd(fd, init_buf);
 }
 
-KMError HttpTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser, void *init, size_t len)
+KMError HttpTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf)
 {
     setupCallbacks();
-    return http_.attachSocket(std::move(tcp), std::move(parser), init, len);
+    return http_.attachSocket(std::move(tcp), std::move(parser), init_buf);
 }
 
 KMError HttpTest::attachStream(H2Connection* conn, uint32_t streamId)
@@ -68,9 +68,9 @@ void HttpTest::onClose(KMError err)
     obj_mgr_->removeObject(conn_id_);
 }
 
-void HttpTest::onHttpData(void* data, size_t len)
+void HttpTest::onHttpData(KMBuffer &buf)
 {
-    total_bytes_read_ += len;
+    total_bytes_read_ += buf.chainLength();
     //printf("HttpClient_%ld::onHttpData, len=%zu, total=%zu\n", conn_id_, len, total_bytes_read_);
 }
 
@@ -158,15 +158,23 @@ void HttpTest::sendTestFile()
     }
     if (file_name_.empty()) {
         static const std::string not_found("<html><body>404 Not Found!</body></html>");
-        http_.sendData((const uint8_t*)(not_found.c_str()), not_found.size());
-        http_.sendData(nullptr, 0);
+        //http_.sendData((const uint8_t*)(not_found.c_str()), not_found.size());
+        //http_.sendData(nullptr, 0);
+        KMBuffer buf(not_found.c_str(), not_found.size(), not_found.size());
+        http_.sendData(buf);
+        buf.reset();
+        http_.sendData(buf);
         return;
     }
-    uint8_t buf[4096];
-    auto nread = fread(buf, 1, sizeof(buf), fp);
+    //uint8_t buf[4096];
+    //auto nread = fread(buf, 1, sizeof(buf), fp);
+    KMBuffer buf(4096);
+    auto nread = fread(buf.writePtr(), 1, buf.space(), fp);
+    buf.bytesWritten(nread);
     fclose(fp);
     if (nread > 0) {
-        int ret = http_.sendData(buf, nread);
+        //int ret = http_.sendData(buf, nread);
+        int ret = http_.sendData(buf);
         if (ret < 0) {
             return;
         } else if (ret < nread) {
@@ -184,13 +192,19 @@ void HttpTest::sendTestData()
     if (is_options_) {
         return;
     }
-    uint8_t buf[16*1024];
+    const size_t kBufferSize = 16*1024;
+    uint8_t buf[kBufferSize];
     memset(buf, 'a', sizeof(buf));
+    
+    KMBuffer buf1(buf, kBufferSize/2, kBufferSize/2);
+    KMBuffer buf2(buf + kBufferSize/2, kBufferSize/2, kBufferSize/2);
+    buf1.append(&buf2);
+    
     while (true) {
-        int ret = http_.sendData(buf, sizeof(buf));
+        int ret = http_.sendData(buf1);
         if (ret < 0) {
             break;
-        } else if (ret < sizeof(buf)) {
+        } else if (ret < buf1.chainLength()) {
             // should buffer remain data
             break;
         }

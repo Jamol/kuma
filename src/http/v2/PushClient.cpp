@@ -68,8 +68,8 @@ KMError PushClient::attachStream(H2Connection::Impl* conn, H2StreamPtr &stream)
     stream_->setHeadersCallback([this] (const HeaderVector &headers, bool endSteam) {
         onHeaders(headers, endSteam);
     });
-    stream_->setDataCallback([this] (void *data, size_t len, bool endSteam) {
-        onData(data, len, endSteam);
+    stream_->setDataCallback([this] (KMBuffer &buf, bool endSteam) {
+        onData(buf, endSteam);
     });
     stream_->setRSTStreamCallback([this] (int err) {
         onRSTStream(err);
@@ -122,11 +122,14 @@ void PushClient::onHeaders(const HeaderVector &headers, bool end_stream)
     }
 }
 
-void PushClient::onData(void *data, size_t len, bool end_stream)
+void PushClient::onData(KMBuffer &buf, bool end_stream)
 {
-    if (data && len > 0) {
-        uint8_t *ptr = static_cast<uint8_t*>(data);
-        rsp_body_.insert(rsp_body_.end(), ptr, ptr + len);
+    if (buf.chainLength() > 0) {
+        if (rsp_body_) {
+            rsp_body_->append(buf.clone());
+        } else {
+            rsp_body_.reset(buf.clone());
+        }
     }
     if (end_stream) {
         onComplete();
@@ -163,7 +166,11 @@ void PushClient::getResponseHeaders(HeaderVector &rsp_headers)
     rsp_headers = std::move(rsp_headers_);
 }
 
-void PushClient::getResponseBody(HttpBody &rsp_body)
+void PushClient::getResponseBody(KMBuffer &rsp_body)
 {
-    rsp_body = std::move(rsp_body_);
+    if (rsp_body_) {
+        rsp_body = *rsp_body_;
+    } else {
+        rsp_body.reset();
+    }
 }

@@ -58,7 +58,7 @@ public:
         CLIENT,
         SERVER
     };
-    using FrameCallback = std::function<void(uint8_t/*opcode*/, bool/*fin*/, void*, size_t)>;
+    using FrameCallback = std::function<void(uint8_t/*opcode*/, bool/*fin*/, KMBuffer &buf)>;
     using HandshakeCallback = std::function<void(KMError)>;
     
     WSHandler();
@@ -131,7 +131,7 @@ private:
     void handleDataMask(const FrameHeader& hdr, KMBuffer &buf);
     WSError decodeFrame(uint8_t* data, size_t len);
     
-    void onHttpData(void* data, size_t len);
+    void onHttpData(KMBuffer &buf);
     void onHttpEvent(HttpEvent ev);
     
     void handleRequest();

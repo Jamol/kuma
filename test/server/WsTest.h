@@ -13,14 +13,14 @@ class WsTest : public TestObject
 public:
     WsTest(TestLoop* loop, long conn_id);
 
-    KMError attachFd(SOCKET_FD fd, uint32_t ssl_flags, void *init, size_t len);
-    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, void *init, size_t len);
+    KMError attachFd(SOCKET_FD fd, uint32_t ssl_flags, const KMBuffer *init_buf);
+    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf);
     int close();
     
     void onSend(KMError err);
     void onClose(KMError err);
     
-    void onData(void*, size_t);
+    void onData(KMBuffer &buf);
     
 private:
     void cleanup();

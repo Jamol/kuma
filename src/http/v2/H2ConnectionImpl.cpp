@@ -97,7 +97,7 @@ KMError H2Connection::Impl::connect(const std::string &host, uint16_t port)
 KMError H2Connection::Impl::connect_i(const std::string &host, uint16_t port)
 {
     next_stream_id_ = 1;
-    http_parser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
+    http_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     setState(State::CONNECTING);
     
@@ -114,11 +114,11 @@ KMError H2Connection::Impl::connect_i(const std::string &host, uint16_t port)
     return TcpConnection::connect(host.c_str(), port);
 }
 
-KMError H2Connection::Impl::attachFd(SOCKET_FD fd, const void* init_data, size_t init_len)
+KMError H2Connection::Impl::attachFd(SOCKET_FD fd, const KMBuffer *init_buf)
 {
     next_stream_id_ = 2;
     
-    auto ret = TcpConnection::attachFd(fd, init_data, init_len);
+    auto ret = TcpConnection::attachFd(fd, init_buf);
     if (ret == KMError::NOERR) {
         if (sslEnabled()) {
             // waiting for client preface
@@ -132,7 +132,7 @@ KMError H2Connection::Impl::attachFd(SOCKET_FD fd, const void* init_data, size_t
     return ret;
 }
 
-KMError H2Connection::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len)
+KMError H2Connection::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf)
 {
     KUMA_ASSERT(parser.isRequest());
     http_parser_ = std::move(parser);
@@ -143,7 +143,7 @@ KMError H2Connection::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl
         setState(State::UPGRADING);
     }
     
-    auto ret = TcpConnection::attachSocket(std::move(tcp), init_data, init_len);
+    auto ret = TcpConnection::attachSocket(std::move(tcp), init_buf);
     if (ret != KMError::NOERR) {
         return ret;
     }
@@ -208,13 +208,15 @@ KMError H2Connection::Impl::sendH2Frame(H2Frame *frame)
     size_t payloadSize = frame->calcPayloadSize();
     size_t frameSize = payloadSize + H2_FRAME_HEADER_SIZE;
     
-    send_buffer_.expand(frameSize);
-    int ret = frame->encode(send_buffer_.wr_ptr(), frameSize);
+    KMBuffer buf(frameSize);
+    int ret = frame->encode((uint8_t*)buf.writePtr(), buf.space());
     if (ret < 0) {
         KUMA_ERRXTRACE("sendH2Frame, failed to encode frame");
         return KMError::INVALID_PARAM;
     }
-    send_buffer_.bytes_written(frameSize);
+    KUMA_ASSERT(ret == (int)frameSize);
+    buf.bytesWritten(ret);
+    appendSendBuffer(buf);
     return sendBufferedData();
 }
 
@@ -229,15 +231,16 @@ KMError H2Connection::Impl::sendHeadersFrame(HeadersFrame *frame)
     size_t hpackSize = hdrSize * 3 / 2;
     size_t frameSize = len1 + hpackSize;
     
-    send_buffer_.expand(frameSize);
-    int ret = hp_encoder_.encode(headers, send_buffer_.wr_ptr() + len1, hpackSize);
+    KMBuffer buf(frameSize);
+    int ret = hp_encoder_.encode(headers, (uint8_t*)buf.writePtr() + len1, hpackSize);
     if (ret < 0) {
         return KMError::FAILED;
     }
     size_t bsize = ret;
-    ret = frame->encode(send_buffer_.wr_ptr(), len1, bsize);
+    ret = frame->encode((uint8_t*)buf.writePtr(), len1, bsize);
     KUMA_ASSERT(ret == (int)len1);
-    send_buffer_.bytes_written(len1 + bsize);
+    buf.bytesWritten(len1 + bsize);
+    appendSendBuffer(buf);
     return sendBufferedData();
 }
 
@@ -870,7 +873,8 @@ std::string H2Connection::Impl::buildUpgradeResponse()
 void H2Connection::Impl::sendUpgradeRequest()
 {
     std::string str(buildUpgradeRequest());
-    send_buffer_.write(str);
+    KMBuffer buf(str.c_str(), str.size(), str.size());
+    appendSendBuffer(buf);
     setState(State::UPGRADING);
     sendBufferedData();
 }
@@ -878,7 +882,8 @@ void H2Connection::Impl::sendUpgradeRequest()
 void H2Connection::Impl::sendUpgradeResponse()
 {
     std::string str(buildUpgradeResponse());
-    send_buffer_.write(str);
+    KMBuffer buf(str.c_str(), str.size(), str.size());
+    appendSendBuffer(buf);
     setState(State::UPGRADING);
     sendBufferedData();
     if (sendBufferEmpty()) {
@@ -893,34 +898,36 @@ void H2Connection::Impl::sendPreface()
     params.emplace_back(std::make_pair(INITIAL_WINDOW_SIZE, init_local_window_size_));
     params.emplace_back(std::make_pair(MAX_FRAME_SIZE, max_local_frame_size_));
     size_t setting_size = H2_FRAME_HEADER_SIZE + params.size() * H2_SETTING_ITEM_SIZE;
+    KMBuffer buf;
     if (!isServer()) {
         size_t total_len = ClientConnectionPreface.size() + setting_size + H2_WINDOW_UPDATE_FRAME_SIZE;
-        send_buffer_.expand(total_len);
-        send_buffer_.write(ClientConnectionPreface);
+        buf.allocBuffer(total_len);
+        buf.write(ClientConnectionPreface.c_str(), ClientConnectionPreface.size());
     } else {
         params.emplace_back(std::make_pair(MAX_CONCURRENT_STREAMS, max_concurrent_streams_));
         setting_size += H2_SETTING_ITEM_SIZE;
         size_t total_len = setting_size + H2_WINDOW_UPDATE_FRAME_SIZE;
-        send_buffer_.expand(total_len);
+        buf.allocBuffer(total_len);
     }
     SettingsFrame settings;
     settings.setStreamId(0);
     settings.setParams(std::move(params));
-    int ret = settings.encode(send_buffer_.wr_ptr(), send_buffer_.space());
+    int ret = settings.encode((uint8_t*)buf.writePtr(), buf.space());
     if (ret < 0) {
         KUMA_ERRXTRACE("sendPreface, failed to encode setting frame");
         return;
     }
-    send_buffer_.bytes_written(ret);
+    buf.bytesWritten(ret);
     WindowUpdateFrame win_update;
     win_update.setStreamId(0);
     win_update.setWindowSizeIncrement(flow_ctrl_.localWindowSize());
-    ret = win_update.encode(send_buffer_.wr_ptr(), send_buffer_.space());
+    ret = win_update.encode((uint8_t*)buf.writePtr(), buf.space());
     if (ret < 0) {
         KUMA_ERRXTRACE("sendPreface, failed to window update frame");
         return;
     }
-    send_buffer_.bytes_written(ret);
+    buf.bytesWritten(ret);
+    appendSendBuffer(buf);
     sendBufferedData();
     if (sendBufferEmpty() && preface_received_) {
         onStateOpen();
@@ -1081,9 +1088,9 @@ void H2Connection::Impl::streamClosed(uint32_t stream_id)
     --opened_stream_count_;
 }
 
-void H2Connection::Impl::onHttpData(void* data, size_t len)
+void H2Connection::Impl::onHttpData(KMBuffer &buf)
 {
-    KUMA_ERRXTRACE("onHttpData, len="<<len);
+    KUMA_ERRXTRACE("onHttpData, len="<<buf.chainLength());
 }
 
 void H2Connection::Impl::onHttpEvent(HttpEvent ev)

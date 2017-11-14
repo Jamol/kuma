@@ -39,7 +39,7 @@ class H2Stream : public KMObject
 public:
     using HeadersCallback = std::function<void(const HeaderVector &, bool)>;
     using PromiseCallback = std::function<void(const HeaderVector &)>;
-    using DataCallback = std::function<void(void *, size_t, bool)>;
+    using DataCallback = std::function<void(KMBuffer &buf, bool)>;
     using RSTStreamCallback = std::function<void(int)>;
     using WriteCallback = std::function<void(void)>;
     
@@ -51,6 +51,7 @@ public:
     KMError sendPushPromise(const HeaderVector &headers, size_t headers_size, uint32_t stream_id);
     KMError sendHeaders(const HeaderVector &headers, size_t headers_size, bool end_stream);
     int sendData(const void *data, size_t len, bool end_stream = false);
+    int sendData(const KMBuffer &buf, bool end_stream = false);
     KMError sendWindowUpdate(uint32_t delta);
     
     void close();

@@ -167,6 +167,22 @@ int BioHandler::send(const iovec* iovs, int count)
     return bytes_sent;
 }
 
+int BioHandler::send(const KMBuffer &buf)
+{
+    int bytes_sent = 0;
+    for (auto it = buf.begin(); it != buf.end(); ++it) {
+        int ret = send((const uint8_t*)it->readPtr(), it->length());
+        if (ret < 0) {
+            return ret;
+        }
+        bytes_sent += ret;
+        if (static_cast<size_t>(ret) < it->length()) {
+            return bytes_sent;
+        }
+    }
+    return bytes_sent;
+}
+
 int BioHandler::receive(void* data, size_t length)
 {
     size_t bytes_total = 0;
@@ -542,7 +558,8 @@ int BioHandler::writeSslData(SKBuffer &buf)
 
 int BioHandler::sendData(SKBuffer &buf)
 {
-    auto ret = send_func_(buf.ptr(), buf.size());
+    KMBuffer kmb(buf.ptr(), buf.size(), buf.size());
+    auto ret = send_func_(kmb);
     if (ret > 0) {
         buf.bytes_read(ret);
     }

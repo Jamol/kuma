@@ -109,12 +109,17 @@ int DataFrame::encode(uint8_t *dst, size_t len)
         return ret;
     }
     ptr += ret;
-    
     if (end - ptr < size_) {
         return -1;
     }
-    memcpy(ptr, data_, size_);
-    ptr += size_;
+    if (data_) {
+        memcpy(ptr, data_, size_);
+        ptr += size_;
+    } else if (buf_) {
+        auto buf_len = buf_->chainLength();
+        buf_->readChained(ptr, buf_len);
+        ptr += buf_len;
+    }
     return int(ptr - dst);
 }
 

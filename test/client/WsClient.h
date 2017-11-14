@@ -17,7 +17,7 @@ public:
     void startRequest(const std::string& url);
     int close();
     
-    void onData(void*, size_t);
+    void onData(KMBuffer &buf);
     void onConnect(KMError err);
     void onSend(KMError err);
     void onClose(KMError err);

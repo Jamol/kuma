@@ -57,7 +57,7 @@ KMError HttpRequest::Impl::sendRequest(std::string method, std::string url)
     checkHeaders();
     return sendRequest();
 }
-
+/*
 int HttpRequest::Impl::sendData(const KMBuffer &buf)
 {
     int bytes_sent = 0;
@@ -66,14 +66,14 @@ int HttpRequest::Impl::sendData(const KMBuffer &buf)
         if (ret < 0) {
             return ret;
         }
-        bytes_sent += static_cast<int>(it->length());
-        if (ret < it->length()) {
+        bytes_sent += ret;
+        if (static_cast<size_t>(ret) < it->length()) {
             return bytes_sent;
         }
     }
     return bytes_sent;
 }
-
+*/
 std::string HttpRequest::Impl::getCacheKey()
 {
     std::string cache_key = uri_.getHost() + uri_.getPath();

@@ -35,8 +35,11 @@ Http1xResponse::Http1xResponse(const EventLoopPtr &loop, std::string ver)
     rsp_message_.setSender([this] (const void* data, size_t len) -> int {
         return TcpConnection::send(data, len);
     });
-    rsp_message_.setVSender([this] (iovec* iovs, int count) -> int {
+    rsp_message_.setVSender([this] (const iovec* iovs, int count) -> int {
         return TcpConnection::send(iovs, count);
+    });
+    rsp_message_.setBSender([this] (const KMBuffer &buf) -> int {
+        return TcpConnection::send(buf);
     });
     KM_SetObjKey("Http1xResponse");
 }
@@ -57,24 +60,24 @@ KMError Http1xResponse::setSslFlags(uint32_t ssl_flags)
     return TcpConnection::setSslFlags(ssl_flags);
 }
 
-KMError Http1xResponse::attachFd(SOCKET_FD fd, const void* init_data, size_t init_len)
+KMError Http1xResponse::attachFd(SOCKET_FD fd, const KMBuffer *init_buf)
 {
     setState(State::RECVING_REQUEST);
     req_parser_.reset();
-    req_parser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
+    req_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
     req_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
-    return TcpConnection::attachFd(fd, init_data, init_len);
+    return TcpConnection::attachFd(fd, init_buf);
 }
 
-KMError Http1xResponse::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len)
+KMError Http1xResponse::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf)
 {
     setState(State::RECVING_REQUEST);
     req_parser_.reset();
     req_parser_ = std::move(parser);
-    req_parser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
+    req_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
     req_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
 
-    auto ret = TcpConnection::attachSocket(std::move(tcp), init_data, init_len);
+    auto ret = TcpConnection::attachSocket(std::move(tcp), init_buf);
     if(ret == KMError::NOERR && req_parser_.paused()) {
         req_parser_.resume();
     }
@@ -96,7 +99,8 @@ void Http1xResponse::checkHeaders()
 void Http1xResponse::buildResponse(int status_code, const std::string& desc, const std::string& ver)
 {
     auto rsp = rsp_message_.buildHeader(status_code, desc, ver);
-    send_buffer_.write(rsp);
+    KMBuffer buf(rsp.c_str(), rsp.size(), rsp.size());
+    appendSendBuffer(buf);
 }
 
 KMError Http1xResponse::sendResponse(int status_code, const std::string& desc, const std::string& ver)
@@ -141,10 +145,27 @@ int Http1xResponse::sendData(const void* data, size_t len)
     return ret;
 }
 
+int Http1xResponse::sendData(const KMBuffer &buf)
+{
+    if(!sendBufferEmpty() || getState() != State::SENDING_BODY) {
+        return 0;
+    }
+    int ret = rsp_message_.sendData(buf);
+    if(ret < 0) {
+        setState(State::IN_ERROR);
+    } else if(ret >= 0) {
+        if (rsp_message_.isCompleted() && sendBufferEmpty()) {
+            setState(State::COMPLETE);
+            eventLoop()->post([this] { notifyComplete(); }, &loop_token_);
+        }
+    }
+    return ret;
+}
+
 void Http1xResponse::reset()
 {
     // reset TcpConnection
-    send_buffer_.reset();
+    TcpConnection::reset();
     
     HttpResponse::Impl::reset();
     req_parser_.reset();
@@ -206,9 +227,9 @@ void Http1xResponse::onError(KMError err)
     }
 }
 
-void Http1xResponse::onHttpData(void* data, size_t len)
+void Http1xResponse::onHttpData(KMBuffer &buf)
 {
-    if(data_cb_) data_cb_((uint8_t*)data, len);
+    if(data_cb_) data_cb_(buf);
 }
 
 void Http1xResponse::onHttpEvent(HttpEvent ev)

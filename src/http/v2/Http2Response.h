@@ -38,6 +38,7 @@ public:
     void addHeader(std::string name, std::string value) override;
     KMError sendResponse(int status_code, const std::string& desc, const std::string& ver) override;
     int sendData(const void* data, size_t len) override;
+    int sendData(const KMBuffer &buf) override;
     KMError close() override;
     
     const std::string& getMethod() const override { return req_method_; }
@@ -49,7 +50,7 @@ public:
     
 protected:
     void onHeaders(const HeaderVector &headers, bool end_stream);
-    void onData(void *data, size_t len, bool end_stream);
+    void onData(KMBuffer &buf, bool end_stream);
     void onRSTStream(int err);
     void onWrite();
     

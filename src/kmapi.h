@@ -244,7 +244,7 @@ private:
 class KUMA_API HttpParser
 {
 public:
-    using DataCallback = std::function<void(void*, size_t)>;
+    using DataCallback = std::function<void(KMBuffer &)>;
     using EventCallback = std::function<void(HttpEvent)>;
     using EnumrateCallback = std::function<void(const char*, const char*)>;
     
@@ -292,7 +292,7 @@ private:
 class KUMA_API HttpRequest
 {
 public:
-    using DataCallback = std::function<void(void*, size_t)>;
+    using DataCallback = std::function<void(KMBuffer &)>;
     using EventCallback = std::function<void(KMError)>;
     using HttpEventCallback = std::function<void(void)>;
     
@@ -332,7 +332,7 @@ private:
 class KUMA_API HttpResponse
 {
 public:
-    using DataCallback = std::function<void(void*, size_t)>;
+    using DataCallback = std::function<void(KMBuffer &)>;
     using EventCallback = std::function<void(KMError)>;
     using HttpEventCallback = std::function<void(void)>;
     
@@ -343,8 +343,8 @@ public:
     ~HttpResponse();
     
     KMError setSslFlags(uint32_t ssl_flags);
-    KMError attachFd(SOCKET_FD fd, const void* init_data=nullptr, size_t init_len=0);
-    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const void* init_data=nullptr, size_t init_len=0);
+    KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf=nullptr);
+    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf=nullptr);
     void addHeader(const char* name, const char* value);
     void addHeader(const char* name, uint32_t value);
     KMError sendResponse(int status_code, const char* desc = nullptr);
@@ -377,7 +377,7 @@ private:
 class KUMA_API WebSocket
 {
 public:
-    using DataCallback = std::function<void(void*, size_t, bool/*is_text*/, bool/*fin*/)>;
+    using DataCallback = std::function<void(KMBuffer &, bool/*is_text*/, bool/*fin*/)>;
     using EventCallback = std::function<void(KMError)>;
     
     WebSocket(EventLoop* loop);
@@ -389,8 +389,8 @@ public:
     void setOrigin(const char* origin);
     const char* getOrigin() const;
     KMError connect(const char* ws_url, EventCallback cb);
-    KMError attachFd(SOCKET_FD fd, const void* init_data=nullptr, size_t init_len=0);
-    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const void* init_data=nullptr, size_t init_len=0);
+    KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf=nullptr);
+    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf=nullptr);
     int send(const void* data, size_t len, bool is_text, bool fin=true);
     int send(const KMBuffer &buf, bool is_text, bool fin=true);
     KMError close();
@@ -416,8 +416,8 @@ public:
     ~H2Connection();
     
     KMError setSslFlags(uint32_t ssl_flags);
-    KMError attachFd(SOCKET_FD fd, const void* init_data=nullptr, size_t init_len=0);
-    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const void* init_data=nullptr, size_t init_len=0);
+    KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf=nullptr);
+    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf=nullptr);
     /* associate H2 stream with HttpResponse
      *
      * @param stream_id stream ID

@@ -23,8 +23,8 @@ WsClient::WsClient(TestLoop* loop, long conn_id)
 void WsClient::startRequest(const std::string& url)
 {
     ws_.setSslFlags(SSL_ALLOW_SELF_SIGNED_CERT);
-    ws_.setDataCallback([this] (void* data, size_t len, bool is_text, bool fin) {
-        onData(data, len);
+    ws_.setDataCallback([this] (KMBuffer &buf, bool is_text, bool fin) {
+        onData(buf);
     });
     ws_.setWriteCallback([this] (KMError err) { onSend(err); });
     ws_.setErrorCallback([this] (KMError err) { onClose(err); });
@@ -45,7 +45,9 @@ void WsClient::sendData()
 {
     uint8_t buf[1024];
     *(uint32_t*)buf = htonl(++index_);
-    ws_.send(buf, sizeof(buf), false);
+    //ws_.send(buf, sizeof(buf), false);
+    KMBuffer kmb(buf, sizeof(buf), sizeof(buf));
+    ws_.send(kmb, false);
     // should buffer remain data if send length < sizeof(buf)
 }
 
@@ -65,14 +67,17 @@ void WsClient::onSend(KMError err)
     //printf("Client::onSend\n");
 }
 
-void WsClient::onData(void* data, size_t len)
+void WsClient::onData(KMBuffer &buf)
 {
+    auto chain_len = buf.chainLength();
     uint32_t index = 0;
-    if(len >= 4) {
-        index = ntohl(*(uint32_t*)data);
+    if(chain_len >= 4) {
+        uint8_t d[4];
+        buf.readChained(d, 4);
+        index = ntohl(*(uint32_t*)d);
     }
     if(index % 1000 == 0) {
-        printf("WsClient::onReceive, bytes_read=%zu, index=%d\n", len, index);
+        printf("WsClient::onReceive, bytes_read=%zu, index=%d\n", chain_len, index);
     }
     if(index < max_send_count_) {
         if (!timed_sending_) {

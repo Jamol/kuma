@@ -50,6 +50,7 @@ public:
     KMError setSslFlags(uint32_t ssl_flags) override;
     void addHeader(std::string name, std::string value) override;
     int sendData(const void* data, size_t len) override;
+    int sendData(const KMBuffer &buf) override;
     void reset() override; // reset for connection reuse
     KMError close() override;
     
@@ -63,7 +64,7 @@ protected:
     void onConnect(KMError err);
     void onError(KMError err);
     void onHeaders(const HeaderVector &headers, bool end_stream);
-    void onData(void *data, size_t len, bool end_stream);
+    void onData(KMBuffer &buf, bool end_stream);
     void onRSTStream(int err);
     void onWrite();
     //}
@@ -77,13 +78,16 @@ protected:
      */
     bool processHttpCache(const EventLoopPtr &loop);
     void saveRequestData(const void *data, size_t len);
+    void saveRequestData(const KMBuffer &buf);
     void saveResponseData(const void *data, size_t len);
+    void saveResponseData(const KMBuffer &buf);
     
     //{ on conn_ thread
     size_t buildHeaders(HeaderVector &headers);
     KMError sendRequest_i();
     KMError sendHeaders();
     int sendData_i(const void* data, size_t len);
+    int sendData_i(const KMBuffer &buf);
     int sendData_i();
     void close_i();
     
@@ -116,13 +120,13 @@ protected:
     // response
     int status_code_ = 0;
     HeaderVector rsp_headers_;
-    KM_Queue<iovec> rsp_queue_;
+    KM_Queue<KMBuffer::Ptr> rsp_queue_;
     bool header_complete_ = false;
     bool response_complete_ = false;
     
     bool closing_ = { false };
     bool write_blocked_ { false };
-    KM_Queue<iovec> req_queue_;
+    KM_Queue<KMBuffer::Ptr> req_queue_;
     
     EventLoopToken loop_token_;
     EventLoopToken conn_token_;

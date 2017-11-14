@@ -15,7 +15,7 @@ HttpClient::HttpClient(TestLoop* loop, long conn_id)
 void HttpClient::startRequest(const std::string& url)
 {
     http_request_.setSslFlags(SSL_ALLOW_SELF_SIGNED_CERT);
-    http_request_.setDataCallback([this] (void* data, size_t len) { onData(data, len); });
+    http_request_.setDataCallback([this] (KMBuffer &buf) { onData(buf); });
     http_request_.setWriteCallback([this] (KMError err) { onSend(err); });
     http_request_.setErrorCallback([this] (KMError err) { onClose(err); });
     http_request_.setHeaderCompleteCallback([this] { onHeaderComplete(); });
@@ -34,21 +34,25 @@ int HttpClient::close()
     return 0;
 }
 
-void HttpClient::onData(void* data, size_t len)
+void HttpClient::onData(KMBuffer &buf)
 {
-    total_bytes_read_ += len;
+    total_bytes_read_ += buf.chainLength();
     //printf("HttpClient_%ld::onData, len=%zu, total=%zu\n", conn_id_, len, total_bytes_read_);
 }
 
 void HttpClient::onSend(KMError err)
 {
-    uint8_t buf[16*1024];
+    const size_t kBufferSize = 16*1024;
+    uint8_t buf[kBufferSize];
     memset(buf, 'a', sizeof(buf));
+    KMBuffer buf1(buf, kBufferSize/2, kBufferSize/2);
+    KMBuffer buf2(buf + kBufferSize/2, kBufferSize/2, kBufferSize/2);
+    buf1.append(&buf2);
     while (true) {
-        int ret = http_request_.sendData(buf, sizeof(buf));
+        int ret = http_request_.sendData(buf1);
         if (ret < 0) {
             break;
-        } else if (ret < sizeof(buf)) {
+        } else if (ret < buf1.chainLength()) {
             // should buffer remain data
             break;
         }

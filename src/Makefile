@@ -21,7 +21,7 @@ INCLUDES = -I. -I$(VENDORDIR) -I$(OPENSSLDIR)/include
 #
 ##############################################################################
 #
-LIBS = $(OPENSSLDIR)/lib/linux/libssl.a $(OPENSSLDIR)/lib/linux/libcrypto.a
+#LIBS = $(OPENSSLDIR)/lib/linux/libssl.a $(OPENSSLDIR)/lib/linux/libcrypto.a
 
 #
 ##############################################################################
@@ -29,7 +29,7 @@ LIBS = $(OPENSSLDIR)/lib/linux/libssl.a $(OPENSSLDIR)/lib/linux/libcrypto.a
 CXX=g++
 
 CXXFLAGS = -g -std=c++11 -pipe -fPIC -Wall -Wextra -pedantic -DKUMA_HAS_OPENSSL
-LDFLAGS = -shared -Wl,-Bsymbolic -lpthread -ldl
+LDFLAGS = -shared -Wl,-Bsymbolic -lpthread -ldl -lssl -lcrypto
 
 SRCS =  \
     EventLoopImpl.cpp \

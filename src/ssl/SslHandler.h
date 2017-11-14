@@ -26,6 +26,7 @@
 
 #include "kmdefs.h"
 #include "evdefs.h"
+#include "kmbuffer.h"
 #include "OpenSslLib.h"
 
 #include <string>
@@ -54,6 +55,7 @@ public:
     virtual SslState handshake() = 0;
     virtual int send(const void* data, size_t size) = 0;
     virtual int send(const iovec* iovs, int count) = 0;
+    virtual int send(const KMBuffer &buf) = 0;
     virtual int receive(void* data, size_t size) = 0;
     virtual KMError close() = 0;
     

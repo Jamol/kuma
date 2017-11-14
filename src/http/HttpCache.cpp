@@ -24,7 +24,7 @@
 
 KUMA_NS_USING
 
-bool HttpCache::getCache(const std::string &key, int &status_code, HeaderVector &headers, HttpBody &body)
+bool HttpCache::getCache(const std::string &key, int &status_code, HeaderVector &headers, KMBuffer &body)
 {
     std::lock_guard<std::mutex> g(mutex_);
     auto it = caches_.find(key);
@@ -38,12 +38,12 @@ bool HttpCache::getCache(const std::string &key, int &status_code, HeaderVector 
     }
     status_code = it->second.status_code;
     headers = it->second.headers;
-    body = it->second.body;
+    body = *(it->second.body.get());
     auto age = duration_cast<std::chrono::seconds>(now_time - it->second.receive_time).count();
     headers.emplace_back("Age", std::to_string(age));
     return true;
 }
-
+/*
 void HttpCache::setCache(const std::string &key, int status_code, HeaderVector headers, const uint8_t *body, size_t body_size)
 {
     HttpBody b;
@@ -52,16 +52,16 @@ void HttpCache::setCache(const std::string &key, int status_code, HeaderVector h
     }
     setCache(key, status_code, std::move(headers), std::move(b));
 }
-
-void HttpCache::setCache(const std::string &key, int status_code, HeaderVector headers, HttpBody body)
+*/
+void HttpCache::setCache(const std::string &key, int status_code, HeaderVector headers, KMBuffer &body)
 {
     auto max_age = getMaxAgeOfCache(headers);
-    KUMA_INFOTRACE("HttpCache::setCache, key="<<key<<", max_age="<<max_age<<", body="<<body.size());
+    KUMA_INFOTRACE("HttpCache::setCache, key="<<key<<", max_age="<<max_age<<", body="<<body.chainLength());
     if (max_age <= 0) {
         return;
     }
     std::lock_guard<std::mutex> g(mutex_);
-    caches_[key] = {status_code, std::move(headers), std::move(body), max_age};
+    caches_[key] = {status_code, std::move(headers), body, max_age};
 }
 
 HttpCache& HttpCache::instance()

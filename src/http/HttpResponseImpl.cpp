@@ -56,7 +56,7 @@ KMError HttpResponse::Impl::sendResponse(int status_code, const std::string& des
     checkHeaders();
     return sendResponse(status_code, desc, version_);
 }
-
+/*
 int HttpResponse::Impl::sendData(const KMBuffer &buf)
 {
     int bytes_sent = 0;
@@ -65,14 +65,14 @@ int HttpResponse::Impl::sendData(const KMBuffer &buf)
         if (ret < 0) {
             return ret;
         }
-        bytes_sent += static_cast<int>(it->length());
-        if (ret < it->length()) {
+        bytes_sent += ret;
+        if (static_cast<size_t>(ret) < it->length()) {
             return bytes_sent;
         }
     }
     return bytes_sent;
 }
-
+*/
 void HttpResponse::Impl::reset()
 {
     

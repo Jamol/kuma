@@ -123,6 +123,59 @@ int H2Stream::sendData(const void *data, size_t len, bool end_stream)
     return -1;
 }
 
+int H2Stream::sendData(const KMBuffer &buf, bool end_stream)
+{
+    if (getState() == State::HALF_CLOSED_L || getState() == State::CLOSED) {
+        return -1;
+    }
+    if (write_blocked_) {
+        return 0;
+    }
+    auto buf_len = buf.chainLength();
+    size_t stream_window_size = flow_ctrl_.remoteWindowSize();
+    size_t conn_window_size = conn_->remoteWindowSize();
+    size_t window_size = std::min<size_t>(stream_window_size, conn_window_size);
+    if (0 == window_size && (!end_stream || buf_len != 0)) {
+        write_blocked_ = true;
+        KUMA_INFOXTRACE("sendData, remote window 0, cws="<<conn_window_size<<", sws="<<stream_window_size);
+        if (conn_window_size == 0) {
+            conn_->appendBlockedStream(stream_id_);
+        }
+        return 0;
+    }
+    size_t send_len = window_size < buf_len ? window_size : buf_len;
+    DataFrame frame;
+    frame.setStreamId(getStreamId());
+    if (end_stream) {
+        frame.addFlags(H2_FRAME_FLAG_END_STREAM);
+    }
+    std::unique_ptr<KMBuffer> sub_buf;
+    if (send_len < buf_len) {
+        sub_buf.reset(buf.subbuffer(0, send_len));
+        frame.setData(*sub_buf);
+    } else {
+        frame.setData(buf);
+    }
+    auto ret = conn_->sendH2Frame(&frame);
+    //KUMA_INFOXTRACE("sendData, len="<<len<<", send_len="<<send_len<<", ret="<<int(ret)<<", win="<<flow_ctrl_.remoteWindowSize());
+    if (KMError::NOERR == ret) {
+        if (end_stream) {
+            endStreamSent();
+        }
+        flow_ctrl_.bytesSent(send_len);
+        if (send_len < buf_len) {
+            write_blocked_ = true;
+            conn_->appendBlockedStream(stream_id_);
+        }
+        return int(send_len);
+    } else if (KMError::AGAIN == ret || KMError::BUFFER_TOO_SMALL == ret) {
+        write_blocked_ = true;
+        return 0;
+    }
+    
+    return -1;
+}
+
 KMError H2Stream::sendWindowUpdate(uint32_t delta)
 {
     if (getState() == State::CLOSED || getState() == State::HALF_CLOSED_R) {
@@ -234,7 +287,8 @@ bool H2Stream::handleDataFrame(DataFrame *frame)
     }
     flow_ctrl_.bytesReceived(frame->size());
     if (data_cb_) {
-        data_cb_((void*)frame->data(), frame->size(), end_stream);
+        KMBuffer buf(frame->data(), frame->size());
+        data_cb_(buf, end_stream);
     }
     return true;
 }

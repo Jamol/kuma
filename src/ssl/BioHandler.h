@@ -40,7 +40,7 @@ struct iovec;
 class BioHandler : public SslHandler
 {
 public:
-    using SendFunc = std::function<int(const void*, size_t)>;
+    using SendFunc = std::function<int(const KMBuffer &buf)>;
     using RecvFunc = std::function<int(void*, size_t)>;
     
     BioHandler();
@@ -55,6 +55,7 @@ public:
     SslState handshake() override;
     int send(const void* data, size_t size) override;
     int send(const iovec* iovs, int count) override;
+    int send(const KMBuffer &buf) override;
     int receive(void* data, size_t size) override;
     KMError close() override;
     

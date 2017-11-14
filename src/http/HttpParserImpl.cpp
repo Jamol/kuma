@@ -255,7 +255,8 @@ HttpParser::Impl::ParseState HttpParser::Impl::parse(const char* data, size_t le
         total_bytes_read_ += len;
         *bytes_read = static_cast<int>(len);
         DESTROY_DETECTOR_SETUP();
-        if(data_cb_) data_cb_(const_cast<char*>(data), len);
+        KMBuffer buf(data, len, len);
+        if(data_cb_) data_cb_(buf);
         DESTROY_DETECTOR_CHECK(PARSE_STATE_DESTROYED);
         return PARSE_STATE_DONE;
     }
@@ -337,7 +338,8 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(const char*& cur_pos, c
                 total_bytes_read_ = content_length_;
                 read_state_ = HTTP_READ_DONE;
                 DESTROY_DETECTOR_SETUP();
-                if(data_cb_) data_cb_(notify_data, notify_len);
+                KMBuffer buf(notify_data, notify_len, notify_len);
+                if(data_cb_) data_cb_(buf);
                 DESTROY_DETECTOR_CHECK(PARSE_STATE_DESTROYED);
                 onComplete();
                 return PARSE_STATE_DONE;
@@ -347,7 +349,8 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(const char*& cur_pos, c
                 char* notify_data = const_cast<char*>(cur_pos);
                 total_bytes_read_ += cur_len;
                 cur_pos = end;
-                if(data_cb_) data_cb_(notify_data, cur_len);
+                KMBuffer buf(notify_data, cur_len, cur_len);
+                if(data_cb_) data_cb_(buf);
                 return PARSE_STATE_CONTINUE;
             }
         }
@@ -469,14 +472,16 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(const char*& cur_pos, 
                     chunk_state_ = CHUNK_READ_DATA_CR;
                     cur_pos += notify_len;
                     DESTROY_DETECTOR_SETUP();
-                    if(data_cb_) data_cb_(notify_data, notify_len);
+                    KMBuffer buf(notify_data, notify_len, notify_len);
+                    if(data_cb_) data_cb_(buf);
                     DESTROY_DETECTOR_CHECK(PARSE_STATE_DESTROYED);
                 } else {// need more data
                     char* notify_data = const_cast<char*>(cur_pos);
                     total_bytes_read_ += cur_len;
                     chunk_bytes_read_ += cur_len;
                     cur_pos += cur_len;
-                    if(data_cb_) data_cb_(notify_data, cur_len);
+                    KMBuffer buf(notify_data, cur_len, cur_len);
+                    if(data_cb_) data_cb_(buf);
                     return PARSE_STATE_CONTINUE;
                 }
                 break;

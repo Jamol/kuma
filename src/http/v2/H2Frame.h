@@ -24,6 +24,7 @@
 
 #include "kmdefs.h"
 #include "h2defs.h"
+#include "kmbuffer.h"
 
 #include <vector>
 
@@ -102,10 +103,12 @@ public:
     const void* data() { return data_; }
     size_t size() { return size_; }
     void setData(const void *data, size_t len) { data_ = data; size_ = len;}
+    void setData(const KMBuffer &buf) { buf_ = &buf; size_ = buf.chainLength(); }
     
 private:
     const void *data_ = nullptr;
     size_t size_ = 0;
+    const KMBuffer *buf_ = nullptr;
 };
 
 class HeadersFrame : public H2Frame

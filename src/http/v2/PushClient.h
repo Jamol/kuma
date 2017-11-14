@@ -41,14 +41,14 @@ public:
     
     std::string getCacheKey() const;
     void getResponseHeaders(HeaderVector &rsp_headers);
-    void getResponseBody(HttpBody &rsp_body);
+    void getResponseBody(KMBuffer &rsp_body);
     
     H2StreamPtr release();
     
 protected:
     void onPromise(const HeaderVector &headers);
     void onHeaders(const HeaderVector &headers, bool end_stream);
-    void onData(void *data, size_t len, bool end_stream);
+    void onData(KMBuffer &buf, bool end_stream);
     void onRSTStream(int err);
     void onWrite();
     
@@ -72,7 +72,7 @@ protected:
     bool complete_ = false;
     int status_code_ = 0;
     HeaderVector rsp_headers_;
-    std::vector<uint8_t> rsp_body_;
+    KMBuffer::Ptr rsp_body_;
 };
 
 using PushClientPtr = std::unique_ptr<PushClient>;

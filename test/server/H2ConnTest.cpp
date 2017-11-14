@@ -24,7 +24,7 @@ void H2ConnTest::cleanup()
     h2_map_.clear();
 }
 
-KMError H2ConnTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser, void *init, size_t len)
+KMError H2ConnTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf)
 {
     conn_.setAcceptCallback([this] (uint32_t streamId) -> bool {
         return onAccept(streamId);
@@ -32,7 +32,7 @@ KMError H2ConnTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser, void *ini
     conn_.setErrorCallback([this] (int err) {
         return onError(err);
     });
-    return conn_.attachSocket(std::move(tcp), std::move(parser), init, len);
+    return conn_.attachSocket(std::move(tcp), std::move(parser), init_buf);
 }
 
 int H2ConnTest::close()

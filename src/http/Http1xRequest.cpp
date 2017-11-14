@@ -37,8 +37,11 @@ Http1xRequest::Http1xRequest(const EventLoopPtr &loop, std::string ver)
     req_message_.setSender([this] (const void* data, size_t len) -> int {
         return TcpConnection::send(data, len);
     });
-    req_message_.setVSender([this] (iovec* iovs, int count) -> int {
+    req_message_.setVSender([this] (const iovec* iovs, int count) -> int {
         return TcpConnection::send(iovs, count);
+    });
+    req_message_.setBSender([this] (const KMBuffer &buf) -> int {
+        return TcpConnection::send(buf);
     });
     KM_SetObjKey("Http1xRequest");
 }
@@ -91,7 +94,8 @@ void Http1xRequest::buildRequest()
     }
     auto url(ss.str());
     auto req = req_message_.buildHeader(method_, url, version_);
-    send_buffer_.write(req);
+    KMBuffer buf(req.c_str(), req.size(), req.size());
+    appendSendBuffer(buf);
 }
 
 KMError Http1xRequest::sendRequest()
@@ -128,13 +132,13 @@ bool Http1xRequest::processHttpCache()
     
     int status_code = 0;
     HeaderVector rsp_headers;
-    HttpBody rsp_body;
+    KMBuffer rsp_body;
     if (HttpCache::instance().getCache(cache_key, status_code, rsp_headers, rsp_body)) {
         // cache hit
         setState(State::RECVING_RESPONSE);
         rsp_parser_.setHeaders(std::move(rsp_headers));
         rsp_parser_.setStatusCode(status_code);
-        rsp_cache_body_.swap(rsp_body);
+        rsp_cache_body_.reset(rsp_body.clone());
         auto loop = TcpConnection::eventLoop();
         loop->post([this] { onCacheComplete(); }, &loop_token_);
         return true;
@@ -158,12 +162,28 @@ int Http1xRequest::sendData(const void* data, size_t len)
     return ret;
 }
 
+int Http1xRequest::sendData(const KMBuffer &buf)
+{
+    if(!sendBufferEmpty() || getState() != State::SENDING_BODY) {
+        return 0;
+    }
+    auto ret = req_message_.sendData(buf);
+    if (ret >= 0) {
+        if (req_message_.isCompleted() && sendBufferEmpty()) {
+            setState(State::RECVING_RESPONSE);
+        }
+    } else if(ret < 0) {
+        setState(State::IN_ERROR);
+    }
+    return ret;
+}
+
 void Http1xRequest::reset()
 {
     HttpRequest::Impl::reset();
     req_message_.reset();
     rsp_parser_.reset();
-    rsp_cache_body_.clear();
+    rsp_cache_body_.reset();
     if (getState() == State::COMPLETE) {
         setState(State::WAIT_FOR_REUSE);
     }
@@ -179,7 +199,7 @@ KMError Http1xRequest::close()
 
 void Http1xRequest::sendRequestHeader()
 {
-    rsp_parser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
+    rsp_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
     rsp_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     buildRequest();
     setState(State::SENDING_HEADER);
@@ -264,9 +284,9 @@ void Http1xRequest::onError(KMError err)
     }
 }
 
-void Http1xRequest::onHttpData(void* data, size_t len)
+void Http1xRequest::onHttpData(KMBuffer &buf)
 {
-    if(data_cb_) data_cb_(data, len);
+    if(data_cb_) data_cb_(buf);
 }
 
 void Http1xRequest::onHttpEvent(HttpEvent ev)
@@ -306,11 +326,11 @@ void Http1xRequest::onCacheComplete()
     DESTROY_DETECTOR_SETUP();
     if (header_cb_) header_cb_();
     DESTROY_DETECTOR_CHECK_VOID();
-    if (!rsp_cache_body_.empty() && data_cb_) {
+    if (rsp_cache_body_ && !rsp_cache_body_->empty() && data_cb_) {
         DESTROY_DETECTOR_SETUP();
-        data_cb_(&rsp_cache_body_[0], rsp_cache_body_.size());
+        data_cb_(*rsp_cache_body_);
         DESTROY_DETECTOR_CHECK_VOID();
-        rsp_cache_body_.clear();
+        rsp_cache_body_.reset();
     }
     onComplete();
 }

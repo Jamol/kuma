@@ -22,6 +22,7 @@
 #ifndef __KMBuffer_H__
 #define __KMBuffer_H__
 #include "kmdefs.h"
+#include <memory>
 #include <vector>
 #include <atomic>
 
@@ -176,7 +177,7 @@ public:
     class Iterator;
     enum class StorageType
     {
-        AUTO,
+        AUTO,   // KMBuffer is auto storage, don't call delete when destroy
         OTHER
     };
     KMBuffer(StorageType type = StorageType::OTHER) : storage_type_(type) {}
@@ -229,12 +230,25 @@ public:
         }
     }
     
-    KMBuffer(void *data, size_t size, StorageType type = StorageType::AUTO)
+    /**
+     * data is not owned by this KMBuffer, caller should make sure data is valid
+     * before this KMBuffer destroyed
+     */
+    KMBuffer(void *data, size_t capacity, size_t size=0, StorageType type = StorageType::AUTO)
     : storage_type_(type)
-    {// we are not the owner of data
+    {
+        if (size > capacity) {
+            size = capacity;
+        }
         begin_ptr_ = static_cast<char*>(data);
-        end_ptr_ = begin_ptr_ + size;
-        rd_ptr_ = wr_ptr_ = begin_ptr_;
+        end_ptr_ = begin_ptr_ + capacity;
+        rd_ptr_ = begin_ptr_;
+        wr_ptr_ = rd_ptr_ + size;
+    }
+    
+    KMBuffer(const void *data, size_t capacity, size_t size=0, StorageType type = StorageType::AUTO)
+    : KMBuffer(const_cast<void*>(data), capacity, size, type)
+    {
     }
     
     ~KMBuffer()
@@ -337,9 +351,20 @@ public:
         if(0 == ret) return 0;
         ret = ret>len?len:ret;
         if(buf) {
-            memcpy(buf, rd_ptr_, ret);
+            std::copy(rd_ptr_, rd_ptr_ + ret, static_cast<char*>(buf));
         }
         rd_ptr_ += ret;
+        return ret;
+    }
+    
+    size_t read(void *buf, size_t len) const
+    {
+        size_t ret = length();
+        if(0 == ret) return 0;
+        ret = ret>len?len:ret;
+        if(buf) {
+            std::copy(rd_ptr_, rd_ptr_ + ret, static_cast<char*>(buf));
+        }
         return ret;
     }
     
@@ -348,7 +373,8 @@ public:
         size_t ret = space();
         if(0 == ret) return 0;
         ret = ret > len ? len:ret;
-        memcpy(wr_ptr_, buf, ret);
+        auto *ptr = static_cast<const char*>(buf);
+        std::copy(ptr, ptr + ret, wr_ptr_);
         wr_ptr_ += ret;
         return ret;
     }
@@ -362,11 +388,12 @@ public:
     {
         auto *kmb = this;
         do {
-            if (len <= length()) {
-                rd_ptr_ += len;
+            if (len <= kmb->length()) {
+                kmb->rd_ptr_ += len;
                 break;
             } else {
-                rd_ptr_ = wr_ptr_;
+                len -= kmb->length();
+                kmb->rd_ptr_ = kmb->wr_ptr_;
             }
             kmb = kmb->next_;
         } while (kmb != this);
@@ -424,14 +451,37 @@ public:
         return total_read;
     }
     
+    size_t readChained(void *buf, size_t len) const
+    {
+        auto const *kmb = this;
+        auto *ptr = static_cast<char*>(buf);
+        size_t total_read = 0;
+        do {
+            total_read += kmb->read(ptr ? (ptr+total_read) : nullptr, len-total_read);
+            if(len == total_read) {
+                break;
+            }
+            kmb = kmb->next_;
+        } while (kmb != this);
+        
+        return total_read;
+    }
+    
+    /**
+     * Append kmb to the end of this KMBuffer chain
+     * kmb will be owned by this chain
+     */
     void append(KMBuffer *kmb)
     {
-        auto my_tail = prev_;
-        auto kmb_tail = kmb->prev_;
-        my_tail->next_ = kmb;
-        kmb->prev_ = my_tail;
-        kmb_tail->next_ = this;
-        prev_ = kmb_tail;
+        if (kmb) {
+            auto my_tail = prev_;
+            auto kmb_tail = kmb->prev_;
+            my_tail->next_ = kmb;
+            kmb->prev_ = my_tail;
+            kmb_tail->next_ = this;
+            prev_ = kmb_tail;
+            kmb->is_chain_head_ = false;
+        }
     }
 
     KMBuffer* clone() const
@@ -483,7 +533,8 @@ public:
         return dup;
     }
     
-    void reclaim(){
+    void reclaim()
+    {
         if(length() > 0) {
             return ;
         }
@@ -495,7 +546,8 @@ public:
         rd_ptr_ = wr_ptr_ = nullptr;
     }
     
-    int fillIov(IOVEC& iovs) const {
+    int fillIov(IOVEC& iovs) const
+    {
         int cnt = 0;
         auto *kmb = this;
         do {
@@ -512,16 +564,26 @@ public:
         return cnt;
     }
     
+    void unlink()
+    {
+        if (is_chain_head_ && next_ != this) {
+            next_->is_chain_head_ = true;
+        }
+        next_->prev_ = prev_;
+        prev_->next_ = next_;
+        prev_ = next_ = this;
+        is_chain_head_ = true;
+    }
+    
     void reset()
     {
-        while (next_ != this) {
-            next_->destroySelf();
+        if (is_chain_head_) {
+            // destroy whole buffer chain
+            while (next_ != this) {
+                next_->destroySelf();
+            }
         }
-        prev_ = next_ = this;
-        
-        shared_data_ = nullptr;
-        begin_ptr_ = end_ptr_ = nullptr;
-        rd_ptr_ = wr_ptr_ = nullptr;
+        resetSelf();
     }
     
     void destroy()
@@ -533,13 +595,15 @@ public:
     }
 
 private:
-    KMBuffer* cloneSelf() const {
+    KMBuffer* cloneSelf() const
+    {
         KMBuffer* kmb = new KMBuffer();
         cloneSelf(*kmb);
         return kmb;
     }
     
-    void cloneSelf(KMBuffer &buf) const {
+    void cloneSelf(KMBuffer &buf) const
+    {
         if (!shared_data_) {
             if (length() > 0 && buf.allocBuffer(length())) {
                 buf.write(readPtr(), length());
@@ -554,9 +618,11 @@ private:
     }
     
     /**
-     * don't call destroySelf from chain head
+     * don't call resetSelf on chained head
      */
-    void destroySelf() {
+    void resetSelf()
+    {
+        // unlink form buffer chain
         next_->prev_ = prev_;
         prev_->next_ = next_;
         prev_ = next_ = this;
@@ -564,6 +630,15 @@ private:
         shared_data_ = nullptr;
         begin_ptr_ = end_ptr_ = nullptr;
         rd_ptr_ = wr_ptr_ = nullptr;
+        is_chain_head_ = true;
+    }
+    
+    /**
+     * don't call destroySelf on chained head
+     */
+    void destroySelf()
+    {
+        resetSelf();
         if(storage_type_ != StorageType::AUTO) {
             delete this;
         }
@@ -575,6 +650,7 @@ private:
     char* end_ptr_{ nullptr };
     char* rd_ptr_{ nullptr };
     char* wr_ptr_{ nullptr };
+    bool is_chain_head_{ true };
     _SharedBasePtr shared_data_;
 
     KMBuffer* prev_{ this };
@@ -642,6 +718,17 @@ public:
     {
         return Iterator(nullptr, nullptr);
     }
+    
+    struct KMBufferDeleter
+    {
+        void operator() (KMBuffer *kmb)
+        {
+            if (kmb) {
+                kmb->destroy();
+            }
+        }
+    };
+    using Ptr = std::unique_ptr<KMBuffer, KMBufferDeleter>;
 };
 
 KUMA_NS_END

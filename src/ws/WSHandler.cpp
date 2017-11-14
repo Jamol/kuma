@@ -38,7 +38,7 @@ using namespace kuma;
 //////////////////////////////////////////////////////////////////////////
 WSHandler::WSHandler()
 {
-    http_parser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
+    http_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
 }
 
@@ -51,7 +51,7 @@ void WSHandler::setHttpParser(HttpParser::Impl&& parser)
 {
     http_parser_.reset();
     http_parser_ = std::move(parser);
-    http_parser_.setDataCallback([this] (void* data, size_t len) { onHttpData(data, len); });
+    http_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     if(http_parser_.paused()) {
         http_parser_.resume();
@@ -124,9 +124,9 @@ const std::string WSHandler::getOrigin()
     return http_parser_.getHeaderValue("Origin");
 }
 
-void WSHandler::onHttpData(void* data, size_t len)
+void WSHandler::onHttpData(KMBuffer &buf)
 {
-    KUMA_ERRTRACE("WSHandler::onHttpData, len="<<len);
+    KUMA_ERRTRACE("WSHandler::onHttpData, len="<<buf.chainLength());
 }
 
 void WSHandler::onHttpEvent(HttpEvent ev)
@@ -424,7 +424,8 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
 WSHandler::WSError WSHandler::handleFrame(const FrameHeader &hdr, void* payload, size_t len)
 {
     DESTROY_DETECTOR_SETUP();
-    if(frame_cb_) frame_cb_(hdr.opcode, hdr.fin, payload, len);
+    KMBuffer buf(payload, len, len);
+    if(frame_cb_) frame_cb_(hdr.opcode, hdr.fin, buf);
     DESTROY_DETECTOR_CHECK(WSError::DESTROYED);
     return WSError::NOERR;
 }

@@ -254,6 +254,22 @@ int SioHandler::send(const iovec* iovs, int count)
     return bytes_sent;
 }
 
+int SioHandler::send(const KMBuffer &buf)
+{
+    int bytes_sent = 0;
+    for (auto it = buf.begin(); it != buf.end(); ++it) {
+        int ret = SioHandler::send((const uint8_t*)it->readPtr(), it->length());
+        if (ret < 0) {
+            return ret;
+        }
+        bytes_sent += ret;
+        if (static_cast<size_t>(ret) < it->length()) {
+            return bytes_sent;
+        }
+    }
+    return bytes_sent;
+}
+
 int SioHandler::receive(void* data, size_t size)
 {
     if(!ssl_) {

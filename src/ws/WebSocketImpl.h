@@ -45,8 +45,8 @@ public:
     void setOrigin(const std::string& origin);
     const std::string& getOrigin() const { return origin_; }
     KMError connect(const std::string& ws_url, EventCallback cb);
-    KMError attachFd(SOCKET_FD fd, const void* init_data, size_t init_len);
-    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len);
+    KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf);
+    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf);
     int send(const void* data, size_t len, bool is_text, bool fin);
     int send(const KMBuffer &buf, bool is_text, bool fin);
     KMError close();
@@ -72,14 +72,14 @@ private:
     
     void sendUpgradeRequest();
     void sendUpgradeResponse();
-    void onWsFrame(uint8_t opcode, bool fin, void* payload, size_t plen);
+    void onWsFrame(uint8_t opcode, bool fin, KMBuffer &buf);
     void onWsHandshake(KMError err);
     void onStateOpen();
     KMError sendWsFrame(WSHandler::WSOpcode opcode, bool fin, uint8_t *payload, size_t plen);
     KMError sendWsFrame(WSHandler::WSOpcode opcode, bool fin, const KMBuffer &buf);
     KMError sendCloseFrame(uint16_t statusCode);
-    KMError sendPingFrame(uint8_t *payload, size_t plen);
-    KMError sendPongFrame(uint8_t *payload, size_t plen);
+    KMError sendPingFrame(const KMBuffer &buf);
+    KMError sendPongFrame(const KMBuffer &buf);
     
     void onConnect(KMError err) override;
     KMError handleInputData(uint8_t *src, size_t len) override;

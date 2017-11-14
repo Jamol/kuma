@@ -47,8 +47,8 @@ void WebSocket::Impl::cleanup()
 
 void WebSocket::Impl::setupWsHandler()
 {
-    ws_handler_.setFrameCallback([this] (uint8_t opcode, bool fin, void* data, size_t len) {
-        onWsFrame(opcode, fin, data, len);
+    ws_handler_.setFrameCallback([this] (uint8_t opcode, bool fin, KMBuffer &buf) {
+        onWsFrame(opcode, fin, buf);
     });
     ws_handler_.setHandshakeCallback([this] (KMError err) {
         onWsHandshake(err);
@@ -96,19 +96,19 @@ KMError WebSocket::Impl::connect_i(const std::string& ws_url)
     return TcpConnection::connect(uri_.getHost().c_str(), port);
 }
 
-KMError WebSocket::Impl::attachFd(SOCKET_FD fd, const void* init_data, size_t init_len)
+KMError WebSocket::Impl::attachFd(SOCKET_FD fd, const KMBuffer *init_buf)
 {
     ws_handler_.setMode(WSHandler::WSMode::SERVER);
     setState(State::UPGRADING);
-    return TcpConnection::attachFd(fd, init_data, init_len);
+    return TcpConnection::attachFd(fd, init_buf);
 }
 
-KMError WebSocket::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const void* init_data, size_t init_len)
+KMError WebSocket::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf)
 {
     ws_handler_.setMode(WSHandler::WSMode::SERVER);
     setState(State::UPGRADING);
 
-    auto ret = TcpConnection::attachSocket(std::move(tcp), init_data, init_len);
+    auto ret = TcpConnection::attachSocket(std::move(tcp), init_buf);
     
     ws_handler_.setHttpParser(std::move(parser));
     return ret;
@@ -258,15 +258,18 @@ void WebSocket::Impl::onStateOpen()
     }
 }
 
-void WebSocket::Impl::onWsFrame(uint8_t opcode, bool fin, void* payload, size_t plen)
+void WebSocket::Impl::onWsFrame(uint8_t opcode, bool fin, KMBuffer &buf)
 {
     if (WSHandler::isControlFrame(opcode)) {
+        auto buf_len = buf.chainLength();
         if (WSHandler::WSOpcode::WS_OPCODE_CLOSE == opcode) {
             uint16_t statusCode = 0;
-            if (payload && plen >= 2) {
-                const uint8_t *ptr = (uint8_t*)payload;
-                statusCode = (ptr[0] << 8) | ptr[1];
-                KUMA_INFOXTRACE("onWsFrame, close-frame, statusCode="<<statusCode<<", plen="<<(plen-2));
+            if (buf_len >= 2) {
+                uint8_t hdr[2];
+                const KMBuffer &const_buf = buf;
+                const_buf.readChained(hdr, 2);
+                statusCode = (hdr[0] << 8) | hdr[1];
+                KUMA_INFOXTRACE("onWsFrame, close-frame, statusCode="<<statusCode<<", plen="<<(buf_len-2));
             } else {
                 KUMA_INFOXTRACE("onWsFrame, close-frame received");
             }
@@ -275,11 +278,11 @@ void WebSocket::Impl::onWsFrame(uint8_t opcode, bool fin, void* payload, size_t 
             setState(State::CLOSED);
             if(error_cb_) error_cb_(KMError::FAILED);
         } else if (WSHandler::WSOpcode::WS_OPCODE_PING == opcode) {
-            sendPongFrame((uint8_t*)payload, plen);
+            sendPongFrame(buf);
         }
     } else {
         bool is_text = WSHandler::WSOpcode::WS_OPCODE_TEXT == opcode;
-        if(data_cb_) data_cb_(payload, plen, is_text, fin);
+        if(data_cb_) data_cb_(buf, is_text, fin);
     }
 }
 
@@ -358,12 +361,12 @@ KMError WebSocket::Impl::sendCloseFrame(uint16_t statusCode)
     }
 }
 
-KMError WebSocket::Impl::sendPingFrame(uint8_t *payload, size_t plen)
+KMError WebSocket::Impl::sendPingFrame(const KMBuffer &buf)
 {
-    return sendWsFrame(WSHandler::WSOpcode::WS_OPCODE_PING, true, payload, plen);
+    return sendWsFrame(WSHandler::WSOpcode::WS_OPCODE_PING, true, buf);
 }
 
-KMError WebSocket::Impl::sendPongFrame(uint8_t *payload, size_t plen)
+KMError WebSocket::Impl::sendPongFrame(const KMBuffer &buf)
 {
-    return sendWsFrame(WSHandler::WSOpcode::WS_OPCODE_PONG, true, payload, plen);
+    return sendWsFrame(WSHandler::WSOpcode::WS_OPCODE_PONG, true, buf);
 }
