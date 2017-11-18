@@ -37,7 +37,7 @@ int HttpClient::close()
 void HttpClient::onData(KMBuffer &buf)
 {
     total_bytes_read_ += buf.chainLength();
-    //printf("HttpClient_%ld::onData, len=%zu, total=%zu\n", conn_id_, len, total_bytes_read_);
+    //printf("HttpClient_%ld::onData, len=%zu, total=%zu\n", conn_id_, buf.chainLength(), total_bytes_read_);
 }
 
 void HttpClient::onSend(KMError err)

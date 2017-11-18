@@ -13,6 +13,20 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		6F30AFF91FBC090000532B8B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6F30AFED1FBC090000532B8B /* kuma.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 6F852DF11985E33000271D87;
+			remoteInfo = kuma;
+		};
+		6F30AFFB1FBC091600532B8B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6F30AFED1FBC090000532B8B /* kuma.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 6F852DF01985E33000271D87;
+			remoteInfo = kuma;
+		};
 		6F7FC4D41F4AE11D0038360B /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6F7FC4C81F4AE11D0038360B /* gtest.xcodeproj */;
@@ -84,6 +98,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		6F30AFED1FBC090000532B8B /* kuma.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = kuma.xcodeproj; path = ../../../bld/osx/kuma.xcodeproj; sourceTree = "<group>"; };
 		6F7FC47F1F4ADF510038360B /* kuma_ut */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = kuma_ut; sourceTree = BUILT_PRODUCTS_DIR; };
 		6F7FC4891F4ADFD10038360B /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../../../main.cpp; sourceTree = "<group>"; };
 		6F7FC4C81F4AE11D0038360B /* gtest.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = gtest.xcodeproj; path = ../../../vendor/gtest/googletest/xcode/gtest.xcodeproj; sourceTree = "<group>"; };
@@ -102,6 +117,14 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6F30AFEE1FBC090000532B8B /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				6F30AFFA1FBC090000532B8B /* kuma.dylib */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		6F7FC4761F4ADF510038360B = {
 			isa = PBXGroup;
 			children = (
@@ -131,6 +154,7 @@
 		6F7FC48B1F4AE0BD0038360B /* Dependencies */ = {
 			isa = PBXGroup;
 			children = (
+				6F30AFED1FBC090000532B8B /* kuma.xcodeproj */,
 				6F7FC4C81F4AE11D0038360B /* gtest.xcodeproj */,
 			);
 			name = Dependencies;
@@ -164,6 +188,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				6F30AFFC1FBC091600532B8B /* PBXTargetDependency */,
 				6F7FC4E31F4AE1410038360B /* PBXTargetDependency */,
 			);
 			name = kuma_ut;
@@ -201,6 +226,10 @@
 					ProductGroup = 6F7FC4C91F4AE11D0038360B /* Products */;
 					ProjectRef = 6F7FC4C81F4AE11D0038360B /* gtest.xcodeproj */;
 				},
+				{
+					ProductGroup = 6F30AFEE1FBC090000532B8B /* Products */;
+					ProjectRef = 6F30AFED1FBC090000532B8B /* kuma.xcodeproj */;
+				},
 			);
 			projectRoot = "";
 			targets = (
@@ -210,6 +239,13 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
+		6F30AFFA1FBC090000532B8B /* kuma.dylib */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.dylib";
+			path = kuma.dylib;
+			remoteRef = 6F30AFF91FBC090000532B8B /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 		6F7FC4D51F4AE11D0038360B /* gtest.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
@@ -274,6 +310,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		6F30AFFC1FBC091600532B8B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = kuma;
+			targetProxy = 6F30AFFB1FBC091600532B8B /* PBXContainerItemProxy */;
+		};
 		6F7FC4E31F4AE1410038360B /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = "gtest-static";

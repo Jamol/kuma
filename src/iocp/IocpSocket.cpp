@@ -167,7 +167,7 @@ int IocpSocket::send(const iovec* iovs, int count)
         setState(State::CLOSED);
     }
     else if (static_cast<size_t>(ret) < bytes_total) {
-        for (size_t i = 0; i < count; ++i) {
+        for (int i = 0; i < count; ++i) {
             const uint8_t* first = ((uint8_t*)iovs[i].iov_base) + ret;
             const uint8_t* last = ((uint8_t*)iovs[i].iov_base) + iovs[i].iov_len;
             if (first < last) {

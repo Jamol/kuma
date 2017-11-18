@@ -59,7 +59,10 @@ H2Connection::Impl::~Impl()
 {
     KUMA_INFOXTRACE("~H2Connection");
     if (!loop_token_.expired()) {
-        eventLoop()->sync([this] { cleanup(); });
+        auto loop = eventLoop();
+        if (loop) {
+            loop->sync([this] { cleanup(); });
+        }
     }
     loop_token_.reset();
 }
@@ -488,12 +491,7 @@ bool H2Connection::Impl::handleGoawayFrame(GoawayFrame *frame)
         it.second->onError(frame->getErrorCode());
     }
     auto error_cb = std::move(error_cb_);
-    if (!key_.empty()) {
-        auto &connMgr = H2ConnectionMgr::getRequestConnMgr(sslEnabled());
-        std::string key(std::move(key_));
-        // will destroy self when calling from loop stop
-        connMgr.removeConnection(key);
-    }
+    removeSelf();
     if (error_cb) {
         error_cb(frame->getErrorCode());
     }
@@ -591,7 +589,7 @@ KMError H2Connection::Impl::handleInputData(uint8_t *buf, size_t len)
         DESTROY_DETECTOR_SETUP();
         int ret = http_parser_.parse((char*)buf, (uint32_t)len);
         DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
-        if (ret >= len) {
+        if (static_cast<size_t>(ret) >= len) {
             return KMError::NOERR;
         }
         // residual data, should be preface
@@ -806,8 +804,11 @@ void H2Connection::Impl::onLoopActivity(LoopActivity acti)
 {
     if (acti == LoopActivity::EXIT) {
         KUMA_INFOXTRACE("loop exit");
-        cleanup();
+        setState(State::CLOSED);
+        TcpConnection::close();
+        push_clients_.clear();
         loop_token_.reset();
+        removeSelf();
     }
 }
 

@@ -71,7 +71,7 @@ void HttpTest::onClose(KMError err)
 void HttpTest::onHttpData(KMBuffer &buf)
 {
     total_bytes_read_ += buf.chainLength();
-    //printf("HttpClient_%ld::onHttpData, len=%zu, total=%zu\n", conn_id_, len, total_bytes_read_);
+    //printf("HttpClient_%ld::onHttpData, len=%zu, total=%zu\n", conn_id_, buf.chainLength(), total_bytes_read_);
 }
 
 void HttpTest::onHeaderComplete()

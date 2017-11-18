@@ -105,7 +105,7 @@ int TcpConnection::send(const void* data, size_t len)
     }
     int ret = tcp_.send(data, len);
     if (ret > 0) {
-        if (ret < len) {
+        if (static_cast<size_t>(ret) < len) {
             KMBuffer buf((char*)data + ret, len - ret, len - ret);
             appendSendBuffer(buf);
         }
@@ -122,7 +122,7 @@ int TcpConnection::send(const iovec* iovs, int count)
     int ret = tcp_.send(iovs, count);
     if (ret >= 0) {
         size_t total_len = 0;
-        for (size_t i=0; i<count; ++i) {
+        for (int i=0; i<count; ++i) {
             total_len += iovs[i].iov_len;
             const uint8_t* first = ((uint8_t*)iovs[i].iov_base) + ret;
             const uint8_t* last = ((uint8_t*)iovs[i].iov_base) + iovs[i].iov_len;

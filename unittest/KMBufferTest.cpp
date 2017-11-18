@@ -175,3 +175,95 @@ TEST(KMBufferTest, Verify_Sub_Buffer)
     
     delete [] read_buf;
 }
+
+TEST(KMBufferTest, Test_Read_and_Const_Read)
+{
+    KMBuffer buf1(KMBuffer::StorageType::AUTO);
+    std::allocator<char> a;
+    buf1.allocBuffer(1024, a);
+    buf1.bytesWritten(1024);
+    
+    EXPECT_EQ(1024, buf1.length());
+    
+    char d2[256];
+    KMBuffer buf2(d2, sizeof(d2), 128);
+    EXPECT_EQ(128, buf2.length());
+    
+    char d3[256];
+    KMBuffer buf3(d3, sizeof(d3), sizeof(d3));
+    EXPECT_EQ(sizeof(d3), buf3.length());
+    
+    buf1.append(&buf2);
+    EXPECT_EQ(1024+128, buf1.chainLength());
+    buf1.append(&buf3);
+    EXPECT_EQ(1024+128+256, buf1.chainLength());
+    
+    auto const *kmb = &buf1;
+    std::vector<char> vec;
+    vec.resize(buf1.chainLength());
+    auto ret = kmb->readChained(&vec[0], vec.size());
+    EXPECT_EQ(vec.size(), ret);
+    EXPECT_EQ(vec.size(), buf1.chainLength());
+    
+    ret = buf1.readChained(&vec[0], vec.size());
+    EXPECT_EQ(vec.size(), ret);
+    EXPECT_EQ(0, buf1.chainLength());
+}
+
+TEST(KMBufferTest, Test_Destroy)
+{
+    KMBuffer buf1(KMBuffer::StorageType::AUTO);
+    std::allocator<char> a;
+    buf1.allocBuffer(1024, a);
+    buf1.bytesWritten(1024);
+    
+    char d2[256];
+    KMBuffer buf2(d2, sizeof(d2), 128);
+    
+    char d3[256];
+    KMBuffer buf3(d3, sizeof(d3), sizeof(d3));
+    
+    buf1.append(&buf2);
+    EXPECT_EQ(1024+128, buf1.chainLength());
+    buf1.append(&buf3);
+    EXPECT_EQ(1024+128+256, buf1.chainLength());
+    
+    buf2.destroy();
+    EXPECT_FALSE(buf2.isChained());
+    EXPECT_EQ(0, buf2.length());
+    EXPECT_EQ(1024+256, buf1.chainLength());
+    buf1.destroy();
+    EXPECT_FALSE(buf1.isChained());
+    EXPECT_EQ(0, buf1.length());
+    EXPECT_FALSE(buf3.isChained());
+    EXPECT_EQ(0, buf3.length());
+}
+
+TEST(KMBufferTest, Test_Unlink)
+{
+    KMBuffer buf1(KMBuffer::StorageType::AUTO);
+    std::allocator<char> a;
+    buf1.allocBuffer(1024, a);
+    buf1.bytesWritten(1024);
+    
+    char d2[256];
+    KMBuffer buf2(d2, sizeof(d2), 128);
+    
+    char d3[256];
+    KMBuffer buf3(d3, sizeof(d3), sizeof(d3));
+    
+    buf1.append(&buf2);
+    EXPECT_EQ(1024+128, buf1.chainLength());
+    buf1.append(&buf3);
+    EXPECT_EQ(1024+128+256, buf1.chainLength());
+    
+    buf2.unlink();
+    EXPECT_FALSE(buf2.isChained());
+    EXPECT_EQ(128, buf2.length());
+    EXPECT_EQ(1024+256, buf1.chainLength());
+    buf1.unlink();
+    EXPECT_FALSE(buf1.isChained());
+    EXPECT_EQ(1024, buf1.length());
+    EXPECT_FALSE(buf3.isChained());
+    EXPECT_EQ(256, buf3.length());
+}

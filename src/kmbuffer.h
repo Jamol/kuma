@@ -28,6 +28,7 @@
 
 #ifndef KUMA_OS_WIN
 #include <sys/uio.h> // for struct iovec
+#include <string.h> // for memcpy
 #endif
 
 namespace {
@@ -351,7 +352,7 @@ public:
         if(0 == ret) return 0;
         ret = ret>len?len:ret;
         if(buf) {
-            std::copy(rd_ptr_, rd_ptr_ + ret, static_cast<char*>(buf));
+            memcpy(buf, rd_ptr_, ret);
         }
         rd_ptr_ += ret;
         return ret;
@@ -363,7 +364,7 @@ public:
         if(0 == ret) return 0;
         ret = ret>len?len:ret;
         if(buf) {
-            std::copy(rd_ptr_, rd_ptr_ + ret, static_cast<char*>(buf));
+            memcpy(buf, rd_ptr_, ret);
         }
         return ret;
     }
@@ -373,8 +374,7 @@ public:
         size_t ret = space();
         if(0 == ret) return 0;
         ret = ret > len ? len:ret;
-        auto *ptr = static_cast<const char*>(buf);
-        std::copy(ptr, ptr + ret, wr_ptr_);
+        memcpy(wr_ptr_, buf, ret);
         wr_ptr_ += ret;
         return ret;
     }

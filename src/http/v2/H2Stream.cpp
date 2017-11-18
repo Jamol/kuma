@@ -287,7 +287,7 @@ bool H2Stream::handleDataFrame(DataFrame *frame)
     }
     flow_ctrl_.bytesReceived(frame->size());
     if (data_cb_) {
-        KMBuffer buf(frame->data(), frame->size());
+        KMBuffer buf(frame->data(), frame->size(), frame->size());
         data_cb_(buf, end_stream);
     }
     return true;
