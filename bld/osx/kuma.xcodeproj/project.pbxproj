@@ -352,11 +352,11 @@
 				6FE0EEFD1D409863006136B7 /* Http2Response.h */,
 				6FE0EEFE1D409863006136B7 /* H2Stream.cpp */,
 				6FE0EEFF1D409863006136B7 /* H2Stream.h */,
+				6F7FC4711F4933B50038360B /* h2utils.cpp */,
+				6F7FC4721F4933B50038360B /* h2utils.h */,
 				6FE0EEF01D409838006136B7 /* hpack */,
 				6F7FC46C1F4880470038360B /* PushClient.cpp */,
 				6F7FC46D1F4880470038360B /* PushClient.h */,
-				6F7FC4711F4933B50038360B /* h2utils.cpp */,
-				6F7FC4721F4933B50038360B /* h2utils.h */,
 			);
 			path = v2;
 			sourceTree = "<group>";
@@ -394,9 +394,15 @@
 				6FE0EEEF1D40982B006136B7 /* v2 */,
 				6F91F16F1D782DD3004A95B9 /* Http1xRequest.cpp */,
 				6F91F1701D782DD3004A95B9 /* Http1xRequest.h */,
-				6F9E76791D36758B005E04B2 /* httpdefs.h */,
 				6F6D12EC1D965A9D008B64E6 /* Http1xResponse.cpp */,
 				6F6D12ED1D965A9D008B64E6 /* Http1xResponse.h */,
+				6F7FC3B51F4297BD0038360B /* HttpCache.cpp */,
+				6F7FC3B61F4297BD0038360B /* HttpCache.h */,
+				6F9E76791D36758B005E04B2 /* httpdefs.h */,
+				6F3731F31E37242200479457 /* HttpHeader.cpp */,
+				6F3731F41E37242200479457 /* HttpHeader.h */,
+				6F37307E1E2F35B500479457 /* HttpMessage.cpp */,
+				6F37307D1E2F359C00479457 /* HttpMessage.h */,
 				6FBB2C9A1D139C560024550F /* HttpParserImpl.cpp */,
 				6FBB2C9B1D139C560024550F /* HttpParserImpl.h */,
 				6FBB2C9C1D139C560024550F /* HttpRequestImpl.cpp */,
@@ -405,12 +411,6 @@
 				6FBB2C9F1D139C560024550F /* HttpResponseImpl.h */,
 				6FBB2CA01D139C560024550F /* Uri.cpp */,
 				6FBB2CA11D139C560024550F /* Uri.h */,
-				6F3731F31E37242200479457 /* HttpHeader.cpp */,
-				6F3731F41E37242200479457 /* HttpHeader.h */,
-				6F37307E1E2F35B500479457 /* HttpMessage.cpp */,
-				6F37307D1E2F359C00479457 /* HttpMessage.h */,
-				6F7FC3B51F4297BD0038360B /* HttpCache.cpp */,
-				6F7FC3B61F4297BD0038360B /* HttpCache.h */,
 			);
 			path = http;
 			sourceTree = "<group>";

@@ -96,7 +96,7 @@ int H2Stream::sendData(const void *data, size_t len, bool end_stream)
         }
         return 0;
     }
-    size_t send_len = window_size < len ? window_size : len;
+    size_t send_len = std::min<size_t>(window_size, len);
     DataFrame frame;
     frame.setStreamId(getStreamId());
     if (end_stream) {

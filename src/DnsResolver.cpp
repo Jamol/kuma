@@ -190,7 +190,9 @@ void DnsResolver::dnsProc()
 
         sockaddr_storage addr = { 0 };
         auto ret = doResolve(host, 0, addr);
-        KUMA_INFOTRACE("DNS resolved, host="<<host);
+        char ip[128] = { 0 };
+        km_get_sock_addr((struct sockaddr*)&addr, sizeof(addr), ip, sizeof(ip), nullptr);
+        KUMA_INFOTRACE("DNS resolved, host="<<host<<", ip="<<ip);
         for (auto &slot : slots) {
             if (slot) {
                 km_set_addr_port(slot->port, addr);

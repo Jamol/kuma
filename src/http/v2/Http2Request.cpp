@@ -74,11 +74,10 @@ KMError Http2Request::sendRequest()
 {
     std::string str_port = uri_.getPort();
     uint16_t port = 80;
+    ssl_flags_ = SSL_NONE;
     if (is_equal("https", uri_.getScheme())) {
         ssl_flags_ |= SSL_ENABLE;
         port = 443;
-    } else {
-        ssl_flags_ = SSL_NONE;
     }
     if(!str_port.empty()) {
         port = std::stoi(str_port);

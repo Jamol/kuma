@@ -447,8 +447,7 @@ bool H2Connection::Impl::handlePushFrame(PushPromiseFrame *frame)
         headers_block_buf_.assign(frame->getBlock(), frame->getBlock() + frame->getBlockSize());
     }
     
-    H2StreamPtr stream(new H2Stream(frame->getPromisedStreamId(), this, init_local_window_size_, init_remote_window_size_));
-    addStream(stream);
+    auto stream = createStream(frame->getPromisedStreamId());
     PushClientPtr client(new PushClient());
     client->attachStream(this, stream);
     addPushClient(stream->getStreamId(), std::move(client));
@@ -589,6 +588,12 @@ KMError H2Connection::Impl::handleInputData(uint8_t *buf, size_t len)
         DESTROY_DETECTOR_SETUP();
         int ret = http_parser_.parse((char*)buf, (uint32_t)len);
         DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
+        if (getState() == State::IN_ERROR) {
+            return KMError::FAILED;
+        }
+        if (getState() == State::CLOSED) {
+            return KMError::NOERR;
+        }
         if (static_cast<size_t>(ret) >= len) {
             return KMError::NOERR;
         }
