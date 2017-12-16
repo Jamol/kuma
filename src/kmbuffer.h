@@ -208,9 +208,8 @@ public:
     KMBuffer(void *data, size_t capacity, size_t size, size_t offset, DataDeleter &dd)
     {
         std::allocator<char> a;
-        auto deleter = [a](void *ptr, size_t size) {
-            std::allocator<char> a1 = a;
-            a1.deallocate((char*)ptr, size);
+        auto deleter = [a](void *ptr, size_t size) mutable {
+            a.deallocate((char*)ptr, size);
         };
         using _MySharedData = _SharedData<decltype(deleter), DataDeleter>;
         size_t shared_size = sizeof(_MySharedData);
@@ -262,9 +261,8 @@ public:
     {
         shared_data_.reset();
         static auto null_deleter = [](void*, size_t){};
-        auto deleter = [a](void *ptr, size_t size) {
-            Allocator a1 = a;
-            a1.deallocate((typename Allocator::pointer)ptr, size);
+        auto deleter = [a](void *ptr, size_t size) mutable {
+            a.deallocate((typename Allocator::pointer)ptr, size);
         };
         using _MySharedData = _SharedData<decltype(deleter), decltype(null_deleter)>;
         size_t shared_size = sizeof(_MySharedData);

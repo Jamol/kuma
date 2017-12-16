@@ -70,17 +70,6 @@ enum class LoopActivity {
 using ObserverCallback = std::function<void(LoopActivity)>;
 using ObserverToken = std::weak_ptr<DL_Queue<ObserverCallback>::DLNode>;
 
-class PendingObject
-{
-public:
-    virtual ~PendingObject() {}
-    virtual bool isPending() const = 0;
-
-public:
-    PendingObject* next_ = nullptr;
-    PendingObject* prev_ = nullptr;
-};
-
 class EventLoop::Impl final : public KMObject
 {
 public:
@@ -114,9 +103,6 @@ public:
     void stop();
     bool stopped() const { return stop_loop_; }
 
-    void appendPendingObject(PendingObject *obj);
-    void removePendingObject(PendingObject *obj);
-
 protected:
     void processTasks();
     
@@ -137,8 +123,6 @@ protected:
     LockType            obs_mutex_;
     
     TimerManagerPtr     timer_mgr_;
-
-    PendingObject*      pending_objects_ = nullptr;
 };
 using EventLoopPtr = std::shared_ptr<EventLoop::Impl>;
 using EventLoopWeakPtr = std::weak_ptr<EventLoop::Impl>;

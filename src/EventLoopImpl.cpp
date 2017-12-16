@@ -43,11 +43,6 @@ EventLoop::Impl::~Impl()
         delete poll_;
         poll_ = nullptr;
     }
-    while (pending_objects_) {
-        auto tmp = pending_objects_;
-        pending_objects_ = pending_objects_->next_;
-        delete tmp;
-    }
 }
 
 bool EventLoop::Impl::init()
@@ -156,31 +151,6 @@ KMError EventLoop::Impl::removeObserver(EventLoopToken *token)
         token->observed = false;
     }
     return KMError::NOERR;
-}
-
-void EventLoop::Impl::appendPendingObject(PendingObject *obj)
-{
-    KUMA_ASSERT(inSameThread());
-    if (pending_objects_) {
-        obj->next_ = pending_objects_;
-        pending_objects_->prev_ = obj;
-    }
-    pending_objects_ = obj;
-}
-
-void EventLoop::Impl::removePendingObject(PendingObject *obj)
-{
-    KUMA_ASSERT(inSameThread());
-    if (pending_objects_ == obj) {
-        pending_objects_ = obj->next_;
-    }
-    if (obj->prev_) {
-        obj->prev_->next_ = obj->next_;
-    }
-    if (obj->next_) {
-        obj->next_->prev_ = obj->prev_;
-    }
-    delete obj;
 }
 
 void EventLoop::Impl::processTasks()
