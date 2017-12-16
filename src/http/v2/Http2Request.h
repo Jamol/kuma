@@ -120,13 +120,13 @@ protected:
     // response
     int status_code_ = 0;
     HeaderVector rsp_headers_;
-    KM_Queue<KMBuffer::Ptr> rsp_queue_;
+    KMQueue<KMBuffer::Ptr> rsp_queue_;
     bool header_complete_ = false;
     bool response_complete_ = false;
     
     bool closing_ = { false };
     bool write_blocked_ { false };
-    KM_Queue<KMBuffer::Ptr> req_queue_;
+    KMQueue<KMBuffer::Ptr> req_queue_;
     
     EventLoopToken loop_token_;
     EventLoopToken conn_token_;

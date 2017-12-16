@@ -83,14 +83,14 @@ static int huffEncode(const std::string &str, uint8_t *buf, size_t len) {
         
         while (n >= 8) {
             n -= 8;
-            *ptr++ = current >> n;
+            *ptr++ = static_cast<uint8_t>(current >> n);
         }
     }
     
     if (n > 0) {
         current <<= (8 - n);
         current |= (0xFF >> n);
-        *ptr++ = current;
+        *ptr++ = static_cast<uint8_t>(current);
     }
     
     return int(ptr - buf);
@@ -126,7 +126,7 @@ static int encodeInteger(uint8_t N, uint64_t I, uint8_t *buf, size_t len) {
     if (ptr == end) {
         return -1;
     }
-    *ptr++ = I;
+    *ptr++ = static_cast<uint8_t>(I);
     
     return int(ptr - buf);
 }
@@ -189,7 +189,7 @@ static int decodeInteger(uint8_t N, const uint8_t *buf, size_t len, uint64_t &I)
     uint8_t b = 0;
     do {
         b = *ptr++;
-        u64 += (b & 127) * pow(2, m);
+        u64 += static_cast<uint64_t>((b & 127) * pow(2, m));
         m += 7;
     } while (ptr < end && (b & 128));
     if (ptr == end && (b & 128)) {

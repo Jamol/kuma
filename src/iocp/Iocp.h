@@ -250,6 +250,7 @@ public:
                 if (!isPending()) {
                     remove();
                 }
+                // wait until all pending operations are completed
                 return;
             }
             if (recv_ctx_->op == IocpContext::Op::RECV) {
@@ -266,6 +267,7 @@ public:
                 if (!isPending()) {
                     remove();
                 }
+                // wait until all pending operations are completed
                 return;
             }
             if (io_size != sendBuffer().size()) {
@@ -317,7 +319,9 @@ protected:
         if (loop) {
             loop->unregisterFd(pending_fd_, true);
             pending_fd_ = INVALID_FD;
+            // remove from loop and release self
             loop->removePendingObject(this);
+            delete this;
         }
         else {
             KUMA_ASSERT(false);

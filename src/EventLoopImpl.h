@@ -61,14 +61,29 @@ public:
     State state = State::ACTIVE;
     EventLoopToken* token;
 };
-using TaskQueue = DL_Queue<TaskSlot>;
+using TaskQueue = DLQueue<TaskSlot>;
 using TaskNodePtr = TaskQueue::NodePtr;
 
 enum class LoopActivity {
     EXIT,
 };
 using ObserverCallback = std::function<void(LoopActivity)>;
-using ObserverToken = std::weak_ptr<DL_Queue<ObserverCallback>::DLNode>;
+using ObserverToken = std::weak_ptr<DLQueue<ObserverCallback>::DLNode>;
+
+/**
+ * PendingObject is used to cache the IOCP context pointer, and will be removed when
+ * all pending operatios are completed, or the loop exited
+ */
+class PendingObject
+{
+public:
+    virtual ~PendingObject() {}
+    virtual bool isPending() const = 0;
+
+public:
+    PendingObject* next_ = nullptr;
+    PendingObject* prev_ = nullptr;
+};
 
 class EventLoop::Impl final : public KMObject
 {
@@ -103,11 +118,14 @@ public:
     void stop();
     bool stopped() const { return stop_loop_; }
 
+    void appendPendingObject(PendingObject *obj);
+    void removePendingObject(PendingObject *obj);
+
 protected:
     void processTasks();
     
 protected:
-    using ObserverQueue = DL_Queue<ObserverCallback>;
+    using ObserverQueue = DLQueue<ObserverCallback>;
     using LockType = std::mutex;
     using LockGuard = std::lock_guard<LockType>;
     
@@ -123,6 +141,8 @@ protected:
     LockType            obs_mutex_;
     
     TimerManagerPtr     timer_mgr_;
+
+    PendingObject*      pending_objects_ = nullptr;
 };
 using EventLoopPtr = std::shared_ptr<EventLoop::Impl>;
 using EventLoopWeakPtr = std::weak_ptr<EventLoop::Impl>;

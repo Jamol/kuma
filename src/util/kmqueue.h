@@ -26,15 +26,15 @@ KUMA_NS_BEGIN
 // enqueue on a thread and dequene on another thread
 ///
 template <class E>
-class KM_Queue
+class KMQueue
 {
 public:
-    KM_Queue()
+    KMQueue()
     {
         head_ = new TLNode(E());
         tail_ = head_;
     }
-    ~KM_Queue()
+    ~KMQueue()
     {
         TLNode* node = nullptr;
         while(head_) {
@@ -118,15 +118,15 @@ protected:
 };
 
 template <class E, class LockType>
-class KM_QueueMT
+class KMQueueMT
 {
 public:
-    KM_QueueMT()
+    KMQueueMT()
     {
         head_ = new TLNode(E());
         tail_ = head_;
     }
-    ~KM_QueueMT()
+    ~KMQueueMT()
     {
         TLNode* node = nullptr;
         while(head_)
@@ -208,7 +208,7 @@ protected:
 
 // double linked list
 template <class E>
-class DL_Queue final
+class DLQueue final
 {
 public:
     class DLNode
@@ -227,7 +227,7 @@ public:
     using NodePtr = typename DLNode::Ptr;
     
 public:
-    ~DL_Queue()
+    ~DLQueue()
     {
         while(head_) {
             head_ = head_->next_;
@@ -321,7 +321,7 @@ public:
         return !head_;
     }
     
-    void swap(DL_Queue &other)
+    void swap(DLQueue &other)
     {
         head_.swap(other.head_);
         tail_.swap(other.tail_);
