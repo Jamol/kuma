@@ -344,7 +344,7 @@ public:
 protected:
     IocpWrapper() = default;
     virtual ~IocpWrapper() {
-        if (pending_fd_) {
+        if (pending_fd_ != INVALID_FD) {
             closeFd(pending_fd_);
             pending_fd_ = INVALID_FD;
         }
@@ -373,7 +373,7 @@ protected:
             loop->removePendingObject(this);
         }
         else {
-            if (pending_fd_) {
+            if (pending_fd_ != INVALID_FD) {
                 closeFd(pending_fd_);
                 pending_fd_ = INVALID_FD;
             }
