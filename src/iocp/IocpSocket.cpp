@@ -29,7 +29,7 @@
 using namespace kuma;
 
 IocpSocket::IocpSocket(const EventLoopPtr &loop)
-    : SocketBase(loop), IocpBase(IocpWrapperPtr(new IocpWrapper()))
+    : SocketBase(loop), IocpBase(IocpWrapper::create())
 {
     KM_SetObjKey("IocpSocket");
     //KUMA_INFOXTRACE("IocpSocket");

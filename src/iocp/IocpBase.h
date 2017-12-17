@@ -26,7 +26,7 @@ KUMA_NS_BEGIN
 class IocpBase
 {
 public:
-    IocpBase(IocpWrapperPtr && ctx)
+    IocpBase(IocpWrapper::Ptr && ctx)
         : iocp_ctx_(std::move(ctx))
     {
         iocp_ctx_->setCallback([this](IocpContext::Op op, size_t io_size) {
@@ -47,12 +47,8 @@ public:
         if (registered_) {
             registered_ = false;
             iocp_ctx_->setCallback(nullptr);
-            auto ret = iocp_ctx_->unregisterFd(loop, fd, close_fd);
-            if (!ret) {
-                // has pending operations, need wait untill all operations are completed before destroy iocp_ctx_
-                auto obj = iocp_ctx_.release();
-                loop->appendPendingObject(obj);
-            }
+            iocp_ctx_->unregisterFd(loop, fd, close_fd);
+            iocp_ctx_.reset();
         }
         else if (close_fd && fd != INVALID_FD) {
             closeFd(fd);
@@ -107,8 +103,8 @@ public:
     }
 
 protected:
-    bool            registered_ = false;
-    IocpWrapperPtr  iocp_ctx_;
+    bool                registered_ = false;
+    IocpWrapper::Ptr    iocp_ctx_;
 };
 
 KUMA_NS_END

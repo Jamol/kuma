@@ -71,14 +71,16 @@ using ObserverCallback = std::function<void(LoopActivity)>;
 using ObserverToken = std::weak_ptr<DLQueue<ObserverCallback>::DLNode>;
 
 /**
- * PendingObject is used to cache the IOCP context pointer, and will be removed when
- * all pending operatios are completed, or the loop exited
+ * PendingObject is used to cache the IOCP context when destroying IocpSocket that 
+ * has pending operations. It will be removed after all pending operatios are completed,
+ * or the loop exited
  */
 class PendingObject
 {
 public:
     virtual ~PendingObject() {}
     virtual bool isPending() const = 0;
+    virtual void onLoopExit() = 0;
 
 public:
     PendingObject* next_ = nullptr;

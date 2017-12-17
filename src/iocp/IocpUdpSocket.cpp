@@ -68,7 +68,7 @@
 using namespace kuma;
 
 IocpUdpSocket::IocpUdpSocket(const EventLoopPtr &loop)
-: UdpSocketBase(loop), IocpBase(IocpWrapperPtr(new IocpUdpWrapper()))
+: UdpSocketBase(loop), IocpBase(IocpUdpWrapper::create())
 {
     KM_SetObjKey("IocpUdpSocket");
 }

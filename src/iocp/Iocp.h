@@ -78,16 +78,16 @@ class IocpWrapper : public PendingObject
 public:
     using IocpCallback = std::function<void(IocpContext::Op op, size_t io_size)>;
 
-    virtual ~IocpWrapper() {
-        if (pending_fd_) {
-            closeFd(pending_fd_);
-            pending_fd_ = INVALID_FD;
-        }
-    }
-
     bool isPending() const override
     {
         return send_pending_ || recv_pending_;
+    }
+
+    void onLoopExit() override
+    {
+        // loop exited, there are no more IO events
+        loop_.reset();
+        resetPending();
     }
 
     void cancel(SOCKET_FD fd)
@@ -126,12 +126,13 @@ public:
         }
         if (loop) {
             if (isPending()) {
-                // wait untill all pending operations are completed
-                shutdown(fd, 2); // not close fd to prevent fd reusing
+                // wait until all pending operations are completed, or loop exit
+                shutdown(fd, 2);
 
                 closing_ = true;
                 pending_fd_ = fd;
                 loop_ = loop;
+                loop->appendPendingObject(this);
 
                 cancel(fd);
                 return false;
@@ -139,9 +140,8 @@ public:
             loop->unregisterFd(fd, close_fd);
         }
         else if (close_fd) {
-            recv_pending_ = false;
-            send_pending_ = false;
             closeFd(fd);
+            resetPending();
         }
         return true;
     }
@@ -160,6 +160,7 @@ public:
         }
         else {
             recv_pending_ = true;
+            increment();
             return true;
         }
     }
@@ -180,6 +181,7 @@ public:
         }
         else {
             recv_pending_ = true;
+            increment();
             return true;
         }
     }
@@ -198,6 +200,7 @@ public:
         if (ret == SOCKET_ERROR) {
             if (WSA_IO_PENDING == WSAGetLastError()) {
                 send_pending_ = true;
+                increment();
                 return 0;
             }
             return -1;
@@ -207,6 +210,7 @@ public:
             // or set FILE_SKIP_COMPLETION_PORT_ON_SUCCESS
             // SetFileCompletionNotificationModes
             send_pending_ = true;
+            increment();
         }
         return ret;
     }
@@ -229,6 +233,7 @@ public:
         if (ret == SOCKET_ERROR) {
             if (WSA_IO_PENDING == WSAGetLastError()) {
                 recv_pending_ = true;
+                increment();
                 return 0;
             }
             return -1;
@@ -238,6 +243,7 @@ public:
             // or set FILE_SKIP_COMPLETION_PORT_ON_SUCCESS
             // SetFileCompletionNotificationModes
             recv_pending_ = true;
+            increment();
         }
         return ret;
     }
@@ -246,11 +252,7 @@ public:
     {
         if (recv_ctx_ && ol == &recv_ctx_->ol) {
             recv_pending_ = false;
-            if (closing_) {
-                if (!isPending()) {
-                    remove();
-                }
-                // wait until all pending operations are completed
+            if (decrement() || closing_) {
                 return;
             }
             if (recv_ctx_->op == IocpContext::Op::RECV) {
@@ -263,11 +265,7 @@ public:
         }
         else if (send_ctx_ && ol == &send_ctx_->ol) {
             send_pending_ = false;
-            if (closing_) {
-                if (!isPending()) {
-                    remove();
-                }
-                // wait until all pending operations are completed
+            if (decrement() || closing_) {
                 return;
             }
             if (io_size != sendBuffer().size()) {
@@ -312,22 +310,75 @@ public:
         callback_ = std::move(cb);
     }
 
-protected:
-    void remove()
+    void increment()
     {
-        auto loop = loop_.lock();
-        if (loop) {
-            loop->unregisterFd(pending_fd_, true);
-            pending_fd_ = INVALID_FD;
-            // remove from loop and release self
-            loop->removePendingObject(this);
-            delete this;
+        ++refcount_;
+    }
+
+    bool decrement()
+    {
+        if (--refcount_ == 0) {
+            onDestroy();
+            return true;
         }
-        else {
-            KUMA_ASSERT(false);
+        return false;
+    }
+
+public:
+    struct Deleter
+    {
+        void operator()(IocpWrapper* ptr) {
+            if (ptr) {
+                ptr->decrement();
+            }
+        }
+    };
+    using Ptr = std::unique_ptr<IocpWrapper, Deleter>;
+    static Ptr create()
+    {
+        auto *p = new IocpWrapper();
+        p->increment();
+        return Ptr(p);
+    }
+
+protected:
+    IocpWrapper() = default;
+    virtual ~IocpWrapper() {
+        if (pending_fd_) {
             closeFd(pending_fd_);
             pending_fd_ = INVALID_FD;
         }
+    }
+
+    void resetPending()
+    {
+        if (send_pending_) {
+            send_pending_ = false;
+            if (decrement()) return;
+        }
+        if (recv_pending_) {
+            recv_pending_ = false;
+            if (decrement()) return;
+        }
+    }
+
+    void onDestroy()
+    {
+        auto loop = loop_.lock();
+        if (loop) {
+            if (pending_fd_ != INVALID_FD) {
+                loop->unregisterFd(pending_fd_, true);
+                pending_fd_ = INVALID_FD;
+            }
+            loop->removePendingObject(this);
+        }
+        else {
+            if (pending_fd_) {
+                closeFd(pending_fd_);
+                pending_fd_ = INVALID_FD;
+            }
+        }
+        delete this;
     }
 
 protected:
@@ -337,11 +388,12 @@ protected:
     IocpContextPtr      recv_ctx_;
     IocpCallback        callback_;
 
+    std::atomic_long    refcount_{ 0 };
+
     EventLoopWeakPtr    loop_;
     bool                closing_ = false;
     SOCKET_FD           pending_fd_ = INVALID_FD;
 };
-using IocpWrapperPtr = std::unique_ptr<IocpWrapper>;
 
 class IocpUdpWrapper : public IocpWrapper
 {
@@ -378,6 +430,17 @@ public:
         }
         return ret;
     }
+
+    static Ptr create()
+    {
+        auto *p = new IocpUdpWrapper();
+        p->increment();
+        return Ptr(p);
+    }
+
+protected:
+    IocpUdpWrapper() = default;
+    ~IocpUdpWrapper() = default;
 
 public:
     sockaddr_storage    ss_addr_;

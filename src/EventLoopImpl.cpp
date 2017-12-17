@@ -39,14 +39,14 @@ EventLoop::Impl::Impl(PollType poll_type)
 
 EventLoop::Impl::~Impl()
 {
+    while (pending_objects_) {
+        auto obj = pending_objects_;
+        pending_objects_ = pending_objects_->next_;
+        obj->onLoopExit();
+    }
     if(poll_) {
         delete poll_;
         poll_ = nullptr;
-    }
-    while (pending_objects_) {
-        auto tmp = pending_objects_;
-        pending_objects_ = pending_objects_->next_;
-        delete tmp;
     }
 }
 
@@ -224,6 +224,11 @@ void EventLoop::Impl::loop(uint32_t max_wait_ms)
     }
     processTasks();
     
+    while (pending_objects_) {
+        auto obj = pending_objects_;
+        pending_objects_ = pending_objects_->next_;
+        obj->onLoopExit();
+    }
     {
         LockGuard g(obs_mutex_);
         ObserverCallback cb;

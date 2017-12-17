@@ -33,7 +33,7 @@
 using namespace kuma;
 
 IocpAcceptor::IocpAcceptor(const EventLoopPtr &loop)
-: AcceptorBase(loop), IocpBase(IocpWrapperPtr(new IocpWrapper()))
+: AcceptorBase(loop), IocpBase(IocpWrapper::create())
 {
     KM_SetObjKey("IocpAcceptor");
 }
