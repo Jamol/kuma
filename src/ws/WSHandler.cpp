@@ -77,12 +77,16 @@ std::string generate_sec_accept_value(const std::string& sec_ws_key)
     return std::string((char*)x64_encode_buf, x64_encode_len);
 }
 
-std::string WSHandler::buildUpgradeRequest(const std::string& path, const std::string& host,
+std::string WSHandler::buildUpgradeRequest(const std::string& path, const std::string& query, const std::string& host,
                                     const std::string& proto, const std::string& origin)
 {
     std::stringstream ss;
     ss << "GET ";
     ss << path;
+    if(!query.empty()){
+        ss << "?";
+        ss << query;
+    }
     ss << " HTTP/1.1\r\n";
     ss << "Host: " << host << "\r\n";
     ss << "Upgrade: websocket\r\n";

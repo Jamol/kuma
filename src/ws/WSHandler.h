@@ -67,7 +67,7 @@ public:
     void setMode(WSMode mode) { mode_ = mode; }
     WSMode getMode() { return mode_; }
     void setHttpParser(HttpParser::Impl&& parser);
-    std::string buildUpgradeRequest(const std::string& path, const std::string& host,
+    std::string buildUpgradeRequest(const std::string& path, const std::string& query, const std::string& host,
                              const std::string& proto, const std::string& origin);
     std::string buildUpgradeResponse();
     

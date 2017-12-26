@@ -232,7 +232,7 @@ void WebSocket::Impl::onError(KMError err)
 
 void WebSocket::Impl::sendUpgradeRequest()
 {
-    std::string str(ws_handler_.buildUpgradeRequest(uri_.getPath(), uri_.getHost(), proto_, origin_));
+    std::string str(ws_handler_.buildUpgradeRequest(uri_.getPath(), uri_.getQuery(), uri_.getHost(), proto_, origin_));
     setState(State::UPGRADING);
     TcpConnection::send((const uint8_t*)str.c_str(), str.size());
 }
