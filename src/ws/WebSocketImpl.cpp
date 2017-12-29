@@ -173,7 +173,7 @@ KMError WebSocket::Impl::close()
 {
     KUMA_INFOXTRACE("close");
     if (getState() == State::OPEN) {
-        sendCloseFrame(1000);
+        //sendCloseFrame(1000);
     }
     cleanup();
     setState(State::CLOSED);

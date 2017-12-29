@@ -138,6 +138,9 @@ public:
     TcpSocket(EventLoop* loop);
     ~TcpSocket();
     
+    /**
+     * Set SSL flags. only the flags set before connect will take effect
+     */
     KMError setSslFlags(uint32_t ssl_flags);
     uint32_t getSslFlags() const;
     bool sslEnabled() const;
@@ -152,6 +155,7 @@ public:
     int send(const iovec* iovs, int count);
     int send(const KMBuffer &buf);
     int receive(void* data, size_t length);
+    
     KMError close();
     
     KMError pause();
@@ -208,6 +212,7 @@ public:
     int send(const iovec* iovs, int count, const char* host, uint16_t port);
     int send(const KMBuffer &buf, const char* host, uint16_t port);
     int receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port);
+    
     KMError close();
     
     KMError mcastJoin(const char* mcast_addr, uint16_t mcast_port);
@@ -231,7 +236,14 @@ public:
     Timer(EventLoop* loop);
     ~Timer();
     
+    /**
+     * Schedule the timer. This API is thread-safe
+     */
     bool schedule(uint32_t delay_ms, TimerCallback cb, TimerMode mode=TimerMode::ONE_SHOT);
+    
+    /**
+     * Cancel the scheduled timer. This API is thread-safe
+     */
     void cancel();
     
     class Impl;
@@ -309,6 +321,7 @@ public:
     int sendData(const void* data, size_t len);
     int sendData(const KMBuffer &buf);
     void reset(); // reset for connection reuse
+    
     KMError close();
     
     int getStatusCode() const;
@@ -351,6 +364,7 @@ public:
     int sendData(const void* data, size_t len);
     int sendData(const KMBuffer &buf);
     void reset(); // reset for connection reuse
+    
     KMError close();
     
     const char* getMethod() const;
@@ -393,6 +407,7 @@ public:
     KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf=nullptr);
     int send(const void* data, size_t len, bool is_text, bool fin=true);
     int send(const KMBuffer &buf, bool is_text, bool fin=true);
+    
     KMError close();
     
     void setDataCallback(DataCallback cb);
@@ -424,7 +439,9 @@ public:
      * @param rsp HttpResponse to be associated
      */
     KMError attachStream(uint32_t stream_id, HttpResponse* rsp);
+    
     KMError close();
+    
     void setAcceptCallback(AcceptCallback cb);
     void setErrorCallback(ErrorCallback cb);
     

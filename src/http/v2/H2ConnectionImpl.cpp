@@ -1171,9 +1171,8 @@ void H2Connection::Impl::notifyListeners(KMError err)
 void H2Connection::Impl::removeSelf()
 {
     if (!key_.empty()) {
-        auto &conn_mgr = H2ConnectionMgr::getRequestConnMgr(sslEnabled());
         std::string key(std::move(key_));
         // will destroy self when calling from loop stop
-        conn_mgr.removeConnection(key);
+        H2ConnectionMgr::removeConnection(key, sslEnabled());
     }
 }

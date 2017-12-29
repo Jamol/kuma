@@ -44,7 +44,11 @@ public:
     void removeConnection(const std::string key);
     
 public:
-    static H2ConnectionMgr& getRequestConnMgr(bool secure) { return secure ? req_secure_conn_mgr_ : req_conn_mgr_;}
+    static H2ConnectionMgr& getRequestConnMgr(bool secure)
+    {
+        return secure ? req_secure_conn_mgr_ : req_conn_mgr_;
+    }
+    static void removeConnection(const std::string &key, bool secure);
     static H2ConnectionMgr req_conn_mgr_;
     static H2ConnectionMgr req_secure_conn_mgr_;
 

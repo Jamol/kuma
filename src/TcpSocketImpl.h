@@ -88,7 +88,6 @@ public:
     EventLoopPtr eventLoop() const;
     
 private:
-    void ioReady(uint32_t events);
     void onConnect(KMError err);
     void onSend(KMError err);
     void onReceive(KMError err);

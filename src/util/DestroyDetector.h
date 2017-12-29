@@ -14,29 +14,65 @@
 
 KUMA_NS_BEGIN
 
+class DestroyGuard
+{
+public:
+    ~DestroyGuard()
+    {
+        prev_->next_ = next_;
+        next_->prev_ = prev_;
+        prev_ = next_ = this;
+    }
+    
+    void setDestroyed()
+    {
+        destroyed_ = true;
+    }
+    
+    bool isDestroyed() const
+    {
+        return destroyed_;
+    }
+    
+protected:
+    friend class DestroyDetector;
+    
+    bool destroyed_ = false;
+    DestroyGuard* prev_ = this;
+    DestroyGuard* next_ = this;
+};
+
 class DestroyDetector
 {
 public:
     ~DestroyDetector() {
-        if(destroy_flag_ptr_) {
-            *destroy_flag_ptr_ = true;
+        auto next = dd_root_.next_;
+        for (; next != &dd_root_; next = next->next_) {
+            next->setDestroyed();
         }
+    }
+    
+    void appendDestroyGuard(DestroyGuard *dg)
+    {
+        auto *last = dd_root_.prev_->next_;
+        last->next_ = dg;
+        dg->prev_ = last;
+        dg->next_ = &dd_root_;
+        dd_root_.prev_ = dg;
     }
 
 protected:
-    bool *destroy_flag_ptr_ = nullptr;
+    DestroyGuard dd_root_;
 };
 
 #define DESTROY_DETECTOR_SETUP() \
-bool destroyed = false; \
-KUMA_ASSERT(nullptr == destroy_flag_ptr_); \
-destroy_flag_ptr_ = &destroyed;
+DestroyGuard __dguard; \
+appendDestroyGuard(&__dguard);
 
 #define DESTROY_DETECTOR_CHECK(ret) \
-if(destroyed) { \
+if(__dguard.isDestroyed()) { \
 return ret; \
-} \
-destroy_flag_ptr_ = nullptr;
+}
 
 #define DESTROY_DETECTOR_CHECK_VOID() DESTROY_DETECTOR_CHECK((void()))
 

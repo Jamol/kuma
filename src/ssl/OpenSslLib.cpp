@@ -147,6 +147,8 @@ void OpenSslLib::doFini()
         CRYPTO_set_dynlock_create_callback(nullptr);
         CRYPTO_set_dynlock_lock_callback(nullptr);
         CRYPTO_set_dynlock_destroy_callback(nullptr);
+        delete [] ssl_locks_;
+        ssl_locks_ = nullptr;
     }
     EVP_cleanup();
     CRYPTO_cleanup_all_ex_data();

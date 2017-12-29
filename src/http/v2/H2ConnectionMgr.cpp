@@ -80,3 +80,11 @@ void H2ConnectionMgr::removeConnection(const std::string key)
     std::lock_guard<std::mutex> g(conn_mutex_);
     conn_map_.erase(key);
 }
+
+void H2ConnectionMgr::removeConnection(const std::string &key, bool secure)
+{
+    if (!key.empty()) {
+        auto &conn_mgr = H2ConnectionMgr::getRequestConnMgr(secure);
+        conn_mgr.removeConnection(key);
+    }
+}

@@ -189,7 +189,8 @@ KMError AcceptorBase::close()
 void AcceptorBase::onAccept()
 {
     SOCKET_FD fd = INVALID_FD;
-    while(!closed_) {
+    auto loop = loop_.lock();
+    while(!closed_ && !loop->stopped()) {
         fd = ::accept(fd_, NULL, NULL);
         if(INVALID_FD == fd) {
             if (EINTR == errno) {
