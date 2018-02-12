@@ -145,6 +145,7 @@ private:
     State getState() { return state_; }
     void onStateOpen();
     void cleanup();
+    void cleanupAndRemove();
     
     void onConnectError(KMError err);
     void notifyBlockedStreams();

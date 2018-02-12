@@ -185,8 +185,12 @@ KMError EPoll::wait(uint32_t wait_ms)
         for (int i=0; i<nfds; ++i) {
             SOCKET_FD fd = (SOCKET_FD)(long)events[i].data.ptr;
             if(fd < poll_items_.size()) {
-                IOCallback &cb = poll_items_[fd].cb;
-                if(cb) cb(get_kuma_events(events[i].events), nullptr, 0);
+                auto revents = get_kuma_events(events[i].events);
+                revents &= poll_items_[fd].events;
+                if (revents) {
+                    auto &cb = poll_items_[fd].cb;
+                    if(cb) cb(revents, nullptr, 0);
+                }
             }
         }
     }

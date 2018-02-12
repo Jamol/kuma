@@ -72,7 +72,12 @@ void H2Connection::Impl::cleanup()
     setState(State::CLOSED);
     TcpConnection::close();
     push_clients_.clear();
-    removeSelf();
+}
+
+void H2Connection::Impl::cleanupAndRemove()
+{
+    cleanup();
+    H2ConnectionMgr::removeConnection(key_, sslEnabled());
 }
 
 void H2Connection::Impl::setConnectionKey(const std::string &key)
@@ -175,7 +180,7 @@ KMError H2Connection::Impl::close()
         sendGoaway(H2Error::NOERR);
     }
     setState(State::CLOSED);
-    cleanup();
+    cleanupAndRemove();
     return KMError::NOERR;
 }
 
@@ -608,7 +613,7 @@ KMError H2Connection::Impl::handleInputData(uint8_t *buf, size_t len)
             if (memcmp(cmp_preface_.c_str(), buf, cmp_size) != 0) {
                 KUMA_ERRXTRACE("handleInputData, invalid protocol");
                 setState(State::CLOSED);
-                cleanup();
+                cleanupAndRemove();
                 return KMError::INVALID_PROTO;
             }
             cmp_preface_ = cmp_preface_.substr(cmp_size);
@@ -638,7 +643,7 @@ KMError H2Connection::Impl::parseInputData(const uint8_t *buf, size_t len)
        parse_state == FrameParser::ParseState::STOPPED) {
         KUMA_ERRXTRACE("parseInputData, failed, len="<<len<<", state="<<getState());
         setState(State::CLOSED);
-        cleanup();
+        cleanupAndRemove();
         return KMError::FAILED;
     }
     return KMError::NOERR;
@@ -974,7 +979,7 @@ void H2Connection::Impl::onError(KMError err)
     KUMA_INFOXTRACE("onError, err="<<int(err));
     auto error_cb(std::move(error_cb_));
     setState(State::IN_ERROR);
-    cleanup();
+    cleanupAndRemove();
     if (error_cb) {
         error_cb(int(err));
     }
@@ -984,7 +989,10 @@ void H2Connection::Impl::onConnectError(KMError err)
 {
     setState(State::IN_ERROR);
     cleanup();
+    auto conn_key(std::move(key_));
+    auto secure = sslEnabled();
     notifyListeners(err);
+    H2ConnectionMgr::removeConnection(conn_key, secure);
 }
 
 KMError H2Connection::Impl::sendWindowUpdate(uint32_t stream_id, uint32_t delta)

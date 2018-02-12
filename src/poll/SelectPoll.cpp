@@ -213,23 +213,26 @@ KMError SelectPoll::wait(uint32_t wait_ms)
     PollFdVector poll_fds = poll_fds_;
     int fds_count = int(poll_fds.size());
     for (int i = 0; i < fds_count && nready > 0; ++i) {
-        uint32_t events = 0;
+        KMEvent revents = 0;
         SOCKET_FD fd = poll_fds[i].fd;
         if(FD_ISSET(fd, &readfds)) {
-            events |= KUMA_EV_READ;
+            revents |= KUMA_EV_READ;
             --nready;
         }
         if(nready > 0 && FD_ISSET(fd, &writefds)) {
-            events |= KUMA_EV_WRITE;
+            revents |= KUMA_EV_WRITE;
             --nready;
         }
         if(nready > 0 && FD_ISSET(fd, &exceptfds)) {
-            events |= KUMA_EV_ERROR;
+            revents |= KUMA_EV_ERROR;
             --nready;
         }
         if (fd < poll_items_.size()) {
-            IOCallback& cb = poll_items_[fd].cb;
-            if (cb) cb(events, nullptr, 0);
+            revents &= poll_items_[fd].events;
+            if (revents) {
+                auto &cb = poll_items_[fd].cb;
+                if (cb) cb(revents, nullptr, 0);
+            }
         }
     }
     return KMError::NOERR;

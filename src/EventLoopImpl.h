@@ -168,7 +168,9 @@ protected:
     friend class EventLoop::Impl;
     EventLoopWeakPtr loop_;
     
-    std::list<TaskNodePtr> node_queue_;
+    // task_nodes_ is protected by EventLoop task_mutex_
+    std::list<TaskNodePtr> task_nodes_;
+    
     bool observed = false;
     ObserverToken obs_token_;
 };

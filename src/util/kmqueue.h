@@ -214,12 +214,15 @@ public:
     class DLNode
     {
     public:
+        using Ptr = std::shared_ptr<DLNode>;
         DLNode(const E &e) : element_(e) {}
         DLNode(E &&e) : element_(std::forward<E>(e)) {}
         template<class... Args>
         DLNode(Args&&... args) : element_(std::forward<Args>(args)...) {}
+        E& element() { return element_; }
         
-        using Ptr = std::shared_ptr<DLNode>;
+    private:
+        friend class DLQueue;
         E element_;
         Ptr prev_;
         Ptr next_;

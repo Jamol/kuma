@@ -217,8 +217,12 @@ KMError VPoll::wait(uint32_t wait_ms)
         if(poll_fds[idx].revents) {
             --num_revts;
             if(poll_fds[idx].fd < poll_items_.size()) {
-                IOCallback &cb = poll_items_[poll_fds[idx].fd].cb;
-                if(cb) cb(get_kuma_events(poll_fds[idx].revents), nullptr, 0);
+                auto &item = poll_items_[poll_fds[idx].fd];
+                auto revents = get_kuma_events(poll_fds[idx].revents);
+                revents &= item.events;
+                if (revents && item.cb) {
+                    item.cb(revents, nullptr, 0);
+                }
             }
         }
         ++idx;

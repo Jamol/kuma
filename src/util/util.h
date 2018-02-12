@@ -27,6 +27,7 @@
 
 #include <string>
 #include <sstream>
+#include <memory>
 
 struct addrinfo;
 struct sockaddr;
@@ -101,6 +102,43 @@ void for_each_token(const std::string &tokens, char delim, LAMBDA &&func)
         }
     }
 }
+
+template<typename T>
+std::weak_ptr<T> __to_weak_ptr(std::enable_shared_from_this<T> *ptr, ...)
+{
+    return ptr->shared_from_this();
+}
+
+template<typename T>
+std::weak_ptr<T const> __to_weak_ptr(std::enable_shared_from_this<T> const *ptr, ...)
+{
+    return ptr->shared_from_this();
+}
+
+template<typename T>
+auto __to_weak_ptr(std::enable_shared_from_this<T> *ptr, decltype(ptr->weak_from_this()) *) -> decltype(ptr->weak_from_this())
+{
+    return ptr->weak_from_this();
+}
+
+template<typename T>
+auto __to_weak_ptr(std::enable_shared_from_this<T> const *ptr, decltype(ptr->weak_from_this()) *) -> decltype(ptr->weak_from_this())
+{
+    return ptr->weak_from_this();
+}
+
+template<typename T>
+std::weak_ptr<T> to_weak_ptr(std::enable_shared_from_this<T> *ptr)
+{
+    return __to_weak_ptr<T>(ptr, nullptr);
+}
+
+template<typename T>
+std::weak_ptr<T const> to_weak_ptr(std::enable_shared_from_this<T> const *ptr)
+{
+    return __to_weak_ptr<T>(ptr, nullptr);
+}
+
 
 inline uint32_t decode_u32(const uint8_t *src)
 {

@@ -44,6 +44,10 @@ EventLoop::Impl::~Impl()
         pending_objects_ = pending_objects_->next_;
         obj->onLoopExit();
     }
+    ObserverCallback cb;
+    while (obs_queue_.dequeue(cb)) {
+        cb(LoopActivity::EXIT);
+    }
     if(poll_) {
         delete poll_;
         poll_ = nullptr;
@@ -185,25 +189,26 @@ void EventLoop::Impl::removePendingObject(PendingObject *obj)
 void EventLoop::Impl::processTasks()
 {
     TaskQueue tq;
-    task_mutex_.lock();
+    std::unique_lock<LockType> ul(task_mutex_);
     task_queue_.swap(tq);
     
     while (auto node = tq.front_node()) {
         tq.pop_front();
-        node->element_.state = TaskSlot::State::RUNNING;
-        task_mutex_.unlock();
-        task_run_mutex_.lock();
-        if (node->element_.state != TaskSlot::State::INACTIVE) {
-            node->element_();
-            node->element_.state = TaskSlot::State::INACTIVE;
+        auto &task_slot = node->element();
+        task_slot.state = TaskSlot::State::RUNNING;
+        ul.unlock();
+        {// execute the task
+            LockGuard g(task_run_mutex_);
+            if (task_slot.state != TaskSlot::State::INACTIVE) {
+                task_slot();
+                task_slot.state = TaskSlot::State::INACTIVE;
+            }
         }
-        task_run_mutex_.unlock();
-        task_mutex_.lock();
-        if (node->element_.token) {
-            node->element_.token->removeTaskNode(node);
+        ul.lock();
+        if (task_slot.token) {
+            task_slot.token->removeTaskNode(node);
         }
     }
-    task_mutex_.unlock();
 }
 
 void EventLoop::Impl::loopOnce(uint32_t max_wait_ms)
@@ -276,14 +281,15 @@ KMError EventLoop::Impl::removeTask(EventLoopToken *token)
     bool is_running = false;
     {
         LockGuard g(task_mutex_);
-        for (auto &node : token->node_queue_) {
-            if (node->element_.state == TaskSlot::State::RUNNING) {
+        for (auto &node : token->task_nodes_) {
+            auto &task_slot = node->element();
+            if (task_slot.state == TaskSlot::State::RUNNING) {
                 is_running = true;
-                node->element_.state = TaskSlot::State::INACTIVE;
+                task_slot.state = TaskSlot::State::INACTIVE;
             }
             task_queue_.remove(node);
         }
-        token->node_queue_.clear();
+        token->task_nodes_.clear();
     }
     if (is_running && !inSameThread()) {
         // wait for end of running
@@ -362,14 +368,14 @@ EventLoopPtr EventLoopToken::eventLoop()
 
 void EventLoopToken::appendTaskNode(TaskNodePtr &node)
 {
-    node_queue_.emplace_back(node);
+    task_nodes_.emplace_back(node);
 }
 
 void EventLoopToken::removeTaskNode(TaskNodePtr &node)
 {
-    for (auto it = node_queue_.begin(); it != node_queue_.end(); ++it) {
+    for (auto it = task_nodes_.begin(); it != task_nodes_.end(); ++it) {
         if (*it == node) {
-            node_queue_.erase(it);
+            task_nodes_.erase(it);
             break;
         }
     }
@@ -384,7 +390,7 @@ void EventLoopToken::reset()
 {
     auto loop = loop_.lock();
     if (loop) {
-        if (!node_queue_.empty()) {
+        if (!task_nodes_.empty()) {
             loop->removeTask(this);
         }
         if (!obs_token_.expired()) {
@@ -393,7 +399,7 @@ void EventLoopToken::reset()
         }
         loop_.reset();
     } else {
-        node_queue_.clear();
+        task_nodes_.clear();
     }
 }
 

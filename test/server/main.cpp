@@ -65,7 +65,8 @@ int main(int argc, char *argv[])
 #ifdef KUMA_OS_WIN
     SetConsoleCtrlHandler(HandlerRoutine, TRUE);
 #else
-    signal(SIGPIPE, HandlerRoutine);
+    signal(SIGHUP, SIG_IGN);
+    signal(SIGPIPE, SIG_IGN);
     signal(SIGINT, HandlerRoutine);
     signal(SIGTERM, HandlerRoutine);
 #endif

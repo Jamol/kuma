@@ -222,7 +222,7 @@ KMError KQueue::wait(uint32_t wait_ms)
         for (int i=0; i<nevents; ++i) {
             SOCKET_FD fd = (SOCKET_FD)kevents[i].ident;
             if(fd >= 0 && fd <= max_fd) {
-                uint32_t revents = 0;
+                KMEvent revents = 0;
                 if (kevents[i].filter == EVFILT_READ) {
                     revents |= KUMA_EV_READ;
                 } else if (kevents[i].filter == EVFILT_WRITE) {
@@ -245,8 +245,12 @@ KMError KQueue::wait(uint32_t wait_ms)
             if (fd < poll_items_.size()) {
                 uint32_t revents = poll_items_[fd].revents;
                 poll_items_[fd].revents = 0;
-                IOCallback &cb = poll_items_[fd].cb;
-                if(cb) cb(revents, nullptr, 0);
+                // in case a processed event may modify this event
+                revents &= poll_items_[fd].events;
+                if (revents) {
+                    auto &cb = poll_items_[fd].cb;
+                    if(cb) cb(revents, nullptr, 0);
+                }
             }
         }
     }
