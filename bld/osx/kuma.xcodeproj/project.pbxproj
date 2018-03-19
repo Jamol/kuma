@@ -670,7 +670,7 @@
 				GCC_PREFIX_HEADER = "kuma-Prefix.pch";
 				HEADER_SEARCH_PATHS = ../../vendor/openssl/include;
 				INSTALL_PATH = .;
-				LIBRARY_SEARCH_PATHS = ../../vendor/openssl/lib/osx;
+				LIBRARY_SEARCH_PATHS = "../../vendor/openssl/lib/osx/$(ARCHS)";
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				OBJROOT = ../../objs/osx;
 				OTHER_LDFLAGS = (
@@ -690,7 +690,7 @@
 				GCC_PREFIX_HEADER = "kuma-Prefix.pch";
 				HEADER_SEARCH_PATHS = ../../vendor/openssl/include;
 				INSTALL_PATH = .;
-				LIBRARY_SEARCH_PATHS = ../../vendor/openssl/lib/osx;
+				LIBRARY_SEARCH_PATHS = "../../vendor/openssl/lib/osx/$(ARCHS)";
 				MACOSX_DEPLOYMENT_TARGET = 10.11;
 				OBJROOT = ../../objs/osx;
 				OTHER_LDFLAGS = (

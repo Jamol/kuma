@@ -2,12 +2,13 @@ LOCAL_PATH := $(call my-dir)/..
 MY_ROOT := $(LOCAL_PATH)/..
 include $(CLEAR_VARS)
 
-MY_LIB_PATH = $(MY_ROOT)/vendor/openssl/lib/android
+OPENSSL_PATH := $(MY_ROOT)/vendor/openssl
+OPENSSL_LIB_PATH := $(OPENSSL_PATH)/lib/android/$(APP_ABI)
 
 ifeq ($(NDK_DEBUG), 1)
-	NDK_APP_DST_DIR := $(MY_ROOT)/bin/android/armeabi-v7a/debug
+	NDK_APP_DST_DIR := $(MY_ROOT)/bin/android/$(APP_ABI)/debug
 else
-	NDK_APP_DST_DIR := $(MY_ROOT)/bin/android/armeabi-v7a/release
+	NDK_APP_DST_DIR := $(MY_ROOT)/bin/android/$(APP_ABI)/release
 endif
 
 LOCAL_MODULE := kuma
@@ -62,9 +63,9 @@ LOCAL_SRC_FILES := \
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH) \
 	$(MY_ROOT)/vendor \
-	$(MY_ROOT)/vendor/openssl/include
+	$(OPENSSL_PATH)/include
 
-LOCAL_LDLIBS := -ldl -llog -l$(MY_LIB_PATH)/libssl.a -l$(MY_LIB_PATH)/libcrypto.a
+LOCAL_LDLIBS := -ldl -llog -l$(OPENSSL_LIB_PATH)/libssl.a -l$(OPENSSL_LIB_PATH)/libcrypto.a
 LOCAL_CFLAGS := -w -O2 -D__ANDROID__ -DKUMA_HAS_OPENSSL
 LOCAL_CPPFLAGS := -std=c++11
 LOCAL_CPP_FEATURES := rtti exceptions
