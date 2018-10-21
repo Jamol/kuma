@@ -38,7 +38,7 @@
 KUMA_NS_BEGIN
 
 class IOPoll;
-class EventLoopToken;
+using EventLoopToken = EventLoop::Token::Impl;
 
 class TaskSlot
 {
@@ -149,11 +149,11 @@ protected:
 using EventLoopPtr = std::shared_ptr<EventLoop::Impl>;
 using EventLoopWeakPtr = std::weak_ptr<EventLoop::Impl>;
 
-class EventLoopToken
+class EventLoop::Token::Impl
 {
 public:
-    EventLoopToken();
-    ~EventLoopToken();
+    Impl();
+    ~Impl();
     
     void eventLoop(const EventLoopPtr &loop);
     EventLoopPtr eventLoop();

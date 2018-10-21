@@ -345,33 +345,33 @@ KMError EventLoop::Impl::post(Task task, EventLoopToken *token)
 }
 
 /////////////////////////////////////////////////////////////////
-// EventLoopToken
-EventLoopToken::EventLoopToken()
+// EventLoop::Token::Impl
+EventLoop::Token::Impl::Impl()
 {
     
 }
 
-EventLoopToken::~EventLoopToken()
+EventLoop::Token::Impl::~Impl()
 {
     reset();
 }
 
-void EventLoopToken::eventLoop(const EventLoopPtr &loop)
+void EventLoop::Token::Impl::eventLoop(const EventLoopPtr &loop)
 {
     loop_ = loop;
 }
 
-EventLoopPtr EventLoopToken::eventLoop()
+EventLoopPtr EventLoop::Token::Impl::eventLoop()
 {
     return loop_.lock();
 }
 
-void EventLoopToken::appendTaskNode(TaskNodePtr &node)
+void EventLoop::Token::Impl::appendTaskNode(TaskNodePtr &node)
 {
     task_nodes_.emplace_back(node);
 }
 
-void EventLoopToken::removeTaskNode(TaskNodePtr &node)
+void EventLoop::Token::Impl::removeTaskNode(TaskNodePtr &node)
 {
     for (auto it = task_nodes_.begin(); it != task_nodes_.end(); ++it) {
         if (*it == node) {
@@ -381,12 +381,12 @@ void EventLoopToken::removeTaskNode(TaskNodePtr &node)
     }
 }
 
-bool EventLoopToken::expired()
+bool EventLoop::Token::Impl::expired()
 {
     return loop_.expired() || (observed && obs_token_.expired());
 }
 
-void EventLoopToken::reset()
+void EventLoop::Token::Impl::reset()
 {
     auto loop = loop_.lock();
     if (loop) {

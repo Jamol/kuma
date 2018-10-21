@@ -197,7 +197,7 @@ void EventLoop::cancel(Token *token)
 }
 
 EventLoop::Token::Token()
-: pimpl_(new EventLoopToken())
+: pimpl_(new Impl())
 {
     
 }
@@ -229,7 +229,7 @@ void EventLoop::Token::reset()
     }
 }
 
-EventLoopToken* EventLoop::Token::pimpl()
+EventLoop::Token::Impl* EventLoop::Token::pimpl()
 {
     return pimpl_;
 }

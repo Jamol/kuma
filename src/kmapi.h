@@ -36,7 +36,6 @@
 KUMA_NS_BEGIN
 
 class KMBuffer;
-class EventLoopToken;
 
 class KUMA_API EventLoop
 {
@@ -55,10 +54,11 @@ public:
         
         void reset();
         
-        EventLoopToken* pimpl();
+        class Impl;
+        Impl* pimpl();
         
     private:
-        EventLoopToken* pimpl_;
+        Impl* pimpl_;
     };
     
 public:
