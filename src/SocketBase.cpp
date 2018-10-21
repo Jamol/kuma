@@ -87,7 +87,7 @@ void SocketBase::cleanup()
     if (INVALID_FD != fd_) {
         SOCKET_FD fd = fd_;
         fd_ = INVALID_FD;
-        shutdown(fd, 0); // only stop receive
+        shutdown(fd, 2);
         unregisterFd(fd, true);
     }
 }
@@ -466,6 +466,14 @@ void SocketBase::setSocketOption()
     if (set_tcpnodelay(fd_) != 0) {
         KUMA_WARNXTRACE("setSocketOption, failed to set TCP_NODELAY, fd=" << fd_ << ", err=" << getLastError());
     }
+    
+#ifdef KUMA_OS_MAC
+    // ignore SIGPIPE
+    int opt_val = 1;
+    if (setsockopt(fd_, SOL_SOCKET, SO_NOSIGPIPE, &opt_val, sizeof(opt_val))) {
+        // failed
+    }
+#endif
 }
 
 void SocketBase::notifySendBlocked()

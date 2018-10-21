@@ -58,7 +58,7 @@ LOCAL_SRC_FILES := \
     ssl/SioHandler.cpp \
     ssl/OpenSslLib.cpp \
     DnsResolver.cpp \
-    kmapi.cpp 
+    kmapi.cpp
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH) \
@@ -67,7 +67,7 @@ LOCAL_C_INCLUDES := \
 
 LOCAL_LDLIBS := -ldl -llog -l$(OPENSSL_LIB_PATH)/libssl.a -l$(OPENSSL_LIB_PATH)/libcrypto.a
 LOCAL_CFLAGS := -w -O2 -D__ANDROID__ -DKUMA_HAS_OPENSSL
-LOCAL_CPPFLAGS := -std=c++11
+LOCAL_CPPFLAGS := -std=c++1z
 LOCAL_CPP_FEATURES := rtti exceptions
 
 include $(BUILD_SHARED_LIBRARY)

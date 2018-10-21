@@ -666,6 +666,7 @@
 		6F852DFF1985E33000271D87 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "kuma-Prefix.pch";
 				HEADER_SEARCH_PATHS = ../../vendor/openssl/include;
@@ -686,6 +687,7 @@
 		6F852E001985E33000271D87 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "kuma-Prefix.pch";
 				HEADER_SEARCH_PATHS = ../../vendor/openssl/include;

@@ -28,7 +28,7 @@ INCLUDES = -I. -I$(VENDORDIR) -I$(OPENSSLDIR)/include
 #
 CXX=g++
 
-CXXFLAGS = -g -std=c++11 -pipe -fPIC -Wall -Wextra -pedantic -DKUMA_HAS_OPENSSL
+CXXFLAGS = -g -std=c++17 -pipe -fPIC -Wall -Wextra -pedantic -DKUMA_HAS_OPENSSL
 LDFLAGS = -shared -Wl,-Bsymbolic -lpthread -ldl -lssl -lcrypto
 
 SRCS =  \

@@ -85,7 +85,7 @@ KMError EventLoop::Impl::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb
     if(inSameThread()) {
         return poll_->registerFd(fd, events, std::move(cb));
     }
-    return async([=] () mutable {
+    return async([=, cb=std::move(cb)] () mutable {
         auto ret = poll_->registerFd(fd, events, cb);
         if(ret != KMError::NOERR) {
             return ;
@@ -311,8 +311,8 @@ KMError EventLoop::Impl::sync(Task task)
             task();
             std::unique_lock<std::mutex> lk(m);
             ready = true;
+            cv.notify_one(); // the waiting thread may block again since m is not released
             lk.unlock();
-            cv.notify_one();
         });
         auto ret = post(std::move(task_sync));
         if (ret != KMError::NOERR) {

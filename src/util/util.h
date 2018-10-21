@@ -25,6 +25,14 @@
 #include "kmdefs.h"
 #include "evdefs.h" // for SOCKET_FD
 
+#if defined(KUMA_OS_LINUX)
+# include <sys/types.h>
+# include <unistd.h>
+# if !defined(KUMA_OS_ANDROID)
+#  include <sys/syscall.h>
+# endif
+#endif
+
 #include <string>
 #include <sstream>
 #include <memory>
@@ -43,6 +51,10 @@ KUMA_NS_BEGIN
 using LPFN_CANCELIOEX = BOOL(WINAPI*)(HANDLE, LPOVERLAPPED);
 #elif defined(KUMA_OS_MAC)
 # define getCurrentThreadId() pthread_mach_thread_np(pthread_self())
+#elif defined(KUMA_OS_ANDROID)
+# define getCurrentThreadId() gettid()
+#elif defined(KUMA_OS_LINUX)
+# define getCurrentThreadId() syscall(__NR_gettid)
 #else
 # define getCurrentThreadId() pthread_self()
 #endif
