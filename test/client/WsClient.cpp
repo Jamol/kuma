@@ -28,7 +28,6 @@ void WsClient::startRequest(const std::string& url)
     });
     ws_.setWriteCallback([this] (KMError err) { onSend(err); });
     ws_.setErrorCallback([this] (KMError err) { onClose(err); });
-    //timer_.schedule(1000, [this] { onTimer(); }, true);
     ws_.setProtocol("jws");
     ws_.setOrigin("www.jamol.cn");
     ws_.connect(url.c_str(), [this] (KMError err) { onConnect(err); });
@@ -58,7 +57,7 @@ void WsClient::onConnect(KMError err)
     sendData();
     if (getSendInterval() > 0) {
         timed_sending_ = true;
-        timer_.schedule(getSendInterval(), [this] { sendData(); }, TimerMode::REPEATING);
+        timer_.schedule(getSendInterval(), TimerMode::REPEATING, [this] { sendData(); });
     }
 }
 

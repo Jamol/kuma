@@ -239,7 +239,7 @@ public:
     /**
      * Schedule the timer. This API is thread-safe
      */
-    bool schedule(uint32_t delay_ms, TimerCallback cb, TimerMode mode=TimerMode::ONE_SHOT);
+    bool schedule(uint32_t delay_ms, TimerMode mode, TimerCallback cb);
     
     /**
      * Cancel the scheduled timer. This API is thread-safe

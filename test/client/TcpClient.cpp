@@ -27,7 +27,7 @@ KMError TcpClient::connect(const std::string &host, uint16_t port)
     tcp_.setReadCallback([this] (KMError err) { onReceive(err); });
     tcp_.setWriteCallback([this] (KMError err) { onSend(err); });
     tcp_.setErrorCallback([this] (KMError err) { onClose(err); });
-    timer_.schedule(1000, [this] { onTimer(); }, TimerMode::REPEATING);
+    timer_.schedule(1000, TimerMode::REPEATING, [this] { onTimer(); });
     return tcp_.connect(host.c_str(), port, [this] (KMError err) { onConnect(err); });
 }
 

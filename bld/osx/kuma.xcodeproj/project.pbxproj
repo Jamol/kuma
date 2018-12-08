@@ -672,7 +672,7 @@
 				HEADER_SEARCH_PATHS = ../../vendor/openssl/include;
 				INSTALL_PATH = .;
 				LIBRARY_SEARCH_PATHS = "../../vendor/openssl/lib/osx/$(ARCHS)";
-				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				OBJROOT = ../../objs/osx;
 				OTHER_LDFLAGS = (
 					"-lssl",
@@ -693,7 +693,7 @@
 				HEADER_SEARCH_PATHS = ../../vendor/openssl/include;
 				INSTALL_PATH = .;
 				LIBRARY_SEARCH_PATHS = "../../vendor/openssl/lib/osx/$(ARCHS)";
-				MACOSX_DEPLOYMENT_TARGET = 10.11;
+				MACOSX_DEPLOYMENT_TARGET = 10.13;
 				OBJROOT = ../../objs/osx;
 				OTHER_LDFLAGS = (
 					"-lssl",

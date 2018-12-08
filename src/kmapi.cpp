@@ -519,9 +519,9 @@ Timer::~Timer()
     delete pimpl_;
 }
 
-bool Timer::schedule(uint32_t delay_ms, TimerCallback cb, TimerMode mode)
+bool Timer::schedule(uint32_t delay_ms, TimerMode mode, TimerCallback cb)
 {
-    return pimpl_->schedule(delay_ms, std::move(cb), mode);
+    return pimpl_->schedule(delay_ms, mode, std::move(cb));
 }
 
 void Timer::cancel()

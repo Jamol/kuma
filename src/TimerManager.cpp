@@ -50,7 +50,7 @@ Timer::Impl::~Impl()
     cancel();
 }
 
-bool Timer::Impl::schedule(uint32_t delay_ms, TimerCallback cb, TimerMode mode)
+bool Timer::Impl::schedule(uint32_t delay_ms, TimerMode mode, TimerCallback cb)
 {
     TimerManagerPtr mgr = timer_mgr_.lock();
     if(mgr) {
@@ -414,10 +414,7 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
         list_remove_node(running_node_);
         --timer_count_;
         mutex_.unlock(); // sync nodes in tmp_list with cancel_timer.
-        TICK_COUNT_TYPE now_ms = 0;
-        if (reschedule_node_) {
-            now_ms = get_tick_count_ms();
-        }
+
         running_mutex_.lock();
         if(running_node_) {
             if(running_node_->timer_) {
@@ -432,7 +429,7 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
         
         mutex_.lock();
         if(reschedule_node_ && !reschedule_node_->cancelled_ && !isTimerPending(reschedule_node_)) {
-            reschedule_node_->start_tick_ = now_ms;//get_tick_count_ms();
+            reschedule_node_->start_tick_ = now_tick;
             addTimer(reschedule_node_, FROM_RESCHEDULE);
             reschedule_node_ = nullptr;
         }

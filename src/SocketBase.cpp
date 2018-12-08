@@ -137,9 +137,9 @@ KMError SocketBase::connect(const std::string &host, uint16_t port, EventCallbac
     }
     connect_cb_ = std::move(cb);
     if (timeout_ms > 0 && timeout_ms != uint32_t(-1)) {
-        timer_.schedule(timeout_ms, [this]() {
+        timer_.schedule(timeout_ms, TimerMode::ONE_SHOT, [this]() {
             onConnect(KMError::TIMEOUT);
-        }, TimerMode::ONE_SHOT);
+        });
     }
     if (!km_is_ip_address(host.c_str())) {
         sockaddr_storage ss_addr = { 0 };

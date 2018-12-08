@@ -128,7 +128,7 @@ public:
     Impl(TimerManagerPtr mgr);
     ~Impl();
     
-    bool schedule(uint32_t delay_ms, TimerCallback cb, TimerMode mode);
+    bool schedule(uint32_t delay_ms, TimerMode mode, TimerCallback cb);
     void cancel();
     
 private:
