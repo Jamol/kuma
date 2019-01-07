@@ -44,7 +44,8 @@ using KeyValuePair = std::pair<std::string, std::string>;
 using HeaderVector = std::vector<KeyValuePair>;
 using HttpBody = std::vector<uint8_t>;
 
-struct CaseIgnoreLess : public std::binary_function<std::string, std::string, bool> {
+struct CaseIgnoreLess
+{
     bool operator()(const std::string &lhs, const std::string &rhs) const {
         return strcasecmp(lhs.c_str(), rhs.c_str()) < 0;
     }

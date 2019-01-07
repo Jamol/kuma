@@ -259,15 +259,16 @@ public:
     template<typename Allocator>
     bool allocBuffer(size_t size, Allocator &a)
     {
+        using AllocatorTraits = std::allocator_traits<Allocator>;
         shared_data_.reset();
         static auto null_deleter = [](void*, size_t){};
         auto deleter = [a](void *ptr, size_t size) mutable {
-            a.deallocate((typename Allocator::pointer)ptr, size);
+            AllocatorTraits::deallocate(a, (typename AllocatorTraits::pointer)ptr, size);
         };
         using _MySharedData = _SharedData<decltype(deleter), decltype(null_deleter)>;
         size_t shared_size = sizeof(_MySharedData);
         size_t alloc_size = size + shared_size;
-        auto buf = a.allocate(alloc_size);
+        auto buf = AllocatorTraits::allocate(a, alloc_size);
         auto data = buf + shared_size;
         auto *sd = new (buf) _MySharedData(data, size, alloc_size, deleter, null_deleter);
         shared_data_ = sd;
