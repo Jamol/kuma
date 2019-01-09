@@ -459,7 +459,7 @@ void WSHandler::handleDataMask(const uint8_t mask_key[WS_MASK_KEY_SIZE], KMBuffe
 {
     size_t pos = 0;
     for (auto it = buf.begin(); it != buf.end(); ++it) {
-        auto *data = it->readPtr();
+        auto *data = static_cast<uint8_t*>(it->readPtr());
         auto len = it->length();
         for (size_t i = 0; i < len; ++i, ++pos) {
             data[i] = data[i] ^ mask_key[pos%4];

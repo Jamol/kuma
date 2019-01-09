@@ -207,7 +207,7 @@ int HttpParser::Impl::parse(const KMBuffer &buf)
     for (auto it = buf.begin(); it != buf.end(); ++it) {
         if (it->length() > 0) {
             int bytes_parsed = 0;
-            auto parse_state = parse(it->readPtr(), it->length(), &bytes_parsed);
+            auto parse_state = parse(static_cast<char*>(it->readPtr()), it->length(), &bytes_parsed);
             total_parsed += bytes_parsed;
             if(PARSE_STATE_CONTINUE != parse_state) {
                 if(PARSE_STATE_ERROR == parse_state && event_cb_) {

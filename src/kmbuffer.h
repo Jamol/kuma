@@ -207,27 +207,7 @@ public:
     template<typename DataDeleter> // DataDeleter = void(void*, size_t)
     KMBuffer(void *data, size_t capacity, size_t size, size_t offset, DataDeleter &dd)
     {
-        std::allocator<char> a;
-        auto deleter = [a](void *ptr, size_t size) mutable {
-            a.deallocate((char*)ptr, size);
-        };
-        using _MySharedData = _SharedData<decltype(deleter), DataDeleter>;
-        size_t shared_size = sizeof(_MySharedData);
-        size_t alloc_size = shared_size;
-        auto buf = a.allocate(alloc_size);
-        auto *sd = new (buf) _MySharedData(data, capacity, alloc_size, deleter, dd);
-        shared_data_ = sd;
-        
-        begin_ptr_ = static_cast<char*>(data);
-        end_ptr_ = begin_ptr_ + capacity;
-        rd_ptr_ = begin_ptr_ + offset;
-        wr_ptr_ = rd_ptr_ + size;
-        if (rd_ptr_ > end_ptr_) {
-            rd_ptr_ = end_ptr_;
-        }
-        if (wr_ptr_ > end_ptr_) {
-            wr_ptr_ = end_ptr_;
-        }
+        reset(data, capacity, size, offset, dd);
     }
     
     /**
@@ -237,13 +217,7 @@ public:
     KMBuffer(void *data, size_t capacity, size_t size=0, StorageType type = StorageType::AUTO)
     : storage_type_(type)
     {
-        if (size > capacity) {
-            size = capacity;
-        }
-        begin_ptr_ = static_cast<char*>(data);
-        end_ptr_ = begin_ptr_ + capacity;
-        rd_ptr_ = begin_ptr_;
-        wr_ptr_ = rd_ptr_ + size;
+        reset(data, capacity, size);
     }
     
     KMBuffer(const void *data, size_t capacity, size_t size=0, StorageType type = StorageType::AUTO)
@@ -378,8 +352,8 @@ public:
         return ret;
     }
     
-    char* readPtr() const { return rd_ptr_; }
-    char* writePtr() const { return wr_ptr_; }
+    void* readPtr() const { return rd_ptr_; }
+    void* writePtr() const { return wr_ptr_; }
 
     bool isChained() const { return next_ != this; }
 
@@ -510,7 +484,7 @@ public:
                     dd = new KMBuffer();
                     std::allocator<char> a;
                     dd->allocBuffer(copy_len, a);
-                    dd->write(kmb->readPtr() + offset, copy_len);
+                    dd->write(static_cast<char*>(kmb->readPtr()) + offset, copy_len);
                 } else {
                     dd = kmb->cloneSelf();
                     dd->rd_ptr_ += offset;
@@ -583,6 +557,54 @@ public:
             }
         }
         resetSelf();
+    }
+
+    template<typename DataDeleter> // DataDeleter = void(void*, size_t)
+    void reset(void *data, size_t capacity, size_t size, size_t offset, DataDeleter &dd)
+    {
+        shared_data_.reset();
+        std::allocator<char> a;
+        auto deleter = [a](void *ptr, size_t size) mutable {
+            a.deallocate((char*)ptr, size);
+        };
+        using _MySharedData = _SharedData<decltype(deleter), DataDeleter>;
+        size_t shared_size = sizeof(_MySharedData);
+        size_t alloc_size = shared_size;
+        auto buf = a.allocate(alloc_size);
+        auto *sd = new (buf) _MySharedData(data, capacity, alloc_size, deleter, dd);
+        shared_data_ = sd;
+
+        begin_ptr_ = static_cast<char*>(data);
+        end_ptr_ = begin_ptr_ + capacity;
+        rd_ptr_ = begin_ptr_ + offset;
+        wr_ptr_ = rd_ptr_ + size;
+        if (rd_ptr_ > end_ptr_) {
+            rd_ptr_ = end_ptr_;
+        }
+        if (wr_ptr_ > end_ptr_) {
+            wr_ptr_ = end_ptr_;
+        }
+    }
+
+    /**
+     * data is not owned by this KMBuffer, caller should make sure data is valid
+     * before this KMBuffer destroyed
+     */
+    void reset(void *data, size_t capacity, size_t size)
+    {
+        shared_data_.reset();
+        if (size > capacity) {
+            size = capacity;
+        }
+        begin_ptr_ = static_cast<char*>(data);
+        end_ptr_ = begin_ptr_ + capacity;
+        rd_ptr_ = begin_ptr_;
+        wr_ptr_ = rd_ptr_ + size;
+    }
+
+    void clear()
+    {
+        rd_ptr_ = wr_ptr_ = begin_ptr_;
     }
     
     void destroy()
