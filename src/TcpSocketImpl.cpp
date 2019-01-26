@@ -104,8 +104,11 @@ KMError TcpSocket::Impl::setSslFlags(uint32_t ssl_flags)
     ssl_flags_ = ssl_flags;
     return KMError::NOERR;
 #else
-    //KUMA_ERRXTRACE("setSslFlags, OpenSSL is not enabled, please define KUMA_HAS_OPENSSL and recompile");
-    return KMError::UNSUPPORT;
+    if (ssl_flags != SSL_NONE) {
+        //KUMA_ERRXTRACE("setSslFlags, OpenSSL is not enabled, please define KUMA_HAS_OPENSSL and recompile");
+        return KMError::UNSUPPORT;
+    }
+    return KMError::NOERR;
 #endif
 }
 
@@ -226,13 +229,13 @@ KMError TcpSocket::Impl::setAlpnProtocols(const AlpnProtos &protocols)
     return KMError::NOERR;
 }
 
-KMError TcpSocket::Impl::getAlpnSelected(std::string &proto)
+KMError TcpSocket::Impl::getAlpnSelected(std::string &protocol)
 {
     if (!sslEnabled()) {
         return KMError::INVALID_PROTO;
     }
     if (ssl_handler_) {
-        return ssl_handler_->getAlpnSelected(proto);
+        return ssl_handler_->getAlpnSelected(protocol);
     }
     else {
         return KMError::INVALID_STATE;

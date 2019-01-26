@@ -946,19 +946,6 @@ KMError WebSocket::setSslFlags(uint32_t ssl_flags)
     return pimpl_->setSslFlags(ssl_flags);
 }
 
-void WebSocket::setProtocol(const char* proto)
-{
-    if (!proto) {
-        return;
-    }
-    pimpl_->setProtocol(proto);
-}
-
-const char* WebSocket::getProtocol() const
-{
-    return pimpl_->getProtocol().c_str();
-}
-
 void WebSocket::setOrigin(const char* origin)
 {
     if (!origin) {
@@ -970,6 +957,32 @@ void WebSocket::setOrigin(const char* origin)
 const char* WebSocket::getOrigin() const
 {
     return pimpl_->getOrigin().c_str();
+}
+
+KMError WebSocket::setSubprotocol(const char* subprotocol)
+{
+    if (!subprotocol) {
+        return KMError::INVALID_PARAM;
+    }
+    return pimpl_->setSubprotocol(subprotocol);
+}
+
+const char* WebSocket::getSubprotocol() const
+{
+    return pimpl_->getSubprotocol().c_str();
+}
+
+KMError WebSocket::setExtensions(const char* extensions)
+{
+    if (!extensions) {
+        return KMError::INVALID_PARAM;
+    }
+    return pimpl_->setExtensions(extensions);
+}
+
+const char* WebSocket::getExtensions() const
+{
+    return pimpl_->getExtensions().c_str();
 }
 
 KMError WebSocket::connect(const char* ws_url, EventCallback cb)

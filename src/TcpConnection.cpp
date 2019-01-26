@@ -67,7 +67,7 @@ KMError TcpConnection::connect(const std::string &host, uint16_t port)
 
 void TcpConnection::saveInitData(const KMBuffer *init_buf)
 {
-    if(init_buf && init_buf->chainLength() > 0) {
+    if(init_buf && !init_buf->empty()) {
         auto chain_size = init_buf->chainLength();
         initData_.resize(chain_size);
         init_buf->readChained(&initData_[0], initData_.size());
@@ -247,3 +247,20 @@ void TcpConnection::onClose(KMError err)
     cleanup();
     onError(err);
 }
+
+#ifdef KUMA_HAS_OPENSSL
+KMError TcpConnection::setAlpnProtocols(const AlpnProtos &protocols)
+{
+    return tcp_.setAlpnProtocols(protocols);
+}
+
+KMError TcpConnection::getAlpnSelected(std::string &protocol)
+{
+    return tcp_.getAlpnSelected(protocol);
+}
+
+KMError TcpConnection::setSslServerName(std::string serverName)
+{
+    return tcp_.setSslServerName(std::move(serverName));
+}
+#endif

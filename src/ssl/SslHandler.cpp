@@ -83,7 +83,7 @@ KMError SslHandler::setAlpnProtocols(const AlpnProtos &protocols)
 #endif
 }
 
-KMError SslHandler::getAlpnSelected(std::string &proto)
+KMError SslHandler::getAlpnSelected(std::string &protocol)
 {
     if (!ssl_) {
         return KMError::INVALID_STATE;
@@ -92,9 +92,9 @@ KMError SslHandler::getAlpnSelected(std::string &proto)
     uint32_t len = 0;
     SSL_get0_alpn_selected(ssl_, &buf, &len);
     if (buf && len > 0) {
-        proto.assign((const char*)buf, len);
+        protocol.assign((const char*)buf, len);
     } else {
-        proto.clear();
+        protocol.clear();
     }
     return KMError::NOERR;
 }

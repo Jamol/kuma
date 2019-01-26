@@ -67,14 +67,19 @@ public:
     void setMode(WSMode mode) { mode_ = mode; }
     WSMode getMode() { return mode_; }
     void setHttpParser(HttpParser::Impl&& parser);
-    std::string buildUpgradeRequest(const std::string& path, const std::string& query, const std::string& host,
-                             const std::string& proto, const std::string& origin);
-    std::string buildUpgradeResponse();
+    std::string buildUpgradeRequest(const std::string& path,
+                                    const std::string& query,
+                                    const std::string& host,
+                                    const std::string& origin,
+                                    const std::string& subprotocol,
+                                    const std::string& extensions);
+    std::string buildUpgradeResponse(const std::string& subprotocol,
+                                     const std::string& extensions);
     
     WSError handleData(uint8_t* data, size_t len);
     static int encodeFrameHeader(WSOpcode opcode, bool fin, uint8_t (*mask_key)[WS_MASK_KEY_SIZE], size_t plen, uint8_t hdr_buf[14]);
     
-    const std::string getProtocol();
+    const std::string getSubprotocol();
     const std::string getOrigin();
     
     void setFrameCallback(FrameCallback cb) { frame_cb_ = std::move(cb); }

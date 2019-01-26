@@ -45,6 +45,12 @@ public:
     int send(const KMBuffer &buf);
     KMError close();
     
+#ifdef KUMA_HAS_OPENSSL
+    KMError setAlpnProtocols(const AlpnProtos &protocols);
+    KMError getAlpnSelected(std::string &protocol);
+    KMError setSslServerName(std::string serverName);
+#endif
+    
     EventLoopPtr eventLoop() { return tcp_.eventLoop(); }
     
 protected:

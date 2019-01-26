@@ -35,6 +35,16 @@
 
 using namespace kuma;
 
+const std::string kSecWebSocketKey { "Sec-WebSocket-Key" };
+const std::string kSecWebSocketAccept { "Sec-WebSocket-Accept" };
+const std::string kSecWebSocketVersion { "Sec-WebSocket-Version" };
+const std::string kSecWebSocketProtocol { "Sec-WebSocket-Protocol" };
+const std::string kSecWebSocketExtensions { "Sec-WebSocket-Extensions" };
+
+const std::string kWebSocketVersion { "13" };
+
+static std::string generate_sec_accept_value(const std::string& sec_ws_key);
+
 //////////////////////////////////////////////////////////////////////////
 WSHandler::WSHandler()
 {
@@ -58,27 +68,12 @@ void WSHandler::setHttpParser(HttpParser::Impl&& parser)
     }
 }
 
-#define SHA1_DIGEST_SIZE	20
-std::string generate_sec_accept_value(const std::string& sec_ws_key)
-{
-    static const std::string sec_accept_guid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-    if(sec_ws_key.empty()) {
-        return "";
-    }
-    std::string accept = sec_ws_key;
-    accept += sec_accept_guid;
-    
-    uint8_t uShaRst2[SHA1_DIGEST_SIZE] = {0};
-    SHA1((const uint8_t *)accept.c_str(), accept.size(), uShaRst2);
-    
-    uint8_t x64_encode_buf[32] = {0};
-    uint32_t x64_encode_len = x64_encode(uShaRst2, SHA1_DIGEST_SIZE, x64_encode_buf, sizeof(x64_encode_buf), false);
-    
-    return std::string((char*)x64_encode_buf, x64_encode_len);
-}
-
-std::string WSHandler::buildUpgradeRequest(const std::string& path, const std::string& query, const std::string& host,
-                                    const std::string& proto, const std::string& origin)
+std::string WSHandler::buildUpgradeRequest(const std::string& path,
+                                           const std::string& query,
+                                           const std::string& host,
+                                           const std::string& origin,
+                                           const std::string& subprotocol,
+                                           const std::string& extensions)
 {
     std::stringstream ss;
     ss << "GET ";
@@ -91,36 +86,56 @@ std::string WSHandler::buildUpgradeRequest(const std::string& path, const std::s
     ss << "Host: " << host << "\r\n";
     ss << "Upgrade: websocket\r\n";
     ss << "Connection: Upgrade\r\n";
-    ss << "Origin: " << origin << "\r\n";
-    ss << "Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\n";
-    if (!proto.empty()) {
-        ss << "Sec-WebSocket-Protocol: " << proto << "\r\n";
+    if (!origin.empty()) {
+        ss << "Origin: " << origin << "\r\n";
     }
-    ss << "Sec-WebSocket-Version: 13\r\n";
+    ss << kSecWebSocketKey << ": " << "dGhlIHNhbXBsZSBub25jZQ==" << "\r\n";
+    if (!subprotocol.empty()) {
+        ss << kSecWebSocketProtocol << ": " << subprotocol << "\r\n";
+    }
+    if (!extensions.empty()) {
+        ss << kSecWebSocketExtensions << ": " << extensions << "\r\n";
+    }
+    ss << kSecWebSocketVersion << ": " << kWebSocketVersion << "\r\n";
     ss << "\r\n";
     return ss.str();
 }
 
-std::string WSHandler::buildUpgradeResponse()
+std::string WSHandler::buildUpgradeResponse(const std::string& subprotocol,
+                                            const std::string& extensions)
 {
-    std::string sec_ws_key = http_parser_.getHeaderValue("Sec-WebSocket-Key");
-    std::string protos = http_parser_.getHeaderValue("Sec-WebSocket-Protocol");
-    
-    std::stringstream ss;
-    ss << "HTTP/1.1 101 Switching Protocols\r\n";
-    ss << "Upgrade: websocket\r\n";
-    ss << "Connection: Upgrade\r\n";
-    ss << "Sec-WebSocket-Accept: " << generate_sec_accept_value(sec_ws_key) << "\r\n";
-    if(!protos.empty()) {
-        ss << "Sec-WebSocket-Protocol: " << protos << "\r\n";
+    if (state_ == STATE_OPEN) {
+        std::string sec_ws_key = http_parser_.getHeaderValue(kSecWebSocketKey);
+        std::string client_protocols = http_parser_.getHeaderValue(kSecWebSocketProtocol);
+        std::string client_extensions = http_parser_.getHeaderValue(kSecWebSocketExtensions);
+        
+        std::stringstream ss;
+        ss << "HTTP/1.1 101 Switching Protocols\r\n";
+        ss << "Upgrade: websocket\r\n";
+        ss << "Connection: Upgrade\r\n";
+        ss << kSecWebSocketAccept << ": " << generate_sec_accept_value(sec_ws_key) << "\r\n";
+        if(!subprotocol.empty()) {
+            ss << kSecWebSocketProtocol << ": " << subprotocol << "\r\n";
+        }
+        if (!extensions.empty()) {
+            ss << kSecWebSocketExtensions << ": " << extensions << "\r\n";
+        }
+        ss << "\r\n";
+        return ss.str();
+    } else if (state_ == STATE_ERROR) {
+        std::stringstream ss;
+        ss << "HTTP/1.1 400 Bad Request\r\n";
+        ss << kSecWebSocketVersion << ": " << kWebSocketVersion << "\r\n";
+        ss << "\r\n";
+        return ss.str();
+    } else {
+        return "";
     }
-    ss << "\r\n";
-    return ss.str();
 }
 
-const std::string WSHandler::getProtocol()
+const std::string WSHandler::getSubprotocol()
 {
-    return http_parser_.getHeaderValue("Sec-WebSocket-Protocol");
+    return http_parser_.getHeaderValue(kSecWebSocketProtocol);
 }
 
 const std::string WSHandler::getOrigin()
@@ -130,12 +145,12 @@ const std::string WSHandler::getOrigin()
 
 void WSHandler::onHttpData(KMBuffer &buf)
 {
-    KUMA_ERRTRACE("WSHandler::onHttpData, len="<<buf.chainLength());
+    KUMA_ERRTRACE_THIS("WSHandler::onHttpData, len="<<buf.chainLength());
 }
 
 void WSHandler::onHttpEvent(HttpEvent ev)
 {
-    KUMA_INFOTRACE("WSHandler::onHttpEvent, ev="<<int(ev));
+    KUMA_INFOTRACE_THIS("WSHandler::onHttpEvent, ev="<<int(ev));
     switch (ev) {
         case HttpEvent::HEADER_COMPLETE:
             break;
@@ -159,33 +174,41 @@ void WSHandler::onHttpEvent(HttpEvent ev)
 
 void WSHandler::handleRequest()
 {
-    if(!http_parser_.isUpgradeTo("WebSocket")) {
-        state_ = STATE_ERROR;
-        KUMA_INFOTRACE("WSHandler::handleRequest, not WebSocket request");
-        if(handshake_cb_) handshake_cb_(KMError::INVALID_PROTO);
-        return;
-    }
-    std::string sec_ws_key = http_parser_.getHeaderValue("Sec-WebSocket-Key");
-    if(sec_ws_key.empty()) {
-        state_ = STATE_ERROR;
-        KUMA_INFOTRACE("WSHandler::handleRequest, no Sec-WebSocket-Key");
-        if(handshake_cb_) handshake_cb_(KMError::INVALID_PROTO);
-        return;
-    }
-    state_ = STATE_OPEN;
-    if(handshake_cb_) handshake_cb_(KMError::NOERR);
+    auto err = KMError::NOERR;
+    do {
+        if(!http_parser_.isUpgradeTo("WebSocket")) {
+            KUMA_ERRTRACE_THIS("WSHandler::handleRequest, not WebSocket request");
+            err = KMError::PROTO_ERROR;
+            break;
+        }
+        auto const &sec_ws_ver = http_parser_.getHeaderValue(kSecWebSocketVersion);
+        if (sec_ws_ver.empty() || !contains_token(sec_ws_ver, kWebSocketVersion, ',')) {
+            KUMA_ERRTRACE_THIS("WSHandler::handleRequest, unsupported version number, ver="<<sec_ws_ver);
+            err = KMError::PROTO_ERROR;
+            break;
+        }
+        auto const &sec_ws_key = http_parser_.getHeaderValue(kSecWebSocketKey);
+        if(sec_ws_key.empty()) {
+            KUMA_ERRTRACE_THIS("WSHandler::handleRequest, no Sec-WebSocket-Key");
+            err = KMError::PROTO_ERROR;
+            break;
+        }
+    } while (0);
+    
+    state_ = err == KMError::NOERR ? STATE_OPEN : STATE_ERROR;
+    if(handshake_cb_) handshake_cb_(err);
 }
 
 void WSHandler::handleResponse()
 {
-    if(http_parser_.isUpgradeTo("WebSocket")) {
-        state_ = STATE_OPEN;
-        if(handshake_cb_) handshake_cb_(KMError::NOERR);
-    } else {
-        state_ = STATE_ERROR;
-        KUMA_INFOTRACE("WSHandler::handleResponse, invalid status code: "<<http_parser_.getStatusCode());
-        if(handshake_cb_) handshake_cb_(KMError::INVALID_PROTO);
+    auto err = KMError::NOERR;
+    if(!http_parser_.isUpgradeTo("WebSocket")) {
+        KUMA_ERRTRACE_THIS("WSHandler::handleResponse, invalid status code: "<<http_parser_.getStatusCode());
+        err = KMError::PROTO_ERROR;
     }
+    
+    state_ = err == KMError::NOERR ? STATE_OPEN : STATE_ERROR;
+    if(handshake_cb_) handshake_cb_(err);
 }
 
 WSHandler::WSError WSHandler::handleData(uint8_t* data, size_t len)
@@ -465,4 +488,23 @@ void WSHandler::handleDataMask(const uint8_t mask_key[WS_MASK_KEY_SIZE], KMBuffe
             data[i] = data[i] ^ mask_key[pos%4];
         }
     }
+}
+
+#define SHA1_DIGEST_SIZE    20
+static std::string generate_sec_accept_value(const std::string& sec_ws_key)
+{
+    const std::string sec_accept_guid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
+    if(sec_ws_key.empty()) {
+        return "";
+    }
+    std::string accept = sec_ws_key;
+    accept += sec_accept_guid;
+    
+    uint8_t uShaRst2[SHA1_DIGEST_SIZE] = {0};
+    SHA1((const uint8_t *)accept.c_str(), accept.size(), uShaRst2);
+    
+    uint8_t x64_encode_buf[32] = {0};
+    uint32_t x64_encode_len = x64_encode(uShaRst2, SHA1_DIGEST_SIZE, x64_encode_buf, sizeof(x64_encode_buf), false);
+    
+    return std::string((char*)x64_encode_buf, x64_encode_len);
 }

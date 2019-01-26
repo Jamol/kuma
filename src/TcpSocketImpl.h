@@ -65,7 +65,7 @@ public:
     KMError detachFd(SOCKET_FD &fd);
 #ifdef KUMA_HAS_OPENSSL
     KMError setAlpnProtocols(const AlpnProtos &protocols);
-    KMError getAlpnSelected(std::string &proto);
+    KMError getAlpnSelected(std::string &protocol);
     KMError setSslServerName(std::string serverName);
     KMError attachFd(SOCKET_FD fd, SSL *ssl, BIO *nbio);
     KMError detachFd(SOCKET_FD &fd, SSL* &ssl, BIO* &nbio);

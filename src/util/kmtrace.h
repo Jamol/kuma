@@ -43,6 +43,11 @@ KUMA_NS_BEGIN
 #define KUMA_ERRTRACE(x)    KUMA_TRACE(KUMA_TRACE_LEVEL_ERROR, x)
 #define KUMA_DBGTRACE(x)    KUMA_TRACE(KUMA_TRACE_LEVEL_DEBUG, x)
 
+#define KUMA_INFOTRACE_THIS(x)   KUMA_TRACE(KUMA_TRACE_LEVEL_INFO, x<<", this="<<this)
+#define KUMA_WARNTRACE_THIS(x)   KUMA_TRACE(KUMA_TRACE_LEVEL_WARN, x<<", this="<<this)
+#define KUMA_ERRTRACE_THIS(x)    KUMA_TRACE(KUMA_TRACE_LEVEL_ERROR, x<<", this="<<this)
+#define KUMA_DBGTRACE_THIS(x)    KUMA_TRACE(KUMA_TRACE_LEVEL_DEBUG, x<<", this="<<this)
+
 #define KUMA_ASSERT(x) assert(x)
 
 void TracePrint(int level, const char* szMessage, ...);

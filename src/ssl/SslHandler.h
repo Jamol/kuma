@@ -48,7 +48,7 @@ public:
     virtual KMError detachSsl(SSL* &ssl, BIO* &nbio) = 0;
     
     virtual KMError setAlpnProtocols(const AlpnProtos &protocols);
-    virtual KMError getAlpnSelected(std::string &proto);
+    virtual KMError getAlpnSelected(std::string &protocol);
     virtual KMError setServerName(const std::string &serverName);
     virtual KMError setHostName(const std::string &hostName);
     

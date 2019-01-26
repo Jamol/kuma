@@ -398,10 +398,15 @@ public:
     ~WebSocket();
     
     KMError setSslFlags(uint32_t ssl_flags);
-    void setProtocol(const char* proto);
-    const char* getProtocol() const;
     void setOrigin(const char* origin);
     const char* getOrigin() const;
+    
+    /** add subprotocols to handshake request/response,
+     */
+    KMError setSubprotocol(const char* subprotocol);
+    const char* getSubprotocol() const;
+    KMError setExtensions(const char* extensions);
+    const char* getExtensions() const;
     KMError connect(const char* ws_url, EventCallback cb);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf=nullptr);
     KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf=nullptr);

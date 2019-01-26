@@ -55,14 +55,21 @@ void WebSocket::Impl::setupWsHandler()
     });
 }
 
-void WebSocket::Impl::setProtocol(const std::string& proto)
-{
-    proto_ = proto;
-}
-
 void WebSocket::Impl::setOrigin(const std::string& origin)
 {
     origin_ = origin;
+}
+
+KMError WebSocket::Impl::setSubprotocol(const std::string& subprotocol)
+{
+    subprotocol_ = subprotocol;
+    return KMError::NOERR;
+}
+
+KMError WebSocket::Impl::setExtensions(const std::string& extensions)
+{
+    extensions_ = extensions;
+    return KMError::NOERR;
 }
 
 KMError WebSocket::Impl::connect(const std::string& ws_url, EventCallback cb)
@@ -92,7 +99,10 @@ KMError WebSocket::Impl::connect_i(const std::string& ws_url)
     if(!str_port.empty()) {
         port = std::stoi(str_port);
     }
-    setSslFlags(ssl_flags);
+    auto rv = setSslFlags(ssl_flags);
+    if (rv != KMError::NOERR) {
+        return rv;
+    }
     return TcpConnection::connect(uri_.getHost().c_str(), port);
 }
 
@@ -214,7 +224,14 @@ void WebSocket::Impl::onWrite()
 {
     if(getState() == State::UPGRADING) {
         if (isServer()) {
-            onStateOpen(); // response is sent out
+            // response is sent out
+            if (handshake_result_ == KMError::NOERR) {
+                onStateOpen();
+            } else {
+                setState(State::IN_ERROR);
+                if(error_cb_) error_cb_(handshake_result_);
+            }
+            return;
         } else {
             return; // wait upgrade response
         }
@@ -232,18 +249,23 @@ void WebSocket::Impl::onError(KMError err)
 
 void WebSocket::Impl::sendUpgradeRequest()
 {
-    std::string str(ws_handler_.buildUpgradeRequest(uri_.getPath(), uri_.getQuery(), uri_.getHost(), proto_, origin_));
+    std::string str(ws_handler_.buildUpgradeRequest(uri_.getPath(), uri_.getQuery(), uri_.getHost(), origin_, subprotocol_, extensions_));
     setState(State::UPGRADING);
     TcpConnection::send((const uint8_t*)str.c_str(), str.size());
 }
 
 void WebSocket::Impl::sendUpgradeResponse()
 {
-    std::string str(ws_handler_.buildUpgradeResponse());
+    std::string str(ws_handler_.buildUpgradeResponse(subprotocol_, extensions_));
     setState(State::UPGRADING);
     int ret = TcpConnection::send((const uint8_t*)str.c_str(), str.size());
     if (ret == (int)str.size()) {
-        onStateOpen();
+        if (handshake_result_ == KMError::NOERR) {
+            onStateOpen();
+        } else {
+            setState(State::IN_ERROR);
+            if(error_cb_) error_cb_(handshake_result_);
+        }
     }
 }
 
@@ -288,15 +310,16 @@ void WebSocket::Impl::onWsFrame(uint8_t opcode, bool fin, KMBuffer &buf)
 
 void WebSocket::Impl::onWsHandshake(KMError err)
 {
-    if(KMError::NOERR == err) {
-        if(isServer()) {
-            sendUpgradeResponse();
-        } else {
-            onStateOpen();
-        }
+    handshake_result_ = err;
+    if (isServer()) {
+        sendUpgradeResponse();
     } else {
-        setState(State::IN_ERROR);
-        if(error_cb_) error_cb_(KMError::FAILED);
+        if(KMError::NOERR == err) {
+            onStateOpen();
+        } else {
+            setState(State::IN_ERROR);
+            if(error_cb_) error_cb_(err);
+        }
     }
 }
 

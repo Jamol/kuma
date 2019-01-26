@@ -40,10 +40,13 @@ public:
     Impl(const EventLoopPtr &loop);
     ~Impl();
     
-    void setProtocol(const std::string& proto);
-    const std::string& getProtocol() const { return proto_; }
     void setOrigin(const std::string& origin);
     const std::string& getOrigin() const { return origin_; }
+    KMError setSubprotocol(const std::string& subprotocol);
+    const std::string& getSubprotocol() const { return subprotocol_; }
+    KMError setExtensions(const std::string& extensions);
+    const std::string& getExtensions() const { return extensions_; }
+    
     KMError connect(const std::string& ws_url, EventCallback cb);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf);
     KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf);
@@ -92,10 +95,12 @@ private:
     Uri                     uri_;
     bool                    fragmented_ = false;
     
+    KMError                 handshake_result_ = KMError::NOERR;
     size_t                  body_bytes_sent_ = 0;
     
-    std::string             proto_;
     std::string             origin_;
+    std::string             subprotocol_;
+    std::string             extensions_;
     DataCallback            data_cb_;
     EventCallback           connect_cb_;
     EventCallback           write_cb_;
