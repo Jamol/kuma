@@ -671,16 +671,11 @@ bool contains_token(const std::string& str, const std::string& token, char delim
 
 int generateRandomBytes(uint8_t *buf, int len)
 {
-    static std::mt19937 gen((std::random_device())());
-    std::uniform_int_distribution<> dis;
-    int rnd_len = 0;
-    while (rnd_len < len) {
-        int rnd = dis(gen);
-        auto copy_len = len - rnd_len > sizeof(rnd) ? sizeof(rnd) : len - rnd_len;
-        memcpy(buf + rnd_len, &rnd, copy_len);
-        rnd_len += static_cast<int>(copy_len);
-    }
-    return rnd_len;
+    using bytes_randomizer = std::independent_bits_engine<std::default_random_engine, CHAR_BIT, unsigned long>;
+    
+    bytes_randomizer br(std::random_device{}());
+    std::generate(buf, buf + len, std::ref(br));
+    return len;
 }
 
 std::string getExecutablePath()

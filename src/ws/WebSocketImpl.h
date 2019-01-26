@@ -29,6 +29,8 @@
 #include "http/Uri.h"
 #include "util/DestroyDetector.h"
 
+#include <random>
+
 KUMA_NS_BEGIN
 
 class WebSocket::Impl : public KMObject, public DestroyDetector, public TcpConnection
@@ -89,6 +91,8 @@ private:
     void onWrite() override;
     void onError(KMError err) override;
     
+    uint32_t generateMaskKey();
+    
 private:
     State                   state_ = State::IDLE;
     WSHandler               ws_handler_;
@@ -105,6 +109,8 @@ private:
     EventCallback           connect_cb_;
     EventCallback           write_cb_;
     EventCallback           error_cb_;
+    
+    std::mt19937 rand_engine_{std::random_device{}()};
 };
 
 KUMA_NS_END

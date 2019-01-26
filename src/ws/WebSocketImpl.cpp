@@ -329,7 +329,7 @@ KMError WebSocket::Impl::sendWsFrame(WSHandler::WSOpcode opcode, bool fin, uint8
     int hdr_len = 0;
     if (ws_handler_.getMode() == WSHandler::WSMode::CLIENT && plen > 0) {
         uint8_t mask_key[WS_MASK_KEY_SIZE];
-        generateRandomBytes(mask_key, WS_MASK_KEY_SIZE);
+        *(uint32_t*)mask_key = generateMaskKey();
         WSHandler::handleDataMask(mask_key, payload, plen);
         hdr_len = ws_handler_.encodeFrameHeader(opcode, fin, &mask_key, plen, hdr_buf);
     } else {
@@ -356,7 +356,7 @@ KMError WebSocket::Impl::sendWsFrame(WSHandler::WSOpcode opcode, bool fin, const
     int hdr_len = 0;
     if (ws_handler_.getMode() == WSHandler::WSMode::CLIENT && plen > 0) {
         uint8_t mask_key[WS_MASK_KEY_SIZE];
-        generateRandomBytes(mask_key, WS_MASK_KEY_SIZE);
+        *(uint32_t*)mask_key = generateMaskKey();
         WSHandler::handleDataMask(mask_key, const_cast<KMBuffer&>(buf));
         hdr_len = ws_handler_.encodeFrameHeader(opcode, fin, &mask_key, plen, hdr_buf);
     } else {
@@ -392,4 +392,10 @@ KMError WebSocket::Impl::sendPingFrame(const KMBuffer &buf)
 KMError WebSocket::Impl::sendPongFrame(const KMBuffer &buf)
 {
     return sendWsFrame(WSHandler::WSOpcode::WS_OPCODE_PONG, true, buf);
+}
+
+uint32_t WebSocket::Impl::generateMaskKey()
+{
+    std::uniform_int_distribution<uint32_t> dist;
+    return dist(rand_engine_);
 }
