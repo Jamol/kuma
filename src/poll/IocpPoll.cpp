@@ -100,7 +100,7 @@ KMError IocpPoll::unregisterFd(SOCKET_FD fd)
 
 KMError IocpPoll::updateFd(SOCKET_FD fd, KMEvent events)
 {
-    return KMError::UNSUPPORT;
+    return KMError::NOT_SUPPORTED;
 }
 
 KMError IocpPoll::wait(uint32_t wait_ms)

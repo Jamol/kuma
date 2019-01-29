@@ -59,7 +59,7 @@ void IocpSocket::unregisterFd(SOCKET_FD fd, bool close_fd)
 KMError IocpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_ms)
 {
     if (!connect_ex) {
-        return KMError::UNSUPPORT;
+        return KMError::NOT_SUPPORTED;
     }
     if (INVALID_FD == fd_) {
         fd_ = createFd(ss_addr.ss_family);
@@ -114,7 +114,7 @@ KMError IocpSocket::attachFd(SOCKET_FD fd)
 KMError IocpSocket::detachFd(SOCKET_FD &fd)
 {
     // cannot cancel the IO safely
-    return KMError::UNSUPPORT;
+    return KMError::NOT_SUPPORTED;
     /*unregisterFd(fd_, false);
     return SocketBase::detachFd(fd);*/
 }
