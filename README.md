@@ -78,7 +78,8 @@ int main(int argc, char *argv[])
     ws.setSubprotocol("jws");
     ws.setOrigin("www.jamol.cn");
     ws.connect("wss://127.0.0.1:8443", [] (KMError err) {
-        printf("ws.onConnect, err=%d\n", err);
+        printf("ws.onHandshake, err=%d\n", err);
+        return true;
     });
     
     Timer timer(&main_loop);
@@ -125,7 +126,10 @@ int main(int argc, char *argv[])
     server.setAcceptCallback([&ws] (SOCKET_FD fd, const char* ip, uint16_t port) -> bool {
         printf("server.onAccept, ip=%s\n", ip);
         ws.setSslFlags(SSL_ENABLE);
-        ws.attachFd(fd, nullptr, 0);
+        ws.attachFd(fd, nullptr, [] (KMError err) {
+            printf("ws.onHandshake, err=%d\n", err);
+            return true;
+        });
         return true;
     });
     server.setErrorCallback([] (KMError err) {
