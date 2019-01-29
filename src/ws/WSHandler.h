@@ -31,6 +31,15 @@ KUMA_NS_BEGIN
 
 #define WS_MASK_KEY_SIZE    4
 #define WS_MAX_HEADER_SIZE  14
+
+const std::string kSecWebSocketKey { "Sec-WebSocket-Key" };
+const std::string kSecWebSocketAccept { "Sec-WebSocket-Accept" };
+const std::string kSecWebSocketVersion { "Sec-WebSocket-Version" };
+const std::string kSecWebSocketProtocol { "Sec-WebSocket-Protocol" };
+const std::string kSecWebSocketExtensions { "Sec-WebSocket-Extensions" };
+
+const std::string kWebSocketVersion { "13" };
+
 class WSHandler : public DestroyDetector
 {
 public:
@@ -41,7 +50,7 @@ public:
         WS_OPCODE_CLOSE     = 8,
         WS_OPCODE_PING      = 9,
         WS_OPCODE_PONG      = 10
-    }WSOpcode;
+    } WSOpcode;
     enum class WSError : int {
         NOERR,
         NEED_MORE_DATA,
@@ -60,6 +69,7 @@ public:
     };
     using FrameCallback = std::function<void(uint8_t/*opcode*/, bool/*fin*/, KMBuffer &buf)>;
     using HandshakeCallback = std::function<void(KMError)>;
+    using EnumerateCallback = HttpParser::Impl::EnumerateCallback;
     
     WSHandler();
     ~WSHandler() = default;
@@ -67,14 +77,6 @@ public:
     void setMode(WSMode mode) { mode_ = mode; }
     WSMode getMode() { return mode_; }
     void setHttpParser(HttpParser::Impl&& parser);
-    std::string buildUpgradeRequest(const std::string& path,
-                                    const std::string& query,
-                                    const std::string& host,
-                                    const std::string& origin,
-                                    const std::string& subprotocol,
-                                    const std::string& extensions);
-    std::string buildUpgradeResponse(const std::string& subprotocol,
-                                     const std::string& extensions);
     
     WSError handleData(uint8_t* data, size_t len);
     static int encodeFrameHeader(WSOpcode opcode, bool fin, uint8_t (*mask_key)[WS_MASK_KEY_SIZE], size_t plen, uint8_t hdr_buf[14]);
@@ -82,8 +84,16 @@ public:
     const std::string getSubprotocol();
     const std::string getOrigin();
     
+    const std::string& getPath() const;
+    const std::string& getQuery() const;
+    const std::string& getParamValue(const std::string &name) const;
+    const std::string& getHeaderValue(const std::string &name) const;
+    void forEachHeader(const EnumerateCallback &cb) const;
+    
     void setFrameCallback(FrameCallback cb) { frame_cb_ = std::move(cb); }
     void setHandshakeCallback(HandshakeCallback cb) { handshake_cb_ = std::move(cb); }
+    
+    void reset();
     
     static void handleDataMask(const uint8_t mask_key[WS_MASK_KEY_SIZE], uint8_t* data, size_t len);
     static void handleDataMask(const uint8_t mask_key[WS_MASK_KEY_SIZE], KMBuffer &buf);

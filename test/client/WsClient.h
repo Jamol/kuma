@@ -18,7 +18,7 @@ public:
     int close();
     
     void onData(KMBuffer &buf);
-    void onConnect(KMError err);
+    bool onHandshake(KMError err);
     void onSend(KMError err);
     void onClose(KMError err);
     

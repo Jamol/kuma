@@ -84,9 +84,10 @@ KMError Http1xResponse::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& p
     return ret;
 }
 
-void Http1xResponse::addHeader(std::string name, std::string value)
+KMError Http1xResponse::addHeader(std::string name, std::string value)
 {
     rsp_message_.addHeader(std::move(name), std::move(value));
+    return KMError::NOERR;
 }
 
 void Http1xResponse::checkHeaders()

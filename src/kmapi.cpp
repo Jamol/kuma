@@ -269,7 +269,7 @@ KMError TcpSocket::setSslServerName(const char *server_name)
     }
     return pimpl_->setSslServerName(server_name);
 #else
-    return KMError::UNSUPPORT;
+    return KMError::NOT_SUPPORTED;
 #endif
 }
 
@@ -304,7 +304,7 @@ KMError TcpSocket::startSslHandshake(SslRole ssl_role)
 #ifdef KUMA_HAS_OPENSSL
     return pimpl_->startSslHandshake(ssl_role);
 #else
-    return KMError::UNSUPPORT;
+    return KMError::NOT_SUPPORTED;
 #endif
 }
 
@@ -322,7 +322,7 @@ KMError TcpSocket::getAlpnSelected(char *buf, size_t len)
     }
     return ret;
 #else
-    return KMError::UNSUPPORT;
+    return KMError::NOT_SUPPORTED;
 #endif
 }
 
@@ -622,6 +622,11 @@ const char* HttpParser::getUrlPath() const
     return pimpl_->getUrlPath().c_str();
 }
 
+const char* HttpParser::getUrlQuery() const
+{
+    return pimpl_->getUrlQuery().c_str();
+}
+
 const char* HttpParser::getMethod() const
 {
     return pimpl_->getMethod().c_str();
@@ -642,17 +647,17 @@ const char* HttpParser::getHeaderValue(const char* name) const
     return pimpl_->getHeaderValue(name).c_str();
 }
 
-void HttpParser::forEachParam(EnumrateCallback cb)
+void HttpParser::forEachParam(const EnumerateCallback &cb) const
 {
     pimpl_->forEachParam([&cb](const std::string& name, const std::string& value) {
-        cb(name.c_str(), value.c_str());
+        return cb(name.c_str(), value.c_str());
     });
 }
 
-void HttpParser::forEachHeader(EnumrateCallback cb)
+void HttpParser::forEachHeader(const EnumerateCallback &cb) const
 {
     pimpl_->forEachHeader([&cb](const std::string& name, const std::string& value) {
-        cb(name.c_str(), value.c_str());
+        return cb(name.c_str(), value.c_str());
     });
 }
 
@@ -692,20 +697,20 @@ KMError HttpRequest::setSslFlags(uint32_t ssl_flags)
     return pimpl_->setSslFlags(ssl_flags);
 }
 
-void HttpRequest::addHeader(const char* name, const char* value)
+KMError HttpRequest::addHeader(const char* name, const char* value)
 {
     if (!name || !value) {
-        return;
+        return KMError::INVALID_PARAM;
     }
-    pimpl_->addHeader(name, value);
+    return pimpl_->addHeader(name, value);
 }
 
-void HttpRequest::addHeader(const char* name, uint32_t value)
+KMError HttpRequest::addHeader(const char* name, uint32_t value)
 {
     if (!name) {
-        return;
+        return KMError::INVALID_PARAM;
     }
-    pimpl_->addHeader(name, value);
+    return pimpl_->addHeader(name, value);
 }
 
 KMError HttpRequest::sendRequest(const char* method, const char* url)
@@ -751,10 +756,10 @@ const char* HttpRequest::getHeaderValue(const char* name) const
     return pimpl_->getHeaderValue(name).c_str();
 }
 
-void HttpRequest::forEachHeader(HttpParser::EnumrateCallback cb)
+void HttpRequest::forEachHeader(const EnumerateCallback &cb) const
 {
     pimpl_->forEachHeader([&cb] (const std::string& name, const std::string& value) {
-        cb(name.c_str(), value.c_str());
+        return cb(name.c_str(), value.c_str());
     });
 }
 
@@ -820,18 +825,18 @@ KMError HttpResponse::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const K
     return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move(*parser.pimpl()), init_buf);
 }
 
-void HttpResponse::addHeader(const char* name, const char* value)
+KMError HttpResponse::addHeader(const char* name, const char* value)
 {
     if (!name || !value) {
-        return;
+        return KMError::INVALID_PARAM;
     }
     return pimpl_->addHeader(name, value);
 }
 
-void HttpResponse::addHeader(const char* name, uint32_t value)
+KMError HttpResponse::addHeader(const char* name, uint32_t value)
 {
     if (!name) {
-        return;
+        return KMError::INVALID_PARAM;
     }
     return pimpl_->addHeader(name, value);
 }
@@ -871,6 +876,11 @@ const char* HttpResponse::getPath() const
     return pimpl_->getPath().c_str();
 }
 
+const char* HttpResponse::getQuery() const
+{
+    return pimpl_->getQuery().c_str();
+}
+
 const char* HttpResponse::getVersion() const
 {
     return pimpl_->getVersion().c_str();
@@ -886,10 +896,10 @@ const char* HttpResponse::getHeaderValue(const char* name) const
     return pimpl_->getHeaderValue(name).c_str();
 }
 
-void HttpResponse::forEachHeader(HttpParser::EnumrateCallback cb)
+void HttpResponse::forEachHeader(const EnumerateCallback &cb) const
 {
     pimpl_->forEachHeader([&cb] (const std::string& name, const std::string& value) {
-        cb(name.c_str(), value.c_str());
+        return cb(name.c_str(), value.c_str());
     });
 }
 
@@ -971,7 +981,7 @@ const char* WebSocket::getSubprotocol() const
 {
     return pimpl_->getSubprotocol().c_str();
 }
-
+/*
 KMError WebSocket::setExtensions(const char* extensions)
 {
     if (!extensions) {
@@ -984,8 +994,24 @@ const char* WebSocket::getExtensions() const
 {
     return pimpl_->getExtensions().c_str();
 }
+*/
+KMError WebSocket::addHeader(const char *name, const char *value)
+{
+    if (!name || !value) {
+        return KMError::INVALID_PARAM;
+    }
+    return pimpl_->addHeader(name, value);
+}
 
-KMError WebSocket::connect(const char* ws_url, EventCallback cb)
+KMError WebSocket::addHeader(const char *name, uint32_t value)
+{
+    if (!name) {
+        return KMError::INVALID_PARAM;
+    }
+    return pimpl_->addHeader(name, value);
+}
+
+KMError WebSocket::connect(const char* ws_url, HandshakeCallback cb)
 {
     if (!ws_url) {
         return KMError::INVALID_PARAM;
@@ -993,14 +1019,14 @@ KMError WebSocket::connect(const char* ws_url, EventCallback cb)
     return pimpl_->connect(ws_url, std::move(cb));
 }
 
-KMError WebSocket::attachFd(SOCKET_FD fd, const KMBuffer *init_buf)
+KMError WebSocket::attachFd(SOCKET_FD fd, const KMBuffer *init_buf, HandshakeCallback cb)
 {
-    return pimpl_->attachFd(fd, init_buf);
+    return pimpl_->attachFd(fd, init_buf, std::move(cb));
 }
 
-KMError WebSocket::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf)
+KMError WebSocket::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf, HandshakeCallback cb)
 {
-    return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move((*parser.pimpl())), init_buf);
+    return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move((*parser.pimpl())), init_buf, std::move(cb));
 }
 
 int WebSocket::send(const void* data, size_t len, bool is_text, bool fin)
@@ -1008,14 +1034,41 @@ int WebSocket::send(const void* data, size_t len, bool is_text, bool fin)
     return pimpl_->send(data, len, is_text, fin);
 }
 
-int WebSocket::send(const KMBuffer &buf, bool is_text, bool fin)
+int WebSocket::send(const KMBuffer &buf, bool is_text, bool is_fin)
 {
-    return pimpl_->send(buf, is_text, fin);
+    return pimpl_->send(buf, is_text, is_fin);
 }
 
 KMError WebSocket::close()
 {
     return pimpl_->close();
+}
+
+const char* WebSocket::getPath() const
+{
+    return pimpl_->getPath().c_str();
+}
+
+const char* WebSocket::getQuery() const
+{
+    return pimpl_->getQuery().c_str();
+}
+
+const char* WebSocket::getParamValue(const char* name) const
+{
+    return pimpl_->getParamValue(name).c_str();
+}
+
+const char* WebSocket::getHeaderValue(const char* name) const
+{
+    return pimpl_->getHeaderValue(name).c_str();
+}
+
+void WebSocket::forEachHeader(const EnumerateCallback &cb) const
+{
+    pimpl_->forEachHeader([&cb] (const std::string& name, const std::string& value) {
+        return cb(name.c_str(), value.c_str());
+    });
 }
 
 void WebSocket::setDataCallback(DataCallback cb)

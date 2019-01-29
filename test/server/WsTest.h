@@ -17,10 +17,11 @@ public:
     KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf);
     int close();
     
+    bool onHandshake(KMError err);
     void onSend(KMError err);
     void onClose(KMError err);
     
-    void onData(KMBuffer &buf);
+    void onData(KMBuffer &buf, bool is_text, bool is_fin);
     
 private:
     void cleanup();

@@ -40,7 +40,7 @@ class HttpParser::Impl : public DestroyDetector, public HttpHeader
 public:
     using DataCallback = HttpParser::DataCallback;
     using EventCallback = HttpParser::EventCallback;
-    using EnumrateCallback = std::function<void(const std::string&, const std::string&)>;
+    using EnumerateCallback = std::function<bool(const std::string&, const std::string&)>;
     
     Impl() = default;
     Impl(const Impl& other);
@@ -63,19 +63,20 @@ public:
     bool complete() const;
     bool error() const;
     bool paused() const { return paused_; }
-    bool isUpgradeTo(const std::string& proto) const;
+    bool isUpgradeTo(const std::string& protocol) const;
     
     int getStatusCode() const { return status_code_; }
     const std::string& getLocation() const { return getHeaderValue("Location"); }
     const std::string& getUrl() const { return url_; }
     const std::string& getUrlPath() const { return url_path_; }
+    const std::string& getUrlQuery() const { return url_query_; }
     const std::string& getMethod() const { return method_; }
     const std::string& getVersion() const { return version_; }
     const std::string& getParamValue(const std::string& name) const;
     const std::string& getHeaderValue(const std::string& name) const;
     
-    void forEachParam(EnumrateCallback cb);
-    void forEachHeader(EnumrateCallback cb);
+    void forEachParam(const EnumerateCallback &cb) const;
+    void forEachHeader(const EnumerateCallback &cb) const;
     
     void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
     void setEventCallback(EventCallback cb) { event_cb_ = std::move(cb); }
@@ -160,6 +161,7 @@ private:
     std::string         url_;
     std::string         version_;
     std::string         url_path_;
+    std::string         url_query_;
     HeaderMap           param_map_;
     
     // response

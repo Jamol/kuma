@@ -22,28 +22,9 @@
 #include "WSHandler.h"
 #include "util/kmtrace.h"
 #include "util/util.h"
-#include "util/base64.h"
 
-#include <sstream>
-#ifdef KUMA_HAS_OPENSSL
-#include <openssl/sha.h>
-#else
-#include "sha1/sha1.h"
-#include "sha1/sha1.cpp"
-#define SHA1 sha1::calc
-#endif
 
 using namespace kuma;
-
-const std::string kSecWebSocketKey { "Sec-WebSocket-Key" };
-const std::string kSecWebSocketAccept { "Sec-WebSocket-Accept" };
-const std::string kSecWebSocketVersion { "Sec-WebSocket-Version" };
-const std::string kSecWebSocketProtocol { "Sec-WebSocket-Protocol" };
-const std::string kSecWebSocketExtensions { "Sec-WebSocket-Extensions" };
-
-const std::string kWebSocketVersion { "13" };
-
-static std::string generate_sec_accept_value(const std::string& sec_ws_key);
 
 //////////////////////////////////////////////////////////////////////////
 WSHandler::WSHandler()
@@ -65,71 +46,6 @@ void WSHandler::setHttpParser(HttpParser::Impl&& parser)
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     if(http_parser_.paused()) {
         http_parser_.resume();
-    }
-}
-
-std::string WSHandler::buildUpgradeRequest(const std::string& path,
-                                           const std::string& query,
-                                           const std::string& host,
-                                           const std::string& origin,
-                                           const std::string& subprotocol,
-                                           const std::string& extensions)
-{
-    std::stringstream ss;
-    ss << "GET ";
-    ss << path;
-    if(!query.empty()){
-        ss << "?";
-        ss << query;
-    }
-    ss << " HTTP/1.1\r\n";
-    ss << "Host: " << host << "\r\n";
-    ss << "Upgrade: websocket\r\n";
-    ss << "Connection: Upgrade\r\n";
-    if (!origin.empty()) {
-        ss << "Origin: " << origin << "\r\n";
-    }
-    ss << kSecWebSocketKey << ": " << "dGhlIHNhbXBsZSBub25jZQ==" << "\r\n";
-    if (!subprotocol.empty()) {
-        ss << kSecWebSocketProtocol << ": " << subprotocol << "\r\n";
-    }
-    if (!extensions.empty()) {
-        ss << kSecWebSocketExtensions << ": " << extensions << "\r\n";
-    }
-    ss << kSecWebSocketVersion << ": " << kWebSocketVersion << "\r\n";
-    ss << "\r\n";
-    return ss.str();
-}
-
-std::string WSHandler::buildUpgradeResponse(const std::string& subprotocol,
-                                            const std::string& extensions)
-{
-    if (state_ == STATE_OPEN) {
-        std::string sec_ws_key = http_parser_.getHeaderValue(kSecWebSocketKey);
-        std::string client_protocols = http_parser_.getHeaderValue(kSecWebSocketProtocol);
-        std::string client_extensions = http_parser_.getHeaderValue(kSecWebSocketExtensions);
-        
-        std::stringstream ss;
-        ss << "HTTP/1.1 101 Switching Protocols\r\n";
-        ss << "Upgrade: websocket\r\n";
-        ss << "Connection: Upgrade\r\n";
-        ss << kSecWebSocketAccept << ": " << generate_sec_accept_value(sec_ws_key) << "\r\n";
-        if(!subprotocol.empty()) {
-            ss << kSecWebSocketProtocol << ": " << subprotocol << "\r\n";
-        }
-        if (!extensions.empty()) {
-            ss << kSecWebSocketExtensions << ": " << extensions << "\r\n";
-        }
-        ss << "\r\n";
-        return ss.str();
-    } else if (state_ == STATE_ERROR) {
-        std::stringstream ss;
-        ss << "HTTP/1.1 400 Bad Request\r\n";
-        ss << kSecWebSocketVersion << ": " << kWebSocketVersion << "\r\n";
-        ss << "\r\n";
-        return ss.str();
-    } else {
-        return "";
     }
 }
 
@@ -401,7 +317,19 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                     return WSError::PROTOCOL_ERROR;
                 }
                 ctx_.buf.clear();
-                ctx_.state = DecodeState::DATA;
+                if (ctx_.hdr.length > 0) {
+                    ctx_.state = DecodeState::DATA;
+                } else {
+                    auto err = handleFrame(ctx_.hdr, nullptr, 0);
+                    if (err != WSError::NOERR) {
+                        return err;
+                    }
+                    if (WS_OPCODE_CLOSE == ctx_.hdr.opcode) {
+                        ctx_.state = DecodeState::CLOSED;
+                        return WSError::CLOSED;
+                    }
+                    ctx_.reset();
+                }
                 break;
             }
             case DecodeState::DATA:
@@ -490,21 +418,34 @@ void WSHandler::handleDataMask(const uint8_t mask_key[WS_MASK_KEY_SIZE], KMBuffe
     }
 }
 
-#define SHA1_DIGEST_SIZE    20
-static std::string generate_sec_accept_value(const std::string& sec_ws_key)
+const std::string& WSHandler::getPath() const
 {
-    const std::string sec_accept_guid = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
-    if(sec_ws_key.empty()) {
-        return "";
-    }
-    std::string accept = sec_ws_key;
-    accept += sec_accept_guid;
-    
-    uint8_t uShaRst2[SHA1_DIGEST_SIZE] = {0};
-    SHA1((const uint8_t *)accept.c_str(), accept.size(), uShaRst2);
-    
-    uint8_t x64_encode_buf[32] = {0};
-    uint32_t x64_encode_len = x64_encode(uShaRst2, SHA1_DIGEST_SIZE, x64_encode_buf, sizeof(x64_encode_buf), false);
-    
-    return std::string((char*)x64_encode_buf, x64_encode_len);
+    return http_parser_.getUrlPath();
+}
+
+const std::string& WSHandler::getQuery() const
+{
+    return http_parser_.getUrlQuery();
+}
+
+const std::string& WSHandler::getParamValue(const std::string &name) const
+{
+    return http_parser_.getParamValue(name);
+}
+
+const std::string& WSHandler::getHeaderValue(const std::string &name) const
+{
+    return http_parser_.getHeaderValue(name);
+}
+
+void WSHandler::forEachHeader(const EnumerateCallback &cb) const
+{
+    http_parser_.forEachHeader(cb);
+}
+
+void WSHandler::reset()
+{
+    http_parser_.reset();
+    ctx_.reset();
+    state_ = STATE_HANDSHAKE;
 }

@@ -43,9 +43,9 @@ HttpResponse::Impl::~Impl()
     
 }
 
-void HttpResponse::Impl::addHeader(std::string name, uint32_t value)
+KMError HttpResponse::Impl::addHeader(std::string name, uint32_t value)
 {
-    addHeader(std::move(name), std::to_string(value));
+    return addHeader(std::move(name), std::to_string(value));
 }
 
 KMError HttpResponse::Impl::sendResponse(int status_code, const std::string& desc)

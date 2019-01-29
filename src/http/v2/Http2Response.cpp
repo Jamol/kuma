@@ -63,16 +63,19 @@ KMError Http2Response::attachStream(H2Connection::Impl* conn, uint32_t stream_id
     return KMError::NOERR;
 }
 
-void Http2Response::addHeader(std::string name, std::string value)
+KMError Http2Response::addHeader(std::string name, std::string value)
 {
-    transform(name.begin(), name.end(), name.begin(), ::tolower);
     if(!name.empty()) {
+        transform(name.begin(), name.end(), name.begin(), ::tolower);
         if (is_equal("transfer-encoding", name) && is_equal("chunked", value)) {
             is_chunked_ = true;
-            return; // omit chunked
+        } else {
+            HttpHeader::addHeader(std::move(name), std::move(value));
         }
-        HttpHeader::addHeader(std::move(name), std::move(value));
+        return KMError::NOERR;
     }
+    
+    return KMError::INVALID_PARAM;
 }
 
 KMError Http2Response::sendResponse(int status_code, const std::string& desc, const std::string& ver)
@@ -179,11 +182,11 @@ size_t Http2Response::buildHeaders(int status_code, HeaderVector &headers)
     return headers_size;
 }
 
-const std::string& Http2Response::getParamValue(std::string name) const {
+const std::string& Http2Response::getParamValue(const std::string &name) const {
     return EmptyString;
 }
 
-const std::string& Http2Response::getHeaderValue(std::string name) const {
+const std::string& Http2Response::getHeaderValue(const std::string &name) const {
     for (auto const &kv : req_headers_) {
         if (is_equal(kv.first, name)) {
             return kv.second;
@@ -192,9 +195,11 @@ const std::string& Http2Response::getHeaderValue(std::string name) const {
     return EmptyString;
 }
 
-void Http2Response::forEachHeader(HttpParser::Impl::EnumrateCallback&& cb) {
+void Http2Response::forEachHeader(const EnumerateCallback &cb) const {
     for (auto &kv : req_headers_) {
-        cb(kv.first, kv.second);
+        if (!cb(kv.first, kv.second)) {
+            break;
+        }
     }
 }
 

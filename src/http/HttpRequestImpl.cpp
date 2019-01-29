@@ -36,9 +36,9 @@ HttpRequest::Impl::Impl(std::string ver)
     
 }
 
-void HttpRequest::Impl::addHeader(std::string name, uint32_t value)
+KMError HttpRequest::Impl::addHeader(std::string name, uint32_t value)
 {
-    addHeader(std::move(name), std::to_string(value));
+    return addHeader(std::move(name), std::to_string(value));
 }
 
 KMError HttpRequest::Impl::sendRequest(std::string method, std::string url)

@@ -79,7 +79,7 @@ KMError SslHandler::setAlpnProtocols(const AlpnProtos &protocols)
     }
     return KMError::SSL_FAILED;
 #else
-    return KMError::UNSUPPORT;
+    return KMError::NOT_SUPPORTED;
 #endif
 }
 
@@ -107,7 +107,7 @@ KMError SslHandler::setServerName(const std::string &serverName)
     }
     return KMError::SSL_FAILED;
 #else
-    return KMError::UNSUPPORT;
+    return KMError::NOT_SUPPORTED;
 #endif
 }
 

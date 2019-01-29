@@ -28,9 +28,11 @@ void WsClient::startRequest(const std::string& url)
     });
     ws_.setWriteCallback([this] (KMError err) { onSend(err); });
     ws_.setErrorCallback([this] (KMError err) { onClose(err); });
-    ws_.setProtocol("jws");
+    ws_.setSubprotocol("jws");
     ws_.setOrigin("www.jamol.cn");
-    ws_.connect(url.c_str(), [this] (KMError err) { onConnect(err); });
+    ws_.addHeader("x-forward-addr", "123");
+    ws_.addHeader("x-custom", "kmtest");
+    ws_.connect(url.c_str(), [this] (KMError err) { return onHandshake(err); });
 }
 
 int WsClient::close()
@@ -50,15 +52,17 @@ void WsClient::sendData()
     // should buffer remain data if send length < sizeof(buf)
 }
 
-void WsClient::onConnect(KMError err)
+bool WsClient::onHandshake(KMError err)
 {
-    printf("WsClient::onConnect, err=%d\n", err);
+    printf("WsClient::onHandshake, err=%d\n", err);
     start_point_ = std::chrono::steady_clock::now();
     sendData();
     if (getSendInterval() > 0) {
         timed_sending_ = true;
         timer_.schedule(getSendInterval(), TimerMode::REPEATING, [this] { sendData(); });
     }
+    
+    return true;
 }
 
 void WsClient::onSend(KMError err)

@@ -44,7 +44,7 @@ public:
     KMError setSslFlags(uint32_t ssl_flags) override;
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf) override;
     KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf) override;
-    void addHeader(std::string name, std::string value) override;
+    KMError addHeader(std::string name, std::string value) override;
     KMError sendResponse(int status_code, const std::string& desc, const std::string& ver) override;
     int sendData(const void* data, size_t len) override;
     int sendData(const KMBuffer &buf) override;
@@ -53,15 +53,16 @@ public:
     
     const std::string& getMethod() const override { return req_parser_.getMethod(); }
     const std::string& getPath() const override { return req_parser_.getUrlPath(); }
+    const std::string& getQuery() const override { return req_parser_.getUrlQuery(); }
     const std::string& getVersion() const override { return req_parser_.getVersion(); }
-    const std::string& getParamValue(std::string name) const override {
-        return req_parser_.getParamValue(std::move(name));
+    const std::string& getParamValue(const std::string &name) const override {
+        return req_parser_.getParamValue(name);
     }
-    const std::string& getHeaderValue(std::string name) const override {
-        return req_parser_.getHeaderValue(std::move(name));
+    const std::string& getHeaderValue(const std::string &name) const override {
+        return req_parser_.getHeaderValue(name);
     }
-    void forEachHeader(HttpParser::Impl::EnumrateCallback&& cb) override {
-        return req_parser_.forEachHeader(std::move(cb));
+    void forEachHeader(const EnumerateCallback &cb) const override {
+        return req_parser_.forEachHeader(cb);
     }
     
 protected:

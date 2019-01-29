@@ -40,7 +40,7 @@ public:
     ~Http1xRequest();
     
     KMError setSslFlags(uint32_t ssl_flags) override { return TcpConnection::setSslFlags(ssl_flags); }
-    void addHeader(std::string name, std::string value) override;
+    KMError addHeader(std::string name, std::string value) override;
     int sendData(const void* data, size_t len) override;
     int sendData(const KMBuffer &buf) override;
     void reset() override; // reset for connection reuse
@@ -48,8 +48,14 @@ public:
     
     int getStatusCode() const override { return rsp_parser_.getStatusCode(); }
     const std::string& getVersion() const override { return rsp_parser_.getVersion(); }
-    const std::string& getHeaderValue(std::string name) const override { return rsp_parser_.getHeaderValue(std::move(name)); }
-    void forEachHeader(HttpParser::Impl::EnumrateCallback cb) override { return rsp_parser_.forEachHeader(std::move(cb)); }
+    const std::string& getHeaderValue(const std::string &name) const override
+    {
+        return rsp_parser_.getHeaderValue(name);
+    }
+    void forEachHeader(const EnumerateCallback &cb) const override
+    {
+        return rsp_parser_.forEachHeader(cb);
+    }
     
 protected: // callbacks of tcp_socket
     void onConnect(KMError err) override;

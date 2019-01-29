@@ -656,7 +656,7 @@ std::string& trim_right(std::string& str)
 
 bool contains_token(const std::string& str, const std::string& token, char delim)
 {
-    std::stringstream ss;
+    std::istringstream ss;
     ss.str(str);
     std::string item;
     while (std::getline(ss, item, delim)) {

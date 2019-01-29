@@ -69,6 +69,7 @@ HttpParser::Impl& HttpParser::Impl::operator=(const Impl& other)
         method_ = other.method_;
         url_ = other.url_;
         url_path_ = other.url_path_;
+        url_query_ = other.url_query_;
         param_map_ = other.param_map_;
         header_vec_ = other.header_vec_;
         status_code_ = other.status_code_;
@@ -98,6 +99,7 @@ HttpParser::Impl& HttpParser::Impl::operator=(Impl&& other)
         method_.swap(other.method_);
         url_.swap(other.url_);
         url_path_.swap(other.url_path_);
+        url_query_.swap(other.url_query_);
         param_map_.swap(other.param_map_);
         header_vec_.swap(other.header_vec_);
         status_code_ = other.status_code_;
@@ -146,16 +148,16 @@ bool HttpParser::Impl::error() const
     return HTTP_READ_ERROR == read_state_;
 }
 
-bool HttpParser::Impl::isUpgradeTo(const std::string& proto) const
+bool HttpParser::Impl::isUpgradeTo(const std::string& protocol) const
 {
-    if (!is_equal(getHeaderValue("Upgrade"), proto) ||
+    if (!is_equal(getHeaderValue("Upgrade"), protocol) ||
         !contains_token(getHeaderValue("Connection"), "Upgrade", ',')) {
         return false;
     }
     if (!isRequest() && 101 != getStatusCode()) {
         return false;
     }
-    if (isRequest() && is_equal(proto, "h2c") &&
+    if (isRequest() && is_equal(protocol, "h2c") &&
         !contains_token(getHeaderValue("Connection"), "HTTP2-Settings", ',')) {
         return false;
     }
@@ -609,6 +611,7 @@ bool HttpParser::Impl::parseUrl()
         return false;
     }
     url_path_ = uri.getPath();
+    url_query_ = uri.getQuery();
     const std::string& query = uri.getQuery();
     std::string::size_type pos = 0;
     while (true) {
@@ -664,17 +667,21 @@ const std::string& HttpParser::Impl::getHeaderValue(const std::string& name) con
     return HttpHeader::getHeader(name);
 }
 
-void HttpParser::Impl::forEachParam(EnumrateCallback cb)
+void HttpParser::Impl::forEachParam(const EnumerateCallback &cb) const
 {
     for (auto &kv : param_map_) {
-        cb(kv.first, kv.second);
+        if (!cb(kv.first, kv.second)) {
+            break;
+        }
     }
 }
 
-void HttpParser::Impl::forEachHeader(EnumrateCallback cb)
+void HttpParser::Impl::forEachHeader(const EnumerateCallback &cb) const
 {
     for (auto &kv : header_vec_) {
-        cb(kv.first, kv.second);
+        if (!cb(kv.first, kv.second)) {
+            break;
+        }
     }
 }
 

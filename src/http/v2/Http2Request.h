@@ -48,7 +48,7 @@ public:
     ~Http2Request();
     
     KMError setSslFlags(uint32_t ssl_flags) override;
-    void addHeader(std::string name, std::string value) override;
+    KMError addHeader(std::string name, std::string value) override;
     int sendData(const void* data, size_t len) override;
     int sendData(const KMBuffer &buf) override;
     void reset() override; // reset for connection reuse
@@ -56,8 +56,8 @@ public:
     
     int getStatusCode() const override { return status_code_; }
     const std::string& getVersion() const override { return VersionHTTP2_0; }
-    const std::string& getHeaderValue(std::string name) const override;
-    void forEachHeader(EnumrateCallback cb) override;
+    const std::string& getHeaderValue(const std::string &name) const override;
+    void forEachHeader(const EnumerateCallback &cb) const override;
     
 protected:
     //{ on conn_ thread

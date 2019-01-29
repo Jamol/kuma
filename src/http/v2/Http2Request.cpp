@@ -58,16 +58,19 @@ KMError Http2Request::setSslFlags(uint32_t ssl_flags)
     return KMError::NOERR;
 }
 
-void Http2Request::addHeader(std::string name, std::string value)
+KMError Http2Request::addHeader(std::string name, std::string value)
 {
-    transform(name.begin(), name.end(), name.begin(), ::tolower);
     if(!name.empty()) {
+        transform(name.begin(), name.end(), name.begin(), ::tolower);
         if (is_equal("Transfer-Encoding", name) && is_equal("chunked", value)) {
             is_chunked_ = true;
-            return; // omit chunked
+        } else {
+            HttpHeader::addHeader(std::move(name), std::move(value));
         }
-        HttpHeader::addHeader(std::move(name), std::move(value));
+        return KMError::NOERR;
     }
+    
+    return KMError::INVALID_PARAM;
 }
 
 KMError Http2Request::sendRequest()
@@ -204,7 +207,7 @@ bool Http2Request::processPushPromise()
     return true;
 }
 
-const std::string& Http2Request::getHeaderValue(std::string name) const
+const std::string& Http2Request::getHeaderValue(const std::string &name) const
 {
     for (auto const &kv : rsp_headers_) {
         if (is_equal(kv.first, name)) {
@@ -214,10 +217,12 @@ const std::string& Http2Request::getHeaderValue(std::string name) const
     return EmptyString;
 }
 
-void Http2Request::forEachHeader(EnumrateCallback cb)
+void Http2Request::forEachHeader(const EnumerateCallback &cb) const
 {
     for (auto &kv : rsp_headers_) {
-        cb(kv.first, kv.second);
+        if (!cb(kv.first, kv.second)) {
+            break;
+        }
     }
 }
 

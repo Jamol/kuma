@@ -35,7 +35,7 @@ public:
     Http2Response(const EventLoopPtr &loop, std::string ver);
     
     KMError attachStream(H2Connection::Impl* conn, uint32_t stream_id) override;
-    void addHeader(std::string name, std::string value) override;
+    KMError addHeader(std::string name, std::string value) override;
     KMError sendResponse(int status_code, const std::string& desc, const std::string& ver) override;
     int sendData(const void* data, size_t len) override;
     int sendData(const KMBuffer &buf) override;
@@ -43,10 +43,11 @@ public:
     
     const std::string& getMethod() const override { return req_method_; }
     const std::string& getPath() const override { return req_path_; }
+    const std::string& getQuery() const override { return EmptyString; }
     const std::string& getVersion() const override { return VersionHTTP2_0; }
-    const std::string& getParamValue(std::string name) const override;
-    const std::string& getHeaderValue(std::string name) const override;
-    void forEachHeader(HttpParser::Impl::EnumrateCallback&& cb) override;
+    const std::string& getParamValue(const std::string &name) const override;
+    const std::string& getHeaderValue(const std::string &name) const override;
+    void forEachHeader(const EnumerateCallback &cb) const override;
     
 protected:
     void onHeaders(const HeaderVector &headers, bool end_stream);

@@ -135,7 +135,7 @@ class KUMA_API TcpSocket
 public:
     using EventCallback = std::function<void(KMError)>;
     
-    TcpSocket(EventLoop* loop);
+    TcpSocket(EventLoop *loop);
     ~TcpSocket();
     
     /**
@@ -145,16 +145,16 @@ public:
     uint32_t getSslFlags() const;
     bool sslEnabled() const;
     KMError setSslServerName(const char *server_name);
-    KMError bind(const char* bind_host, uint16_t bind_port);
-    KMError connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
+    KMError bind(const char *bind_host, uint16_t bind_port);
+    KMError connect(const char *host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
     KMError attachFd(SOCKET_FD fd);
     KMError detachFd(SOCKET_FD &fd);
     KMError startSslHandshake(SslRole ssl_role);
     KMError getAlpnSelected(char *buf, size_t len);
-    int send(const void* data, size_t length);
-    int send(const iovec* iovs, int count);
+    int send(const void *data, size_t length);
+    int send(const iovec *iovs, int count);
     int send(const KMBuffer &buf);
-    int receive(void* data, size_t length);
+    int receive(void *data, size_t length);
     
     KMError close();
     
@@ -182,11 +182,11 @@ public:
     using AcceptCallback = std::function<bool(SOCKET_FD, const char*, uint16_t)>;
     using ErrorCallback = std::function<void(KMError)>;
     
-    TcpListener(EventLoop* loop);
+    TcpListener(EventLoop *loop);
     ~TcpListener();
     
-    KMError startListen(const char* host, uint16_t port);
-    KMError stopListen(const char* host, uint16_t port);
+    KMError startListen(const char *host, uint16_t port);
+    KMError stopListen(const char *host, uint16_t port);
     KMError close();
     
     void setAcceptCallback(AcceptCallback cb);
@@ -204,19 +204,19 @@ class KUMA_API UdpSocket
 public:
     using EventCallback = std::function<void(KMError)>;
     
-    UdpSocket(EventLoop* loop);
+    UdpSocket(EventLoop *loop);
     ~UdpSocket();
     
-    KMError bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags=0);
-    int send(const void* data, size_t length, const char* host, uint16_t port);
-    int send(const iovec* iovs, int count, const char* host, uint16_t port);
-    int send(const KMBuffer &buf, const char* host, uint16_t port);
-    int receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port);
+    KMError bind(const char *bind_host, uint16_t bind_port, uint32_t udp_flags=0);
+    int send(const void *data, size_t length, const char *host, uint16_t port);
+    int send(const iovec *iovs, int count, const char *host, uint16_t port);
+    int send(const KMBuffer &buf, const char *host, uint16_t port);
+    int receive(void *data, size_t length, char *ip_buf, size_t ip_len, uint16_t &port);
     
     KMError close();
     
-    KMError mcastJoin(const char* mcast_addr, uint16_t mcast_port);
-    KMError mcastLeave(const char* mcast_addr, uint16_t mcast_port);
+    KMError mcastJoin(const char *mcast_addr, uint16_t mcast_port);
+    KMError mcastLeave(const char *mcast_addr, uint16_t mcast_port);
     
     void setReadCallback(EventCallback cb);
     void setErrorCallback(EventCallback cb);
@@ -233,7 +233,7 @@ class KUMA_API Timer
 public:
     using TimerCallback = std::function<void(void)>;
     
-    Timer(EventLoop* loop);
+    Timer(EventLoop *loop);
     ~Timer();
     
     /**
@@ -258,13 +258,16 @@ class KUMA_API HttpParser
 public:
     using DataCallback = std::function<void(KMBuffer &)>;
     using EventCallback = std::function<void(HttpEvent)>;
-    using EnumrateCallback = std::function<void(const char*, const char*)>;
+    /**
+     * enumerate callback, return true to continue, return false to stop enumerate
+     */
+    using EnumerateCallback = std::function<bool(const char*, const char*)>; // (name, value)
     
     HttpParser();
     ~HttpParser();
     
     // return bytes parsed
-    int parse(const char* data, size_t len);
+    int parse(const char *data, size_t len);
     int parse(const KMBuffer &buf);
     void pause();
     void resume();
@@ -278,18 +281,19 @@ public:
     bool complete() const;
     bool error() const;
     bool paused() const;
-    bool isUpgradeTo(const char* proto) const;
+    bool isUpgradeTo(const char *protocol) const;
     
     int getStatusCode() const;
     const char* getUrl() const;
     const char* getUrlPath() const;
+    const char* getUrlQuery() const;
     const char* getMethod() const;
     const char* getVersion() const;
-    const char* getParamValue(const char* name) const;
-    const char* getHeaderValue(const char* name) const;
+    const char* getParamValue(const char *name) const;
+    const char* getHeaderValue(const char *name) const;
     
-    void forEachParam(EnumrateCallback cb);
-    void forEachHeader(EnumrateCallback cb);
+    void forEachParam(const EnumerateCallback &cb) const;
+    void forEachHeader(const EnumerateCallback &cb) const;
     
     void setDataCallback(DataCallback cb);
     void setEventCallback(EventCallback cb);
@@ -307,18 +311,19 @@ public:
     using DataCallback = std::function<void(KMBuffer &)>;
     using EventCallback = std::function<void(KMError)>;
     using HttpEventCallback = std::function<void(void)>;
+    using EnumerateCallback = HttpParser::EnumerateCallback;
     
     /* 
      * @param ver, http version, "HTTP/2.0" for HTTP2
      */
-    HttpRequest(EventLoop* loop, const char* ver = "HTTP/1.1");
+    HttpRequest(EventLoop *loop, const char *ver = "HTTP/1.1");
     ~HttpRequest();
     
     KMError setSslFlags(uint32_t ssl_flags);
-    void addHeader(const char* name, const char* value);
-    void addHeader(const char* name, uint32_t value);
-    KMError sendRequest(const char* method, const char* url);
-    int sendData(const void* data, size_t len);
+    KMError addHeader(const char *name, const char *value);
+    KMError addHeader(const char *name, uint32_t value);
+    KMError sendRequest(const char *method, const char *url);
+    int sendData(const void *data, size_t len);
     int sendData(const KMBuffer &buf);
     void reset(); // reset for connection reuse
     
@@ -326,8 +331,8 @@ public:
     
     int getStatusCode() const;
     const char* getVersion() const;
-    const char* getHeaderValue(const char* name) const;
-    void forEachHeader(HttpParser::EnumrateCallback cb);
+    const char* getHeaderValue(const char *name) const;
+    void forEachHeader(const EnumerateCallback &cb) const;
     
     void setDataCallback(DataCallback cb);
     void setWriteCallback(EventCallback cb);
@@ -348,20 +353,21 @@ public:
     using DataCallback = std::function<void(KMBuffer &)>;
     using EventCallback = std::function<void(KMError)>;
     using HttpEventCallback = std::function<void(void)>;
+    using EnumerateCallback = HttpParser::EnumerateCallback;
     
     /*
      * @param ver, http version, "HTTP/2.0" for HTTP2
      */
-    HttpResponse(EventLoop* loop, const char* ver);
+    HttpResponse(EventLoop *loop, const char *ver);
     ~HttpResponse();
     
     KMError setSslFlags(uint32_t ssl_flags);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf=nullptr);
-    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf=nullptr);
-    void addHeader(const char* name, const char* value);
-    void addHeader(const char* name, uint32_t value);
-    KMError sendResponse(int status_code, const char* desc = nullptr);
-    int sendData(const void* data, size_t len);
+    KMError attachSocket(TcpSocket &&tcp, HttpParser &&parser, const KMBuffer *init_buf=nullptr);
+    KMError addHeader(const char *name, const char *value);
+    KMError addHeader(const char *name, uint32_t value);
+    KMError sendResponse(int status_code, const char *desc = nullptr);
+    int sendData(const void *data, size_t len);
     int sendData(const KMBuffer &buf);
     void reset(); // reset for connection reuse
     
@@ -369,10 +375,11 @@ public:
     
     const char* getMethod() const;
     const char* getPath() const;
+    const char* getQuery() const;
     const char* getVersion() const;
-    const char* getParamValue(const char* name) const;
-    const char* getHeaderValue(const char* name) const;
-    void forEachHeader(HttpParser::EnumrateCallback cb);
+    const char* getParamValue(const char *name) const;
+    const char* getHeaderValue(const char *name) const;
+    void forEachHeader(const EnumerateCallback &cb) const;
     
     void setDataCallback(DataCallback cb);
     void setWriteCallback(EventCallback cb);
@@ -393,27 +400,47 @@ class KUMA_API WebSocket
 public:
     using DataCallback = std::function<void(KMBuffer &, bool/*is_text*/, bool/*fin*/)>;
     using EventCallback = std::function<void(KMError)>;
+    /**
+     * HandshakeCallback is called when:
+     *   1. client received server opening handshake
+     *   2. server received client opening handshake
+     * on server side, user can check the request in this callback, and return false to reject the handshake
+     */
+    using HandshakeCallback = std::function<bool(KMError)>;
+    using EnumerateCallback = HttpParser::EnumerateCallback;
     
-    WebSocket(EventLoop* loop);
+    WebSocket(EventLoop *loop);
     ~WebSocket();
     
     KMError setSslFlags(uint32_t ssl_flags);
-    void setOrigin(const char* origin);
+    void setOrigin(const char *origin);
     const char* getOrigin() const;
     
-    /** add subprotocols to handshake request/response,
+    /**
+     * add subprotocol to handshake request/response
      */
-    KMError setSubprotocol(const char* subprotocol);
+    KMError setSubprotocol(const char *subprotocol);
     const char* getSubprotocol() const;
-    KMError setExtensions(const char* extensions);
-    const char* getExtensions() const;
-    KMError connect(const char* ws_url, EventCallback cb);
-    KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf=nullptr);
-    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf=nullptr);
-    int send(const void* data, size_t len, bool is_text, bool fin=true);
-    int send(const KMBuffer &buf, bool is_text, bool fin=true);
+    
+    /**
+     * add user defined headers
+     */
+    KMError addHeader(const char *name, const char *value);
+    KMError addHeader(const char *name, uint32_t value);
+    
+    KMError connect(const char *ws_url, HandshakeCallback cb);
+    KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf, HandshakeCallback cb);
+    KMError attachSocket(TcpSocket &&tcp, HttpParser &&parser, const KMBuffer *init_buf, HandshakeCallback cb);
+    int send(const void *data, size_t len, bool is_text, bool is_fin=true);
+    int send(const KMBuffer &buf, bool is_text, bool is_fin=true);
     
     KMError close();
+    
+    const char* getPath() const;
+    const char* getQuery() const;
+    const char* getParamValue(const char *name) const;
+    const char* getHeaderValue(const char *name) const;
+    void forEachHeader(const EnumerateCallback &cb) const;
     
     void setDataCallback(DataCallback cb);
     void setWriteCallback(EventCallback cb);
@@ -432,18 +459,18 @@ public:
     using AcceptCallback = std::function<bool(uint32_t/* stream ID */)>;
     using ErrorCallback = std::function<void(int)>;
     
-    H2Connection(EventLoop* loop);
+    H2Connection(EventLoop *loop);
     ~H2Connection();
     
     KMError setSslFlags(uint32_t ssl_flags);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf=nullptr);
-    KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf=nullptr);
+    KMError attachSocket(TcpSocket &&tcp, HttpParser &&parser, const KMBuffer *init_buf=nullptr);
     /* associate H2 stream with HttpResponse
      *
      * @param stream_id stream ID
      * @param rsp HttpResponse to be associated
      */
-    KMError attachStream(uint32_t stream_id, HttpResponse* rsp);
+    KMError attachStream(uint32_t stream_id, HttpResponse *rsp);
     
     KMError close();
     
@@ -459,7 +486,7 @@ private:
 
 using TraceFunc = std::function<void(int, const char*)>; // (level, msg)
 
-KUMA_API void init(const char* path = nullptr);
+KUMA_API void init(const char *path = nullptr);
 KUMA_API void fini();
 KUMA_API void setTraceFunc(TraceFunc func);
 

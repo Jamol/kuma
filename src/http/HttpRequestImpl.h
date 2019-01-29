@@ -37,14 +37,14 @@ public:
     using DataCallback = HttpRequest::DataCallback;
     using EventCallback = HttpRequest::EventCallback;
     using HttpEventCallback = HttpRequest::HttpEventCallback;
-    using EnumrateCallback = HttpParser::Impl::EnumrateCallback;
+    using EnumerateCallback = HttpParser::Impl::EnumerateCallback;
     
     Impl(std::string ver);
     virtual ~Impl() = default;
     
     virtual KMError setSslFlags(uint32_t ssl_flags) = 0;
-    virtual void addHeader(std::string name, std::string value) = 0;
-    virtual void addHeader(std::string name, uint32_t value);
+    virtual KMError addHeader(std::string name, std::string value) = 0;
+    virtual KMError addHeader(std::string name, uint32_t value);
     KMError sendRequest(std::string method, std::string url);
     virtual int sendData(const void* data, size_t len) = 0;
     virtual int sendData(const KMBuffer &buf) = 0;
@@ -53,8 +53,8 @@ public:
     
     virtual int getStatusCode() const = 0;
     virtual const std::string& getVersion() const = 0;
-    virtual const std::string& getHeaderValue(std::string name) const = 0;
-    virtual void forEachHeader(EnumrateCallback cb) = 0;
+    virtual const std::string& getHeaderValue(const std::string &name) const = 0;
+    virtual void forEachHeader(const EnumerateCallback &cb) const = 0;
     
     std::string getCacheKey();
     

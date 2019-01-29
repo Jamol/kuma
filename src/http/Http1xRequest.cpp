@@ -57,9 +57,10 @@ void Http1xRequest::cleanup()
     loop_token_.reset();
 }
 
-void Http1xRequest::addHeader(std::string name, std::string value)
+KMError Http1xRequest::addHeader(std::string name, std::string value)
 {
     req_message_.addHeader(std::move(name), std::move(value));
+    return KMError::NOERR;
 }
 
 void Http1xRequest::checkHeaders()

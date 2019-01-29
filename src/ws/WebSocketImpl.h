@@ -38,6 +38,8 @@ class WebSocket::Impl : public KMObject, public DestroyDetector, public TcpConne
 public:
     using DataCallback = WebSocket::DataCallback;
     using EventCallback = WebSocket::EventCallback;
+    using HandshakeCallback = WebSocket::HandshakeCallback;
+    using EnumerateCallback = HttpParser::Impl::EnumerateCallback;
     
     Impl(const EventLoopPtr &loop);
     ~Impl();
@@ -48,13 +50,36 @@ public:
     const std::string& getSubprotocol() const { return subprotocol_; }
     KMError setExtensions(const std::string& extensions);
     const std::string& getExtensions() const { return extensions_; }
+    KMError addHeader(std::string name, std::string value);
+    KMError addHeader(std::string name, uint32_t value);
     
-    KMError connect(const std::string& ws_url, EventCallback cb);
-    KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf);
-    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf);
+    KMError connect(const std::string& ws_url, HandshakeCallback cb);
+    KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf, HandshakeCallback cb);
+    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf, HandshakeCallback cb);
     int send(const void* data, size_t len, bool is_text, bool fin);
     int send(const KMBuffer &buf, bool is_text, bool fin);
     KMError close();
+    
+    const std::string& getPath() const
+    {
+        return ws_handler_.getPath();
+    }
+    const std::string& getQuery() const
+    {
+        return ws_handler_.getQuery();
+    }
+    const std::string& getParamValue(const std::string &name) const
+    {
+        return ws_handler_.getParamValue(name);
+    }
+    const std::string& getHeaderValue(const std::string &name) const
+    {
+        return ws_handler_.getHeaderValue(name);
+    }
+    void forEachHeader(const EnumerateCallback &cb) const
+    {
+        ws_handler_.forEachHeader(cb);
+    }
     
     void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
     void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
@@ -75,6 +100,8 @@ private:
     void cleanup();
     void setupWsHandler();
     
+    std::string buildUpgradeRequest();
+    std::string buildUpgradeResponse();
     void sendUpgradeRequest();
     void sendUpgradeResponse();
     void onWsFrame(uint8_t opcode, bool fin, KMBuffer &buf);
@@ -99,14 +126,17 @@ private:
     Uri                     uri_;
     bool                    fragmented_ = false;
     
+    HeaderVector            header_vec_;
+    
     KMError                 handshake_result_ = KMError::NOERR;
     size_t                  body_bytes_sent_ = 0;
     
     std::string             origin_;
     std::string             subprotocol_;
     std::string             extensions_;
+    
+    HandshakeCallback       handshake_cb_;
     DataCallback            data_cb_;
-    EventCallback           connect_cb_;
     EventCallback           write_cb_;
     EventCallback           error_cb_;
     

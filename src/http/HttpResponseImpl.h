@@ -38,16 +38,17 @@ public:
     using DataCallback = HttpResponse::DataCallback;
     using EventCallback = HttpResponse::EventCallback;
     using HttpEventCallback = HttpResponse::HttpEventCallback;
+    using EnumerateCallback = HttpParser::Impl::EnumerateCallback;
     
     Impl(std::string ver);
     virtual ~Impl();
     
-    virtual KMError setSslFlags(uint32_t ssl_flags) { return KMError::UNSUPPORT; }
-    virtual KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf) { return KMError::UNSUPPORT; }
-    virtual KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf) { return KMError::UNSUPPORT; }
-    virtual KMError attachStream(H2Connection::Impl* conn, uint32_t stream_id) { return KMError::UNSUPPORT; }
-    virtual void addHeader(std::string name, std::string value) = 0;
-    virtual void addHeader(std::string name, uint32_t value);
+    virtual KMError setSslFlags(uint32_t ssl_flags) { return KMError::NOT_SUPPORTED; }
+    virtual KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf) { return KMError::NOT_SUPPORTED; }
+    virtual KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf) { return KMError::NOT_SUPPORTED; }
+    virtual KMError attachStream(H2Connection::Impl* conn, uint32_t stream_id) { return KMError::NOT_SUPPORTED; }
+    virtual KMError addHeader(std::string name, std::string value) = 0;
+    virtual KMError addHeader(std::string name, uint32_t value);
     KMError sendResponse(int status_code, const std::string& desc);
     virtual int sendData(const void* data, size_t len) = 0;
     virtual int sendData(const KMBuffer &buf) = 0;
@@ -56,10 +57,11 @@ public:
     
     virtual const std::string& getMethod() const = 0;
     virtual const std::string& getPath() const = 0;
+    virtual const std::string& getQuery() const = 0;
     virtual const std::string& getVersion() const = 0;
-    virtual const std::string& getParamValue(std::string name) const = 0;
-    virtual const std::string& getHeaderValue(std::string name) const = 0;
-    virtual void forEachHeader(HttpParser::Impl::EnumrateCallback&& cb) = 0;
+    virtual const std::string& getParamValue(const std::string &name) const = 0;
+    virtual const std::string& getHeaderValue(const std::string &name) const = 0;
+    virtual void forEachHeader(const EnumerateCallback &cb) const = 0;
     
     void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
     void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
