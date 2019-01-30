@@ -19,7 +19,7 @@ open project bld/osx/kuma with xcode and build it
 
 ### Windows
 ```
-open bld/msvc/kuma.sln with VS2015 and build it
+open bld/msvc/kuma.sln with VS2017 and build it
 ```
 
 ### Linux

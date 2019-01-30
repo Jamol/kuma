@@ -201,8 +201,10 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
     
     size_t pos = 0;
     uint8_t b = 0;
-    while(pos < len)
+    auto last_state = ctx_.state;
+    while(pos < len || last_state != ctx_.state)
     {
+        last_state = ctx_.state;
         switch(ctx_.state)
         {
             case DecodeState::HDR1:
@@ -241,9 +243,9 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
             }
             case DecodeState::HDREX:
             {
-                if(126 == ctx_.hdr.plen) {
+                if (126 == ctx_.hdr.plen) {
                     uint32_t expect_len = 2;
-                    if(len-pos+ctx_.pos >= expect_len) {
+                    if (len-pos+ctx_.pos >= expect_len) {
                         for (; ctx_.pos<expect_len; ++pos, ++ctx_.pos) {
                             ctx_.hdr.xpl.xpl16 |= data[pos] << ((expect_len-ctx_.pos-1) << 3);
                         }
@@ -260,7 +262,7 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                         ++ctx_.pos;
                         return WSError::NEED_MORE_DATA;
                     }
-                } else if(127 == ctx_.hdr.plen) {
+                } else if (127 == ctx_.hdr.plen) {
                     uint32_t expect_len = 8;
                     if(len-pos+ctx_.pos >= expect_len) {
                         for (; ctx_.pos<expect_len; ++pos, ++ctx_.pos) {
@@ -293,14 +295,14 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
             }
             case DecodeState::MASKEY:
             {
-                if(ctx_.hdr.mask) {
+                if (ctx_.hdr.mask) {
                     if (WSMode::CLIENT == mode_) {
                         // server MUST NOT mask any frames
                         ctx_.state = DecodeState::IN_ERROR;
                         return WSError::PROTOCOL_ERROR;
                     }
                     uint32_t expect_len = 4;
-                    if(len-pos+ctx_.pos >= expect_len)
+                    if (len-pos+ctx_.pos >= expect_len)
                     {
                         memcpy(ctx_.hdr.maskey+ctx_.pos, data+pos, expect_len-ctx_.pos);
                         pos += expect_len-ctx_.pos;
@@ -317,19 +319,7 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                     return WSError::PROTOCOL_ERROR;
                 }
                 ctx_.buf.clear();
-                if (ctx_.hdr.length > 0) {
-                    ctx_.state = DecodeState::DATA;
-                } else {
-                    auto err = handleFrame(ctx_.hdr, nullptr, 0);
-                    if (err != WSError::NOERR) {
-                        return err;
-                    }
-                    if (WS_OPCODE_CLOSE == ctx_.hdr.opcode) {
-                        ctx_.state = DecodeState::CLOSED;
-                        return WSError::CLOSED;
-                    }
-                    ctx_.reset();
-                }
+                ctx_.state = DecodeState::DATA;
                 break;
             }
             case DecodeState::DATA:
@@ -344,7 +334,7 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
 
                 uint8_t* notify_data = nullptr;
                 uint32_t notify_len = 0;
-                if(ctx_.buf.empty()) {
+                if (ctx_.buf.empty()) {
                     notify_data = data + pos;
                     notify_len = ctx_.hdr.length;
                     pos += notify_len;
@@ -366,7 +356,9 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                     ctx_.state = DecodeState::CLOSED;
                     return WSError::CLOSED;
                 }
+                // reset context and state for next frame
                 ctx_.reset();
+                last_state = ctx_.state;
                 break;
             }
             default:
