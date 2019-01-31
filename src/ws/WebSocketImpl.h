@@ -56,8 +56,8 @@ public:
     KMError connect(const std::string& ws_url, HandshakeCallback cb);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf, HandshakeCallback cb);
     KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf, HandshakeCallback cb);
-    int send(const void* data, size_t len, bool is_text, bool fin);
-    int send(const KMBuffer &buf, bool is_text, bool fin);
+    int send(const void* data, size_t len, bool is_text, bool is_fin);
+    int send(const KMBuffer &buf, bool is_text, bool is_fin);
     KMError close();
     
     const std::string& getPath() const
@@ -104,11 +104,11 @@ private:
     std::string buildUpgradeResponse();
     void sendUpgradeRequest();
     void sendUpgradeResponse();
-    void onWsFrame(uint8_t opcode, bool fin, KMBuffer &buf);
+    void onWsFrame(uint8_t opcode, bool is_fin, KMBuffer &buf);
     void onWsHandshake(KMError err);
     void onStateOpen();
-    KMError sendWsFrame(WSHandler::WSOpcode opcode, bool fin, uint8_t *payload, size_t plen);
-    KMError sendWsFrame(WSHandler::WSOpcode opcode, bool fin, const KMBuffer &buf);
+    KMError sendWsFrame(WSHandler::WSOpcode opcode, bool is_fin, uint8_t *payload, size_t plen);
+    KMError sendWsFrame(WSHandler::WSOpcode opcode, bool is_fin, const KMBuffer &buf);
     KMError sendCloseFrame(uint16_t statusCode);
     KMError sendPingFrame(const KMBuffer &buf);
     KMError sendPongFrame(const KMBuffer &buf);

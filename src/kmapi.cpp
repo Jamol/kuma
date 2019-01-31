@@ -1029,9 +1029,9 @@ KMError WebSocket::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBu
     return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move((*parser.pimpl())), init_buf, std::move(cb));
 }
 
-int WebSocket::send(const void* data, size_t len, bool is_text, bool fin)
+int WebSocket::send(const void* data, size_t len, bool is_text, bool is_fin)
 {
-    return pimpl_->send(data, len, is_text, fin);
+    return pimpl_->send(data, len, is_text, is_fin);
 }
 
 int WebSocket::send(const KMBuffer &buf, bool is_text, bool is_fin)

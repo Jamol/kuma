@@ -72,6 +72,13 @@ using LPFN_CANCELIOEX = BOOL(WINAPI*)(HANDLE, LPOVERLAPPED);
 
 #define UNUSED(x) (void)(x)
 
+#if __cplusplus > 201402L
+// c++17
+# define FALLTHROUGH [[fallthrough]];
+#else
+# define FALLTHROUGH
+#endif
+
 template <typename T, size_t N>
 char(&ArraySizeHelper(const T(&array)[N]))[N];
 #define ARRAY_SIZE(array) (sizeof(ArraySizeHelper(array)))

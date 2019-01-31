@@ -201,10 +201,8 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
     
     size_t pos = 0;
     uint8_t b = 0;
-    auto last_state = ctx_.state;
-    while(pos < len || last_state != ctx_.state)
+    while(pos < len)
     {
-        last_state = ctx_.state;
         switch(ctx_.state)
         {
             case DecodeState::HDR1:
@@ -223,23 +221,29 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                 }
                 // TODO: check interleaved fragments of different messages
                 ctx_.state = DecodeState::HDR2;
-                break;
+                
+                FALLTHROUGH;
             }
             case DecodeState::HDR2:
             {
-                b = data[pos++];
-                ctx_.hdr.mask = b >> 7;
-                ctx_.hdr.plen = b & 0x7F;
-                ctx_.hdr.xpl.xpl64 = 0;
-                ctx_.pos = 0;
-                ctx_.buf.clear();
-                if (isControlFrame(ctx_.hdr.opcode) && ctx_.hdr.plen > 125) {
-                    // the payload length of control frames MUST <= 125
-                    ctx_.state = DecodeState::IN_ERROR;
-                    return WSError::PROTOCOL_ERROR;
+                if (pos < len) {
+                    b = data[pos++];
+                    ctx_.hdr.mask = b >> 7;
+                    ctx_.hdr.plen = b & 0x7F;
+                    ctx_.hdr.xpl.xpl64 = 0;
+                    ctx_.pos = 0;
+                    ctx_.buf.clear();
+                    if (isControlFrame(ctx_.hdr.opcode) && ctx_.hdr.plen > 125) {
+                        // the payload length of control frames MUST <= 125
+                        ctx_.state = DecodeState::IN_ERROR;
+                        return WSError::PROTOCOL_ERROR;
+                    }
+                    ctx_.state = DecodeState::HDREX;
+                } else {
+                    return WSError::NEED_MORE_DATA;
                 }
-                ctx_.state = DecodeState::HDREX;
-                break;
+                
+                FALLTHROUGH;
             }
             case DecodeState::HDREX:
             {
@@ -291,7 +295,8 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                     ctx_.hdr.length = ctx_.hdr.plen;
                     ctx_.state = DecodeState::MASKEY;
                 }
-                break;
+                
+                FALLTHROUGH;
             }
             case DecodeState::MASKEY:
             {
@@ -320,7 +325,8 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                 }
                 ctx_.buf.clear();
                 ctx_.state = DecodeState::DATA;
-                break;
+                
+                FALLTHROUGH;
             }
             case DecodeState::DATA:
             {
@@ -356,13 +362,14 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                     ctx_.state = DecodeState::CLOSED;
                     return WSError::CLOSED;
                 }
-                // reset context and state for next frame
+                // reset context for next frame
                 ctx_.reset();
-                last_state = ctx_.state;
                 break;
             }
             default:
+            {
                 return WSError::INVALID_FRAME;
+            }
         }
     }
     return ctx_.state == DecodeState::HDR1 ? WSError::NOERR : WSError::NEED_MORE_DATA;

@@ -398,7 +398,7 @@ private:
 class KUMA_API WebSocket
 {
 public:
-    using DataCallback = std::function<void(KMBuffer &, bool/*is_text*/, bool/*fin*/)>;
+    using DataCallback = std::function<void(KMBuffer &, bool/*is_text*/, bool/*is_fin*/)>;
     using EventCallback = std::function<void(KMError)>;
     /**
      * HandshakeCallback is called when:
