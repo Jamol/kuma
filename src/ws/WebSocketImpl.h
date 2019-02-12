@@ -31,6 +31,12 @@
 
 #include <random>
 
+WS_NS_BEGIN
+
+class ExtensionHandler;
+
+WS_NS_END
+
 KUMA_NS_BEGIN
 
 class WebSocket::Impl : public KMObject, public DestroyDetector, public TcpConnection
@@ -56,8 +62,8 @@ public:
     KMError connect(const std::string& ws_url, HandshakeCallback cb);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf, HandshakeCallback cb);
     KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf, HandshakeCallback cb);
-    int send(const void* data, size_t len, bool is_text, bool is_fin);
-    int send(const KMBuffer &buf, bool is_text, bool is_fin);
+    int send(const void* data, size_t len, bool is_text, bool is_fin, uint32_t flags);
+    int send(const KMBuffer &buf, bool is_text, bool is_fin, uint32_t flags);
     KMError close();
     
     const std::string& getPath() const
@@ -100,15 +106,17 @@ private:
     void cleanup();
     void setupWsHandler();
     
+    KMError negotiateExtensions();
+    
     std::string buildUpgradeRequest();
     std::string buildUpgradeResponse();
     void sendUpgradeRequest();
     void sendUpgradeResponse();
-    void onWsFrame(uint8_t opcode, bool is_fin, KMBuffer &buf);
+    KMError onWsFrame(ws::FrameHeader hdr, KMBuffer &buf);
     void onWsHandshake(KMError err);
     void onStateOpen();
-    KMError sendWsFrame(WSHandler::WSOpcode opcode, bool is_fin, uint8_t *payload, size_t plen);
-    KMError sendWsFrame(WSHandler::WSOpcode opcode, bool is_fin, const KMBuffer &buf);
+    KMError sendWsFrame(ws::FrameHeader hdr, uint8_t *payload, size_t plen);
+    KMError sendWsFrame(ws::FrameHeader hdr, const KMBuffer &buf);
     KMError sendCloseFrame(uint16_t statusCode);
     KMError sendPingFrame(const KMBuffer &buf);
     KMError sendPongFrame(const KMBuffer &buf);
@@ -118,11 +126,14 @@ private:
     void onWrite() override;
     void onError(KMError err) override;
     
+    KMError onExtensionIncomingFrame(ws::FrameHeader hdr, KMBuffer &buf);
+    KMError onExtensionOutcomingFrame(ws::FrameHeader hdr, KMBuffer &buf);
+    
     uint32_t generateMaskKey();
     
 private:
     State                   state_ = State::IDLE;
-    WSHandler               ws_handler_;
+    ws::WSHandler           ws_handler_;
     Uri                     uri_;
     bool                    fragmented_ = false;
     
@@ -141,6 +152,8 @@ private:
     EventCallback           error_cb_;
     
     std::mt19937 rand_engine_{std::random_device{}()};
+    
+    std::unique_ptr<ws::ExtensionHandler> extension_handler_;
 };
 
 KUMA_NS_END

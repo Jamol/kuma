@@ -7,6 +7,7 @@ SRCDIR = $(ROOTDIR)/src
 VENDORDIR = $(ROOTDIR)/vendor
 
 OPENSSLDIR = $(VENDORDIR)/openssl
+ZLIBDIR = $(VENDORDIR)/zlib
 
 BINDIR = $(ROOTDIR)/bin/linux
 LIBDIR = $(ROOTDIR)/lib
@@ -30,6 +31,19 @@ CXX=g++
 
 CXXFLAGS = -g -std=c++17 -pipe -fPIC -Wall -Wextra -pedantic -DKUMA_HAS_OPENSSL
 LDFLAGS = -shared -Wl,-Bsymbolic -lpthread -ldl -lssl -lcrypto
+
+ZLIBSRCS = \
+    $(ZLIBDIR)/adler32.c \
+    $(ZLIBDIR)/compress.c \
+    $(ZLIBDIR)/crc32.c \
+    $(ZLIBDIR)/deflate.c \
+    $(ZLIBDIR)/infback.c \
+    $(ZLIBDIR)/inffast.c \
+    $(ZLIBDIR)/inflate.c \
+    $(ZLIBDIR)/inftrees.c \
+    $(ZLIBDIR)/trees.c \
+    $(ZLIBDIR)/uncompr.c \
+    $(ZLIBDIR)/zutil.c
 
 SRCS =  \
     EventLoopImpl.cpp \
@@ -68,6 +82,10 @@ SRCS =  \
     http/v2/hpack/HPacker.cpp \
     ws/WSHandler.cpp \
     ws/WebSocketImpl.cpp \
+    ws/exts/ExtensionHandler.cpp \
+    ws/exts/PMCE_Deflate.cpp \
+    ws/exts/PMCE_Base.cpp \
+    ws/exts/WSExtension.cpp \
     util/util.cpp \
     util/kmtrace.cpp \
     util/base64.cpp \
@@ -77,7 +95,9 @@ SRCS =  \
     ssl/OpenSslLib.cpp \
     DnsResolver.cpp \
     kmapi.cpp
-    
+
+SRCS += $(ZLIBSRCS)
+
 OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(patsubst %.cpp,$(OBJDIR)/%.o,$(patsubst %.cxx,$(OBJDIR)/%.o,$(SRCS))))
 #OBJS = $(SRCS:%.cpp=$(OBJDIR)/%.o)
 

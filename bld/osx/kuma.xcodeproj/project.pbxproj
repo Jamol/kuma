@@ -38,6 +38,13 @@
 		6F75128F1D76BD46000BE6EC /* PipeNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F75128D1D76BD46000BE6EC /* PipeNotifier.h */; };
 		6F7512921D76BE27000BE6EC /* Notifier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7512911D76BE27000BE6EC /* Notifier.cpp */; };
 		6F7512941D76C237000BE6EC /* SocketNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F7512931D76C237000BE6EC /* SocketNotifier.h */; };
+		6F77ADD82202CCE200BCBB51 /* WSExtension.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F77ADD72202CCE200BCBB51 /* WSExtension.h */; };
+		6F77ADDA2202CF7D00BCBB51 /* PMCE_Base.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F77ADD92202CF7D00BCBB51 /* PMCE_Base.h */; };
+		6F77ADDC2202D07300BCBB51 /* PMCE_Base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F77ADDB2202D07300BCBB51 /* PMCE_Base.cpp */; };
+		6F77ADDF2202D28C00BCBB51 /* PMCE_Deflate.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F77ADDD2202D28C00BCBB51 /* PMCE_Deflate.cpp */; };
+		6F77ADE02202D28C00BCBB51 /* PMCE_Deflate.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F77ADDE2202D28C00BCBB51 /* PMCE_Deflate.h */; };
+		6F77AE0322057E0000BCBB51 /* wsdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F77AE0222057E0000BCBB51 /* wsdefs.h */; };
+		6F77AE0522104F1200BCBB51 /* WSExtension.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F77AE0422104F1200BCBB51 /* WSExtension.cpp */; };
 		6F7BBAFE1ED2E4400093BDE3 /* AcceptorBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7BBAFC1ED2E4400093BDE3 /* AcceptorBase.cpp */; };
 		6F7BBAFF1ED2E4400093BDE3 /* AcceptorBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F7BBAFD1ED2E4400093BDE3 /* AcceptorBase.h */; };
 		6F7BBB371ED57B0A0093BDE3 /* UdpSocketBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7BBB351ED57B0A0093BDE3 /* UdpSocketBase.cpp */; };
@@ -79,6 +86,20 @@
 		6FD3F0561EBD99790027D04F /* BioHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FD3F0541EBD99790027D04F /* BioHandler.cpp */; };
 		6FD3F0571EBD99790027D04F /* BioHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FD3F0551EBD99790027D04F /* BioHandler.h */; };
 		6FD3F0F01EC06FE70027D04F /* skbuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FD3F0EF1EC06FE70027D04F /* skbuffer.h */; };
+		6FD7C441221275E30005DDFF /* ExtensionHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FD7C43F221275E30005DDFF /* ExtensionHandler.cpp */; };
+		6FD7C442221275E30005DDFF /* ExtensionHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FD7C440221275E30005DDFF /* ExtensionHandler.h */; };
+		6FD7C454221293080005DDFF /* trees.c in Sources */ = {isa = PBXBuildFile; fileRef = 6FD7C447221293080005DDFF /* trees.c */; };
+		6FD7C455221293080005DDFF /* deflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 6FD7C448221293080005DDFF /* deflate.c */; };
+		6FD7C456221293080005DDFF /* compress.c in Sources */ = {isa = PBXBuildFile; fileRef = 6FD7C449221293080005DDFF /* compress.c */; };
+		6FD7C457221293080005DDFF /* inffast.c in Sources */ = {isa = PBXBuildFile; fileRef = 6FD7C44A221293080005DDFF /* inffast.c */; };
+		6FD7C458221293080005DDFF /* crc32.c in Sources */ = {isa = PBXBuildFile; fileRef = 6FD7C44B221293080005DDFF /* crc32.c */; };
+		6FD7C459221293080005DDFF /* zutil.c in Sources */ = {isa = PBXBuildFile; fileRef = 6FD7C44C221293080005DDFF /* zutil.c */; };
+		6FD7C45A221293080005DDFF /* inftrees.c in Sources */ = {isa = PBXBuildFile; fileRef = 6FD7C44D221293080005DDFF /* inftrees.c */; };
+		6FD7C45B221293080005DDFF /* infback.c in Sources */ = {isa = PBXBuildFile; fileRef = 6FD7C44E221293080005DDFF /* infback.c */; };
+		6FD7C45C221293080005DDFF /* inflate.c in Sources */ = {isa = PBXBuildFile; fileRef = 6FD7C44F221293080005DDFF /* inflate.c */; };
+		6FD7C45D221293080005DDFF /* adler32.c in Sources */ = {isa = PBXBuildFile; fileRef = 6FD7C450221293080005DDFF /* adler32.c */; };
+		6FD7C45E221293080005DDFF /* uncompr.c in Sources */ = {isa = PBXBuildFile; fileRef = 6FD7C451221293080005DDFF /* uncompr.c */; };
+		6FD7C45F221293080005DDFF /* zlib.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FD7C452221293080005DDFF /* zlib.h */; };
 		6FE0EF001D409863006136B7 /* FrameParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FE0EEF11D409863006136B7 /* FrameParser.cpp */; };
 		6FE0EF011D409863006136B7 /* FrameParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FE0EEF21D409863006136B7 /* FrameParser.h */; };
 		6FE0EF021D409863006136B7 /* H2ConnectionImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FE0EEF31D409863006136B7 /* H2ConnectionImpl.cpp */; };
@@ -144,6 +165,13 @@
 		6F75128D1D76BD46000BE6EC /* PipeNotifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PipeNotifier.h; sourceTree = "<group>"; };
 		6F7512911D76BE27000BE6EC /* Notifier.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Notifier.cpp; sourceTree = "<group>"; };
 		6F7512931D76C237000BE6EC /* SocketNotifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SocketNotifier.h; sourceTree = "<group>"; };
+		6F77ADD72202CCE200BCBB51 /* WSExtension.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WSExtension.h; sourceTree = "<group>"; };
+		6F77ADD92202CF7D00BCBB51 /* PMCE_Base.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PMCE_Base.h; sourceTree = "<group>"; };
+		6F77ADDB2202D07300BCBB51 /* PMCE_Base.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PMCE_Base.cpp; sourceTree = "<group>"; };
+		6F77ADDD2202D28C00BCBB51 /* PMCE_Deflate.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PMCE_Deflate.cpp; sourceTree = "<group>"; };
+		6F77ADDE2202D28C00BCBB51 /* PMCE_Deflate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PMCE_Deflate.h; sourceTree = "<group>"; };
+		6F77AE0222057E0000BCBB51 /* wsdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = wsdefs.h; sourceTree = "<group>"; };
+		6F77AE0422104F1200BCBB51 /* WSExtension.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WSExtension.cpp; sourceTree = "<group>"; };
 		6F7BBAFC1ED2E4400093BDE3 /* AcceptorBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AcceptorBase.cpp; sourceTree = "<group>"; };
 		6F7BBAFD1ED2E4400093BDE3 /* AcceptorBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AcceptorBase.h; sourceTree = "<group>"; };
 		6F7BBB351ED57B0A0093BDE3 /* UdpSocketBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UdpSocketBase.cpp; sourceTree = "<group>"; };
@@ -189,6 +217,20 @@
 		6FD3F0541EBD99790027D04F /* BioHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BioHandler.cpp; sourceTree = "<group>"; };
 		6FD3F0551EBD99790027D04F /* BioHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BioHandler.h; sourceTree = "<group>"; };
 		6FD3F0EF1EC06FE70027D04F /* skbuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = skbuffer.h; sourceTree = "<group>"; };
+		6FD7C43F221275E30005DDFF /* ExtensionHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ExtensionHandler.cpp; sourceTree = "<group>"; };
+		6FD7C440221275E30005DDFF /* ExtensionHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExtensionHandler.h; sourceTree = "<group>"; };
+		6FD7C447221293080005DDFF /* trees.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = trees.c; sourceTree = "<group>"; };
+		6FD7C448221293080005DDFF /* deflate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = deflate.c; sourceTree = "<group>"; };
+		6FD7C449221293080005DDFF /* compress.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = compress.c; sourceTree = "<group>"; };
+		6FD7C44A221293080005DDFF /* inffast.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = inffast.c; sourceTree = "<group>"; };
+		6FD7C44B221293080005DDFF /* crc32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = crc32.c; sourceTree = "<group>"; };
+		6FD7C44C221293080005DDFF /* zutil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = zutil.c; sourceTree = "<group>"; };
+		6FD7C44D221293080005DDFF /* inftrees.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = inftrees.c; sourceTree = "<group>"; };
+		6FD7C44E221293080005DDFF /* infback.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = infback.c; sourceTree = "<group>"; };
+		6FD7C44F221293080005DDFF /* inflate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = inflate.c; sourceTree = "<group>"; };
+		6FD7C450221293080005DDFF /* adler32.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = adler32.c; sourceTree = "<group>"; };
+		6FD7C451221293080005DDFF /* uncompr.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = uncompr.c; sourceTree = "<group>"; };
+		6FD7C452221293080005DDFF /* zlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zlib.h; sourceTree = "<group>"; };
 		6FE0EEF11D409863006136B7 /* FrameParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FrameParser.cpp; sourceTree = "<group>"; };
 		6FE0EEF21D409863006136B7 /* FrameParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FrameParser.h; sourceTree = "<group>"; };
 		6FE0EEF31D409863006136B7 /* H2ConnectionImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H2ConnectionImpl.cpp; sourceTree = "<group>"; };
@@ -247,6 +289,21 @@
 			path = poll;
 			sourceTree = "<group>";
 		};
+		6F77ADD62202CCA000BCBB51 /* exts */ = {
+			isa = PBXGroup;
+			children = (
+				6FD7C43F221275E30005DDFF /* ExtensionHandler.cpp */,
+				6FD7C440221275E30005DDFF /* ExtensionHandler.h */,
+				6F77ADDD2202D28C00BCBB51 /* PMCE_Deflate.cpp */,
+				6F77ADDE2202D28C00BCBB51 /* PMCE_Deflate.h */,
+				6F77ADDB2202D07300BCBB51 /* PMCE_Base.cpp */,
+				6F77ADD92202CF7D00BCBB51 /* PMCE_Base.h */,
+				6F77AE0422104F1200BCBB51 /* WSExtension.cpp */,
+				6F77ADD72202CCE200BCBB51 /* WSExtension.h */,
+			);
+			path = exts;
+			sourceTree = "<group>";
+		};
 		6F852DE81985E33000271D87 = {
 			isa = PBXGroup;
 			children = (
@@ -274,8 +331,9 @@
 				6FF211C61B1556B9006603BB /* ssl */,
 				6F852E291985EB0500271D87 /* util */,
 				6FF7476C1B27D6210007F34D /* ws */,
-				6F7BBAFC1ED2E4400093BDE3 /* AcceptorBase.cpp */,
+				6FD7C445221292AF0005DDFF /* zlib */,
 				6F7BBAFD1ED2E4400093BDE3 /* AcceptorBase.h */,
+				6F7BBAFC1ED2E4400093BDE3 /* AcceptorBase.cpp */,
 				6F8775FD1EAB4AD0002F1165 /* DnsResolver.h */,
 				6F8775FF1EAB4B18002F1165 /* DnsResolver.cpp */,
 				6FF211D51B1556FB006603BB /* evdefs.h */,
@@ -330,6 +388,26 @@
 				6F9E76E71D3BB34E005E04B2 /* kmobject.h */,
 			);
 			path = util;
+			sourceTree = "<group>";
+		};
+		6FD7C445221292AF0005DDFF /* zlib */ = {
+			isa = PBXGroup;
+			children = (
+				6FD7C450221293080005DDFF /* adler32.c */,
+				6FD7C449221293080005DDFF /* compress.c */,
+				6FD7C44B221293080005DDFF /* crc32.c */,
+				6FD7C448221293080005DDFF /* deflate.c */,
+				6FD7C44E221293080005DDFF /* infback.c */,
+				6FD7C44A221293080005DDFF /* inffast.c */,
+				6FD7C44F221293080005DDFF /* inflate.c */,
+				6FD7C44D221293080005DDFF /* inftrees.c */,
+				6FD7C447221293080005DDFF /* trees.c */,
+				6FD7C451221293080005DDFF /* uncompr.c */,
+				6FD7C452221293080005DDFF /* zlib.h */,
+				6FD7C44C221293080005DDFF /* zutil.c */,
+			);
+			name = zlib;
+			path = ../vendor/zlib;
 			sourceTree = "<group>";
 		};
 		6FE0EEEF1D40982B006136B7 /* v2 */ = {
@@ -418,8 +496,10 @@
 		6FF7476C1B27D6210007F34D /* ws */ = {
 			isa = PBXGroup;
 			children = (
+				6F77ADD62202CCA000BCBB51 /* exts */,
 				6FBB2CB81D139C990024550F /* WebSocketImpl.cpp */,
 				6FBB2CB91D139C990024550F /* WebSocketImpl.h */,
+				6F77AE0222057E0000BCBB51 /* wsdefs.h */,
 				6FBB2CBA1D139C990024550F /* WSHandler.cpp */,
 				6FBB2CBB1D139C990024550F /* WSHandler.h */,
 			);
@@ -435,6 +515,7 @@
 			files = (
 				6F6208FB1A26BDB1000DAF4B /* kmconf.h in Headers */,
 				6FE0EF031D409863006136B7 /* H2ConnectionImpl.h in Headers */,
+				6F77AE0322057E0000BCBB51 /* wsdefs.h in Headers */,
 				6F2963571A18AB0D00C3C79B /* util.h in Headers */,
 				6F0098AD1B01FEC800122C15 /* TcpSocketImpl.h in Headers */,
 				6FE0EF081D409863006136B7 /* H2Frame.h in Headers */,
@@ -445,6 +526,7 @@
 				6FBB2C901D139C430024550F /* IOPoll.h in Headers */,
 				6FF211041B130A2F006603BB /* TcpListenerImpl.h in Headers */,
 				6F7BBAFF1ED2E4400093BDE3 /* AcceptorBase.h in Headers */,
+				6FD7C442221275E30005DDFF /* ExtensionHandler.h in Headers */,
 				6FBB2CAF1D139C560024550F /* Uri.h in Headers */,
 				6FE0EF061D409863006136B7 /* h2defs.h in Headers */,
 				6FD3F0571EBD99790027D04F /* BioHandler.h in Headers */,
@@ -454,11 +536,13 @@
 				6F6D14561D9CBDE7008B64E6 /* FlowControl.h in Headers */,
 				6FBB2CAB1D139C560024550F /* HttpRequestImpl.h in Headers */,
 				6FBB2CBD1D139C990024550F /* WebSocketImpl.h in Headers */,
+				6FD7C45F221293080005DDFF /* zlib.h in Headers */,
 				6F5C79E21D59CC8700FF8C83 /* DestroyDetector.h in Headers */,
 				6F7FC4741F4933B50038360B /* h2utils.h in Headers */,
 				6FE0EF181D40986D006136B7 /* StaticTable.h in Headers */,
 				6F3731F61E37242200479457 /* HttpHeader.h in Headers */,
 				6F7512941D76C237000BE6EC /* SocketNotifier.h in Headers */,
+				6F77ADD82202CCE200BCBB51 /* WSExtension.h in Headers */,
 				6FE0EF011D409863006136B7 /* FrameParser.h in Headers */,
 				6F75128F1D76BD46000BE6EC /* PipeNotifier.h in Headers */,
 				6FE0EF051D409863006136B7 /* H2ConnectionMgr.h in Headers */,
@@ -477,6 +561,7 @@
 				6FE0EF0C1D409863006136B7 /* Http2Response.h in Headers */,
 				6FF7478E1B29587D0007F34D /* base64.h in Headers */,
 				6F91F1721D782DD3004A95B9 /* Http1xRequest.h in Headers */,
+				6F77ADE02202D28C00BCBB51 /* PMCE_Deflate.h in Headers */,
 				6FBB2CB71D139C700024550F /* SioHandler.h in Headers */,
 				6F7FC3B81F4297BD0038360B /* HttpCache.h in Headers */,
 				6F35E21B1F96ECAB005F705B /* defer.h in Headers */,
@@ -488,6 +573,7 @@
 				6F2D40481B194AE200E24928 /* TimerManager.h in Headers */,
 				6F2732A41EC44A16006E221E /* SocketBase.h in Headers */,
 				6FBB2CAD1D139C560024550F /* HttpResponseImpl.h in Headers */,
+				6F77ADDA2202CF7D00BCBB51 /* PMCE_Base.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -542,25 +628,37 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6FD7C441221275E30005DDFF /* ExtensionHandler.cpp in Sources */,
+				6FD7C45A221293080005DDFF /* inftrees.c in Sources */,
 				6F7512921D76BE27000BE6EC /* Notifier.cpp in Sources */,
 				6FBB2CB41D139C700024550F /* OpenSslLib.cpp in Sources */,
 				6FBB2CAE1D139C560024550F /* Uri.cpp in Sources */,
+				6FD7C458221293080005DDFF /* crc32.c in Sources */,
 				6F2732A31EC44A16006E221E /* SocketBase.cpp in Sources */,
 				6FE0EF141D40986D006136B7 /* HPacker.cpp in Sources */,
 				6FE0EF161D40986D006136B7 /* HPackTable.cpp in Sources */,
+				6FD7C45E221293080005DDFF /* uncompr.c in Sources */,
+				6FD7C45B221293080005DDFF /* infback.c in Sources */,
 				6FE0EF0D1D409863006136B7 /* H2Stream.cpp in Sources */,
 				6F472B311D43B53500D01201 /* TcpConnection.cpp in Sources */,
 				6F6D14551D9CBDE7008B64E6 /* FlowControl.cpp in Sources */,
+				6FD7C455221293080005DDFF /* deflate.c in Sources */,
+				6F77AE0522104F1200BCBB51 /* WSExtension.cpp in Sources */,
 				6FBB2CAC1D139C560024550F /* HttpResponseImpl.cpp in Sources */,
 				6FD3F0561EBD99790027D04F /* BioHandler.cpp in Sources */,
 				6FE0EF041D409863006136B7 /* H2ConnectionMgr.cpp in Sources */,
 				6F7BBAFE1ED2E4400093BDE3 /* AcceptorBase.cpp in Sources */,
 				6FE0EF001D409863006136B7 /* FrameParser.cpp in Sources */,
 				6F0098B31B03124400122C15 /* TcpSocketImpl.cpp in Sources */,
+				6FD7C456221293080005DDFF /* compress.c in Sources */,
+				6FD7C457221293080005DDFF /* inffast.c in Sources */,
 				6F91F1B21D7ADF77004A95B9 /* KQueue.cpp in Sources */,
 				6F2D403E1B1834D300E24928 /* UdpSocketImpl.cpp in Sources */,
 				6FBB2CB61D139C700024550F /* SioHandler.cpp in Sources */,
+				6F77ADDF2202D28C00BCBB51 /* PMCE_Deflate.cpp in Sources */,
 				6F91F1711D782DD3004A95B9 /* Http1xRequest.cpp in Sources */,
+				6FD7C45C221293080005DDFF /* inflate.c in Sources */,
+				6FD7C459221293080005DDFF /* zutil.c in Sources */,
 				6FBB2CAA1D139C560024550F /* HttpRequestImpl.cpp in Sources */,
 				6FBB2C931D139C430024550F /* VPoll.cpp in Sources */,
 				6FF212931B181103006603BB /* kmapi.cpp in Sources */,
@@ -580,9 +678,12 @@
 				6FE0EF071D409863006136B7 /* H2Frame.cpp in Sources */,
 				6FF211D91B1556FB006603BB /* EventLoopImpl.cpp in Sources */,
 				6F7FC4731F4933B50038360B /* h2utils.cpp in Sources */,
+				6FD7C45D221293080005DDFF /* adler32.c in Sources */,
 				6F7FC3B71F4297BD0038360B /* HttpCache.cpp in Sources */,
+				6F77ADDC2202D07300BCBB51 /* PMCE_Base.cpp in Sources */,
 				6FBB2C921D139C430024550F /* SelectPoll.cpp in Sources */,
 				6F2963561A18AB0D00C3C79B /* util.cpp in Sources */,
+				6FD7C454221293080005DDFF /* trees.c in Sources */,
 				6FE0EF091D409863006136B7 /* Http2Request.cpp in Sources */,
 				6FBB2CA81D139C560024550F /* HttpParserImpl.cpp in Sources */,
 				6FF7478D1B29587D0007F34D /* base64.cpp in Sources */,

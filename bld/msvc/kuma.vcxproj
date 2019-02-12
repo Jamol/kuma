@@ -96,6 +96,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;KUMA_EXPORTS;_WINSOCK_DEPRECATED_NO_WARNINGS;KUMA_HAS_OPENSSL;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\src;..\..\src\loop;..\..\src\ssl;..\..\vendor;..\..\vendor\openssl\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -113,6 +114,7 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;KUMA_EXPORTS;NOMINMAX;KUMA_HAS_OPENSSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\src;..\..\src\loop;..\..\vendor;..\..\vendor\openssl\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -132,6 +134,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;KUMA_EXPORTS;KUMA_HAS_OPENSSL;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\src;..\..\src\loop;..\..\src\ssl;..\..\vendor;..\..\vendor\openssl\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -153,6 +156,7 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;NOMINMAX;KUMA_EXPORTS;KUMA_HAS_OPENSSL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
       <AdditionalIncludeDirectories>..\..\src;..\..\src\loop;..\..\vendor;..\..\vendor\openssl\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -210,8 +214,23 @@
     <ClCompile Include="..\..\src\util\base64.cpp" />
     <ClCompile Include="..\..\src\util\kmtrace.cpp" />
     <ClCompile Include="..\..\src\util\util.cpp" />
+    <ClCompile Include="..\..\src\ws\exts\ExtensionHandler.cpp" />
+    <ClCompile Include="..\..\src\ws\exts\PMCE_Base.cpp" />
+    <ClCompile Include="..\..\src\ws\exts\PMCE_Deflate.cpp" />
+    <ClCompile Include="..\..\src\ws\exts\WSExtension.cpp" />
     <ClCompile Include="..\..\src\ws\WebSocketImpl.cpp" />
     <ClCompile Include="..\..\src\ws\WSHandler.cpp" />
+    <ClCompile Include="..\..\vendor\zlib\adler32.c" />
+    <ClCompile Include="..\..\vendor\zlib\compress.c" />
+    <ClCompile Include="..\..\vendor\zlib\crc32.c" />
+    <ClCompile Include="..\..\vendor\zlib\deflate.c" />
+    <ClCompile Include="..\..\vendor\zlib\infback.c" />
+    <ClCompile Include="..\..\vendor\zlib\inffast.c" />
+    <ClCompile Include="..\..\vendor\zlib\inflate.c" />
+    <ClCompile Include="..\..\vendor\zlib\inftrees.c" />
+    <ClCompile Include="..\..\vendor\zlib\trees.c" />
+    <ClCompile Include="..\..\vendor\zlib\uncompr.c" />
+    <ClCompile Include="..\..\vendor\zlib\zutil.c" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\AcceptorBase.h" />
@@ -272,6 +291,7 @@
     <ClInclude Include="..\..\src\util\util.h" />
     <ClInclude Include="..\..\src\ws\WebSocketImpl.h" />
     <ClInclude Include="..\..\src\ws\WSHandler.h" />
+    <ClInclude Include="..\..\vendor\zlib\zlib.h" />
     <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>

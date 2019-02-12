@@ -61,6 +61,12 @@
     <Filter Include="Header Files\iocp">
       <UniqueIdentifier>{72369736-9295-4043-9abb-0347b03c95f2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ws\exts">
+      <UniqueIdentifier>{17d4254d-de26-4d30-8894-e4d50b2cbc19}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\zlib">
+      <UniqueIdentifier>{1d0973ec-b28d-4023-a08f-4e10a4b27126}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\EventLoopImpl.cpp">
@@ -206,6 +212,51 @@
     </ClCompile>
     <ClCompile Include="..\..\src\http\v2\h2utils.cpp">
       <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ws\exts\ExtensionHandler.cpp">
+      <Filter>Source Files\ws\exts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ws\exts\PMCE_Base.cpp">
+      <Filter>Source Files\ws\exts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ws\exts\PMCE_Deflate.cpp">
+      <Filter>Source Files\ws\exts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ws\exts\WSExtension.cpp">
+      <Filter>Source Files\ws\exts</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\vendor\zlib\adler32.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\vendor\zlib\compress.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\vendor\zlib\crc32.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\vendor\zlib\deflate.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\vendor\zlib\infback.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\vendor\zlib\inffast.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\vendor\zlib\inflate.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\vendor\zlib\inftrees.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\vendor\zlib\trees.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\vendor\zlib\uncompr.c">
+      <Filter>Source Files\zlib</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\vendor\zlib\zutil.c">
+      <Filter>Source Files\zlib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -385,6 +436,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\kmbuffer.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\vendor\zlib\zlib.h">
+      <Filter>Source Files\zlib</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

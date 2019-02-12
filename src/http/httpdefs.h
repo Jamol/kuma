@@ -41,7 +41,8 @@ const std::string strHost = "Host";
 const std::string strUpgrade = "Upgrade";
 
 using KeyValuePair = std::pair<std::string, std::string>;
-using HeaderVector = std::vector<KeyValuePair>;
+using KeyValueList = std::vector<KeyValuePair>;
+using HeaderVector = KeyValueList;
 using HttpBody = std::vector<uint8_t>;
 
 struct CaseIgnoreLess

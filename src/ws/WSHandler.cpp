@@ -25,6 +25,7 @@
 
 
 using namespace kuma;
+using namespace kuma::ws;
 
 //////////////////////////////////////////////////////////////////////////
 WSHandler::WSHandler()
@@ -49,14 +50,41 @@ void WSHandler::setHttpParser(HttpParser::Impl&& parser)
     }
 }
 
-const std::string WSHandler::getSubprotocol()
-{
-    return http_parser_.getHeaderValue(kSecWebSocketProtocol);
-}
-
-const std::string WSHandler::getOrigin()
+const std::string WSHandler::getOrigin() const
 {
     return http_parser_.getHeaderValue("Origin");
+}
+
+const std::string WSHandler::getSubprotocol() const
+{
+    std::string subprotocol;
+    http_parser_.forEachHeader([&subprotocol] (const std::string& key, const std::string& value) {
+        if (key == kSecWebSocketProtocol) {
+            if (subprotocol.empty()) {
+                subprotocol = value;
+            } else {
+                subprotocol += ", " + value;
+            }
+        }
+        return true;
+    });
+    return subprotocol;
+}
+
+const std::string WSHandler::getExtensions() const
+{
+    std::string extensions;
+    http_parser_.forEachHeader([&extensions] (const std::string& key, const std::string& value) {
+        if (key == kSecWebSocketExtensions) {
+            if (extensions.empty()) {
+                extensions = value;
+            } else {
+                extensions += ", " + value;
+            }
+        }
+        return true;
+    });
+    return extensions;
 }
 
 void WSHandler::onHttpData(KMBuffer &buf)
@@ -127,7 +155,7 @@ void WSHandler::handleResponse()
     if(handshake_cb_) handshake_cb_(err);
 }
 
-WSHandler::WSError WSHandler::handleData(uint8_t* data, size_t len)
+WSError WSHandler::handleData(uint8_t* data, size_t len)
 {
     if(state_ == STATE_OPEN) {
         return decodeFrame(data, len);
@@ -148,18 +176,33 @@ WSHandler::WSError WSHandler::handleData(uint8_t* data, size_t len)
     return WSError::NOERR;
 }
 
-int WSHandler::encodeFrameHeader(WSOpcode opcode, bool fin, uint8_t (*mask_key)[WS_MASK_KEY_SIZE], size_t plen, uint8_t hdr_buf[14])
+int WSHandler::encodeFrameHeader(FrameHeader hdr, uint8_t hdr_buf[WS_MAX_HEADER_SIZE])
 {
-    uint8_t first_byte = fin ? 0x80 : 0x00;
-    first_byte |= opcode;
-    uint8_t second_byte = mask_key?0x80:0x00;
+    uint8_t first_byte = 0x00;
+    if (hdr.fin) {
+        first_byte |= 0x80;
+    }
+    if (hdr.rsv1) {
+        first_byte |= 0x40;
+    }
+    if (hdr.rsv2) {
+        first_byte |= 0x20;
+    }
+    if (hdr.rsv3) {
+        first_byte |= 0x10;
+    }
+    first_byte |= (uint8_t)hdr.opcode;
+    uint8_t second_byte = 0x00;
+    if (hdr.mask) {
+        second_byte |= 0x80;
+    }
     uint8_t hdr_len = 2;
     
-    if(plen <= 125)
+    if(hdr.length <= 125)
     {//0 byte
-        second_byte |= (uint8_t)plen;
+        second_byte |= (uint8_t)hdr.length;
     }
-    else if(plen <= 0xFFFF)
+    else if(hdr.length <= 0xFFFF)
     {//2 bytes
         hdr_len += 2;
         second_byte |= 126;
@@ -174,8 +217,8 @@ int WSHandler::encodeFrameHeader(WSOpcode opcode, bool fin, uint8_t (*mask_key)[
     hdr_buf[1] = second_byte;
     if(126 == (second_byte & 0x7F))
     {
-        hdr_buf[2] = (unsigned char)(plen >> 8);
-        hdr_buf[3] = (unsigned char)plen;
+        hdr_buf[2] = (unsigned char)(hdr.length >> 8);
+        hdr_buf[3] = (unsigned char)hdr.length;
     }
     else if(127 == (second_byte & 0x7F))
     {
@@ -183,19 +226,19 @@ int WSHandler::encodeFrameHeader(WSOpcode opcode, bool fin, uint8_t (*mask_key)[
         hdr_buf[3] = 0;
         hdr_buf[4] = 0;
         hdr_buf[5] = 0;
-        hdr_buf[6] = (unsigned char)(plen >> 24);
-        hdr_buf[7] = (unsigned char)(plen >> 16);
-        hdr_buf[8] = (unsigned char)(plen >> 8);
-        hdr_buf[9] = (unsigned char)plen;
+        hdr_buf[6] = (unsigned char)(hdr.length >> 24);
+        hdr_buf[7] = (unsigned char)(hdr.length >> 16);
+        hdr_buf[8] = (unsigned char)(hdr.length >> 8);
+        hdr_buf[9] = (unsigned char)hdr.length;
     }
-    if (mask_key) {
-        memcpy(hdr_buf + hdr_len, *mask_key, WS_MASK_KEY_SIZE);
+    if (hdr.mask) {
+        memcpy(hdr_buf + hdr_len, hdr.maskey, WS_MASK_KEY_SIZE);
         hdr_len += WS_MASK_KEY_SIZE;
     }
     return hdr_len;
 }
 
-WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
+WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
 {
 #define WS_MAX_FRAME_DATA_LENGTH	10*1024*1024
     
@@ -210,10 +253,9 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                 b = data[pos++];
                 ctx_.hdr.fin = b >> 7;
                 ctx_.hdr.opcode = b & 0x0F;
-                if(b & 0x70) { // reserved bits are not 0
-                    ctx_.state = DecodeState::IN_ERROR;
-                    return WSError::INVALID_FRAME;
-                }
+                ctx_.hdr.rsv1 = (b >> 6) & 0x01;
+                ctx_.hdr.rsv2 = (b >> 5) & 0x01;
+                ctx_.hdr.rsv3 = (b >> 4) & 0x01;
                 if (!ctx_.hdr.fin && isControlFrame(ctx_.hdr.opcode)) {
                     // Control frames MUST NOT be fragmented
                     ctx_.state = DecodeState::IN_ERROR;
@@ -358,7 +400,7 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                 if (err != WSError::NOERR) {
                     return err;
                 }
-                if (WS_OPCODE_CLOSE == ctx_.hdr.opcode) {
+                if ((uint8_t)WSOpcode::CLOSE == ctx_.hdr.opcode) {
                     ctx_.state = DecodeState::CLOSED;
                     return WSError::CLOSED;
                 }
@@ -375,11 +417,11 @@ WSHandler::WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
     return ctx_.state == DecodeState::HDR1 ? WSError::NOERR : WSError::NEED_MORE_DATA;
 }
 
-WSHandler::WSError WSHandler::handleFrame(const FrameHeader &hdr, void* payload, size_t len)
+WSError WSHandler::handleFrame(const FrameHeader &hdr, void* payload, size_t len)
 {
     DESTROY_DETECTOR_SETUP();
     KMBuffer buf(payload, len, len);
-    if(frame_cb_) frame_cb_(hdr.opcode, hdr.fin, buf);
+    if(frame_cb_) frame_cb_(hdr, buf);
     DESTROY_DETECTOR_CHECK(WSError::DESTROYED);
     return WSError::NOERR;
 }

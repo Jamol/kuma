@@ -23,10 +23,14 @@
 #include "util/kmtrace.h"
 #include "util/util.h"
 #include "util/base64.h"
+#include "exts/ExtensionHandler.h"
 
 #include <sstream>
 
 using namespace kuma;
+using namespace kuma::ws;
+
+#define WS_FLAG_NO_COMPRESS(flags) (flags & 0x01)
 
 static std::string generate_sec_accept_value(const std::string& sec_ws_key);
 
@@ -47,6 +51,7 @@ void WebSocket::Impl::cleanup()
 {
     TcpConnection::close();
     ws_handler_.reset();
+    setupWsHandler();
     header_vec_.clear();
     handshake_result_ = KMError::NOERR;
     body_bytes_sent_ = 0;
@@ -54,12 +59,13 @@ void WebSocket::Impl::cleanup()
     origin_.clear();
     subprotocol_.clear();
     extensions_.clear();
+    extension_handler_.reset();
 }
 
 void WebSocket::Impl::setupWsHandler()
 {
-    ws_handler_.setFrameCallback([this] (uint8_t opcode, bool is_fin, KMBuffer &buf) {
-        onWsFrame(opcode, is_fin, buf);
+    ws_handler_.setFrameCallback([this] (FrameHeader hdr, KMBuffer &buf) {
+        return onWsFrame(hdr, buf);
     });
     ws_handler_.setHandshakeCallback([this] (KMError err) {
         onWsHandshake(err);
@@ -103,7 +109,7 @@ KMError WebSocket::Impl::connect(const std::string& ws_url, HandshakeCallback cb
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
         return KMError::INVALID_STATE;
     }
-    ws_handler_.setMode(WSHandler::WSMode::CLIENT);
+    ws_handler_.setMode(WSMode::CLIENT);
     handshake_cb_ = std::move(cb);
     return connect_i(ws_url);
 }
@@ -134,7 +140,7 @@ KMError WebSocket::Impl::connect_i(const std::string& ws_url)
 KMError WebSocket::Impl::attachFd(SOCKET_FD fd, const KMBuffer *init_buf, HandshakeCallback cb)
 {
     handshake_cb_ = std::move(cb);
-    ws_handler_.setMode(WSHandler::WSMode::SERVER);
+    ws_handler_.setMode(WSMode::SERVER);
     setState(State::UPGRADING);
     return TcpConnection::attachFd(fd, init_buf);
 }
@@ -142,7 +148,7 @@ KMError WebSocket::Impl::attachFd(SOCKET_FD fd, const KMBuffer *init_buf, Handsh
 KMError WebSocket::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf, HandshakeCallback cb)
 {
     handshake_cb_ = std::move(cb);
-    ws_handler_.setMode(WSHandler::WSMode::SERVER);
+    ws_handler_.setMode(WSMode::SERVER);
     setState(State::UPGRADING);
 
     auto ret = TcpConnection::attachSocket(std::move(tcp), init_buf);
@@ -151,7 +157,7 @@ KMError WebSocket::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& 
     return ret;
 }
 
-int WebSocket::Impl::send(const void* data, size_t len, bool is_text, bool is_fin)
+int WebSocket::Impl::send(const void* data, size_t len, bool is_text, bool is_fin, uint32_t flags)
 {
     if(getState() != State::OPEN) {
         return -1;
@@ -159,19 +165,30 @@ int WebSocket::Impl::send(const void* data, size_t len, bool is_text, bool is_fi
     if(!sendBufferEmpty()) {
         return 0;
     }
-    WSHandler::WSOpcode opcode = WSHandler::WSOpcode::WS_OPCODE_BINARY;
+    auto opcode = WSOpcode::BINARY;
     if (fragmented_) {
-        opcode = WSHandler::WSOpcode::WS_OPCODE_CONTINUE;
+        opcode = WSOpcode::CONTINUE;
     }
     else if(is_text) {
-        opcode = WSHandler::WSOpcode::WS_OPCODE_TEXT;
+        opcode = WSOpcode::TEXT;
     }
     fragmented_ = !is_fin;
-    auto ret = sendWsFrame(opcode, is_fin, (uint8_t*)data, len);
+    KMError ret = KMError::FAILED;
+    
+    FrameHeader hdr;
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.fin = is_fin ? 1 : 0;
+    hdr.opcode = uint8_t(opcode);
+    if (extension_handler_ && !WS_FLAG_NO_COMPRESS(flags)) {
+        KMBuffer buf(data, len, len);
+        ret = extension_handler_->handleOutcomingFrame(hdr, buf);
+    } else {
+        ret = sendWsFrame(hdr, (uint8_t*)data, len);
+    }
     return ret == KMError::NOERR ? (int)len : -1;
 }
 
-int WebSocket::Impl::send(const KMBuffer &buf, bool is_text, bool is_fin)
+int WebSocket::Impl::send(const KMBuffer &buf, bool is_text, bool is_fin, uint32_t flags)
 {
     if(getState() != State::OPEN) {
         return -1;
@@ -179,16 +196,26 @@ int WebSocket::Impl::send(const KMBuffer &buf, bool is_text, bool is_fin)
     if(!sendBufferEmpty()) {
         return 0;
     }
-    WSHandler::WSOpcode opcode = WSHandler::WSOpcode::WS_OPCODE_BINARY;
+    auto opcode = WSOpcode::BINARY;
     if (fragmented_) {
-        opcode = WSHandler::WSOpcode::WS_OPCODE_CONTINUE;
+        opcode = WSOpcode::CONTINUE;
     }
     else if(is_text) {
-        opcode = WSHandler::WSOpcode::WS_OPCODE_TEXT;
+        opcode = WSOpcode::TEXT;
     }
     fragmented_ = !is_fin;
     auto chainSize = buf.chainLength();
-    auto ret = sendWsFrame(opcode, is_fin, buf);
+    
+    FrameHeader hdr;
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.fin = is_fin ? 1 : 0;
+    hdr.opcode = uint8_t(opcode);
+    KMError ret = KMError::FAILED;
+    if (extension_handler_ && !WS_FLAG_NO_COMPRESS(flags)) {
+        ret = extension_handler_->handleOutcomingFrame(hdr, const_cast<KMBuffer&>(buf));
+    } else {
+        ret = sendWsFrame(hdr, buf);
+    }
     return ret == KMError::NOERR ? static_cast<int>(chainSize) : -1;
 }
 
@@ -207,13 +234,13 @@ KMError WebSocket::Impl::handleInputData(uint8_t *src, size_t len)
 {
     if (getState() == State::OPEN || getState() == State::UPGRADING) {
         DESTROY_DETECTOR_SETUP();
-        WSHandler::WSError err = ws_handler_.handleData(src, len);
+        WSError err = ws_handler_.handleData(src, len);
         DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
         if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
             return KMError::INVALID_STATE;
         }
-        if(err != WSHandler::WSError::NOERR &&
-           err != WSHandler::WSError::NEED_MORE_DATA) {
+        if(err != WSError::NOERR &&
+           err != WSError::NEED_MORE_DATA) {
             onError(KMError::FAILED);
             return KMError::FAILED;
         }
@@ -281,9 +308,9 @@ std::string WebSocket::Impl::buildUpgradeRequest()
     if (!subprotocol_.empty()) {
         ss << kSecWebSocketProtocol << ": " << subprotocol_ << "\r\n";
     }
-    if (!extensions_.empty()) {
-        ss << kSecWebSocketExtensions << ": " << extensions_ << "\r\n";
-    }
+    
+    ss << kSecWebSocketExtensions << ": permessage-deflate; client_max_window_bits\r\n";
+    
     ss << kSecWebSocketVersion << ": " << kWebSocketVersion << "\r\n";
     
     for (auto &kv : header_vec_) {
@@ -370,11 +397,16 @@ void WebSocket::Impl::onStateOpen()
     }
 }
 
-void WebSocket::Impl::onWsFrame(uint8_t opcode, bool is_fin, KMBuffer &buf)
+KMError WebSocket::Impl::onWsFrame(FrameHeader hdr, KMBuffer &buf)
 {
-    if (WSHandler::isControlFrame(opcode)) {
+    if (hdr.rsv1 != 0 || hdr.rsv2 != 0 || hdr.rsv3 != 0) {
+        setState(State::IN_ERROR);
+        if(error_cb_) error_cb_(KMError::PROTO_ERROR);
+        return KMError::PROTO_ERROR;
+    }
+    if (WSHandler::isControlFrame(hdr.opcode)) {
         auto buf_len = buf.chainLength();
-        if (WSHandler::WSOpcode::WS_OPCODE_CLOSE == opcode) {
+        if ((uint8_t)WSOpcode::CLOSE == hdr.opcode) {
             uint16_t statusCode = 0;
             if (buf_len >= 2) {
                 uint8_t hdr[2];
@@ -389,13 +421,15 @@ void WebSocket::Impl::onWsFrame(uint8_t opcode, bool is_fin, KMBuffer &buf)
             cleanup();
             setState(State::CLOSED);
             if(error_cb_) error_cb_(KMError::CLOSED);
-        } else if (WSHandler::WSOpcode::WS_OPCODE_PING == opcode) {
+        } else if ((uint8_t)WSOpcode::PING == hdr.opcode) {
             sendPongFrame(buf);
         }
     } else {
-        bool is_text = WSHandler::WSOpcode::WS_OPCODE_TEXT == opcode;
-        if(data_cb_) data_cb_(buf, is_text, is_fin);
+        bool is_text = (uint8_t)WSOpcode::TEXT == hdr.opcode;
+        if(data_cb_) data_cb_(buf, is_text, hdr.fin);
     }
+    
+    return KMError::NOERR;
 }
 
 void WebSocket::Impl::onWsHandshake(KMError err)
@@ -403,17 +437,22 @@ void WebSocket::Impl::onWsHandshake(KMError err)
     handshake_result_ = err;
     if (isServer()) {
         origin_ = ws_handler_.getOrigin();
+        subprotocol_ = ws_handler_.getSubprotocol();
+        extensions_ = ws_handler_.getExtensions();
         if(handshake_cb_ && KMError::NOERR == err) {
             DESTROY_DETECTOR_SETUP();
             auto rv = handshake_cb_(err);
             DESTROY_DETECTOR_CHECK_VOID();
             if (!rv) {
                 handshake_result_ = KMError::REJECTED;
+            } else {
+                negotiateExtensions();
             }
         }
         sendUpgradeResponse();
     } else {
         if(KMError::NOERR == err) {
+            negotiateExtensions();
             onStateOpen();
         } else {
             setState(State::IN_ERROR);
@@ -422,18 +461,69 @@ void WebSocket::Impl::onWsHandshake(KMError err)
     }
 }
 
-KMError WebSocket::Impl::sendWsFrame(WSHandler::WSOpcode opcode, bool is_fin, uint8_t *payload, size_t plen)
+KMError WebSocket::Impl::negotiateExtensions()
+{
+    extensions_ = "";
+    std::string ext_list;
+    ws_handler_.forEachHeader([&ext_list] (const std::string& key, const std::string& value) {
+        if (key == kSecWebSocketExtensions) {
+            if (ext_list.empty()) {
+                ext_list = value;
+            } else {
+                ext_list += ", " + value;
+            }
+        }
+        return true;
+    });
+    
+    if (!ext_list.empty()) {
+        auto ext_handler = std::make_unique<ExtensionHandler>();
+        auto err = ext_handler->negotiateExtensions(ext_list, ws_handler_.getMode() == WSMode::CLIENT);
+        if (err == KMError::NOERR) {
+            extension_handler_ = std::move(ext_handler);
+            extensions_ = extension_handler_->getExtensionAnswer();
+            extension_handler_->setIncomingCallback([this] (FrameHeader hdr, KMBuffer &buf) {
+                return onExtensionIncomingFrame(hdr, buf);
+            });
+            extension_handler_->setOutcomingCallback([this] (FrameHeader hdr, KMBuffer &buf) {
+                return onExtensionOutcomingFrame(hdr, buf);
+            });
+            
+            ws_handler_.setFrameCallback([this] (FrameHeader hdr, KMBuffer &buf) {
+                if (WSHandler::isControlFrame(hdr.opcode)) {
+                    return onWsFrame(hdr, buf);
+                } else {
+                    return extension_handler_->handleIncomingFrame(hdr, buf);
+                }
+            });
+        }
+    }
+    
+    return KMError::NOERR;
+}
+
+KMError WebSocket::Impl::onExtensionIncomingFrame(ws::FrameHeader hdr, KMBuffer &buf)
+{
+    onWsFrame(hdr, buf);
+    return KMError::NOERR;
+}
+
+KMError WebSocket::Impl::onExtensionOutcomingFrame(ws::FrameHeader hdr, KMBuffer &buf)
+{
+    return sendWsFrame(hdr, buf);
+}
+
+KMError WebSocket::Impl::sendWsFrame(ws::FrameHeader hdr, uint8_t *payload, size_t plen)
 {
     uint8_t hdr_buf[WS_MAX_HEADER_SIZE];
     int hdr_len = 0;
-    if (ws_handler_.getMode() == WSHandler::WSMode::CLIENT && plen > 0) {
-        uint8_t mask_key[WS_MASK_KEY_SIZE];
-        *(uint32_t*)mask_key = generateMaskKey();
-        WSHandler::handleDataMask(mask_key, payload, plen);
-        hdr_len = ws_handler_.encodeFrameHeader(opcode, is_fin, &mask_key, plen, hdr_buf);
-    } else {
-        hdr_len = ws_handler_.encodeFrameHeader(opcode, is_fin, nullptr, plen, hdr_buf);
+    if (ws_handler_.getMode() == WSMode::CLIENT && plen > 0) {
+        hdr.mask = 1;
+        *(uint32_t*)hdr.maskey = generateMaskKey();
+        WSHandler::handleDataMask(hdr.maskey, payload, plen);
     }
+    hdr.length = uint32_t(plen);
+    hdr_len = ws_handler_.encodeFrameHeader(hdr, hdr_buf);
     iovec iovs[2];
     int cnt = 0;
     iovs[0].iov_base = (char*)hdr_buf;
@@ -448,19 +538,18 @@ KMError WebSocket::Impl::sendWsFrame(WSHandler::WSOpcode opcode, bool is_fin, ui
     return ret < 0 ? KMError::SOCK_ERROR : KMError::NOERR;
 }
 
-KMError WebSocket::Impl::sendWsFrame(WSHandler::WSOpcode opcode, bool is_fin, const KMBuffer &buf)
+KMError WebSocket::Impl::sendWsFrame(FrameHeader hdr, const KMBuffer &buf)
 {
     size_t plen = buf.chainLength();
     uint8_t hdr_buf[WS_MAX_HEADER_SIZE];
     int hdr_len = 0;
-    if (ws_handler_.getMode() == WSHandler::WSMode::CLIENT && plen > 0) {
-        uint8_t mask_key[WS_MASK_KEY_SIZE];
-        *(uint32_t*)mask_key = generateMaskKey();
-        WSHandler::handleDataMask(mask_key, const_cast<KMBuffer&>(buf));
-        hdr_len = ws_handler_.encodeFrameHeader(opcode, is_fin, &mask_key, plen, hdr_buf);
-    } else {
-        hdr_len = ws_handler_.encodeFrameHeader(opcode, is_fin, nullptr, plen, hdr_buf);
+    if (ws_handler_.getMode() == WSMode::CLIENT && plen > 0) {
+        hdr.mask = 1;
+        *(uint32_t*)hdr.maskey = generateMaskKey();
+        WSHandler::handleDataMask(hdr.maskey, const_cast<KMBuffer&>(buf));
     }
+    hdr.length = uint32_t(plen);
+    hdr_len = ws_handler_.encodeFrameHeader(hdr, hdr_buf);
     IOVEC iovs;
     iovec iov;
     iov.iov_base = (char*)hdr_buf;
@@ -473,24 +562,36 @@ KMError WebSocket::Impl::sendWsFrame(WSHandler::WSOpcode opcode, bool is_fin, co
 
 KMError WebSocket::Impl::sendCloseFrame(uint16_t statusCode)
 {
+    FrameHeader hdr;
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.fin = 1;
+    hdr.opcode = uint8_t(WSOpcode::CLOSE);
     if (statusCode != 0) {
         uint8_t payload[2];
         payload[0] = statusCode >> 8;
         payload[1] = statusCode & 0xFF;
-        return sendWsFrame(WSHandler::WSOpcode::WS_OPCODE_CLOSE, true, payload, 2);
+        return sendWsFrame(hdr, payload, 2);
     } else {
-        return sendWsFrame(WSHandler::WSOpcode::WS_OPCODE_CLOSE, true, nullptr, 0);
+        return sendWsFrame(hdr, nullptr, 0);
     }
 }
 
 KMError WebSocket::Impl::sendPingFrame(const KMBuffer &buf)
 {
-    return sendWsFrame(WSHandler::WSOpcode::WS_OPCODE_PING, true, buf);
+    FrameHeader hdr;
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.fin = 1;
+    hdr.opcode = uint8_t(WSOpcode::PING);
+    return sendWsFrame(hdr, buf);
 }
 
 KMError WebSocket::Impl::sendPongFrame(const KMBuffer &buf)
 {
-    return sendWsFrame(WSHandler::WSOpcode::WS_OPCODE_PONG, true, buf);
+    FrameHeader hdr;
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.fin = 1;
+    hdr.opcode = uint8_t(WSOpcode::PONG);
+    return sendWsFrame(hdr, buf);
 }
 
 uint32_t WebSocket::Impl::generateMaskKey()

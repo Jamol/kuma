@@ -88,7 +88,7 @@ KMError SioHandler::init(SslRole ssl_role, SOCKET_FD fd, uint32_t ssl_flags)
         KUMA_ERRXTRACE("init, SSL_set_fd failed, err="<<ERR_reason_error_string(ERR_get_error()));
         SSL_free(ssl_);
         ssl_ = NULL;
-        return KMError::SSL_FAILED;
+        return KMError::SSL_ERROR;
     }
     return KMError::NOERR;
 }

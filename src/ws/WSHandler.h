@@ -22,52 +22,17 @@
 #ifndef __WSHandler_H__
 #define __WSHandler_H__
 
-#include "kmdefs.h"
+#include "wsdefs.h"
 #include "http/HttpParserImpl.h"
 #include "util/DestroyDetector.h"
 #include <vector>
 
-KUMA_NS_BEGIN
-
-#define WS_MASK_KEY_SIZE    4
-#define WS_MAX_HEADER_SIZE  14
-
-const std::string kSecWebSocketKey { "Sec-WebSocket-Key" };
-const std::string kSecWebSocketAccept { "Sec-WebSocket-Accept" };
-const std::string kSecWebSocketVersion { "Sec-WebSocket-Version" };
-const std::string kSecWebSocketProtocol { "Sec-WebSocket-Protocol" };
-const std::string kSecWebSocketExtensions { "Sec-WebSocket-Extensions" };
-
-const std::string kWebSocketVersion { "13" };
+WS_NS_BEGIN
 
 class WSHandler : public DestroyDetector
 {
 public:
-    typedef enum{
-        WS_OPCODE_CONTINUE  = 0,
-        WS_OPCODE_TEXT      = 1,
-        WS_OPCODE_BINARY    = 2,
-        WS_OPCODE_CLOSE     = 8,
-        WS_OPCODE_PING      = 9,
-        WS_OPCODE_PONG      = 10
-    } WSOpcode;
-    enum class WSError : int {
-        NOERR,
-        NEED_MORE_DATA,
-        HANDSHAKE,
-        INVALID_PARAM,
-        INVALID_STATE,
-        INVALID_FRAME,
-        INVALID_LENGTH,
-        PROTOCOL_ERROR,
-        CLOSED,
-        DESTROYED
-    };
-    enum class WSMode {
-        CLIENT,
-        SERVER
-    };
-    using FrameCallback = std::function<void(uint8_t/*opcode*/, bool/*fin*/, KMBuffer &buf)>;
+    using FrameCallback = std::function<KMError(FrameHeader, KMBuffer &)>;
     using HandshakeCallback = std::function<void(KMError)>;
     using EnumerateCallback = HttpParser::Impl::EnumerateCallback;
     
@@ -79,10 +44,11 @@ public:
     void setHttpParser(HttpParser::Impl&& parser);
     
     WSError handleData(uint8_t* data, size_t len);
-    static int encodeFrameHeader(WSOpcode opcode, bool fin, uint8_t (*mask_key)[WS_MASK_KEY_SIZE], size_t plen, uint8_t hdr_buf[14]);
+    static int encodeFrameHeader(FrameHeader hdr, uint8_t hdr_buf[WS_MAX_HEADER_SIZE]);
     
-    const std::string getSubprotocol();
-    const std::string getOrigin();
+    const std::string getOrigin() const;
+    const std::string getSubprotocol() const;
+    const std::string getExtensions() const;
     
     const std::string& getPath() const;
     const std::string& getQuery() const;
@@ -98,7 +64,7 @@ public:
     static void handleDataMask(const uint8_t mask_key[WS_MASK_KEY_SIZE], uint8_t* data, size_t len);
     static void handleDataMask(const uint8_t mask_key[WS_MASK_KEY_SIZE], KMBuffer &buf);
     static bool isControlFrame(uint8_t opcode) {
-        return opcode == WS_OPCODE_PING || opcode == WS_OPCODE_PONG || opcode == WS_OPCODE_CLOSE;
+        return opcode >= 8;
     }
     
 private:
@@ -111,22 +77,6 @@ private:
         CLOSED,
         IN_ERROR,
     };
-    
-    typedef struct FrameHeader {
-        uint8_t fin:1;
-        uint8_t rsv1:1;
-        uint8_t rsv2:1;
-        uint8_t rsv3:1;
-        uint8_t opcode:4;
-        uint8_t mask:1;
-        uint8_t plen:7;
-        union{
-            uint16_t xpl16;
-            uint64_t xpl64;
-        }xpl;
-        uint8_t maskey[WS_MASK_KEY_SIZE];
-        uint32_t length = 0;
-    }FrameHeader;
     typedef struct DecodeContext{
         void reset()
         {
@@ -139,7 +89,7 @@ private:
         DecodeState state{ DecodeState::HDR1 };
         std::vector<uint8_t> buf;
         uint8_t pos = 0;
-    }DecodeContext;
+    } DecodeContext;
     void cleanup();
     
     void handleDataMask(const FrameHeader& hdr, uint8_t* data, size_t len);
@@ -159,7 +109,7 @@ private:
         STATE_OPEN,
         STATE_ERROR,
         STATE_DESTROY
-    }State;
+    } State;
     State                   state_{ STATE_HANDSHAKE };
     WSMode                  mode_ = WSMode::CLIENT;
     DecodeContext           ctx_;
@@ -170,6 +120,6 @@ private:
     HandshakeCallback       handshake_cb_;
 };
 
-KUMA_NS_END
+WS_NS_END
 
 #endif

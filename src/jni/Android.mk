@@ -13,6 +13,21 @@ endif
 
 LOCAL_MODULE := kuma
 
+MY_ZLIB_DIR := ../vendor/zlib
+
+MY_ZLIB_SRC_FILES := \
+    $(MY_ZLIB_DIR)/adler32.c \
+    $(MY_ZLIB_DIR)/compress.c \
+    $(MY_ZLIB_DIR)/crc32.c \
+    $(MY_ZLIB_DIR)/deflate.c \
+    $(MY_ZLIB_DIR)/infback.c \
+    $(MY_ZLIB_DIR)/inffast.c \
+    $(MY_ZLIB_DIR)/inflate.c \
+    $(MY_ZLIB_DIR)/inftrees.c \
+    $(MY_ZLIB_DIR)/trees.c \
+    $(MY_ZLIB_DIR)/uncompr.c \
+    $(MY_ZLIB_DIR)/zutil.c
+
 LOCAL_SRC_FILES := \
     EventLoopImpl.cpp \
     AcceptorBase.cpp \
@@ -50,6 +65,10 @@ LOCAL_SRC_FILES := \
     http/v2/hpack/HPacker.cpp \
     ws/WSHandler.cpp \
     ws/WebSocketImpl.cpp \
+    ws/exts/ExtensionHandler.cpp \
+    ws/exts/PMCE_Deflate.cpp \
+    ws/exts/PMCE_Base.cpp \
+    ws/exts/WSExtension.cpp \
     util/util.cpp \
     util/kmtrace.cpp \
     util/base64.cpp \
@@ -59,6 +78,8 @@ LOCAL_SRC_FILES := \
     ssl/OpenSslLib.cpp \
     DnsResolver.cpp \
     kmapi.cpp
+
+LOCAL_SRC_FILES += $(MY_ZLIB_SRC_FILES)
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH) \

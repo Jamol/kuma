@@ -4,6 +4,7 @@
 //  The contents of this file are implicitly included at the beginning of every source file.
 //
 
-#include <iostream>
+//#include <iostream>
+#include <unistd.h> // for read() used in zlib
 
 #define KUMA_HAS_OPENSSL    1

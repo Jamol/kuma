@@ -58,12 +58,12 @@ KMError SslHandler::init(SslRole ssl_role, SOCKET_FD fd, uint32_t ssl_flags)
     }
     if(NULL == ctx) {
         KUMA_ERRXTRACE("init, CTX is NULL");
-        return KMError::SSL_FAILED;
+        return KMError::SSL_ERROR;
     }
     ssl_ = SSL_new(ctx);
     if(!ssl_) {
         KUMA_ERRXTRACE("init, SSL_new failed");
-        return KMError::SSL_FAILED;
+        return KMError::SSL_ERROR;
     }
     OpenSslLib::setSSLData(ssl_, this);
     //SSL_set_mode(ssl_, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
@@ -77,7 +77,7 @@ KMError SslHandler::setAlpnProtocols(const AlpnProtos &protocols)
     if (ssl_ && SSL_set_alpn_protos(ssl_, &protocols[0], (unsigned int)protocols.size()) == 0) {
         return KMError::NOERR;
     }
-    return KMError::SSL_FAILED;
+    return KMError::SSL_ERROR;
 #else
     return KMError::NOT_SUPPORTED;
 #endif
@@ -105,7 +105,7 @@ KMError SslHandler::setServerName(const std::string &serverName)
     if (ssl_ && SSL_set_tlsext_host_name(ssl_, serverName.c_str())) {
         return KMError::NOERR;
     }
-    return KMError::SSL_FAILED;
+    return KMError::SSL_ERROR;
 #else
     return KMError::NOT_SUPPORTED;
 #endif
@@ -119,7 +119,7 @@ KMError SslHandler::setHostName(const std::string &hostName)
         X509_VERIFY_PARAM_set1_host(param, hostName.c_str(), hostName.size());
         return KMError::NOERR;
     }
-    return KMError::SSL_FAILED;
+    return KMError::SSL_ERROR;
 }
 
 #endif

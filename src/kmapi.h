@@ -421,6 +421,7 @@ public:
      */
     KMError setSubprotocol(const char *subprotocol);
     const char* getSubprotocol() const;
+    const char* getExtensions() const;
     
     /**
      * add user defined headers
@@ -431,8 +432,12 @@ public:
     KMError connect(const char *ws_url, HandshakeCallback cb);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf, HandshakeCallback cb);
     KMError attachSocket(TcpSocket &&tcp, HttpParser &&parser, const KMBuffer *init_buf, HandshakeCallback cb);
-    int send(const void *data, size_t len, bool is_text, bool is_fin=true);
-    int send(const KMBuffer &buf, bool is_text, bool is_fin=true);
+    
+    /**
+     * @param flags, bit 1 -- no compression flag when PMCE is negotiated
+     */
+    int send(const void *data, size_t len, bool is_text, bool is_fin=true, uint32_t flags=0);
+    int send(const KMBuffer &buf, bool is_text, bool is_fin=true, uint32_t flags=0);
     
     KMError close();
     

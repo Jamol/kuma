@@ -175,7 +175,7 @@ KMError TcpSocket::Impl::detachFd(SOCKET_FD &fd)
     }
 #ifdef KUMA_HAS_OPENSSL
     if (sslEnabled()) {
-        return KMError::SSL_FAILED;
+        return KMError::SSL_ERROR;
     }
 #endif
     auto err = socket_->detachFd(fd);
@@ -262,7 +262,7 @@ KMError TcpSocket::Impl::attachFd(SOCKET_FD fd, SSL *ssl, BIO *nbio)
     if (sslEnabled()) {
         if (ssl) {
             if (!createSslHandler()) {
-                return KMError::SSL_FAILED;
+                return KMError::SSL_ERROR;
             }
             return ssl_handler_->attachSsl(ssl, nbio, fd);
         }
@@ -306,7 +306,7 @@ KMError TcpSocket::Impl::startSslHandshake(SslRole ssl_role)
     }
 
     if (!createSslHandler()) {
-        return KMError::SSL_FAILED;
+        return KMError::SSL_ERROR;
     }
     auto ret = ssl_handler_->init(ssl_role, getFd(), ssl_flags_);
     if (ret != KMError::NOERR) {
@@ -330,7 +330,7 @@ KMError TcpSocket::Impl::startSslHandshake(SslRole ssl_role)
 
     auto ssl_state = ssl_handler_->handshake();
     if (ssl_state == SslHandler::SslState::SSL_ERROR) {
-        return KMError::SSL_FAILED;
+        return KMError::SSL_ERROR;
     }
     return KMError::NOERR;
 }
@@ -599,7 +599,7 @@ KMError TcpSocket::Impl::checkSslHandshake(KMError err)
         } else if (ssl_state == SslHandler::SslState::SSL_SUCCESS) {
             err = KMError::NOERR;
         } else {
-            err = KMError::SSL_FAILED;
+            err = KMError::SSL_ERROR;
         }
     }
     KUMA_INFOXTRACE("checkSslHandshake, completed, err=" << int(err));

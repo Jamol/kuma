@@ -981,20 +981,12 @@ const char* WebSocket::getSubprotocol() const
 {
     return pimpl_->getSubprotocol().c_str();
 }
-/*
-KMError WebSocket::setExtensions(const char* extensions)
-{
-    if (!extensions) {
-        return KMError::INVALID_PARAM;
-    }
-    return pimpl_->setExtensions(extensions);
-}
 
 const char* WebSocket::getExtensions() const
 {
     return pimpl_->getExtensions().c_str();
 }
-*/
+
 KMError WebSocket::addHeader(const char *name, const char *value)
 {
     if (!name || !value) {
@@ -1029,14 +1021,14 @@ KMError WebSocket::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBu
     return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move((*parser.pimpl())), init_buf, std::move(cb));
 }
 
-int WebSocket::send(const void* data, size_t len, bool is_text, bool is_fin)
+int WebSocket::send(const void* data, size_t len, bool is_text, bool is_fin, uint32_t flags)
 {
-    return pimpl_->send(data, len, is_text, is_fin);
+    return pimpl_->send(data, len, is_text, is_fin, flags);
 }
 
-int WebSocket::send(const KMBuffer &buf, bool is_text, bool is_fin)
+int WebSocket::send(const KMBuffer &buf, bool is_text, bool is_fin, uint32_t flags)
 {
-    return pimpl_->send(buf, is_text, is_fin);
+    return pimpl_->send(buf, is_text, is_fin, flags);
 }
 
 KMError WebSocket::close()
