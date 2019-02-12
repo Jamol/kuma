@@ -464,17 +464,7 @@ void WebSocket::Impl::onWsHandshake(KMError err)
 KMError WebSocket::Impl::negotiateExtensions()
 {
     extensions_ = "";
-    std::string ext_list;
-    ws_handler_.forEachHeader([&ext_list] (const std::string& key, const std::string& value) {
-        if (key == kSecWebSocketExtensions) {
-            if (ext_list.empty()) {
-                ext_list = value;
-            } else {
-                ext_list += ", " + value;
-            }
-        }
-        return true;
-    });
+    std::string ext_list = ws_handler_.getExtensions();
     
     if (!ext_list.empty()) {
         auto ext_handler = std::make_unique<ExtensionHandler>();
