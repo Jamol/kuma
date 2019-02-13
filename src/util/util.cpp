@@ -53,6 +53,8 @@
 #include <random>
 #include <string>
 #include <sstream>
+#include <algorithm>
+#include <limits.h>
 
 #include "kmobject.h"
 #include "kmtrace.h"

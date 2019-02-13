@@ -25,8 +25,10 @@
 
 #include <string>
 
-#define WS_NS_BEGIN namespace kuma::ws {;
-#define WS_NS_END }
+
+#define WS_NS_BEGIN namespace kuma { namespace ws {;
+#define WS_NS_END }}
+
 
 WS_NS_BEGIN
 

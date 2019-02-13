@@ -28,6 +28,7 @@ INCLUDES = -I. -I$(VENDORDIR) -I$(OPENSSLDIR)/include
 ##############################################################################
 #
 CXX=g++
+CC=gcc
 
 CXXFLAGS = -g -std=c++17 -pipe -fPIC -Wall -Wextra -pedantic -DKUMA_HAS_OPENSSL
 LDFLAGS = -shared -Wl,-Bsymbolic -lpthread -ldl -lssl -lcrypto
@@ -112,7 +113,7 @@ $(BINDIR)/$(TARGET): $(OBJS)
 
 $(OBJDIR)/%.o: %.c
 	$(call testdir,$(dir $@))
-	$(CXX) -c -o $@ $< $(CXXFLAGS) $(INCLUDES)
+	$(CC) -c -o $@ $< $(CXXFLAGS) $(INCLUDES)
 
 $(OBJDIR)/%.o: %.cpp
 	$(call testdir,$(dir $@))
