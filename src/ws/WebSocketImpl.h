@@ -54,7 +54,6 @@ public:
     const std::string& getOrigin() const { return origin_; }
     KMError setSubprotocol(const std::string& subprotocol);
     const std::string& getSubprotocol() const { return subprotocol_; }
-    KMError setExtensions(const std::string& extensions);
     const std::string& getExtensions() const { return extensions_; }
     KMError addHeader(std::string name, std::string value);
     KMError addHeader(std::string name, uint32_t value);

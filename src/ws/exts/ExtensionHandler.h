@@ -47,6 +47,10 @@ public:
     KMError negotiateExtensions(const std::string &extensions, bool is_answer);
     std::string getExtensionAnswer() const { return extension_answer_; }
     
+    bool hasExtension() const { return !ws_extensions_.empty(); }
+    
+    static std::string getExtensionOffer();
+    
 protected:
     virtual KMError onIncomingFrame(FrameHeader hdr, KMBuffer &payload)
     {

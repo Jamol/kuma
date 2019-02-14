@@ -73,7 +73,7 @@ KMError PMCE_Deflate::init()
 KMError PMCE_Deflate::handleIncomingFrame(FrameHeader hdr, KMBuffer &payload)
 {
     if (hdr.rsv1 && hdr.opcode < 8) {
-        DataBuffer d_payload;
+        d_payload.clear();
         auto ret = decompress(payload, d_payload);
         if (ret != KMError::NOERR) {
             return ret;
@@ -96,19 +96,18 @@ KMError PMCE_Deflate::handleIncomingFrame(FrameHeader hdr, KMBuffer &payload)
 
 KMError PMCE_Deflate::handleOutcomingFrame(FrameHeader hdr, KMBuffer &payload)
 {
-    DataBuffer c_payload;
+    c_payload.clear();
     auto ret = compress(payload, c_payload);
-    if (c_payload.size() < 4) {
-        ret = KMError::FAILED;
-    }
-    if (ret == KMError::NOERR) { // else send as uncompressed
+    if (ret == KMError::NOERR && c_payload.size() >= 4) {
         if (hdr.fin) {
             c_payload.resize(c_payload.size()-4);
         }
         hdr.rsv1 = 1;
+        KMBuffer o_payload(&c_payload[0], c_payload.size(), c_payload.size());
+        return onOutcomingFrame(hdr, o_payload);
+    } else { // else send as uncompressed
+        return onOutcomingFrame(hdr, payload);
     }
-    KMBuffer o_payload(&c_payload[0], c_payload.size(), c_payload.size());
-    return onOutcomingFrame(hdr, o_payload);
 }
 
 KMError PMCE_Deflate::getOffer(std::string &offer)

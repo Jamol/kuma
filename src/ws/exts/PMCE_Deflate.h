@@ -57,10 +57,12 @@ protected:
     int         c_max_window_bits = 15;
     bool        c_no_context_takeover = false;
     int         c_memory_level = 8;
+    DataBuffer  c_payload;
     
     z_stream    d_stream {0};
     int         d_flush = Z_SYNC_FLUSH;
     int         d_max_window_bits = 15;
+    DataBuffer  d_payload;
 };
 
 WS_NS_END

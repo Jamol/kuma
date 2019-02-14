@@ -83,12 +83,6 @@ KMError WebSocket::Impl::setSubprotocol(const std::string& subprotocol)
     return KMError::NOERR;
 }
 
-KMError WebSocket::Impl::setExtensions(const std::string& extensions)
-{
-    extensions_ = extensions;
-    return KMError::NOERR;
-}
-
 KMError WebSocket::Impl::addHeader(std::string name, std::string value)
 {
     if (!name.empty() && !value.empty()) {
@@ -309,7 +303,10 @@ std::string WebSocket::Impl::buildUpgradeRequest()
         ss << kSecWebSocketProtocol << ": " << subprotocol_ << "\r\n";
     }
     
-    ss << kSecWebSocketExtensions << ": permessage-deflate; client_max_window_bits\r\n";
+    auto extensionOffer = ExtensionHandler::getExtensionOffer();
+    if (!extensionOffer.empty()) {
+        ss << kSecWebSocketExtensions << ": " << extensionOffer << "\r\n";
+    }
     
     ss << kSecWebSocketVersion << ": " << kWebSocketVersion << "\r\n";
     
@@ -336,8 +333,12 @@ std::string WebSocket::Impl::buildUpgradeResponse()
         if(!subprotocol_.empty()) {
             ss << kSecWebSocketProtocol << ": " << subprotocol_ << "\r\n";
         }
-        if (!extensions_.empty()) {
-            ss << kSecWebSocketExtensions << ": " << extensions_ << "\r\n";
+        
+        if (extension_handler_) {
+            auto extensionAnswer = extension_handler_->getExtensionAnswer();
+            if (!extensionAnswer.empty()) {
+                ss << kSecWebSocketExtensions << ": " << extensionAnswer << "\r\n";
+            }
         }
         
         for (auto &kv : header_vec_) {
@@ -452,6 +453,7 @@ void WebSocket::Impl::onWsHandshake(KMError err)
         sendUpgradeResponse();
     } else {
         if(KMError::NOERR == err) {
+            extensions_ = ws_handler_.getExtensions();
             negotiateExtensions();
             onStateOpen();
         } else {
@@ -463,15 +465,16 @@ void WebSocket::Impl::onWsHandshake(KMError err)
 
 KMError WebSocket::Impl::negotiateExtensions()
 {
-    extensions_ = "";
     std::string ext_list = ws_handler_.getExtensions();
     
     if (!ext_list.empty()) {
         auto ext_handler = std::make_unique<ExtensionHandler>();
         auto err = ext_handler->negotiateExtensions(ext_list, ws_handler_.getMode() == WSMode::CLIENT);
-        if (err == KMError::NOERR) {
+        if (err != KMError::NOERR) {
+            return err;
+        }
+        if (ext_handler->hasExtension()) {
             extension_handler_ = std::move(ext_handler);
-            extensions_ = extension_handler_->getExtensionAnswer();
             extension_handler_->setIncomingCallback([this] (FrameHeader hdr, KMBuffer &buf) {
                 return onExtensionIncomingFrame(hdr, buf);
             });
@@ -494,8 +497,7 @@ KMError WebSocket::Impl::negotiateExtensions()
 
 KMError WebSocket::Impl::onExtensionIncomingFrame(ws::FrameHeader hdr, KMBuffer &buf)
 {
-    onWsFrame(hdr, buf);
-    return KMError::NOERR;
+    return onWsFrame(hdr, buf);
 }
 
 KMError WebSocket::Impl::onExtensionOutcomingFrame(ws::FrameHeader hdr, KMBuffer &buf)

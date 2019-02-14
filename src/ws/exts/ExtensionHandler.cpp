@@ -95,8 +95,12 @@ KMError ExtensionHandler::negotiateExtensions(const std::string &extensions, boo
         last->setOutcomingCallback([this] (FrameHeader hdr, KMBuffer &buf) {
             return onOutcomingFrame(hdr, buf);
         });
-        return KMError::NOERR;
-    } else {
-        return KMError::FAILED;
     }
+    
+    return KMError::NOERR;
+}
+
+std::string ExtensionHandler::getExtensionOffer()
+{
+    return "permessage-deflate; client_max_window_bits";
 }
