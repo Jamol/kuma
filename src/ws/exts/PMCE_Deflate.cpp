@@ -20,6 +20,7 @@
  */
 
 #include "PMCE_Deflate.h"
+#include "compr/compr_zlib.h"
 #include "util/util.h"
 
 using namespace kuma;
@@ -33,40 +34,36 @@ PMCE_Deflate::PMCE_Deflate()
 
 PMCE_Deflate::~PMCE_Deflate()
 {
-    if (m_initialized) {
-        deflateEnd(&c_stream);
-        
-        inflateEnd(&d_stream);
-        
-        m_initialized = false;
-    }
+    
 }
 
 KMError PMCE_Deflate::init()
 {
-    if (!m_negotiated) {
+    if (!negotiated_) {
         return KMError::INVALID_STATE;
     }
-    auto ret = deflateInit2(&c_stream,
-                Z_DEFAULT_COMPRESSION,
-                Z_DEFLATED,
-                -1 * c_max_window_bits,
-                c_memory_level,
-                Z_DEFAULT_STRATEGY);
-    if (ret != Z_OK) {
-        return KMError::FAILED;
+    {
+        std::unique_ptr<ZLibCompressor> compr(new ZLibCompressor());
+        auto ret = compr->init("raw-deflate", c_max_window_bits);
+        if (ret != KMError::NOERR) {
+            return ret;
+        }
+        if (!c_no_context_takeover) {
+            compr->setFlushFlag(Z_SYNC_FLUSH);
+        } else {
+            compr->setFlushFlag(Z_FULL_FLUSH);
+        }
+        compressor_ = std::move(compr);
     }
-    
-    ret = inflateInit2(&d_stream, -1 * d_max_window_bits);
-    if (ret != Z_OK) {
-        return KMError::FAILED;
+    {
+        std::unique_ptr<ZLibDecompressor> decompr(new ZLibDecompressor());
+        auto ret = decompr->init("raw-deflate", d_max_window_bits);
+        if (ret != KMError::NOERR) {
+            return ret;
+        }
+        decompr->setFlushFlag(Z_SYNC_FLUSH);
+        decompressor_ = std::move(decompr);
     }
-    
-    if (c_no_context_takeover) {
-        c_flush = Z_FULL_FLUSH;
-    }
-    
-    m_initialized = true;
     return KMError::NOERR;
 }
 
@@ -74,13 +71,13 @@ KMError PMCE_Deflate::handleIncomingFrame(FrameHeader hdr, KMBuffer &payload)
 {
     if (hdr.rsv1 && hdr.opcode < 8) {
         d_payload.clear();
-        auto ret = decompress(payload, d_payload);
+        auto ret = decompressor_->decompress(payload, d_payload);
         if (ret != KMError::NOERR) {
             return ret;
         }
         if (hdr.fin) {
             uint8_t trailer[4] = {0x00, 0x00, 0xff, 0xff};
-            ret = decompress(trailer, sizeof(trailer), d_payload);
+            ret = decompressor_->decompress(trailer, sizeof(trailer), d_payload);
             if (ret != KMError::NOERR) {
                 return ret;
             }
@@ -97,7 +94,7 @@ KMError PMCE_Deflate::handleIncomingFrame(FrameHeader hdr, KMBuffer &payload)
 KMError PMCE_Deflate::handleOutcomingFrame(FrameHeader hdr, KMBuffer &payload)
 {
     c_payload.clear();
-    auto ret = compress(payload, c_payload);
+    auto ret = compressor_->compress(payload, c_payload);
     if (ret == KMError::NOERR && c_payload.size() >= 4) {
         if (hdr.fin) {
             c_payload.resize(c_payload.size()-4);
@@ -154,7 +151,7 @@ KMError PMCE_Deflate::negotiateAnswer(const std::string &answer)
             return KMError::INVALID_PARAM;
         }
     }
-    m_negotiated = true;
+    negotiated_ = true;
     return KMError::NOERR;
 }
 
@@ -198,77 +195,7 @@ KMError PMCE_Deflate::negotiateOffer(const std::string &offer, std::string &answ
             return KMError::INVALID_PARAM;
         }
     }
-    m_negotiated = true;
-    return KMError::NOERR;
-}
-
-KMError PMCE_Deflate::compress(const uint8_t *ibuf, size_t ilen, DataBuffer &obuf)
-{
-    uint8_t cbuf[8192];
-    c_stream.avail_in = static_cast<uInt>(ilen);
-    c_stream.next_in = const_cast<Bytef *>(ibuf);
-    
-    do {
-        c_stream.avail_out = sizeof(cbuf);
-        c_stream.next_out = cbuf;
-        auto ret = deflate(&c_stream, c_flush);
-        if (ret < 0) {
-            return KMError::FAILED;
-        }
-        auto clen = sizeof(cbuf) - c_stream.avail_out;
-        obuf.insert(obuf.end(), cbuf, cbuf + clen);
-    } while (c_stream.avail_out == 0);
-    
-    return KMError::NOERR;
-}
-
-KMError PMCE_Deflate::decompress(const uint8_t *ibuf, size_t ilen, DataBuffer &obuf)
-{
-    uint8_t dbuf[8192];
-    d_stream.avail_in = static_cast<uInt>(ilen);
-    d_stream.next_in = const_cast<Bytef *>(ibuf);
-    
-    do {
-        d_stream.avail_out = sizeof(dbuf);
-        d_stream.next_out = dbuf;
-        auto ret = inflate(&d_stream, d_flush);
-        if (ret != Z_OK) {
-            return KMError::FAILED;
-        }
-        auto dlen = sizeof(dbuf) - d_stream.avail_out;
-        obuf.insert(obuf.end(), dbuf, dbuf + dlen);
-    } while (d_stream.avail_out == 0);
-    
-    return KMError::NOERR;
-}
-
-KMError PMCE_Deflate::compress(const KMBuffer &ibuf, DataBuffer &obuf)
-{
-    for (auto it = ibuf.begin(); it != ibuf.end(); ++it) {
-        if (it->length() > 0) {
-            auto *cbuf = static_cast<uint8_t *>(it->readPtr());
-            auto ret = compress(cbuf, it->length(), obuf);
-            if (ret != KMError::NOERR) {
-                return ret;
-            }
-        }
-    }
-    
-    return KMError::NOERR;
-}
-
-KMError PMCE_Deflate::decompress(const KMBuffer &ibuf, DataBuffer &obuf)
-{
-    for (auto it = ibuf.begin(); it != ibuf.end(); ++it) {
-        if (it->length() > 0) {
-            auto *dbuf = static_cast<uint8_t *>(it->readPtr());
-            auto ret = decompress(dbuf, it->length(), obuf);
-            if (ret != KMError::NOERR) {
-                return ret;
-            }
-        }
-    }
-    
+    negotiated_ = true;
     return KMError::NOERR;
 }
 

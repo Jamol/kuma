@@ -28,6 +28,7 @@
 #include "util/util.h"
 #include "util/DestroyDetector.h"
 #include "HttpHeader.h"
+
 #include <string>
 #include <map>
 #include <vector>
@@ -42,7 +43,7 @@ public:
     using EventCallback = HttpParser::EventCallback;
     using EnumerateCallback = std::function<bool(const std::string&, const std::string&)>;
     
-    Impl() = default;
+    Impl() : HttpHeader(false) {}
     Impl(const Impl& other);
     Impl(Impl&& other);
     ~Impl();
@@ -86,8 +87,6 @@ public:
     void setUrl(std::string url);
     void setUrlPath(std::string path);
     void setVersion(std::string ver);
-    void setHeaders(const HeaderVector & headers);
-    void setHeaders(HeaderVector && headers);
     void setStatusCode(int status_code);
     void addParamValue(std::string name, std::string value);
     void addHeaderValue(std::string name, std::string value);
@@ -132,6 +131,8 @@ private:
     bool readEOF();
     
     void onHeaderComplete();
+    void onBodyData(const char* data, size_t len);
+    void onBodyData(KMBuffer &buf);
     void onComplete();
     
     KMError saveData(const char* cur_pos, const char* end);

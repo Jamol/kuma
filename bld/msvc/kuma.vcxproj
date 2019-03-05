@@ -22,7 +22,7 @@
     <ProjectGuid>{F5EAD400-0BC5-4F4A-8C37-58A34E9EDD1C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>kuma</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.15063.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.17763.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -169,6 +169,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\AcceptorBase.cpp" />
+    <ClCompile Include="..\..\src\compr\compr.cpp" />
+    <ClCompile Include="..\..\src\compr\compr_zlib.cpp" />
     <ClCompile Include="..\..\src\DnsResolver.cpp" />
     <ClCompile Include="..\..\src\EventLoopImpl.cpp" />
     <ClCompile Include="..\..\src\http\Http1xRequest.cpp" />
@@ -234,6 +236,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\AcceptorBase.h" />
+    <ClInclude Include="..\..\src\compr\compr.h" />
+    <ClInclude Include="..\..\src\compr\compr_zlib.h" />
     <ClInclude Include="..\..\src\DnsResolver.h" />
     <ClInclude Include="..\..\src\evdefs.h" />
     <ClInclude Include="..\..\src\EventLoopImpl.h" />

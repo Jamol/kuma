@@ -31,27 +31,42 @@ KUMA_NS_BEGIN
 class HttpHeader
 {
 public:
+    HttpHeader(bool is_outgoing) : is_outgoing_(is_outgoing) {}
     virtual ~HttpHeader() {}
-    void addHeader(std::string name, std::string value);
-    void addHeader(std::string name, uint32_t value);
+    virtual KMError addHeader(std::string name, std::string value);
+    virtual KMError addHeader(std::string name, uint32_t value);
+    virtual bool removeHeader(const std::string &name);
+    virtual bool removeHeaderValue(const std::string &name, const std::string &value);
     bool hasHeader(const std::string &name) const;
     const std::string& getHeader(const std::string &name) const;
     std::string buildHeader(const std::string &method, const std::string &url, const std::string &ver);
-    std::string buildHeader(int status_code, const std::string &desc, const std::string &ver);
+    std::string buildHeader(int status_code, const std::string &desc, const std::string &ver, const std::string &req_method);
     bool hasBody() const { return has_body_; }
+    bool hasContentLength() const { return has_content_length_; }
+    bool isChunked() const { return is_chunked_; }
+    void setChunked(bool is_chunked) { is_chunked_ = is_chunked; }
+    size_t getContentLength() const { return content_length_; }
+    std::string getEncodingType() const { return encoding_type_; }
     virtual void reset();
+    void setHeaders(const HeaderVector &headers);
+    void setHeaders(HeaderVector &&headers);
     HeaderVector& getHeaders() { return header_vec_; }
+    const HeaderVector& getHeaders() const { return header_vec_; }
     
-protected:
     void processHeader();
-    void processHeader(int status_code);
+    void processHeader(int status_code, const std::string &req_method);
+    
+    HttpHeader& operator= (const HttpHeader &other);
+    HttpHeader& operator= (HttpHeader &&other);
     
 protected:
-    HeaderVector            header_vec_;
+    bool                    is_outgoing_ = true;
     bool                    is_chunked_ = false;
     bool                    has_content_length_ = false;
     bool                    has_body_ = false;
     size_t                  content_length_ = 0;
+    std::string             encoding_type_;
+    HeaderVector            header_vec_;
 };
 
 KUMA_NS_END

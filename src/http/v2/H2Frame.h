@@ -132,7 +132,7 @@ public:
     void setEndHeaders() { addFlags(H2_FRAME_FLAG_END_HEADERS); }
     
     HeaderVector& getHeaders() { return headers_; }
-    size_t getHeadersSize() { return hsize_; }
+    size_t getHeadersSize() const { return hsize_; }
     
 private:
     h2_priority_t pri_;

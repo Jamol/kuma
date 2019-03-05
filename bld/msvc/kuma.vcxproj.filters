@@ -67,6 +67,9 @@
     <Filter Include="Source Files\zlib">
       <UniqueIdentifier>{1d0973ec-b28d-4023-a08f-4e10a4b27126}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\compr">
+      <UniqueIdentifier>{32bb0506-8263-4fc2-a942-64672c48b332}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\EventLoopImpl.cpp">
@@ -258,6 +261,12 @@
     <ClCompile Include="..\..\vendor\zlib\zutil.c">
       <Filter>Source Files\zlib</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\compr\compr.cpp">
+      <Filter>Source Files\compr</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\compr\compr_zlib.cpp">
+      <Filter>Source Files\compr</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\kmconf.h">
@@ -439,6 +448,12 @@
     </ClInclude>
     <ClInclude Include="..\..\vendor\zlib\zlib.h">
       <Filter>Source Files\zlib</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\compr\compr.h">
+      <Filter>Source Files\compr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\compr\compr_zlib.h">
+      <Filter>Source Files\compr</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

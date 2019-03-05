@@ -658,17 +658,36 @@ std::string& trim_right(std::string& str)
 
 bool contains_token(const std::string& str, const std::string& token, char delim)
 {
-    std::istringstream ss;
-    ss.str(str);
-    std::string item;
-    while (std::getline(ss, item, delim)) {
-        trim_left(item);
-        trim_right(item);
-        if (is_equal(token, item)) {
-            return true;
+    bool found = false;
+    for_each_token(str, delim, [&found, &token](std::string &t){
+        if (is_equal(t, token)) {
+            found = true;
+            return false;
         }
-    }
-    return false;
+        return true;
+    });
+    
+    return found;
+}
+
+bool remove_token(std::string& tokens, const std::string& token, char delim)
+{
+    bool removed = false;
+    std::string str;
+    for_each_token(tokens, delim, [&removed, &token, &str](std::string &t){
+        if (is_equal(t, token)) {
+            removed = true;
+        } else {
+            if (!str.empty()) {
+                str += ", ";
+            }
+            str += t;
+        }
+        return true;
+    });
+    tokens = std::move(str);
+    
+    return removed;
 }
 
 int generateRandomBytes(uint8_t *buf, int len)

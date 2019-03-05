@@ -79,6 +79,11 @@ KMError Http1xResponse::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& p
 
     auto ret = TcpConnection::attachSocket(std::move(tcp), init_buf);
     if(ret == KMError::NOERR && req_parser_.paused()) {
+        if (req_parser_.headerComplete()) {
+            DESTROY_DETECTOR_SETUP();
+            onRequestHeaderComplete();
+            DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
+        }
         req_parser_.resume();
     }
     return ret;
@@ -86,20 +91,61 @@ KMError Http1xResponse::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& p
 
 KMError Http1xResponse::addHeader(std::string name, std::string value)
 {
-    rsp_message_.addHeader(std::move(name), std::move(value));
-    return KMError::NOERR;
+    return rsp_message_.addHeader(std::move(name), std::move(value));
 }
 
-void Http1xResponse::checkHeaders()
+void Http1xResponse::checkResponseHeaders()
 {
-    if(!rsp_message_.hasHeader(strContentType)) {
+    if (!rsp_message_.hasHeader(strContentType)) {
         addHeader(strContentType, "application/octet-stream");
     }
+    
+    if (!encoding_type_.empty()) {
+        if (is_content_encoding_) {
+            if (!rsp_message_.hasHeader(strContentEncoding)) {
+                addHeader(strContentEncoding, encoding_type_);
+                KUMA_INFOXTRACE("checkResponseHeaders, add Content-Encoding="<<encoding_type_);
+            }
+        } else {
+            addHeader(strTransferEncoding, encoding_type_ + ", chunked");
+            KUMA_INFOXTRACE("checkResponseHeaders, add Transfer-Encoding="<<encoding_type_);
+        }
+    }
+}
+
+void Http1xResponse::checkRequestHeaders()
+{
+    is_content_encoding_ = true;
+    auto encodings = req_parser_.getHeaderValue(strAcceptEncoding);
+    if (encodings.empty()) {
+        encodings = req_parser_.getHeaderValue("TE");
+        is_content_encoding_ = !encodings.empty();
+    }
+    for_each_token(encodings, ',', [this] (const std::string &str) {
+        if (is_equal(str, "gzip")) {
+            encoding_type_ = "gzip";
+            return false;
+        } else if (is_equal(str, "deflate")) {
+            encoding_type_ = "deflate";
+            return false;
+        }
+        return true;
+    });
+}
+
+const HttpHeader& Http1xResponse::getRequestHeader() const
+{
+    return req_parser_;
+}
+
+HttpHeader& Http1xResponse::getResponseHeader()
+{
+    return rsp_message_;
 }
 
 void Http1xResponse::buildResponse(int status_code, const std::string& desc, const std::string& ver)
 {
-    auto rsp = rsp_message_.buildHeader(status_code, desc, ver);
+    auto rsp = rsp_message_.buildHeader(status_code, desc, ver, req_parser_.getMethod());
     KMBuffer buf(rsp.c_str(), rsp.size(), rsp.size());
     appendSendBuffer(buf);
 }
@@ -123,17 +169,19 @@ KMError Http1xResponse::sendResponse(int status_code, const std::string& desc, c
             eventLoop()->post([this] { notifyComplete(); }, &loop_token_);
         } else {
             setState(State::SENDING_BODY);
-            eventLoop()->post([this] { if (write_cb_) write_cb_(KMError::NOERR); }, &loop_token_);
+            eventLoop()->post([this] { onSendReady(); }, &loop_token_);
         }
     }
     return KMError::NOERR;
 }
 
-int Http1xResponse::sendData(const void* data, size_t len)
+bool Http1xResponse::canSendBody() const
 {
-    if(!sendBufferEmpty() || getState() != State::SENDING_BODY) {
-        return 0;
-    }
+    return sendBufferEmpty() && getState() == State::SENDING_BODY;
+}
+
+int Http1xResponse::sendBody(const void* data, size_t len)
+{
     int ret = rsp_message_.sendData(data, len);
     if(ret < 0) {
         setState(State::IN_ERROR);
@@ -146,11 +194,8 @@ int Http1xResponse::sendData(const void* data, size_t len)
     return ret;
 }
 
-int Http1xResponse::sendData(const KMBuffer &buf)
+int Http1xResponse::sendBody(const KMBuffer &buf)
 {
-    if(!sendBufferEmpty() || getState() != State::SENDING_BODY) {
-        return 0;
-    }
     int ret = rsp_message_.sendData(buf);
     if(ret < 0) {
         setState(State::IN_ERROR);
@@ -171,6 +216,7 @@ void Http1xResponse::reset()
     HttpResponse::Impl::reset();
     req_parser_.reset();
     rsp_message_.reset();
+    encoding_type_.clear();
     setState(State::RECVING_REQUEST);
 }
 
@@ -213,7 +259,7 @@ void Http1xResponse::onWrite()
             return ;
         }
     }
-    if(write_cb_) write_cb_(KMError::NOERR);
+    onSendReady();
 }
 
 void Http1xResponse::onError(KMError err)
@@ -230,7 +276,7 @@ void Http1xResponse::onError(KMError err)
 
 void Http1xResponse::onHttpData(KMBuffer &buf)
 {
-    if(data_cb_) data_cb_(buf);
+    onRequestData(buf);
 }
 
 void Http1xResponse::onHttpEvent(HttpEvent ev)
@@ -238,12 +284,11 @@ void Http1xResponse::onHttpEvent(HttpEvent ev)
     KUMA_INFOXTRACE("onHttpEvent, ev="<<int(ev));
     switch (ev) {
         case HttpEvent::HEADER_COMPLETE:
-            if(header_cb_) header_cb_();
+            onRequestHeaderComplete();
             break;
             
         case HttpEvent::COMPLETE:
-            setState(State::WAIT_FOR_RESPONSE);
-            if(request_cb_) request_cb_();
+            onRequestComplete();
             break;
             
         case HttpEvent::HTTP_ERROR:

@@ -81,6 +81,8 @@ SRCS =  \
     http/v2/PushClient.cpp \
     http/v2/hpack/HPackTable.cpp \
     http/v2/hpack/HPacker.cpp \
+    compr/compr.cpp \
+    compr/compr_zlib.cpp \
     ws/WSHandler.cpp \
     ws/WebSocketImpl.cpp \
     ws/exts/ExtensionHandler.cpp \

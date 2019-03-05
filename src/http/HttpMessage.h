@@ -27,6 +27,7 @@
 #include "httpdefs.h"
 #include "HttpHeader.h"
 
+
 KUMA_NS_BEGIN
 
 class HttpMessage : public HttpHeader
@@ -36,6 +37,7 @@ public:
     using MessageVSender = std::function<int(const iovec*, int)>;
     using MessageBSender = std::function<int(const KMBuffer&)>;
     
+    HttpMessage() : HttpHeader(true) {}
     int sendData(const void* data, size_t len);
     int sendData(const KMBuffer &buf);
     bool isCompleted() const { return !hasBody() || completed_; }

@@ -26,12 +26,17 @@
 #include "kmapi.h"
 #include "httpdefs.h"
 #include "Uri.h"
+#include "util/kmobject.h"
 #include "HttpParserImpl.h"
+#include "compr/compr.h"
+
 #include <map>
 
 KUMA_NS_BEGIN
 
-class HttpRequest::Impl
+const std::string kAcceptableEncodings = "gzip, deflate";
+
+class HttpRequest::Impl : public KMObject
 {
 public:
     using DataCallback = HttpRequest::DataCallback;
@@ -46,8 +51,8 @@ public:
     virtual KMError addHeader(std::string name, std::string value) = 0;
     virtual KMError addHeader(std::string name, uint32_t value);
     KMError sendRequest(std::string method, std::string url);
-    virtual int sendData(const void* data, size_t len) = 0;
-    virtual int sendData(const KMBuffer &buf) = 0;
+    virtual int sendData(const void* data, size_t len);
+    virtual int sendData(const KMBuffer &buf);
     virtual void reset();
     virtual KMError close() = 0;
     
@@ -66,7 +71,13 @@ public:
     
 protected:
     virtual KMError sendRequest() = 0;
-    virtual void checkHeaders() = 0;
+    virtual bool canSendBody() const = 0;
+    virtual int sendBody(const void* data, size_t len) = 0;
+    virtual int sendBody(const KMBuffer &buf) = 0;
+    virtual void checkRequestHeaders() = 0;
+    virtual void checkResponseHeaders() = 0;
+    virtual HttpHeader& getRequestHeader() = 0;
+    virtual const HttpHeader& getResponseHeader() const = 0;
     virtual bool isVersion2() { return true; }
     
     enum class State {
@@ -83,6 +94,11 @@ protected:
     void setState(State state) { state_ = state; }
     State getState() const { return state_; }
     
+    void onResponseHeaderComplete();
+    void onResponseData(KMBuffer &buf);
+    void onResponseComplete();
+    void onSendReady();
+    
 protected:
     State                   state_ = State::IDLE;
     
@@ -96,6 +112,13 @@ protected:
     EventCallback           error_cb_;
     HttpEventCallback       header_cb_;
     HttpEventCallback       response_cb_;
+    
+    size_t                  raw_bytes_sent_ = 0;
+    std::unique_ptr<Compressor> compressor_;
+    std::unique_ptr<Decompressor> decompressor_;
+    
+    bool                    compression_finish_ = false;
+    Compressor::DataBuffer  compression_buffer_;
 };
 
 KUMA_NS_END

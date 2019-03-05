@@ -74,6 +74,7 @@ void HttpClient::onHeaderComplete()
 void HttpClient::onRequestComplete()
 {
     static std::atomic_int req_count{0};
-    printf("HttpClient_%ld::onRequestComplete, total=%zu, count=%d\n", conn_id_, total_bytes_read_, ++req_count);
+    printf("HttpClient_%ld::onRequestComplete, status=%d, total=%zu, count=%d\n",
+           conn_id_, http_request_.getStatusCode(), total_bytes_read_, ++req_count);
     http_request_.close();
 }

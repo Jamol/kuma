@@ -20,9 +20,11 @@
  */
 
 #include "HttpMessage.h"
+
 #include <sstream>
 
 using namespace kuma;
+
 
 int HttpMessage::sendData(const void* data, size_t len)
 {
@@ -35,7 +37,7 @@ int HttpMessage::sendData(const void* data, size_t len)
     int ret = sender_(data, len);
     if(ret > 0) {
         body_bytes_sent_ += ret;
-        if (body_bytes_sent_ >= content_length_) {
+        if (has_body_ && has_content_length_ && body_bytes_sent_ >= content_length_) {
             completed_ = true;
         }
     }
@@ -47,14 +49,14 @@ int HttpMessage::sendData(const KMBuffer &buf)
     if(is_chunked_) {
         return sendChunk(buf);
     }
-    auto chain_len = buf.chainLength();
-    if(0 == chain_len) {
+    auto buf_len = buf.chainLength();
+    if(buf_len == 0) {
         return 0;
     }
     int ret = bsender_(buf);
     if(ret > 0) {
         body_bytes_sent_ += ret;
-        if (body_bytes_sent_ >= content_length_) {
+        if (has_body_ && has_content_length_ && body_bytes_sent_ >= content_length_) {
             completed_ = true;
         }
     }
@@ -63,7 +65,7 @@ int HttpMessage::sendData(const KMBuffer &buf)
 
 int HttpMessage::sendChunk(const void* data, size_t len)
 {
-    if(nullptr == data && 0 == len) { // chunk end
+    if(nullptr == data || 0 == len) { // chunk end
         static const std::string _chunk_end_token_ = "0\r\n\r\n";
         int ret = sender_(_chunk_end_token_.c_str(), _chunk_end_token_.length());
         if(ret > 0) {
@@ -86,7 +88,7 @@ int HttpMessage::sendChunk(const void* data, size_t len)
         iovs[2].iov_len = 2;
         int ret = vsender_(iovs, 3);
         if(ret > 0) {
-            body_bytes_sent_ += ret;
+            body_bytes_sent_ += len;
             return int(len);
         }
         return ret;
@@ -95,8 +97,8 @@ int HttpMessage::sendChunk(const void* data, size_t len)
 
 int HttpMessage::sendChunk(const KMBuffer &buf)
 {
-    auto chain_len = buf.chainLength();
-    if(chain_len == 0) { // chunk end
+    auto buf_len = buf.chainLength();
+    if(buf_len == 0) { // chunk end
         static const std::string _chunk_end_token_ = "0\r\n\r\n";
         int ret = sender_(_chunk_end_token_.c_str(), _chunk_end_token_.length());
         if(ret > 0) {
@@ -106,7 +108,7 @@ int HttpMessage::sendChunk(const KMBuffer &buf)
         return ret;
     } else {
         std::stringstream ss;
-        ss << std::hex << chain_len;
+        ss << std::hex << buf_len;
         std::string str;
         ss >> str;
         str += "\r\n";
@@ -122,8 +124,8 @@ int HttpMessage::sendChunk(const KMBuffer &buf)
         hdr.unlink();
         tail.unlink();
         if(ret > 0) {
-            body_bytes_sent_ += ret;
-            return int(chain_len);
+            body_bytes_sent_ += buf_len;
+            return int(buf_len);
         }
         return ret;
     }

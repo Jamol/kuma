@@ -22,7 +22,7 @@
 #pragma once
 
 #include "PMCE_Base.h"
-#include "zlib/zlib.h"
+#include "compr/compr.h"
 
 WS_NS_BEGIN
 
@@ -42,27 +42,20 @@ public:
     KMError negotiateAnswer(const std::string &answer) override;
     KMError negotiateOffer(const std::string &offer, std::string &answer) override;
     
-    KMError compress(const uint8_t *ibuf, size_t ilen, DataBuffer &obuf);
-    KMError decompress(const uint8_t *ibuf, size_t ilen, DataBuffer &obuf);
-    KMError compress(const KMBuffer &ibuf, DataBuffer &obuf);
-    KMError decompress(const KMBuffer &ibuf, DataBuffer &obuf);
-    
     std::string getExtensionName() const override { return kPerMessageDeflate; }
     
 protected:
-    bool        m_negotiated = false;
-    bool        m_initialized = false;
-    z_stream    c_stream {0};
-    int         c_flush = Z_SYNC_FLUSH;
+    bool        negotiated_ = false;
+    
     int         c_max_window_bits = 15;
     bool        c_no_context_takeover = false;
-    int         c_memory_level = 8;
     DataBuffer  c_payload;
     
-    z_stream    d_stream {0};
-    int         d_flush = Z_SYNC_FLUSH;
     int         d_max_window_bits = 15;
     DataBuffer  d_payload;
+    
+    std::unique_ptr<kuma::Compressor> compressor_;
+    std::unique_ptr<kuma::Decompressor> decompressor_;
 };
 
 WS_NS_END

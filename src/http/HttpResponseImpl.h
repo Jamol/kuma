@@ -29,10 +29,11 @@
 #include "Uri.h"
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
+#include "compr/compr.h"
 
 KUMA_NS_BEGIN
 
-class HttpResponse::Impl
+class HttpResponse::Impl : public KMObject
 {
 public:
     using DataCallback = HttpResponse::DataCallback;
@@ -50,8 +51,8 @@ public:
     virtual KMError addHeader(std::string name, std::string value) = 0;
     virtual KMError addHeader(std::string name, uint32_t value);
     KMError sendResponse(int status_code, const std::string& desc);
-    virtual int sendData(const void* data, size_t len) = 0;
-    virtual int sendData(const KMBuffer &buf) = 0;
+    int sendData(const void* data, size_t len);
+    int sendData(const KMBuffer &buf);
     virtual void reset();
     virtual KMError close() = 0;
     
@@ -72,7 +73,13 @@ public:
     
 protected:
     virtual KMError sendResponse(int status_code, const std::string& desc, const std::string& ver) = 0;
-    virtual void checkHeaders() = 0;
+    virtual bool canSendBody() const = 0;
+    virtual int sendBody(const void* data, size_t len) = 0;
+    virtual int sendBody(const KMBuffer &buf) = 0;
+    virtual void checkRequestHeaders() = 0;
+    virtual void checkResponseHeaders() = 0;
+    virtual const HttpHeader& getRequestHeader() const = 0;
+    virtual HttpHeader& getResponseHeader() = 0;
     virtual bool isVersion2() { return true; }
     
     enum State {
@@ -88,7 +95,11 @@ protected:
     void setState(State state) { state_ = state; }
     State getState() const { return state_; }
     
+    void onRequestHeaderComplete();
+    void onRequestData(KMBuffer &buf);
+    void onRequestComplete();
     void notifyComplete();
+    void onSendReady();
     
 protected:
     State                   state_ = State::IDLE;
@@ -101,6 +112,13 @@ protected:
     HttpEventCallback       header_cb_;
     HttpEventCallback       request_cb_;
     HttpEventCallback       response_cb_;
+    
+    size_t                  raw_bytes_sent_ = 0;
+    std::unique_ptr<Compressor> compressor_;
+    std::unique_ptr<Decompressor> decompressor_;
+    
+    bool                    compression_finish_ = false;
+    Compressor::DataBuffer  compression_buffer_;
 };
 
 KUMA_NS_END

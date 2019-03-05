@@ -41,7 +41,7 @@ KUMA_NS_BEGIN
  * Http2Request will check HTTP cache firstly, and then check if there is push promise for this request. 
  * if none of them hit, a HTTP2 stream will be launched to complete the request.
  */
-class Http2Request : public KMObject, public DestroyDetector, public HttpRequest::Impl, public HttpHeader
+class Http2Request : public DestroyDetector, public HttpRequest::Impl
 {
 public:
     Http2Request(const EventLoopPtr &loop, std::string ver);
@@ -49,8 +49,8 @@ public:
     
     KMError setSslFlags(uint32_t ssl_flags) override;
     KMError addHeader(std::string name, std::string value) override;
-    int sendData(const void* data, size_t len) override;
-    int sendData(const KMBuffer &buf) override;
+    int sendBody(const void* data, size_t len) override;
+    int sendBody(const KMBuffer &buf) override;
     void reset() override; // reset for connection reuse
     KMError close() override;
     
@@ -70,7 +70,11 @@ protected:
     //}
     
     KMError sendRequest() override;
-    void checkHeaders() override;
+    bool canSendBody() const override;
+    void checkResponseHeaders() override;
+    void checkRequestHeaders() override;
+    HttpHeader& getRequestHeader() override;
+    const HttpHeader& getResponseHeader() const override;
     void setupStreamCallbacks();
     
     /*
@@ -102,7 +106,6 @@ protected:
     void onData();
     void onCacheComplete();
     void onPushPromise();
-    void onComplete();
     void onWrite_i();
     void onError_i(KMError err);
     void checkResponseStatus();
@@ -116,10 +119,11 @@ protected:
     // request
     size_t body_bytes_sent_ = 0;
     uint32_t ssl_flags_ = 0;
+    HttpHeader req_header_{true};
     
     // response
     int status_code_ = 0;
-    HeaderVector rsp_headers_;
+    HttpHeader rsp_header_{false};
     KMQueue<KMBuffer::Ptr> rsp_queue_;
     bool header_complete_ = false;
     bool response_complete_ = false;

@@ -60,8 +60,8 @@ protected:
     virtual void onConnect(KMError err) {};
     virtual void onWrite() = 0;
     virtual void onError(KMError err) = 0;
-    bool isServer() { return isServer_; }
-    bool sendBufferEmpty() { return !send_buffer_ || send_buffer_->empty(); }
+    bool isServer() const { return isServer_; }
+    bool sendBufferEmpty() const { return !send_buffer_ || send_buffer_->empty(); }
     KMError sendBufferedData();
     void appendSendBuffer(const KMBuffer &buf);
     void reset();

@@ -35,7 +35,7 @@
 
 KUMA_NS_BEGIN
 
-class Http1xResponse : public KMObject, public HttpResponse::Impl, public DestroyDetector, public TcpConnection
+class Http1xResponse : public HttpResponse::Impl, public DestroyDetector, public TcpConnection
 {
 public:
     Http1xResponse(const EventLoopPtr &loop, std::string ver);
@@ -46,8 +46,8 @@ public:
     KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf) override;
     KMError addHeader(std::string name, std::string value) override;
     KMError sendResponse(int status_code, const std::string& desc, const std::string& ver) override;
-    int sendData(const void* data, size_t len) override;
-    int sendData(const KMBuffer &buf) override;
+    int sendBody(const void* data, size_t len) override;
+    int sendBody(const KMBuffer &buf) override;
     void reset() override; // reset for connection reuse
     KMError close() override;
     
@@ -70,20 +70,27 @@ protected:
     void onWrite() override;
     void onError(KMError err) override;
     
-    // callbacks of HttpParser
-    void onHttpData(KMBuffer &buf);
-    void onHttpEvent(HttpEvent ev);
-    
     bool isVersion2() override { return false; }
     
 protected:
-    void checkHeaders() override;
+    bool canSendBody() const override;
+    void checkResponseHeaders() override;
+    void checkRequestHeaders() override;
+    const HttpHeader& getRequestHeader() const override;
+    HttpHeader& getResponseHeader() override;
     void buildResponse(int status_code, const std::string& desc, const std::string& ver);
     void cleanup();
+    
+    void onHttpData(KMBuffer &buf);
+    void onHttpEvent(HttpEvent ev);
     
 protected:
     HttpParser::Impl        req_parser_;
     HttpMessage             rsp_message_;
+    
+    bool                    is_content_encoding_ = true;
+    std::string             encoding_type_;
+    
     EventLoopToken          loop_token_;
 };
 

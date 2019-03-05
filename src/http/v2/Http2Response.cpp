@@ -67,10 +67,10 @@ KMError Http2Response::addHeader(std::string name, std::string value)
 {
     if(!name.empty()) {
         transform(name.begin(), name.end(), name.begin(), ::tolower);
-        if (is_equal("transfer-encoding", name) && is_equal("chunked", value)) {
-            is_chunked_ = true;
+        if (!is_equal("transfer-encoding", name)) {
+            rsp_header_.addHeader(std::move(name), std::move(value));
         } else {
-            HttpHeader::addHeader(std::move(name), std::move(value));
+            //is_chunked_ = true;
         }
         return KMError::NOERR;
     }
@@ -84,7 +84,7 @@ KMError Http2Response::sendResponse(int status_code, const std::string& desc, co
     setState(State::SENDING_HEADER);
     HeaderVector headers;
     size_t headersSize = buildHeaders(status_code, headers);
-    bool endStream = has_content_length_ && content_length_ == 0;
+    bool endStream = rsp_header_.hasContentLength() && rsp_header_.getContentLength() == 0;
     auto ret = stream_->sendHeaders(headers, headersSize, endStream);
     if (ret == KMError::NOERR) {
         if (endStream) {
@@ -97,31 +97,33 @@ KMError Http2Response::sendResponse(int status_code, const std::string& desc, co
             setState(State::SENDING_BODY);
             auto loop = loop_.lock();
             if (loop) {
-                loop->post([this] { if (write_cb_) write_cb_(KMError::NOERR); }, &loop_token_);
+                loop->post([this] { onSendReady(); }, &loop_token_);
             }
         }
     }
     return ret;
 }
 
-int Http2Response::sendData(const void* data, size_t len)
+bool Http2Response::canSendBody() const
 {
-    if (getState() != State::SENDING_BODY) {
-        return 0;
-    }
+    return getState() == State::SENDING_BODY;
+}
 
+int Http2Response::sendBody(const void* data, size_t len)
+{
     int ret = 0;
     if (data && len) {
         size_t send_len = len;
-        if (has_content_length_ && body_bytes_sent_ + send_len > content_length_) {
-            send_len = content_length_ - body_bytes_sent_;
+        if (rsp_header_.hasContentLength() && body_bytes_sent_ + send_len > rsp_header_.getContentLength()) {
+            send_len = rsp_header_.getContentLength() - body_bytes_sent_;
         }
         ret = stream_->sendData(data, send_len, false);
         if (ret > 0) {
             body_bytes_sent_ += ret;
         }
     }
-    bool endStream = (!data && !len) || (has_content_length_ && body_bytes_sent_ >= content_length_);
+    bool endStream = (!data && !len) ||
+        (rsp_header_.hasContentLength() && body_bytes_sent_ >= rsp_header_.getContentLength());
     if (endStream) { // end stream
         stream_->sendData(nullptr, 0, true);
         setState(State::COMPLETE);
@@ -133,25 +135,22 @@ int Http2Response::sendData(const void* data, size_t len)
     return ret;
 }
 
-int Http2Response::sendData(const KMBuffer &buf)
+int Http2Response::sendBody(const KMBuffer &buf)
 {
-    if (getState() != State::SENDING_BODY) {
-        return 0;
-    }
-    
     auto chain_len = buf.chainLength();
     int ret = 0;
     if (chain_len) {
         size_t send_len = chain_len;
-        if (has_content_length_ && body_bytes_sent_ + send_len > content_length_) {
-            send_len = content_length_ - body_bytes_sent_;
+        if (rsp_header_.hasContentLength() && body_bytes_sent_ + send_len > rsp_header_.getContentLength()) {
+            send_len = rsp_header_.getContentLength() - body_bytes_sent_;
         }
         ret = stream_->sendData(buf, false);
         if (ret > 0) {
             body_bytes_sent_ += ret;
         }
     }
-    bool endStream = (!chain_len) || (has_content_length_ && body_bytes_sent_ >= content_length_);
+    bool endStream = (!chain_len) ||
+        (rsp_header_.hasContentLength() && body_bytes_sent_ >= rsp_header_.getContentLength());
     if (endStream) { // end stream
         stream_->sendData(nullptr, 0, true);
         setState(State::COMPLETE);
@@ -163,19 +162,56 @@ int Http2Response::sendData(const KMBuffer &buf)
     return ret;
 }
 
-void Http2Response::checkHeaders()
+void Http2Response::checkResponseHeaders()
 {
+    if (!encoding_type_.empty() && !rsp_header_.hasHeader(strContentEncoding)) {
+        addHeader(strContentEncoding, encoding_type_);
+        KUMA_INFOXTRACE("checkResponseHeaders, add Content-Encoding="<<encoding_type_);
+    }
+}
+
+void Http2Response::checkRequestHeaders()
+{
+    encoding_type_.clear();
+    auto encodings = req_header_.getHeader(strAcceptEncoding);
+    for_each_token(encodings, ',', [this] (const std::string &str) {
+        if (is_equal(str, "gzip")) {
+            encoding_type_ = "gzip";
+            return false;
+        } else if (is_equal(str, "deflate")) {
+            encoding_type_ = "deflate";
+            return false;
+        }
+        return true;
+    });
     
+    if (req_header_.hasContentLength()) {
+        KUMA_INFOXTRACE("checkRequestHeaders, Content-Length=" << req_header_.getContentLength());
+    }
+    auto contentEncoding = req_header_.getHeader(strContentEncoding);
+    if (!contentEncoding.empty()) {
+        KUMA_INFOXTRACE("checkRequestHeaders, Content-Encoding=" << contentEncoding);
+    }
+}
+
+const HttpHeader& Http2Response::getRequestHeader() const
+{
+    return req_header_;
+}
+
+HttpHeader& Http2Response::getResponseHeader()
+{
+    return rsp_header_;
 }
 
 size_t Http2Response::buildHeaders(int status_code, HeaderVector &headers)
 {
-    HttpHeader::processHeader(status_code);
+    rsp_header_.processHeader(status_code, req_method_);
     size_t headers_size = 0;
     std::string str_status_code = std::to_string(status_code);
     headers.emplace_back(std::make_pair(H2HeaderStatus, str_status_code));
     headers_size += H2HeaderStatus.size() + str_status_code.size();
-    for (auto const &kv : header_vec_) {
+    for (auto const &kv : rsp_header_.getHeaders()) {
         headers.emplace_back(kv.first, kv.second);
         headers_size += kv.first.size() + kv.second.size();
     }
@@ -187,16 +223,11 @@ const std::string& Http2Response::getParamValue(const std::string &name) const {
 }
 
 const std::string& Http2Response::getHeaderValue(const std::string &name) const {
-    for (auto const &kv : req_headers_) {
-        if (is_equal(kv.first, name)) {
-            return kv.second;
-        }
-    }
-    return EmptyString;
+    return req_header_.getHeader(name);
 }
 
 void Http2Response::forEachHeader(const EnumerateCallback &cb) const {
-    for (auto &kv : req_headers_) {
+    for (auto &kv : req_header_.getHeaders()) {
         if (!cb(kv.first, kv.second)) {
             break;
         }
@@ -217,7 +248,7 @@ void Http2Response::onHeaders(const HeaderVector &headers, bool end_stream)
                 if (name == H2HeaderMethod) {
                     req_method_ = value;
                 } else if (name == H2HeaderAuthority) {
-                    req_headers_.emplace_back(strHost, value);
+                    req_header_.addHeader(strHost, value);
                 } else if (name == H2HeaderPath) {
                     req_path_ = value;
                 }
@@ -229,32 +260,30 @@ void Http2Response::onHeaders(const HeaderVector &headers, bool end_stream)
                     }
                     str_cookie += value;
                 } else {
-                    req_headers_.emplace_back(name, value);
+                    req_header_.addHeader(name, value);
                 }
             }
         }
     }
     if (!str_cookie.empty()) {
-        req_headers_.emplace_back(strCookie, std::move(str_cookie));
+        req_header_.addHeader(strCookie, std::move(str_cookie));
     }
     DESTROY_DETECTOR_SETUP();
-    if (header_cb_) header_cb_();
+    onRequestHeaderComplete();
     DESTROY_DETECTOR_CHECK_VOID();
     if (end_stream) {
-        setState(State::WAIT_FOR_RESPONSE);
-        if (request_cb_) request_cb_();
+        onRequestComplete();
     }
 }
 
 void Http2Response::onData(KMBuffer &buf, bool end_stream)
 {
     DESTROY_DETECTOR_SETUP();
-    if (data_cb_ && buf.chainLength() > 0) data_cb_(buf);
+    onRequestHeaderComplete();
     DESTROY_DETECTOR_CHECK_VOID();
     
     if (end_stream) {
-        setState(State::WAIT_FOR_RESPONSE);
-        if (request_cb_) request_cb_();
+        onRequestComplete();
     }
 }
 
@@ -268,7 +297,7 @@ void Http2Response::onRSTStream(int err)
 
 void Http2Response::onWrite()
 {
-    if(write_cb_) write_cb_(KMError::NOERR);
+    onSendReady();
 }
 
 KMError Http2Response::close()

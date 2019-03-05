@@ -92,7 +92,7 @@ KMError TcpConnection::attachSocket(TcpSocket::Impl &&tcp, const KMBuffer *init_
     return tcp_.attach(std::move(tcp));
 }
 
-int TcpConnection::send(const void* data, size_t len)
+int TcpConnection::send(const void *data, size_t len)
 {
     if(!sendBufferEmpty()) {
         // try to send buffered data
@@ -100,7 +100,9 @@ int TcpConnection::send(const void* data, size_t len)
         if (ret != KMError::NOERR) {
             return -1;
         } else if (!sendBufferEmpty()) {
-            return 0;
+            KMBuffer buf((char*)data, len, len);
+            appendSendBuffer(buf);
+            return int(len);
         }
     }
     int ret = tcp_.send(data, len);
@@ -114,10 +116,22 @@ int TcpConnection::send(const void* data, size_t len)
     return ret;
 }
 
-int TcpConnection::send(const iovec* iovs, int count)
+int TcpConnection::send(const iovec *iovs, int count)
 {
     if(!sendBufferEmpty()) {
-        return 0;
+        // try to send buffered data
+        auto ret = sendBufferedData();
+        if (ret != KMError::NOERR) {
+            return -1;
+        } else if (!sendBufferEmpty()) {
+            size_t total_len = 0;
+            for (int i=0; i<count; ++i) {
+                total_len += iovs[i].iov_len;
+                KMBuffer buf(iovs[i].iov_base, iovs[i].iov_len, iovs[i].iov_len);
+                appendSendBuffer(buf);
+            }
+            return int(total_len);
+        }
     }
     int ret = tcp_.send(iovs, count);
     if (ret >= 0) {
@@ -147,7 +161,8 @@ int TcpConnection::send(const KMBuffer &buf)
         if (ret != KMError::NOERR) {
             return -1;
         } else if (!sendBufferEmpty()) {
-            return 0;
+            appendSendBuffer(buf);
+            return (int)buf.chainLength();
         }
     }
     int chain_len = static_cast<int>(buf.chainLength());

@@ -39,11 +39,13 @@ namespace {
 //////////////////////////////////////////////////////////////////////////
 // HttpParserImpl
 HttpParser::Impl::Impl(const Impl& other)
+: HttpHeader(false)
 {
     *this = other;
 }
 
 HttpParser::Impl::Impl(Impl&& other)
+: HttpHeader(false)
 {
     *this = std::move(other);
 }
@@ -257,8 +259,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parse(const char* data, size_t le
         total_bytes_read_ += len;
         *bytes_read = static_cast<int>(len);
         DESTROY_DETECTOR_SETUP();
-        KMBuffer buf(data, len, len);
-        if(data_cb_) data_cb_(buf);
+        onBodyData(data, len);
         DESTROY_DETECTOR_CHECK(PARSE_STATE_DESTROYED);
         return PARSE_STATE_DONE;
     }
@@ -340,8 +341,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(const char*& cur_pos, c
                 total_bytes_read_ = content_length_;
                 read_state_ = HTTP_READ_DONE;
                 DESTROY_DETECTOR_SETUP();
-                KMBuffer buf(notify_data, notify_len, notify_len);
-                if(data_cb_) data_cb_(buf);
+                onBodyData(notify_data, notify_len);
                 DESTROY_DETECTOR_CHECK(PARSE_STATE_DESTROYED);
                 onComplete();
                 return PARSE_STATE_DONE;
@@ -351,8 +351,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(const char*& cur_pos, c
                 char* notify_data = const_cast<char*>(cur_pos);
                 total_bytes_read_ += cur_len;
                 cur_pos = end;
-                KMBuffer buf(notify_data, cur_len, cur_len);
-                if(data_cb_) data_cb_(buf);
+                onBodyData(notify_data, cur_len);
                 return PARSE_STATE_CONTINUE;
             }
         }
@@ -474,16 +473,14 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(const char*& cur_pos, 
                     chunk_state_ = CHUNK_READ_DATA_CR;
                     cur_pos += notify_len;
                     DESTROY_DETECTOR_SETUP();
-                    KMBuffer buf(notify_data, notify_len, notify_len);
-                    if(data_cb_) data_cb_(buf);
+                    onBodyData(notify_data, notify_len);
                     DESTROY_DETECTOR_CHECK(PARSE_STATE_DESTROYED);
                 } else {// need more data
                     char* notify_data = const_cast<char*>(cur_pos);
                     total_bytes_read_ += cur_len;
                     chunk_bytes_read_ += cur_len;
                     cur_pos += cur_len;
-                    KMBuffer buf(notify_data, cur_len, cur_len);
-                    if(data_cb_) data_cb_(buf);
+                    onBodyData(notify_data, cur_len);
                     return PARSE_STATE_CONTINUE;
                 }
                 break;
@@ -540,14 +537,18 @@ void HttpParser::Impl::onHeaderComplete()
     if (isRequest()) {
         HttpHeader::processHeader();
     } else {
-        HttpHeader::processHeader(status_code_);
+        HttpHeader::processHeader(status_code_, method_);
     }
     header_complete_ = true;
     if(has_content_length_) {
         KUMA_INFOTRACE("HttpParser::onHeaderComplete, Content-Length="<<content_length_);
     }
     if(is_chunked_) {
-        KUMA_INFOTRACE("HttpParser::onHeaderComplete, Transfer-Encoding=chunked");
+        KUMA_INFOTRACE("HttpParser::onHeaderComplete, Transfer-Encoding=" << getHeaderValue(strTransferEncoding));
+    }
+    auto contentEncoding = getHeaderValue(strContentEncoding);
+    if (!contentEncoding.empty()) {
+        KUMA_INFOTRACE("HttpParser::onHeaderComplete, Content-Encoding=" << contentEncoding);
     }
     auto upgrade_to = HttpHeader::getHeader(strUpgrade);
     if(!upgrade_to.empty()) {
@@ -555,6 +556,21 @@ void HttpParser::Impl::onHeaderComplete()
         KUMA_INFOTRACE("HttpParser::onHeaderComplete, Upgrade="<<upgrade_to);
     }
     if(event_cb_) event_cb_(HttpEvent::HEADER_COMPLETE);
+}
+
+void HttpParser::Impl::onBodyData(const char* data, size_t len)
+{
+    if (data_cb_) {
+        KMBuffer buf(data, len, len);
+        data_cb_(buf);
+    }
+}
+
+void HttpParser::Impl::onBodyData(KMBuffer &buf)
+{
+    if (data_cb_) {
+        data_cb_(buf);
+    }
 }
 
 void HttpParser::Impl::onComplete()
@@ -703,16 +719,6 @@ void HttpParser::Impl::setUrlPath(std::string path)
 void HttpParser::Impl::setVersion(std::string ver)
 {
     version_ = std::move(ver);
-}
-
-void HttpParser::Impl::setHeaders(const HeaderVector & headers)
-{
-    header_vec_ = headers;
-}
-
-void HttpParser::Impl::setHeaders(HeaderVector && headers)
-{
-    header_vec_ = std::move(headers);
 }
 
 void HttpParser::Impl::setStatusCode(int status_code)

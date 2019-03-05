@@ -33,7 +33,7 @@
 
 KUMA_NS_BEGIN
 
-class Http1xRequest : public KMObject, public DestroyDetector, public HttpRequest::Impl, public TcpConnection
+class Http1xRequest : public DestroyDetector, public HttpRequest::Impl, public TcpConnection
 {
 public:
     Http1xRequest(const EventLoopPtr &loop, std::string ver);
@@ -41,8 +41,8 @@ public:
     
     KMError setSslFlags(uint32_t ssl_flags) override { return TcpConnection::setSslFlags(ssl_flags); }
     KMError addHeader(std::string name, std::string value) override;
-    int sendData(const void* data, size_t len) override;
-    int sendData(const KMBuffer &buf) override;
+    int sendBody(const void* data, size_t len) override;
+    int sendBody(const KMBuffer &buf) override;
     void reset() override; // reset for connection reuse
     KMError close() override;
     
@@ -65,7 +65,11 @@ protected: // callbacks of tcp_socket
 
 private:
     KMError sendRequest() override;
-    void checkHeaders() override;
+    bool canSendBody() const override;
+    void checkResponseHeaders() override;
+    void checkRequestHeaders() override;
+    HttpHeader& getRequestHeader() override;
+    const HttpHeader& getResponseHeader() const override;
     void buildRequest();
     void cleanup();
     void sendRequestHeader();
@@ -74,7 +78,7 @@ private:
     
     void onHttpData(KMBuffer &buf);
     void onHttpEvent(HttpEvent ev);
-    void onComplete();
+    
     void onCacheComplete();
     
 private:

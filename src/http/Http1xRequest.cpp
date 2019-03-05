@@ -59,28 +59,54 @@ void Http1xRequest::cleanup()
 
 KMError Http1xRequest::addHeader(std::string name, std::string value)
 {
-    req_message_.addHeader(std::move(name), std::move(value));
-    return KMError::NOERR;
+    return req_message_.addHeader(std::move(name), std::move(value));
 }
 
-void Http1xRequest::checkHeaders()
+void Http1xRequest::checkRequestHeaders()
 {
-    if(!req_message_.hasHeader("Accept")) {
+    if (!req_message_.hasHeader("Accept")) {
         addHeader("Accept", "*/*");
     }
-    if(!req_message_.hasHeader(strContentType)) {
+    if (!req_message_.hasHeader(strContentType)) {
         addHeader(strContentType, "application/octet-stream");
     }
-    if(!req_message_.hasHeader("User-Agent")) {
-        addHeader("User-Agent", UserAgent);
+    if (!req_message_.hasHeader(strUserAgent)) {
+        addHeader(strUserAgent, UserAgent);
     }
-    addHeader("Host", uri_.getHost());
-    if(!req_message_.hasHeader("Cache-Control")) {
-        addHeader("Cache-Control", "no-cache");
+    addHeader(strHost, uri_.getHost());
+    if (!req_message_.hasHeader(strCacheControl)) {
+        addHeader(strCacheControl, "no-cache");
     }
-    if(!req_message_.hasHeader("Pragma")) {
+    if (!req_message_.hasHeader("Pragma")) {
         addHeader("Pragma", "no-cache");
     }
+    if (!req_message_.hasHeader(strAcceptEncoding)) {
+        addHeader(strAcceptEncoding, "gzip, deflate");
+    }
+    /*if (!req_message_.hasHeader("TE")) {
+        addHeader("TE", "gzip, deflate");
+    }*/
+    if (is_equal(method_, "POST") &&
+        !req_message_.hasHeader(strTransferEncoding) &&
+        !req_message_.hasHeader(strContentLength))
+    {
+        addHeader(strContentLength, "0");
+    }
+}
+
+void Http1xRequest::checkResponseHeaders()
+{
+    
+}
+
+HttpHeader& Http1xRequest::getRequestHeader()
+{
+    return req_message_;
+}
+
+const HttpHeader& Http1xRequest::getResponseHeader() const
+{
+    return rsp_parser_;
 }
 
 void Http1xRequest::buildRequest()
@@ -147,11 +173,13 @@ bool Http1xRequest::processHttpCache()
     return false;
 }
 
-int Http1xRequest::sendData(const void* data, size_t len)
+bool Http1xRequest::canSendBody() const
 {
-    if(!sendBufferEmpty() || getState() != State::SENDING_BODY) {
-        return 0;
-    }
+    return sendBufferEmpty() && getState() == State::SENDING_BODY;
+}
+
+int Http1xRequest::sendBody(const void* data, size_t len)
+{
     auto ret = req_message_.sendData(data, len);
     if (ret >= 0) {
         if (req_message_.isCompleted() && sendBufferEmpty()) {
@@ -163,11 +191,8 @@ int Http1xRequest::sendData(const void* data, size_t len)
     return ret;
 }
 
-int Http1xRequest::sendData(const KMBuffer &buf)
+int Http1xRequest::sendBody(const KMBuffer &buf)
 {
-    if(!sendBufferEmpty() || getState() != State::SENDING_BODY) {
-        return 0;
-    }
     auto ret = req_message_.sendData(buf);
     if (ret >= 0) {
         if (req_message_.isCompleted() && sendBufferEmpty()) {
@@ -215,9 +240,7 @@ void Http1xRequest::sendRequestHeader()
             setState(State::RECVING_RESPONSE);
         } else {
             setState(State::SENDING_BODY);
-            if (write_cb_) {
-                write_cb_(KMError::NOERR);
-            }
+            onSendReady();
         }
     }
 }
@@ -261,7 +284,7 @@ void Http1xRequest::onWrite()
         }
     }
     
-    if(write_cb_) write_cb_(KMError::NOERR);
+    onSendReady();
 }
 
 void Http1xRequest::onError(KMError err)
@@ -287,7 +310,7 @@ void Http1xRequest::onError(KMError err)
 
 void Http1xRequest::onHttpData(KMBuffer &buf)
 {
-    if(data_cb_) data_cb_(buf);
+    onResponseData(buf);
 }
 
 void Http1xRequest::onHttpEvent(HttpEvent ev)
@@ -295,11 +318,11 @@ void Http1xRequest::onHttpEvent(HttpEvent ev)
     KUMA_INFOXTRACE("onHttpEvent, ev="<<int(ev));
     switch (ev) {
         case HttpEvent::HEADER_COMPLETE:
-            if(header_cb_) header_cb_();
+            onResponseHeaderComplete();
             break;
             
         case HttpEvent::COMPLETE:
-            onComplete();
+            onResponseComplete();
             break;
             
         case HttpEvent::HTTP_ERROR:
@@ -313,25 +336,19 @@ void Http1xRequest::onHttpEvent(HttpEvent ev)
     }
 }
 
-void Http1xRequest::onComplete()
-{
-    setState(State::COMPLETE);
-    if(response_cb_) response_cb_();
-}
-
 void Http1xRequest::onCacheComplete()
 {
     if (getState() != State::RECVING_RESPONSE) {
         return;
     }
     DESTROY_DETECTOR_SETUP();
-    if (header_cb_) header_cb_();
+    onResponseHeaderComplete();
     DESTROY_DETECTOR_CHECK_VOID();
     if (rsp_cache_body_ && !rsp_cache_body_->empty() && data_cb_) {
         DESTROY_DETECTOR_SETUP();
-        data_cb_(*rsp_cache_body_);
+        onResponseData(*rsp_cache_body_);
         DESTROY_DETECTOR_CHECK_VOID();
         rsp_cache_body_.reset();
     }
-    onComplete();
+    onResponseComplete();
 }

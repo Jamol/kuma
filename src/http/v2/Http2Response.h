@@ -29,7 +29,7 @@
 
 KUMA_NS_BEGIN
 
-class Http2Response : public KMObject, public HttpResponse::Impl, public HttpHeader, public DestroyDetector
+class Http2Response : public HttpResponse::Impl, public DestroyDetector
 {
 public:
     Http2Response(const EventLoopPtr &loop, std::string ver);
@@ -37,8 +37,8 @@ public:
     KMError attachStream(H2Connection::Impl* conn, uint32_t stream_id) override;
     KMError addHeader(std::string name, std::string value) override;
     KMError sendResponse(int status_code, const std::string& desc, const std::string& ver) override;
-    int sendData(const void* data, size_t len) override;
-    int sendData(const KMBuffer &buf) override;
+    int sendBody(const void* data, size_t len) override;
+    int sendBody(const KMBuffer &buf) override;
     KMError close() override;
     
     const std::string& getMethod() const override { return req_method_; }
@@ -57,7 +57,11 @@ protected:
     
 private:
     void cleanup();
-    void checkHeaders() override;
+    bool canSendBody() const override;
+    void checkResponseHeaders() override;
+    void checkRequestHeaders() override;
+    const HttpHeader& getRequestHeader() const override;
+    HttpHeader& getResponseHeader() override;
     size_t buildHeaders(int status_code, HeaderVector &headers);
     
 private:
@@ -65,12 +69,14 @@ private:
     H2StreamPtr             stream_;
     
     // response
+    HttpHeader              rsp_header_{true};
     size_t                  body_bytes_sent_ = 0;
     
     // request
-    HeaderVector            req_headers_;
+    HttpHeader              req_header_{false};
     std::string             req_method_;
     std::string             req_path_;
+    std::string             encoding_type_;
     
     EventLoopToken          loop_token_;
 };
