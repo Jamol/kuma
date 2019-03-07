@@ -37,7 +37,7 @@ public:
     
     KMError init();
     KMError handleIncomingFrame(FrameHeader hdr, KMBuffer &payload) override;
-    KMError handleOutcomingFrame(FrameHeader hdr, KMBuffer &payload) override;
+    KMError handleOutgoingFrame(FrameHeader hdr, KMBuffer &payload) override;
     KMError getOffer(std::string &offer) override;
     KMError negotiateAnswer(const std::string &answer) override;
     KMError negotiateOffer(const std::string &offer, std::string &answer) override;

@@ -69,11 +69,11 @@ private:
     H2StreamPtr             stream_;
     
     // response
-    HttpHeader              rsp_header_{true};
+    HttpHeader              rsp_header_{true, true};
     size_t                  body_bytes_sent_ = 0;
     
     // request
-    HttpHeader              req_header_{false};
+    HttpHeader              req_header_{false, true};
     std::string             req_method_;
     std::string             req_path_;
     std::string             encoding_type_;

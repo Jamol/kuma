@@ -62,38 +62,6 @@ KMError Http1xRequest::addHeader(std::string name, std::string value)
     return req_message_.addHeader(std::move(name), std::move(value));
 }
 
-void Http1xRequest::checkRequestHeaders()
-{
-    if (!req_message_.hasHeader("Accept")) {
-        addHeader("Accept", "*/*");
-    }
-    if (!req_message_.hasHeader(strContentType)) {
-        addHeader(strContentType, "application/octet-stream");
-    }
-    if (!req_message_.hasHeader(strUserAgent)) {
-        addHeader(strUserAgent, UserAgent);
-    }
-    addHeader(strHost, uri_.getHost());
-    if (!req_message_.hasHeader(strCacheControl)) {
-        addHeader(strCacheControl, "no-cache");
-    }
-    if (!req_message_.hasHeader("Pragma")) {
-        addHeader("Pragma", "no-cache");
-    }
-    if (!req_message_.hasHeader(strAcceptEncoding)) {
-        addHeader(strAcceptEncoding, "gzip, deflate");
-    }
-    /*if (!req_message_.hasHeader("TE")) {
-        addHeader("TE", "gzip, deflate");
-    }*/
-    if (is_equal(method_, "POST") &&
-        !req_message_.hasHeader(strTransferEncoding) &&
-        !req_message_.hasHeader(strContentLength))
-    {
-        addHeader(strContentLength, "0");
-    }
-}
-
 void Http1xRequest::checkResponseHeaders()
 {
     

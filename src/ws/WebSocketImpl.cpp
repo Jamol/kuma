@@ -175,7 +175,7 @@ int WebSocket::Impl::send(const void* data, size_t len, bool is_text, bool is_fi
     hdr.opcode = uint8_t(opcode);
     if (extension_handler_ && !WS_FLAG_NO_COMPRESS(flags)) {
         KMBuffer buf(data, len, len);
-        ret = extension_handler_->handleOutcomingFrame(hdr, buf);
+        ret = extension_handler_->handleOutgoingFrame(hdr, buf);
     } else {
         ret = sendWsFrame(hdr, (uint8_t*)data, len);
     }
@@ -206,7 +206,7 @@ int WebSocket::Impl::send(const KMBuffer &buf, bool is_text, bool is_fin, uint32
     hdr.opcode = uint8_t(opcode);
     KMError ret = KMError::FAILED;
     if (extension_handler_ && !WS_FLAG_NO_COMPRESS(flags)) {
-        ret = extension_handler_->handleOutcomingFrame(hdr, const_cast<KMBuffer&>(buf));
+        ret = extension_handler_->handleOutgoingFrame(hdr, const_cast<KMBuffer&>(buf));
     } else {
         ret = sendWsFrame(hdr, buf);
     }
@@ -478,8 +478,8 @@ KMError WebSocket::Impl::negotiateExtensions()
             extension_handler_->setIncomingCallback([this] (FrameHeader hdr, KMBuffer &buf) {
                 return onExtensionIncomingFrame(hdr, buf);
             });
-            extension_handler_->setOutcomingCallback([this] (FrameHeader hdr, KMBuffer &buf) {
-                return onExtensionOutcomingFrame(hdr, buf);
+            extension_handler_->setOutgoingCallback([this] (FrameHeader hdr, KMBuffer &buf) {
+                return onExtensionOutgoingFrame(hdr, buf);
             });
             
             ws_handler_.setFrameCallback([this] (FrameHeader hdr, KMBuffer &buf) {
@@ -500,7 +500,7 @@ KMError WebSocket::Impl::onExtensionIncomingFrame(ws::FrameHeader hdr, KMBuffer 
     return onWsFrame(hdr, buf);
 }
 
-KMError WebSocket::Impl::onExtensionOutcomingFrame(ws::FrameHeader hdr, KMBuffer &buf)
+KMError WebSocket::Impl::onExtensionOutgoingFrame(ws::FrameHeader hdr, KMBuffer &buf)
 {
     return sendWsFrame(hdr, buf);
 }

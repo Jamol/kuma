@@ -28,7 +28,6 @@
 #include "h2utils.h"
 
 #include <sstream>
-#include <algorithm>
 #include <string>
 
 using namespace kuma;
@@ -60,17 +59,7 @@ KMError Http2Request::setSslFlags(uint32_t ssl_flags)
 
 KMError Http2Request::addHeader(std::string name, std::string value)
 {
-    if(!name.empty()) {
-        transform(name.begin(), name.end(), name.begin(), ::tolower);
-        if (!is_equal("Transfer-Encoding", name)) {
-            req_header_.addHeader(std::move(name), std::move(value));
-        } else {
-            req_header_.setChunked(true);
-        }
-        return KMError::NOERR;
-    }
-    
-    return KMError::INVALID_PARAM;
+    return req_header_.addHeader(std::move(name), std::move(value));
 }
 
 KMError Http2Request::sendRequest()
@@ -220,28 +209,6 @@ void Http2Request::forEachHeader(const EnumerateCallback &cb) const
         if (!cb(kv.first, kv.second)) {
             break;
         }
-    }
-}
-
-void Http2Request::checkRequestHeaders()
-{
-    if(!req_header_.hasHeader("accept")) {
-        addHeader("accept", "*/*");
-    }
-    if(!req_header_.hasHeader("content-type")) {
-        addHeader("content-type", "application/octet-stream");
-    }
-    if(!req_header_.hasHeader("user-agent")) {
-        addHeader("user-agent", UserAgent);
-    }
-    if(!req_header_.hasHeader("cache-control")) {
-        addHeader("cache-control", "no-cache");
-    }
-    if(!req_header_.hasHeader("pragma")) {
-        addHeader("pragma", "no-cache");
-    }
-    if (!req_header_.hasHeader(strAcceptEncoding)) {
-        addHeader(strAcceptEncoding, "gzip, deflate");
     }
 }
 

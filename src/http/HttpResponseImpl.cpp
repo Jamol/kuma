@@ -236,6 +236,7 @@ void HttpResponse::Impl::onRequestComplete()
 
 void HttpResponse::Impl::notifyComplete()
 {
+    KUMA_INFOXTRACE("notifyComplete, raw bytes sent: " << raw_bytes_sent_);
     if(response_cb_) response_cb_();
 }
 

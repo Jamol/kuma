@@ -40,13 +40,13 @@ public:
     virtual ~WSExtension() {}
     
     virtual KMError handleIncomingFrame(FrameHeader hdr, KMBuffer &payload) = 0;
-    virtual KMError handleOutcomingFrame(FrameHeader hdr, KMBuffer &payload) = 0;
+    virtual KMError handleOutgoingFrame(FrameHeader hdr, KMBuffer &payload) = 0;
     virtual KMError getOffer(std::string &offer) = 0;
     virtual KMError negotiateAnswer(const std::string &answer) = 0;
     virtual KMError negotiateOffer(const std::string &offer, std::string &answer) = 0;
     
     void setIncomingCallback(FrameCallback cb) { incoming_cb_ = std::move(cb); }
-    void setOutcomingCallback(FrameCallback cb) { outcoming_cb_ = std::move(cb); }
+    void setOutgoingCallback(FrameCallback cb) { outgoing_cb_ = std::move(cb); }
     
     virtual std::string getExtensionName() const = 0;
     
@@ -62,10 +62,10 @@ protected:
         
         return KMError::INVALID_STATE;
     }
-    virtual KMError onOutcomingFrame(FrameHeader hdr, KMBuffer &payload)
+    virtual KMError onOutgoingFrame(FrameHeader hdr, KMBuffer &payload)
     {
-        if (outcoming_cb_) {
-            return outcoming_cb_(hdr, payload);
+        if (outgoing_cb_) {
+            return outgoing_cb_(hdr, payload);
         }
         
         return KMError::INVALID_STATE;
@@ -73,7 +73,7 @@ protected:
     
 protected:
     FrameCallback incoming_cb_;
-    FrameCallback outcoming_cb_;
+    FrameCallback outgoing_cb_;
 };
 
 WS_NS_END

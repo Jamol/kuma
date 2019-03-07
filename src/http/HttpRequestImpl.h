@@ -56,6 +56,7 @@ public:
     virtual void reset();
     virtual KMError close() = 0;
     
+    virtual bool isHttp2() const { return false; }
     virtual int getStatusCode() const = 0;
     virtual const std::string& getVersion() const = 0;
     virtual const std::string& getHeaderValue(const std::string &name) const = 0;
@@ -74,7 +75,7 @@ protected:
     virtual bool canSendBody() const = 0;
     virtual int sendBody(const void* data, size_t len) = 0;
     virtual int sendBody(const KMBuffer &buf) = 0;
-    virtual void checkRequestHeaders() = 0;
+    virtual void checkRequestHeaders();
     virtual void checkResponseHeaders() = 0;
     virtual HttpHeader& getRequestHeader() = 0;
     virtual const HttpHeader& getResponseHeader() const = 0;

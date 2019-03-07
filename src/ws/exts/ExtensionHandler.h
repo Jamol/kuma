@@ -39,10 +39,10 @@ public:
     virtual ~ExtensionHandler() {}
     
     virtual KMError handleIncomingFrame(FrameHeader hdr, KMBuffer &payload);
-    virtual KMError handleOutcomingFrame(FrameHeader hdr, KMBuffer &payload);
+    virtual KMError handleOutgoingFrame(FrameHeader hdr, KMBuffer &payload);
     
     void setIncomingCallback(FrameCallback cb) { incoming_cb_ = std::move(cb); }
-    void setOutcomingCallback(FrameCallback cb) { outcoming_cb_ = std::move(cb); }
+    void setOutgoingCallback(FrameCallback cb) { outgoing_cb_ = std::move(cb); }
     
     KMError negotiateExtensions(const std::string &extensions, bool is_answer);
     std::string getExtensionAnswer() const { return extension_answer_; }
@@ -60,10 +60,10 @@ protected:
         
         return KMError::INVALID_STATE;
     }
-    virtual KMError onOutcomingFrame(FrameHeader hdr, KMBuffer &payload)
+    virtual KMError onOutgoingFrame(FrameHeader hdr, KMBuffer &payload)
     {
-        if (outcoming_cb_) {
-            return outcoming_cb_(hdr, payload);
+        if (outgoing_cb_) {
+            return outgoing_cb_(hdr, payload);
         }
         
         return KMError::INVALID_STATE;
@@ -71,7 +71,7 @@ protected:
     
 protected:
     FrameCallback incoming_cb_;
-    FrameCallback outcoming_cb_;
+    FrameCallback outgoing_cb_;
     
     std::string extension_answer_;
     std::vector<WSExtension::Ptr> ws_extensions_;

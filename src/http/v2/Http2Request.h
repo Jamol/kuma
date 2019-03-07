@@ -54,6 +54,7 @@ public:
     void reset() override; // reset for connection reuse
     KMError close() override;
     
+    bool isHttp2() const override { return true; }
     int getStatusCode() const override { return status_code_; }
     const std::string& getVersion() const override { return VersionHTTP2_0; }
     const std::string& getHeaderValue(const std::string &name) const override;
@@ -72,7 +73,6 @@ protected:
     KMError sendRequest() override;
     bool canSendBody() const override;
     void checkResponseHeaders() override;
-    void checkRequestHeaders() override;
     HttpHeader& getRequestHeader() override;
     const HttpHeader& getResponseHeader() const override;
     void setupStreamCallbacks();
@@ -119,11 +119,11 @@ protected:
     // request
     size_t body_bytes_sent_ = 0;
     uint32_t ssl_flags_ = 0;
-    HttpHeader req_header_{true};
+    HttpHeader req_header_{true, true};
     
     // response
     int status_code_ = 0;
-    HttpHeader rsp_header_{false};
+    HttpHeader rsp_header_{false, true};
     KMQueue<KMBuffer::Ptr> rsp_queue_;
     bool header_complete_ = false;
     bool response_complete_ = false;

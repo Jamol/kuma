@@ -21,7 +21,6 @@
 
 #include "Http2Response.h"
 
-#include <algorithm>
 #include <string>
 
 using namespace kuma;
@@ -65,17 +64,7 @@ KMError Http2Response::attachStream(H2Connection::Impl* conn, uint32_t stream_id
 
 KMError Http2Response::addHeader(std::string name, std::string value)
 {
-    if(!name.empty()) {
-        transform(name.begin(), name.end(), name.begin(), ::tolower);
-        if (!is_equal("transfer-encoding", name)) {
-            rsp_header_.addHeader(std::move(name), std::move(value));
-        } else {
-            //is_chunked_ = true;
-        }
-        return KMError::NOERR;
-    }
-    
-    return KMError::INVALID_PARAM;
+    return rsp_header_.addHeader(std::move(name), std::move(value));
 }
 
 KMError Http2Response::sendResponse(int status_code, const std::string& desc, const std::string& ver)
@@ -167,6 +156,9 @@ void Http2Response::checkResponseHeaders()
     if (!encoding_type_.empty() && !rsp_header_.hasHeader(strContentEncoding)) {
         addHeader(strContentEncoding, encoding_type_);
         KUMA_INFOXTRACE("checkResponseHeaders, add Content-Encoding="<<encoding_type_);
+    }
+    if (rsp_header_.hasContentLength()) {
+        KUMA_INFOXTRACE("checkResponseHeaders, Content-Length=" << rsp_header_.getContentLength());
     }
 }
 

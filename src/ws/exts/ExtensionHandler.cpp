@@ -35,12 +35,12 @@ KMError ExtensionHandler::handleIncomingFrame(FrameHeader hdr, KMBuffer &payload
     }
 }
 
-KMError ExtensionHandler::handleOutcomingFrame(FrameHeader hdr, KMBuffer &payload)
+KMError ExtensionHandler::handleOutgoingFrame(FrameHeader hdr, KMBuffer &payload)
 {
     if (!ws_extensions_.empty()) {
-        return ws_extensions_[0]->handleOutcomingFrame(hdr, payload);
+        return ws_extensions_[0]->handleOutgoingFrame(hdr, payload);
     } else {
-        return onOutcomingFrame(hdr, payload);
+        return onOutgoingFrame(hdr, payload);
     }
 }
 
@@ -68,8 +68,8 @@ KMError ExtensionHandler::negotiateExtensions(const std::string &extensions, boo
                     prev->setIncomingCallback([pmce=pmce.get()] (FrameHeader hdr, KMBuffer &buf) {
                         return pmce->handleIncomingFrame(hdr, buf);
                     });
-                    prev->setOutcomingCallback([pmce=pmce.get()] (FrameHeader hdr, KMBuffer &buf) {
-                        return pmce->handleOutcomingFrame(hdr, buf);
+                    prev->setOutgoingCallback([pmce=pmce.get()] (FrameHeader hdr, KMBuffer &buf) {
+                        return pmce->handleOutgoingFrame(hdr, buf);
                     });
                 }
                 ws_extensions_.emplace_back(std::move(pmce));
@@ -92,8 +92,8 @@ KMError ExtensionHandler::negotiateExtensions(const std::string &extensions, boo
         last->setIncomingCallback([this] (FrameHeader hdr, KMBuffer &buf) {
             return onIncomingFrame(hdr, buf);
         });
-        last->setOutcomingCallback([this] (FrameHeader hdr, KMBuffer &buf) {
-            return onOutcomingFrame(hdr, buf);
+        last->setOutgoingCallback([this] (FrameHeader hdr, KMBuffer &buf) {
+            return onOutgoingFrame(hdr, buf);
         });
     }
     

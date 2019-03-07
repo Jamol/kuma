@@ -33,7 +33,7 @@ public:
     virtual ~PMCE_Base();
     
     virtual KMError handleIncomingFrame(FrameHeader hdr, KMBuffer &payload) = 0;
-    virtual KMError handleOutcomingFrame(FrameHeader hdr, KMBuffer &payload) = 0;
+    virtual KMError handleOutgoingFrame(FrameHeader hdr, KMBuffer &payload) = 0;
 };
 
 WS_NS_END

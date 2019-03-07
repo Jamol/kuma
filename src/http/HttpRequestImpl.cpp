@@ -80,6 +80,41 @@ KMError HttpRequest::Impl::sendRequest(std::string method, std::string url)
     return sendRequest();
 }
 
+void HttpRequest::Impl::checkRequestHeaders()
+{
+    auto &req_header = getRequestHeader();
+    if (!req_header.hasHeader("Accept")) {
+        addHeader("Accept", "*/*");
+    }
+    if (!req_header.hasHeader(strContentType)) {
+        addHeader(strContentType, "application/octet-stream");
+    }
+    if (!req_header.hasHeader(strUserAgent)) {
+        addHeader(strUserAgent, UserAgent);
+    }
+    if (!isHttp2()) {
+        addHeader(strHost, uri_.getHost());
+    }
+    if (!req_header.hasHeader(strCacheControl)) {
+        addHeader(strCacheControl, "no-cache");
+    }
+    if (!req_header.hasHeader("Pragma")) {
+        addHeader("Pragma", "no-cache");
+    }
+    if (!req_header.hasHeader(strAcceptEncoding)) {
+        addHeader(strAcceptEncoding, "gzip, deflate");
+    }
+    /*if (!isHttp2() && !req_header.hasHeader("TE")) {
+     addHeader("TE", "gzip, deflate");
+     }*/
+    if (is_equal(method_, "POST") &&
+        !req_header.hasHeader(strTransferEncoding) &&
+        !req_header.hasHeader(strContentLength))
+    {
+        addHeader(strContentLength, "0");
+    }
+}
+
 int HttpRequest::Impl::sendData(const void* data, size_t len)
 {
     if (!canSendBody()) {

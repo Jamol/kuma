@@ -31,7 +31,7 @@ KUMA_NS_BEGIN
 class HttpHeader
 {
 public:
-    HttpHeader(bool is_outgoing) : is_outgoing_(is_outgoing) {}
+    HttpHeader(bool is_outgoing, bool is_http2=false);
     virtual ~HttpHeader() {}
     virtual KMError addHeader(std::string name, std::string value);
     virtual KMError addHeader(std::string name, uint32_t value);
@@ -44,7 +44,6 @@ public:
     bool hasBody() const { return has_body_; }
     bool hasContentLength() const { return has_content_length_; }
     bool isChunked() const { return is_chunked_; }
-    void setChunked(bool is_chunked) { is_chunked_ = is_chunked; }
     size_t getContentLength() const { return content_length_; }
     std::string getEncodingType() const { return encoding_type_; }
     virtual void reset();
@@ -60,6 +59,7 @@ public:
     HttpHeader& operator= (HttpHeader &&other);
     
 protected:
+    bool                    is_http2_ = false;
     bool                    is_outgoing_ = true;
     bool                    is_chunked_ = false;
     bool                    has_content_length_ = false;

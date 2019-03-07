@@ -126,7 +126,7 @@ private:
     void onError(KMError err) override;
     
     KMError onExtensionIncomingFrame(ws::FrameHeader hdr, KMBuffer &buf);
-    KMError onExtensionOutcomingFrame(ws::FrameHeader hdr, KMBuffer &buf);
+    KMError onExtensionOutgoingFrame(ws::FrameHeader hdr, KMBuffer &buf);
     
     uint32_t generateMaskKey();
     

@@ -91,7 +91,7 @@ KMError PMCE_Deflate::handleIncomingFrame(FrameHeader hdr, KMBuffer &payload)
     }
 }
 
-KMError PMCE_Deflate::handleOutcomingFrame(FrameHeader hdr, KMBuffer &payload)
+KMError PMCE_Deflate::handleOutgoingFrame(FrameHeader hdr, KMBuffer &payload)
 {
     c_payload.clear();
     auto ret = compressor_->compress(payload, c_payload);
@@ -101,9 +101,9 @@ KMError PMCE_Deflate::handleOutcomingFrame(FrameHeader hdr, KMBuffer &payload)
         }
         hdr.rsv1 = 1;
         KMBuffer o_payload(&c_payload[0], c_payload.size(), c_payload.size());
-        return onOutcomingFrame(hdr, o_payload);
+        return onOutgoingFrame(hdr, o_payload);
     } else { // else send as uncompressed
-        return onOutcomingFrame(hdr, payload);
+        return onOutgoingFrame(hdr, payload);
     }
 }
 
