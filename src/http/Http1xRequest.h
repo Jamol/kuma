@@ -66,7 +66,6 @@ protected: // callbacks of tcp_socket
 private:
     KMError sendRequest() override;
     bool canSendBody() const override;
-    void checkResponseHeaders() override;
     HttpHeader& getRequestHeader() override;
     const HttpHeader& getResponseHeader() const override;
     void buildRequest();

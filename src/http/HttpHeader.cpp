@@ -46,53 +46,13 @@ KMError HttpHeader::addHeader(std::string name, std::string value)
             return KMError::NOERR;
         }
     } else if (is_equal(name, strTransferEncoding)) {
-        if (is_outgoing_ && has_content_length_ && content_length_ == 0) {
-            // no body data
-            return KMError::INVALID_PARAM;
-        }
         is_chunked_ = true;
         if (!is_http2_) {
-            std::string encoding_type;
-            for_each_token(value, ',', [this, &encoding_type] (const std::string &str) {
-                if (!is_equal(str, strChunked)) {
-                    encoding_type = str;
-                    return false;
-                }
-                return true;
-            });
-            if (!encoding_type.empty()) {
-                if (is_equal(encoding_type, "gzip") || is_equal(encoding_type, "deflate")) {
-                    encoding_type_ = std::move(encoding_type);
-                } else if (is_outgoing_) { // remove the compression
-                    value = strChunked;
-                }
-            }
             if (is_outgoing_ && has_content_length_) {
                 removeHeader(strContentLength);
             }
         } else { // is_http2_
             return KMError::NOERR;
-        }
-    } else if (is_equal(name, strContentEncoding)) {
-        if (is_outgoing_ && has_content_length_ && content_length_ == 0) {
-            // no body
-            return KMError::INVALID_PARAM;
-        }
-        if (is_equal(value, "gzip") || is_equal(value, "deflate")) {
-            encoding_type_ = value;
-        } else if (is_outgoing_) {
-            return KMError::NOT_SUPPORTED;
-        }
-        if (is_outgoing_ && !is_chunked_) {
-            if (is_http2_) {
-                is_chunked_ = true;
-                if (has_content_length_) {
-                    // the Content-Length is no longer correct because the content will be compressed
-                    removeHeader(strContentLength);
-                }
-            } else {
-                addHeader(strTransferEncoding, strChunked);
-            }
         }
     }
     
@@ -111,10 +71,6 @@ KMError HttpHeader::addHeader(std::string name, uint32_t value)
 
 bool HttpHeader::removeHeader(const std::string &name)
 {
-    if (is_equal(name, strContentEncoding)) {
-        encoding_type_.clear();
-    }
-    
     bool removed = false;
     auto it = header_vec_.begin();
     while (it != header_vec_.end()) {
@@ -141,8 +97,6 @@ bool HttpHeader::removeHeaderValue(const std::string &name, const std::string &v
                 if (it->second.empty()) {
                     it = header_vec_.erase(it);
                     erased = true;
-                } else if (is_equal(name, strTransferEncoding) && is_equal(value, encoding_type_)) {
-                    encoding_type_.clear();
                 }
             }
         }
@@ -229,7 +183,6 @@ void HttpHeader::reset()
     content_length_ = 0;
     is_chunked_ = false;
     has_body_ = false;
-    encoding_type_.clear();
     header_vec_.clear();
 }
 
@@ -252,7 +205,6 @@ HttpHeader& HttpHeader::operator= (const HttpHeader &other)
         has_content_length_ = other.has_content_length_;
         content_length_ = other.content_length_;
         has_body_ = other.has_body_;
-        encoding_type_ = other.encoding_type_;
         header_vec_ = other.header_vec_;
     }
     
@@ -266,7 +218,6 @@ HttpHeader& HttpHeader::operator= (HttpHeader &&other)
         has_content_length_ = other.has_content_length_;
         content_length_ = other.content_length_;
         has_body_ = other.has_body_;
-        encoding_type_ = std::move(other.encoding_type_);
         header_vec_ = std::move(other.header_vec_);
     }
     

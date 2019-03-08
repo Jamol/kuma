@@ -57,6 +57,7 @@ public:
     virtual KMError close() = 0;
     
     virtual bool isHttp2() const { return false; }
+    
     virtual int getStatusCode() const = 0;
     virtual const std::string& getVersion() const = 0;
     virtual const std::string& getHeaderValue(const std::string &name) const = 0;
@@ -76,7 +77,7 @@ protected:
     virtual int sendBody(const void* data, size_t len) = 0;
     virtual int sendBody(const KMBuffer &buf) = 0;
     virtual void checkRequestHeaders();
-    virtual void checkResponseHeaders() = 0;
+    virtual void checkResponseHeaders();
     virtual HttpHeader& getRequestHeader() = 0;
     virtual const HttpHeader& getResponseHeader() const = 0;
     virtual bool isVersion2() { return true; }
@@ -114,10 +115,14 @@ protected:
     HttpEventCallback       header_cb_;
     HttpEventCallback       response_cb_;
     
+    std::string             req_encoding_type_;
+    std::string             rsp_encoding_type_;
+    
     size_t                  raw_bytes_sent_ = 0;
     std::unique_ptr<Compressor> compressor_;
     std::unique_ptr<Decompressor> decompressor_;
     
+    bool                    compression_enable_ = true;
     bool                    compression_finish_ = false;
     Compressor::DataBuffer  compression_buffer_;
 };

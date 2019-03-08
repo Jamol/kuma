@@ -104,6 +104,8 @@
 		6FD7C549221965360005DDFF /* compr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FD7C545221965360005DDFF /* compr.cpp */; };
 		6FD7C54A221965360005DDFF /* compr.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FD7C546221965360005DDFF /* compr.h */; };
 		6FD7C54B221965360005DDFF /* compr_zlib.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FD7C547221965360005DDFF /* compr_zlib.h */; };
+		6FD7CB99223232F10005DDFF /* httputils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FD7CB97223232F10005DDFF /* httputils.cpp */; };
+		6FD7CB9A223232F10005DDFF /* httputils.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FD7CB98223232F10005DDFF /* httputils.h */; };
 		6FE0EF001D409863006136B7 /* FrameParser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FE0EEF11D409863006136B7 /* FrameParser.cpp */; };
 		6FE0EF011D409863006136B7 /* FrameParser.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FE0EEF21D409863006136B7 /* FrameParser.h */; };
 		6FE0EF021D409863006136B7 /* H2ConnectionImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FE0EEF31D409863006136B7 /* H2ConnectionImpl.cpp */; };
@@ -239,6 +241,8 @@
 		6FD7C545221965360005DDFF /* compr.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = compr.cpp; sourceTree = "<group>"; };
 		6FD7C546221965360005DDFF /* compr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = compr.h; sourceTree = "<group>"; };
 		6FD7C547221965360005DDFF /* compr_zlib.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = compr_zlib.h; sourceTree = "<group>"; };
+		6FD7CB97223232F10005DDFF /* httputils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = httputils.cpp; sourceTree = "<group>"; };
+		6FD7CB98223232F10005DDFF /* httputils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httputils.h; sourceTree = "<group>"; };
 		6FE0EEF11D409863006136B7 /* FrameParser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FrameParser.cpp; sourceTree = "<group>"; };
 		6FE0EEF21D409863006136B7 /* FrameParser.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FrameParser.h; sourceTree = "<group>"; };
 		6FE0EEF31D409863006136B7 /* H2ConnectionImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H2ConnectionImpl.cpp; sourceTree = "<group>"; };
@@ -507,6 +511,8 @@
 				6FBB2C9D1D139C560024550F /* HttpRequestImpl.h */,
 				6FBB2C9E1D139C560024550F /* HttpResponseImpl.cpp */,
 				6FBB2C9F1D139C560024550F /* HttpResponseImpl.h */,
+				6FD7CB97223232F10005DDFF /* httputils.cpp */,
+				6FD7CB98223232F10005DDFF /* httputils.h */,
 				6FBB2CA01D139C560024550F /* Uri.cpp */,
 				6FBB2CA11D139C560024550F /* Uri.h */,
 			);
@@ -551,6 +557,7 @@
 				6FE0EF061D409863006136B7 /* h2defs.h in Headers */,
 				6FD3F0571EBD99790027D04F /* BioHandler.h in Headers */,
 				6F9E767A1D36758B005E04B2 /* httpdefs.h in Headers */,
+				6FD7CB9A223232F10005DDFF /* httputils.h in Headers */,
 				6FBB2CB51D139C700024550F /* OpenSslLib.h in Headers */,
 				6FF211DA1B1556FB006603BB /* EventLoopImpl.h in Headers */,
 				6F6D14561D9CBDE7008B64E6 /* FlowControl.h in Headers */,
@@ -681,6 +688,7 @@
 				6F77ADDF2202D28C00BCBB51 /* PMCE_Deflate.cpp in Sources */,
 				6FD7C548221965360005DDFF /* compr_zlib.cpp in Sources */,
 				6F91F1711D782DD3004A95B9 /* Http1xRequest.cpp in Sources */,
+				6FD7CB99223232F10005DDFF /* httputils.cpp in Sources */,
 				6FD7C45C221293080005DDFF /* inflate.c in Sources */,
 				6FD7C459221293080005DDFF /* zutil.c in Sources */,
 				6FBB2CAA1D139C560024550F /* HttpRequestImpl.cpp in Sources */,

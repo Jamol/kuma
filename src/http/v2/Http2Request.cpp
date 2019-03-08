@@ -214,12 +214,10 @@ void Http2Request::forEachHeader(const EnumerateCallback &cb) const
 
 void Http2Request::checkResponseHeaders()
 {
+    HttpRequest::Impl::checkResponseHeaders();
+    
     if (rsp_header_.hasContentLength()) {
         KUMA_INFOXTRACE("checkResponseHeaders, Content-Length=" << rsp_header_.getContentLength());
-    }
-    auto contentEncoding = rsp_header_.getHeader(strContentEncoding);
-    if (!contentEncoding.empty()) {
-        KUMA_INFOXTRACE("checkResponseHeaders, Content-Encoding=" << contentEncoding);
     }
 }
 

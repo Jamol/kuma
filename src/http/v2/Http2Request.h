@@ -55,6 +55,7 @@ public:
     KMError close() override;
     
     bool isHttp2() const override { return true; }
+    
     int getStatusCode() const override { return status_code_; }
     const std::string& getVersion() const override { return VersionHTTP2_0; }
     const std::string& getHeaderValue(const std::string &name) const override;

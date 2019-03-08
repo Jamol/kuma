@@ -267,6 +267,9 @@
     <ClCompile Include="..\..\src\compr\compr_zlib.cpp">
       <Filter>Source Files\compr</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\http\httputils.cpp">
+      <Filter>Source Files\http</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\kmconf.h">
@@ -454,6 +457,9 @@
     </ClInclude>
     <ClInclude Include="..\..\src\compr\compr_zlib.h">
       <Filter>Source Files\compr</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\httputils.h">
+      <Filter>Header Files\http</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

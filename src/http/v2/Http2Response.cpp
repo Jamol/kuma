@@ -153,10 +153,8 @@ int Http2Response::sendBody(const KMBuffer &buf)
 
 void Http2Response::checkResponseHeaders()
 {
-    if (!encoding_type_.empty() && !rsp_header_.hasHeader(strContentEncoding)) {
-        addHeader(strContentEncoding, encoding_type_);
-        KUMA_INFOXTRACE("checkResponseHeaders, add Content-Encoding="<<encoding_type_);
-    }
+    HttpResponse::Impl::checkResponseHeaders();
+    
     if (rsp_header_.hasContentLength()) {
         KUMA_INFOXTRACE("checkResponseHeaders, Content-Length=" << rsp_header_.getContentLength());
     }
@@ -164,25 +162,10 @@ void Http2Response::checkResponseHeaders()
 
 void Http2Response::checkRequestHeaders()
 {
-    encoding_type_.clear();
-    auto encodings = req_header_.getHeader(strAcceptEncoding);
-    for_each_token(encodings, ',', [this] (const std::string &str) {
-        if (is_equal(str, "gzip")) {
-            encoding_type_ = "gzip";
-            return false;
-        } else if (is_equal(str, "deflate")) {
-            encoding_type_ = "deflate";
-            return false;
-        }
-        return true;
-    });
+    HttpResponse::Impl::checkRequestHeaders();
     
     if (req_header_.hasContentLength()) {
         KUMA_INFOXTRACE("checkRequestHeaders, Content-Length=" << req_header_.getContentLength());
-    }
-    auto contentEncoding = req_header_.getHeader(strContentEncoding);
-    if (!contentEncoding.empty()) {
-        KUMA_INFOXTRACE("checkRequestHeaders, Content-Encoding=" << contentEncoding);
     }
 }
 

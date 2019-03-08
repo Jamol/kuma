@@ -62,11 +62,6 @@ KMError Http1xRequest::addHeader(std::string name, std::string value)
     return req_message_.addHeader(std::move(name), std::move(value));
 }
 
-void Http1xRequest::checkResponseHeaders()
-{
-    
-}
-
 HttpHeader& Http1xRequest::getRequestHeader()
 {
     return req_message_;

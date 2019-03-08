@@ -69,6 +69,7 @@ SRCS =  \
     http/HttpResponseImpl.cpp \
     http/Http1xResponse.cpp \
     http/HttpCache.cpp \
+    http/httputils.cpp \
     http/v2/H2Frame.cpp \
     http/v2/FrameParser.cpp \
     http/v2/FlowControl.cpp \

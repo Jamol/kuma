@@ -41,6 +41,8 @@ public:
     int sendBody(const KMBuffer &buf) override;
     KMError close() override;
     
+    bool isHttp2() const override { return true; }
+    
     const std::string& getMethod() const override { return req_method_; }
     const std::string& getPath() const override { return req_path_; }
     const std::string& getQuery() const override { return EmptyString; }
@@ -76,7 +78,6 @@ private:
     HttpHeader              req_header_{false, true};
     std::string             req_method_;
     std::string             req_path_;
-    std::string             encoding_type_;
     
     EventLoopToken          loop_token_;
 };

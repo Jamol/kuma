@@ -94,45 +94,6 @@ KMError Http1xResponse::addHeader(std::string name, std::string value)
     return rsp_message_.addHeader(std::move(name), std::move(value));
 }
 
-void Http1xResponse::checkResponseHeaders()
-{
-    if (!rsp_message_.hasHeader(strContentType)) {
-        addHeader(strContentType, "application/octet-stream");
-    }
-    
-    if (!encoding_type_.empty()) {
-        if (is_content_encoding_) {
-            if (!rsp_message_.hasHeader(strContentEncoding)) {
-                addHeader(strContentEncoding, encoding_type_);
-                KUMA_INFOXTRACE("checkResponseHeaders, add Content-Encoding="<<encoding_type_);
-            }
-        } else {
-            addHeader(strTransferEncoding, encoding_type_ + ", chunked");
-            KUMA_INFOXTRACE("checkResponseHeaders, add Transfer-Encoding="<<encoding_type_);
-        }
-    }
-}
-
-void Http1xResponse::checkRequestHeaders()
-{
-    is_content_encoding_ = true;
-    auto encodings = req_parser_.getHeaderValue(strAcceptEncoding);
-    if (encodings.empty()) {
-        encodings = req_parser_.getHeaderValue("TE");
-        is_content_encoding_ = !encodings.empty();
-    }
-    for_each_token(encodings, ',', [this] (const std::string &str) {
-        if (is_equal(str, "gzip")) {
-            encoding_type_ = "gzip";
-            return false;
-        } else if (is_equal(str, "deflate")) {
-            encoding_type_ = "deflate";
-            return false;
-        }
-        return true;
-    });
-}
-
 const HttpHeader& Http1xResponse::getRequestHeader() const
 {
     return req_parser_;
@@ -216,7 +177,6 @@ void Http1xResponse::reset()
     HttpResponse::Impl::reset();
     req_parser_.reset();
     rsp_message_.reset();
-    encoding_type_.clear();
     setState(State::RECVING_REQUEST);
 }
 

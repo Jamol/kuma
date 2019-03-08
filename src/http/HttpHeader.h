@@ -45,7 +45,6 @@ public:
     bool hasContentLength() const { return has_content_length_; }
     bool isChunked() const { return is_chunked_; }
     size_t getContentLength() const { return content_length_; }
-    std::string getEncodingType() const { return encoding_type_; }
     virtual void reset();
     void setHeaders(const HeaderVector &headers);
     void setHeaders(HeaderVector &&headers);
@@ -65,7 +64,6 @@ protected:
     bool                    has_content_length_ = false;
     bool                    has_body_ = false;
     size_t                  content_length_ = 0;
-    std::string             encoding_type_;
     HeaderVector            header_vec_;
 };
 

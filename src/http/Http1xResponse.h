@@ -74,8 +74,6 @@ protected:
     
 protected:
     bool canSendBody() const override;
-    void checkResponseHeaders() override;
-    void checkRequestHeaders() override;
     const HttpHeader& getRequestHeader() const override;
     HttpHeader& getResponseHeader() override;
     void buildResponse(int status_code, const std::string& desc, const std::string& ver);
@@ -87,9 +85,6 @@ protected:
 protected:
     HttpParser::Impl        req_parser_;
     HttpMessage             rsp_message_;
-    
-    bool                    is_content_encoding_ = true;
-    std::string             encoding_type_;
     
     EventLoopToken          loop_token_;
 };
