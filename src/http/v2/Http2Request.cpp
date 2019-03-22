@@ -101,7 +101,7 @@ KMError Http2Request::sendRequest()
                 onError(err);
             }
         }, &conn_token_)) {
-            KUMA_ERRXTRACE("sendRequest, failed to run in H2Connection, key="<<conn_->getConnectionKey());
+            KUMA_ERRXTRACE("sendRequest, failed to run on H2Connection, key="<<conn_->getConnectionKey());
             return KMError::INVALID_STATE;
         }
     }
@@ -235,9 +235,9 @@ size_t Http2Request::buildHeaders(HeaderVector &headers)
 {
     req_header_.processHeader();
     size_t headers_size = 0;
-    headers.emplace_back(std::make_pair(H2HeaderMethod, method_));
+    headers.emplace_back(H2HeaderMethod, method_);
     headers_size += H2HeaderMethod.size() + method_.size();
-    headers.emplace_back(std::make_pair(H2HeaderScheme, uri_.getScheme()));
+    headers.emplace_back(H2HeaderScheme, uri_.getScheme());
     headers_size += H2HeaderScheme.size() + uri_.getScheme().size();
     std::string path = uri_.getPath();
     if(!uri_.getQuery().empty()) {
@@ -246,9 +246,9 @@ size_t Http2Request::buildHeaders(HeaderVector &headers)
     if(!uri_.getFragment().empty()) {
         path = "#" + uri_.getFragment();
     }
-    headers.emplace_back(std::make_pair(H2HeaderPath, path));
+    headers.emplace_back(H2HeaderPath, path);
     headers_size += H2HeaderPath.size() + path.size();
-    headers.emplace_back(std::make_pair(H2HeaderAuthority, uri_.getHost()));
+    headers.emplace_back(H2HeaderAuthority, uri_.getHost());
     headers_size += H2HeaderAuthority.size() + uri_.getHost().size();
     for (auto const &kv : req_header_.getHeaders()) {
         headers.emplace_back(kv.first, kv.second);

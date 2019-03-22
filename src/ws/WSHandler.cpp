@@ -30,8 +30,7 @@ using namespace kuma::ws;
 //////////////////////////////////////////////////////////////////////////
 WSHandler::WSHandler()
 {
-    http_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
-    http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
+    
 }
 
 void WSHandler::cleanup()
@@ -39,141 +38,9 @@ void WSHandler::cleanup()
     ctx_.reset();
 }
 
-void WSHandler::setHttpParser(HttpParser::Impl&& parser)
-{
-    http_parser_.reset();
-    http_parser_ = std::move(parser);
-    http_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
-    http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
-    if(http_parser_.paused()) {
-        http_parser_.resume();
-    }
-}
-
-const std::string WSHandler::getOrigin() const
-{
-    return http_parser_.getHeaderValue("Origin");
-}
-
-const std::string WSHandler::getSubprotocol() const
-{
-    std::string subprotocol;
-    http_parser_.forEachHeader([&subprotocol] (const std::string& key, const std::string& value) {
-        if (key == kSecWebSocketProtocol) {
-            if (subprotocol.empty()) {
-                subprotocol = value;
-            } else {
-                subprotocol += ", " + value;
-            }
-        }
-        return true;
-    });
-    return subprotocol;
-}
-
-const std::string WSHandler::getExtensions() const
-{
-    std::string extensions;
-    http_parser_.forEachHeader([&extensions] (const std::string& key, const std::string& value) {
-        if (key == kSecWebSocketExtensions) {
-            if (extensions.empty()) {
-                extensions = value;
-            } else {
-                extensions += ", " + value;
-            }
-        }
-        return true;
-    });
-    return extensions;
-}
-
-void WSHandler::onHttpData(KMBuffer &buf)
-{
-    KUMA_ERRTRACE_THIS("WSHandler::onHttpData, len="<<buf.chainLength());
-}
-
-void WSHandler::onHttpEvent(HttpEvent ev)
-{
-    KUMA_INFOTRACE_THIS("WSHandler::onHttpEvent, ev="<<int(ev));
-    switch (ev) {
-        case HttpEvent::HEADER_COMPLETE:
-            break;
-            
-        case HttpEvent::COMPLETE:
-            if(http_parser_.isRequest()) {
-                handleRequest();
-            } else {
-                handleResponse();
-            }
-            break;
-            
-        case HttpEvent::HTTP_ERROR:
-            state_ = STATE_ERROR;
-            break;
-            
-        default:
-            break;
-    }
-}
-
-void WSHandler::handleRequest()
-{
-    auto err = KMError::NOERR;
-    do {
-        if(!http_parser_.isUpgradeTo("WebSocket")) {
-            KUMA_ERRTRACE_THIS("WSHandler::handleRequest, not WebSocket request");
-            err = KMError::PROTO_ERROR;
-            break;
-        }
-        auto const &sec_ws_ver = http_parser_.getHeaderValue(kSecWebSocketVersion);
-        if (sec_ws_ver.empty() || !contains_token(sec_ws_ver, kWebSocketVersion, ',')) {
-            KUMA_ERRTRACE_THIS("WSHandler::handleRequest, unsupported version number, ver="<<sec_ws_ver);
-            err = KMError::PROTO_ERROR;
-            break;
-        }
-        auto const &sec_ws_key = http_parser_.getHeaderValue(kSecWebSocketKey);
-        if(sec_ws_key.empty()) {
-            KUMA_ERRTRACE_THIS("WSHandler::handleRequest, no Sec-WebSocket-Key");
-            err = KMError::PROTO_ERROR;
-            break;
-        }
-    } while (0);
-    
-    state_ = err == KMError::NOERR ? STATE_OPEN : STATE_ERROR;
-    if(handshake_cb_) handshake_cb_(err);
-}
-
-void WSHandler::handleResponse()
-{
-    auto err = KMError::NOERR;
-    if(!http_parser_.isUpgradeTo("WebSocket")) {
-        KUMA_ERRTRACE_THIS("WSHandler::handleResponse, invalid status code: "<<http_parser_.getStatusCode());
-        err = KMError::PROTO_ERROR;
-    }
-    
-    state_ = err == KMError::NOERR ? STATE_OPEN : STATE_ERROR;
-    if(handshake_cb_) handshake_cb_(err);
-}
-
 WSError WSHandler::handleData(uint8_t* data, size_t len)
 {
-    if(state_ == STATE_OPEN) {
-        return decodeFrame(data, len);
-    }
-    if(state_ == STATE_HANDSHAKE) {
-        DESTROY_DETECTOR_SETUP();
-        int bytes_used = http_parser_.parse((char*)data, len);
-        DESTROY_DETECTOR_CHECK(WSError::DESTROYED);
-        if(state_ == STATE_ERROR) {
-            return WSError::HANDSHAKE;
-        }
-        if(bytes_used < (int)len && state_ == STATE_OPEN) {
-            return decodeFrame(data + bytes_used, len - bytes_used);
-        }
-    } else {
-        return WSError::INVALID_STATE;
-    }
-    return WSError::NOERR;
+    return decodeFrame(data, len);
 }
 
 int WSHandler::encodeFrameHeader(FrameHeader hdr, uint8_t hdr_buf[WS_MAX_HEADER_SIZE])
@@ -459,34 +326,7 @@ void WSHandler::handleDataMask(const uint8_t mask_key[WS_MASK_KEY_SIZE], KMBuffe
     }
 }
 
-const std::string& WSHandler::getPath() const
-{
-    return http_parser_.getUrlPath();
-}
-
-const std::string& WSHandler::getQuery() const
-{
-    return http_parser_.getUrlQuery();
-}
-
-const std::string& WSHandler::getParamValue(const std::string &name) const
-{
-    return http_parser_.getParamValue(name);
-}
-
-const std::string& WSHandler::getHeaderValue(const std::string &name) const
-{
-    return http_parser_.getHeaderValue(name);
-}
-
-void WSHandler::forEachHeader(const EnumerateCallback &cb) const
-{
-    http_parser_.forEachHeader(cb);
-}
-
 void WSHandler::reset()
 {
-    http_parser_.reset();
     ctx_.reset();
-    state_ = STATE_HANDSHAKE;
 }

@@ -189,6 +189,7 @@
     <ClCompile Include="..\..\src\http\v2\H2ConnectionMgr.cpp" />
     <ClCompile Include="..\..\src\http\v2\H2Frame.cpp" />
     <ClCompile Include="..\..\src\http\v2\H2Stream.cpp" />
+    <ClCompile Include="..\..\src\http\v2\H2StreamProxy.cpp" />
     <ClCompile Include="..\..\src\http\v2\h2utils.cpp" />
     <ClCompile Include="..\..\src\http\v2\hpack\HPacker.cpp" />
     <ClCompile Include="..\..\src\http\v2\hpack\HPackTable.cpp" />
@@ -222,6 +223,9 @@
     <ClCompile Include="..\..\src\ws\exts\PMCE_Deflate.cpp" />
     <ClCompile Include="..\..\src\ws\exts\WSExtension.cpp" />
     <ClCompile Include="..\..\src\ws\WebSocketImpl.cpp" />
+    <ClCompile Include="..\..\src\ws\WSConnection.cpp" />
+    <ClCompile Include="..\..\src\ws\WSConnection_v1.cpp" />
+    <ClCompile Include="..\..\src\ws\WSConnection_v2.cpp" />
     <ClCompile Include="..\..\src\ws\WSHandler.cpp" />
     <ClCompile Include="..\..\vendor\zlib\adler32.c" />
     <ClCompile Include="..\..\vendor\zlib\compress.c" />
@@ -259,6 +263,7 @@
     <ClInclude Include="..\..\src\http\v2\h2defs.h" />
     <ClInclude Include="..\..\src\http\v2\H2Frame.h" />
     <ClInclude Include="..\..\src\http\v2\H2Stream.h" />
+    <ClInclude Include="..\..\src\http\v2\H2StreamProxy.h" />
     <ClInclude Include="..\..\src\http\v2\h2utils.h" />
     <ClInclude Include="..\..\src\http\v2\hpack\HPacker.h" />
     <ClInclude Include="..\..\src\http\v2\hpack\HPackTable.h" />
@@ -296,6 +301,9 @@
     <ClInclude Include="..\..\src\util\skbuffer.h" />
     <ClInclude Include="..\..\src\util\util.h" />
     <ClInclude Include="..\..\src\ws\WebSocketImpl.h" />
+    <ClInclude Include="..\..\src\ws\WSConnection.h" />
+    <ClInclude Include="..\..\src\ws\WSConnection_v1.h" />
+    <ClInclude Include="..\..\src\ws\WSConnection_v2.h" />
     <ClInclude Include="..\..\src\ws\WSHandler.h" />
     <ClInclude Include="..\..\vendor\zlib\zlib.h" />
     <ClInclude Include="resource.h" />

@@ -44,7 +44,11 @@ void HttpClient::onSend(KMError err)
 {
     const size_t kBufferSize = 16*1024;
     uint8_t buf[kBufferSize];
-    memset(buf, 'a', sizeof(buf));
+    //memset(buf, 'a', sizeof(buf));
+    buf[0] = 112;
+	for (int i = 1; i < sizeof(buf); ++i) {
+        buf[i] = buf[i-1] + 1;
+    }
     KMBuffer buf1(buf, kBufferSize/2, kBufferSize/2);
     KMBuffer buf2(buf + kBufferSize/2, kBufferSize/2, kBufferSize/2);
     buf1.append(&buf2);

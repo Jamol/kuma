@@ -26,6 +26,7 @@
 
 KUMA_NS_BEGIN
 
+bool processH2RequestHeaders(const HeaderVector &h2_headers, std::string &method, std::string &path, HeaderVector &req_headers);
 bool processH2ResponseHeaders(const HeaderVector &h2_headers, int &status_code, HeaderVector &rsp_headers);
 
 KUMA_NS_END

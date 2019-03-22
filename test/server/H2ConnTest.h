@@ -4,7 +4,6 @@
 
 #include "kmapi.h"
 #include "TestLoop.h"
-#include "HttpTest.h"
 
 #include <string>
 #include <list>
@@ -23,7 +22,7 @@ public:
     int close() override;
     
 private:
-    bool onAccept(uint32_t streamId);
+    bool onAccept(uint32_t stream_id, const char *method, const char *path, const char *host, const char *protocol);
     void onError(int err);
     void cleanup();
     
@@ -38,7 +37,7 @@ private:
     long        conn_id_;
     
     std::mutex      h2_mutex_;
-    std::map<long, HttpTest*> h2_map_;
+    std::map<long, TestObject*> obj_map_;
 };
 
 #endif /* __H2ConnTest_H__ */

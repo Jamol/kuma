@@ -1,5 +1,11 @@
 
 #include "H2ConnTest.h"
+#include "HttpTest.h"
+#include "WsTest.h"
+
+#ifdef KUMA_OS_WIN
+#define strcasecmp _stricmp
+#endif
 
 H2ConnTest::H2ConnTest(TestLoop* loop, long conn_id)
 : loop_(loop)
@@ -17,17 +23,17 @@ H2ConnTest::~H2ConnTest()
 void H2ConnTest::cleanup()
 {
     std::lock_guard<std::mutex> lg(h2_mutex_);
-    for (auto &kv : h2_map_) {
+    for (auto &kv : obj_map_) {
         kv.second->close();
         delete kv.second;
     }
-    h2_map_.clear();
+    obj_map_.clear();
 }
 
 KMError H2ConnTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf)
 {
-    conn_.setAcceptCallback([this] (uint32_t streamId) -> bool {
-        return onAccept(streamId);
+    conn_.setAcceptCallback([this] (uint32_t streamId, const char *method, const char *path, const char *host,const char *protocol) {
+        return onAccept(streamId, method, path, host, protocol);
     });
     conn_.setErrorCallback([this] (int err) {
         return onError(err);
@@ -42,12 +48,18 @@ int H2ConnTest::close()
     return 0;
 }
 
-bool H2ConnTest::onAccept(uint32_t streamId)
+bool H2ConnTest::onAccept(uint32_t stream_id, const char *method, const char *path, const char *host, const char *protocol)
 {
-    printf("H2ConnTest::onAccept, streamId=%u\n", streamId);
-    HttpTest* h2 = new HttpTest(this, long(streamId), "HTTP/2.0");
-    addObject(streamId, h2);
-    h2->attachStream(&conn_, streamId);
+    printf("H2ConnTest::onAccept, streamId=%u, method=%s, proto=%s\n", stream_id, method, protocol);
+    if (strcasecmp(method, "CONNECT") == 0 && strcasecmp(protocol, "websocket") == 0) {
+        WsTest* ws = new WsTest(this, long(stream_id), "HTTP/2.0");
+        addObject(stream_id, ws);
+        ws->attachStream(stream_id, &conn_);
+    } else {
+        HttpTest* h2 = new HttpTest(this, long(stream_id), "HTTP/2.0");
+        addObject(stream_id, h2);
+        h2->attachStream(stream_id, &conn_);
+    }
     return true;
 }
 
@@ -60,21 +72,17 @@ void H2ConnTest::onError(int err)
 
 void H2ConnTest::addObject(long conn_id, TestObject* obj)
 {
-    HttpTest* h2 = dynamic_cast<HttpTest*>(obj);
-    if (!h2) {
-        return;
-    }
     std::lock_guard<std::mutex> lg(h2_mutex_);
-    h2_map_.insert(std::make_pair(conn_id, h2));
+    obj_map_.emplace(conn_id, obj);
 }
 
 void H2ConnTest::removeObject(long conn_id)
 {
     printf("H2ConnTest::removeObject, conn_id=%ld\n", conn_id);
     std::lock_guard<std::mutex> lg(h2_mutex_);
-    auto it = h2_map_.find(conn_id);
-    if(it != h2_map_.end()) {
+    auto it = obj_map_.find(conn_id);
+    if(it != obj_map_.end()) {
         delete it->second;
-        h2_map_.erase(it);
+        obj_map_.erase(it);
     }
 }

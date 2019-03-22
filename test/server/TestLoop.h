@@ -50,7 +50,6 @@ public:
     void addFd(SOCKET_FD fd, Proto proto);
     
     void addHttp(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf);
-    void addHttp2(H2Connection* conn, uint32_t streamId);
     void addH2Conn(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf);
     void addWebSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf);
     

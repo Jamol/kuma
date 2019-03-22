@@ -16,7 +16,7 @@ public:
 
     KMError attachFd(SOCKET_FD fd, uint32_t ssl_flags, const KMBuffer *init_buf);
     KMError attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf);
-    KMError attachStream(H2Connection* conn, uint32_t streamId);
+    KMError attachStream(uint32_t streamId, H2Connection* conn);
     int close();
     
     void onSend(KMError err);

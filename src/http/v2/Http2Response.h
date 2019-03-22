@@ -34,7 +34,7 @@ class Http2Response : public HttpResponse::Impl, public DestroyDetector
 public:
     Http2Response(const EventLoopPtr &loop, std::string ver);
     
-    KMError attachStream(H2Connection::Impl* conn, uint32_t stream_id) override;
+    KMError attachStream(uint32_t stream_id, H2Connection::Impl* conn) override;
     KMError addHeader(std::string name, std::string value) override;
     KMError sendResponse(int status_code, const std::string& desc, const std::string& ver) override;
     int sendBody(const void* data, size_t len) override;

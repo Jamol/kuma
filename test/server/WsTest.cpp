@@ -3,11 +3,12 @@
 
 #include <string.h>
 
-WsTest::WsTest(TestLoop* loop, long conn_id)
-: loop_(loop)
-, ws_(loop->eventLoop())
+WsTest::WsTest(ObjectManager* obj_mgr, long conn_id, const std::string &ver)
+: obj_mgr_(obj_mgr)
+, ws_(obj_mgr->eventLoop(), ver.c_str())
 , conn_id_(conn_id)
 {
+    ws_.setOpenCallback([this] (KMError err) { onOpen(err); });
     ws_.setWriteCallback([this] (KMError err) { onSend(err); });
     ws_.setErrorCallback([this] (KMError err) { onClose(err); });
     ws_.setDataCallback([this] (KMBuffer &buf, bool is_text, bool is_fin) {
@@ -23,7 +24,16 @@ KMError WsTest::attachFd(SOCKET_FD fd, uint32_t ssl_flags, const KMBuffer *init_
 
 KMError WsTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf)
 {
-    return ws_.attachSocket(std::move(tcp), std::move(parser), init_buf, [this] (KMError err) { return onHandshake(err); });
+    return ws_.attachSocket(std::move(tcp), std::move(parser), init_buf, [this] (KMError err) {
+        return onHandshake(err);
+    });
+}
+
+KMError WsTest::attachStream(uint32_t stream_id, H2Connection* conn)
+{
+    return ws_.attachStream(stream_id, conn, [this] (KMError err) {
+        return onHandshake(err);
+    });
 }
 
 int WsTest::close()
@@ -36,12 +46,16 @@ bool WsTest::onHandshake(KMError err)
 {
     printf("WsTest::onHandshake, err=%d\n", err);
     printf("WsTest::onHandshake, path=%s, origin=%s\n", ws_.getPath(), ws_.getOrigin());
-    printf("WsTest::onHandshake, query=%s\n", ws_.getQuery());
     ws_.forEachHeader([](const char *name, const char *value){
         printf("WsTest::onHandshake, header, %s: %s\n", name, value);
         return true;
     });
     return true;
+}
+
+void WsTest::onOpen(KMError err)
+{
+    printf("WsTest::onOpen, err=%d\n", err);
 }
 
 void WsTest::onSend(KMError err)
@@ -53,16 +67,16 @@ void WsTest::onClose(KMError err)
 {
     printf("WsTest::onClose, err=%d\n", err);
     ws_.close();
-    loop_->removeObject(conn_id_);
+    obj_mgr_->removeObject(conn_id_);
 }
 
 void WsTest::onData(KMBuffer &buf, bool is_text, bool is_fin)
 {
-    //printf("WsTest::onData, len=%u\n", len);
+    //printf("WsTest::onData, len=%u\n", uint32_t(buf.chainLength()));
     int ret = ws_.send(buf, is_text, is_fin);
     if(ret < 0) {
         ws_.close();
-        loop_->removeObject(conn_id_);
+        obj_mgr_->removeObject(conn_id_);
     }// else should buffer remain data if ret < len
 }
 

@@ -58,6 +58,11 @@ KMError HttpHeader::addHeader(std::string name, std::string value)
     
     if (is_http2_) {
         transform(name.begin(), name.end(), name.begin(), ::tolower);
+        if (name[0] == ':') { // H2 pseudo header
+            auto kv = std::make_pair(std::move(name), std::move(value));
+            header_vec_.insert(header_vec_.begin(), std::move(kv));
+            return KMError::NOERR;
+        }
     }
     header_vec_.emplace_back(std::move(name), std::move(value));
     

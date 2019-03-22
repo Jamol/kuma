@@ -41,7 +41,7 @@ void Http2Response::cleanup()
     loop_token_.reset();
 }
 
-KMError Http2Response::attachStream(H2Connection::Impl* conn, uint32_t stream_id)
+KMError Http2Response::attachStream(uint32_t stream_id, H2Connection::Impl* conn)
 {
     stream_ = conn->getStream(stream_id);
     if (!stream_) {
@@ -184,7 +184,7 @@ size_t Http2Response::buildHeaders(int status_code, HeaderVector &headers)
     rsp_header_.processHeader(status_code, req_method_);
     size_t headers_size = 0;
     std::string str_status_code = std::to_string(status_code);
-    headers.emplace_back(std::make_pair(H2HeaderStatus, str_status_code));
+    headers.emplace_back(H2HeaderStatus, str_status_code);
     headers_size += H2HeaderStatus.size() + str_status_code.size();
     for (auto const &kv : rsp_header_.getHeaders()) {
         headers.emplace_back(kv.first, kv.second);

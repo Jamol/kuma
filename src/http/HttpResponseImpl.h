@@ -47,7 +47,7 @@ public:
     virtual KMError setSslFlags(uint32_t ssl_flags) { return KMError::NOT_SUPPORTED; }
     virtual KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf) { return KMError::NOT_SUPPORTED; }
     virtual KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf) { return KMError::NOT_SUPPORTED; }
-    virtual KMError attachStream(H2Connection::Impl* conn, uint32_t stream_id) { return KMError::NOT_SUPPORTED; }
+    virtual KMError attachStream(uint32_t stream_id, H2Connection::Impl* conn) { return KMError::NOT_SUPPORTED; }
     virtual KMError addHeader(std::string name, std::string value) = 0;
     virtual KMError addHeader(std::string name, uint32_t value);
     KMError sendResponse(int status_code, const std::string& desc);
