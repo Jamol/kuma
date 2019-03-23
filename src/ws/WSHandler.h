@@ -33,31 +33,17 @@ class WSHandler : public DestroyDetector
 {
 public:
     using FrameCallback = std::function<KMError(FrameHeader, KMBuffer &)>;
-    using HandshakeCallback = std::function<void(KMError)>;
-    using EnumerateCallback = HttpParser::Impl::EnumerateCallback;
     
     WSHandler();
     ~WSHandler() = default;
     
     void setMode(WSMode mode) { mode_ = mode; }
-    WSMode getMode() { return mode_; }
-    void setHttpParser(HttpParser::Impl&& parser);
+    WSMode getMode() const { return mode_; }
     
     WSError handleData(uint8_t* data, size_t len);
     static int encodeFrameHeader(FrameHeader hdr, uint8_t hdr_buf[WS_MAX_HEADER_SIZE]);
     
-    const std::string getOrigin() const;
-    const std::string getSubprotocol() const;
-    const std::string getExtensions() const;
-    
-    const std::string& getPath() const;
-    const std::string& getQuery() const;
-    const std::string& getParamValue(const std::string &name) const;
-    const std::string& getHeaderValue(const std::string &name) const;
-    void forEachHeader(const EnumerateCallback &cb) const;
-    
     void setFrameCallback(FrameCallback cb) { frame_cb_ = std::move(cb); }
-    void setHandshakeCallback(HandshakeCallback cb) { handshake_cb_ = std::move(cb); }
     
     void reset();
     
@@ -95,29 +81,13 @@ private:
     void handleDataMask(const FrameHeader& hdr, uint8_t* data, size_t len);
     void handleDataMask(const FrameHeader& hdr, KMBuffer &buf);
     WSError decodeFrame(uint8_t* data, size_t len);
-    
-    void onHttpData(KMBuffer &buf);
-    void onHttpEvent(HttpEvent ev);
-    
-    void handleRequest();
-    void handleResponse();
     WSError handleFrame(const FrameHeader &hdr, void* payload, size_t len);
     
 private:
-    typedef enum {
-        STATE_HANDSHAKE,
-        STATE_OPEN,
-        STATE_ERROR,
-        STATE_DESTROY
-    } State;
-    State                   state_{ STATE_HANDSHAKE };
     WSMode                  mode_ = WSMode::CLIENT;
     DecodeContext           ctx_;
     
-    HttpParser::Impl        http_parser_;
-    
     FrameCallback           frame_cb_;
-    HandshakeCallback       handshake_cb_;
 };
 
 WS_NS_END

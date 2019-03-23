@@ -47,7 +47,8 @@ enum H2SettingsId : uint16_t {
     MAX_CONCURRENT_STREAMS  = 3,
     INITIAL_WINDOW_SIZE     = 4,
     MAX_FRAME_SIZE          = 5,
-    MAX_HEADER_LIST_SIZE    = 6
+    MAX_HEADER_LIST_SIZE    = 6,
+    ENABLE_CONNECT_PROTOCOL = 8,
 };
 
 enum class H2Error : int32_t {
@@ -71,6 +72,7 @@ using ParamVector = std::vector<std::pair<uint16_t, uint32_t>>;
 
 const std::string H2HeaderMethod(":method");
 const std::string H2HeaderScheme(":scheme");
+const std::string H2HeaderProtocol(":protocol");
 const std::string H2HeaderAuthority(":authority");
 const std::string H2HeaderPath(":path");
 const std::string H2HeaderStatus(":status");

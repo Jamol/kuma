@@ -270,6 +270,18 @@
     <ClCompile Include="..\..\src\http\httputils.cpp">
       <Filter>Source Files\http</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\http\v2\H2StreamProxy.cpp">
+      <Filter>Source Files\http\v2</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ws\WSConnection.cpp">
+      <Filter>Source Files\ws</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ws\WSConnection_v1.cpp">
+      <Filter>Source Files\ws</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ws\WSConnection_v2.cpp">
+      <Filter>Source Files\ws</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\kmconf.h">
@@ -460,6 +472,18 @@
     </ClInclude>
     <ClInclude Include="..\..\src\http\httputils.h">
       <Filter>Header Files\http</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\http\v2\H2StreamProxy.h">
+      <Filter>Header Files\http\v2</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ws\WSConnection.h">
+      <Filter>Header Files\ws</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ws\WSConnection_v1.h">
+      <Filter>Header Files\ws</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ws\WSConnection_v2.h">
+      <Filter>Header Files\ws</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

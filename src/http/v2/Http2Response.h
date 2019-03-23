@@ -29,12 +29,14 @@
 
 KUMA_NS_BEGIN
 
+class H2StreamProxy;
+
 class Http2Response : public HttpResponse::Impl, public DestroyDetector
 {
 public:
     Http2Response(const EventLoopPtr &loop, std::string ver);
     
-    KMError attachStream(H2Connection::Impl* conn, uint32_t stream_id) override;
+    KMError attachStream(uint32_t stream_id, H2Connection::Impl* conn) override;
     KMError addHeader(std::string name, std::string value) override;
     KMError sendResponse(int status_code, const std::string& desc, const std::string& ver) override;
     int sendBody(const void* data, size_t len) override;
@@ -43,8 +45,8 @@ public:
     
     bool isHttp2() const override { return true; }
     
-    const std::string& getMethod() const override { return req_method_; }
-    const std::string& getPath() const override { return req_path_; }
+    const std::string& getMethod() const override;
+    const std::string& getPath() const override;
     const std::string& getQuery() const override { return EmptyString; }
     const std::string& getVersion() const override { return VersionHTTP2_0; }
     const std::string& getParamValue(const std::string &name) const override;
@@ -52,34 +54,21 @@ public:
     void forEachHeader(const EnumerateCallback &cb) const override;
     
 protected:
-    void onHeaders(const HeaderVector &headers, bool end_stream);
+    void onHeader(bool end_stream);
     void onData(KMBuffer &buf, bool end_stream);
-    void onRSTStream(int err);
     void onWrite();
+    void onError(KMError err);
+    void onComplete();
     
 private:
-    void cleanup();
     bool canSendBody() const override;
     void checkResponseHeaders() override;
     void checkRequestHeaders() override;
     const HttpHeader& getRequestHeader() const override;
     HttpHeader& getResponseHeader() override;
-    size_t buildHeaders(int status_code, HeaderVector &headers);
     
 private:
-    EventLoopWeakPtr        loop_;
-    H2StreamPtr             stream_;
-    
-    // response
-    HttpHeader              rsp_header_{true, true};
-    size_t                  body_bytes_sent_ = 0;
-    
-    // request
-    HttpHeader              req_header_{false, true};
-    std::string             req_method_;
-    std::string             req_path_;
-    
-    EventLoopToken          loop_token_;
+    std::unique_ptr<H2StreamProxy> stream_;
 };
 
 KUMA_NS_END

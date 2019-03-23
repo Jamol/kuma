@@ -825,6 +825,11 @@ KMError HttpResponse::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const K
     return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move(*parser.pimpl()), init_buf);
 }
 
+KMError HttpResponse::attachStream(uint32_t stream_id, H2Connection *conn)
+{
+    return pimpl_->attachStream(stream_id, conn->pimpl());
+}
+
 KMError HttpResponse::addHeader(const char* name, const char* value)
 {
     if (!name || !value) {
@@ -940,8 +945,8 @@ HttpResponse::Impl* HttpResponse::pimpl()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-WebSocket::WebSocket(EventLoop* loop)
-: pimpl_(new Impl(EventLoopHelper::implPtr(loop->pimpl())))
+WebSocket::WebSocket(EventLoop* loop, const char *http_ver)
+: pimpl_(new Impl(EventLoopHelper::implPtr(loop->pimpl()), http_ver))
 {
     
 }
@@ -1003,12 +1008,12 @@ KMError WebSocket::addHeader(const char *name, uint32_t value)
     return pimpl_->addHeader(name, value);
 }
 
-KMError WebSocket::connect(const char* ws_url, HandshakeCallback cb)
+KMError WebSocket::connect(const char* ws_url)
 {
     if (!ws_url) {
         return KMError::INVALID_PARAM;
     }
-    return pimpl_->connect(ws_url, std::move(cb));
+    return pimpl_->connect(ws_url);
 }
 
 KMError WebSocket::attachFd(SOCKET_FD fd, const KMBuffer *init_buf, HandshakeCallback cb)
@@ -1019,6 +1024,11 @@ KMError WebSocket::attachFd(SOCKET_FD fd, const KMBuffer *init_buf, HandshakeCal
 KMError WebSocket::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf, HandshakeCallback cb)
 {
     return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move((*parser.pimpl())), init_buf, std::move(cb));
+}
+
+KMError WebSocket::attachStream(uint32_t stream_id, H2Connection *conn, HandshakeCallback cb)
+{
+    return pimpl_->attachStream(stream_id, conn->pimpl(), std::move(cb));
 }
 
 int WebSocket::send(const void* data, size_t len, bool is_text, bool is_fin, uint32_t flags)
@@ -1041,16 +1051,6 @@ const char* WebSocket::getPath() const
     return pimpl_->getPath().c_str();
 }
 
-const char* WebSocket::getQuery() const
-{
-    return pimpl_->getQuery().c_str();
-}
-
-const char* WebSocket::getParamValue(const char* name) const
-{
-    return pimpl_->getParamValue(name).c_str();
-}
-
 const char* WebSocket::getHeaderValue(const char* name) const
 {
     return pimpl_->getHeaderValue(name).c_str();
@@ -1061,6 +1061,11 @@ void WebSocket::forEachHeader(const EnumerateCallback &cb) const
     pimpl_->forEachHeader([&cb] (const std::string& name, const std::string& value) {
         return cb(name.c_str(), value.c_str());
     });
+}
+
+void WebSocket::setOpenCallback(EventCallback cb)
+{
+    pimpl_->setOpenCallback(std::move(cb));
 }
 
 void WebSocket::setDataCallback(DataCallback cb)
@@ -1116,11 +1121,6 @@ KMError H2Connection::attachFd(SOCKET_FD fd, const KMBuffer *init_buf)
 KMError H2Connection::attachSocket(TcpSocket &&tcp, HttpParser &&parser, const KMBuffer *init_buf)
 {
     return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move(*parser.pimpl()), init_buf);
-}
-
-KMError H2Connection::attachStream(uint32_t stream_id, HttpResponse* rsp)
-{
-    return pimpl_->attachStream(stream_id, rsp->pimpl());
 }
 
 KMError H2Connection::close()

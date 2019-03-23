@@ -23,6 +23,46 @@
 
 KUMA_NS_BEGIN
 
+bool processH2RequestHeaders(const HeaderVector &h2_headers, std::string &method, std::string &path, HeaderVector &req_headers)
+{
+    if (h2_headers.empty()) {
+        return false;
+    }
+    std::string str_cookie;
+    for (auto const &kv : h2_headers) {
+        auto const &name = kv.first;
+        auto const &value = kv.second;
+        if (!name.empty()) {
+            if (name[0] == ':') { // pseudo header
+                if (name == H2HeaderMethod) {
+                    method = value;
+                } else if (name == H2HeaderAuthority) {
+                    req_headers.emplace_back(strHost, value);
+                } else if (name == H2HeaderPath) {
+                    path = value;
+                } else {
+                    req_headers.emplace_back(name, value);
+                }
+            } else {
+                if (is_equal(name, H2HeaderCookie)) {
+                    // reassemble cookie
+                    if (!str_cookie.empty()) {
+                        str_cookie += "; ";
+                    }
+                    str_cookie += value;
+                } else {
+                    req_headers.emplace_back(name, value);
+                }
+            }
+        }
+    }
+    if (!str_cookie.empty()) {
+        req_headers.emplace_back(strCookie, std::move(str_cookie));
+    }
+    
+    return true;
+}
+
 bool processH2ResponseHeaders(const HeaderVector &h2_headers, int &status_code, HeaderVector &rsp_headers)
 {
     if (h2_headers.empty()) {

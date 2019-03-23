@@ -17,8 +17,8 @@ public:
     void startRequest(const std::string& url);
     int close();
     
+    void onOpen(KMError err);
     void onData(KMBuffer &buf);
-    bool onHandshake(KMError err);
     void onSend(KMError err);
     void onClose(KMError err);
     

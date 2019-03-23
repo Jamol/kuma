@@ -65,7 +65,10 @@ int main(int argc, char *argv[])
         return -1;
     }
     
-    WebSocket ws(&main_loop);
+    WebSocket ws(&main_loop, "HTTP/1.1");
+    ws.setOpenCallback([] (KMError err) {
+        printf("ws.onOpen, err=%d\n", err);
+    });
     ws.setDataCallback([] (KMBuffer &data, bool is_text, bool is_fin) {
         printf("ws.onData, len=%lu\n", data.chainLength());
     });
@@ -77,10 +80,7 @@ int main(int argc, char *argv[])
     });
     ws.setSubprotocol("jws");
     ws.setOrigin("www.jamol.cn");
-    ws.connect("wss://127.0.0.1:8443", [] (KMError err) {
-        printf("ws.onHandshake, err=%d\n", err);
-        return true;
-    });
+    ws.connect("wss://127.0.0.1:8443/");
     
     Timer timer(&main_loop);
     timer.schedule(1000, TimerMode::ONE_SHOT, [] {
@@ -112,6 +112,9 @@ int main(int argc, char *argv[])
     }
     
     WebSocket ws(&main_loop);
+    ws.setOpenCallback([] (KMError err) {
+        printf("ws.onOpen, err=%d\n", err);
+    });
     ws.setDataCallback([] (KMBuffer &data, bool is_text, bool is_fin) {
         printf("ws.onData, len=%lu\n", data.chainLength());
     });

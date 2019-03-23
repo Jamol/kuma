@@ -74,6 +74,7 @@ SRCS =  \
     http/v2/FrameParser.cpp \
     http/v2/FlowControl.cpp \
     http/v2/H2Stream.cpp \
+    http/v2/H2StreamProxy.cpp \
     http/v2/Http2Request.cpp \
     http/v2/Http2Response.cpp \
     http/v2/H2ConnectionImpl.cpp \
@@ -86,6 +87,9 @@ SRCS =  \
     compr/compr_zlib.cpp \
     ws/WSHandler.cpp \
     ws/WebSocketImpl.cpp \
+    ws/WSConnection.cpp \
+    ws/WSConnection_v1.cpp \
+    ws/WSConnection_v2.cpp \
     ws/exts/ExtensionHandler.cpp \
     ws/exts/PMCE_Deflate.cpp \
     ws/exts/PMCE_Base.cpp \

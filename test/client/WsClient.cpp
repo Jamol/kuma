@@ -8,9 +8,10 @@
 
 uint32_t getSendInterval();
 
+extern std::string getHttpVersion();
 WsClient::WsClient(TestLoop* loop, long conn_id)
 : loop_(loop)
-, ws_(loop->eventLoop())
+, ws_(loop->eventLoop(), getHttpVersion().c_str())
 , timed_sending_(false)
 , timer_(loop->eventLoop())
 , conn_id_(conn_id)
@@ -23,6 +24,7 @@ WsClient::WsClient(TestLoop* loop, long conn_id)
 void WsClient::startRequest(const std::string& url)
 {
     ws_.setSslFlags(SSL_ALLOW_SELF_SIGNED_CERT);
+    ws_.setOpenCallback([this] (KMError err) { onOpen(err); });
     ws_.setDataCallback([this] (KMBuffer &buf, bool is_text, bool fin) {
         onData(buf);
     });
@@ -32,7 +34,7 @@ void WsClient::startRequest(const std::string& url)
     ws_.setOrigin("www.jamol.cn");
     ws_.addHeader("x-forward-addr", "123");
     ws_.addHeader("x-custom", "kmtest");
-    ws_.connect(url.c_str(), [this] (KMError err) { return onHandshake(err); });
+    ws_.connect(url.c_str());
 }
 
 int WsClient::close()
@@ -45,6 +47,10 @@ int WsClient::close()
 void WsClient::sendData()
 {
     uint8_t buf[1024];
+    buf[0] = 12;
+	for (int i = 1; i < sizeof(buf); ++i) {
+        buf[i] = buf[i-1] + 1;
+    }
     *(uint32_t*)buf = htonl(++index_);
     //ws_.send(buf, sizeof(buf), false);
     KMBuffer kmb(buf, sizeof(buf), sizeof(buf));
@@ -52,17 +58,15 @@ void WsClient::sendData()
     // should buffer remain data if send length < sizeof(buf)
 }
 
-bool WsClient::onHandshake(KMError err)
+void WsClient::onOpen(KMError err)
 {
-    printf("WsClient::onHandshake, err=%d\n", err);
+    printf("WsClient::onOpen, err=%d\n", err);
     start_point_ = std::chrono::steady_clock::now();
     sendData();
     if (getSendInterval() > 0) {
         timed_sending_ = true;
         timer_.schedule(getSendInterval(), TimerMode::REPEATING, [this] { sendData(); });
     }
-    
-    return true;
 }
 
 void WsClient::onSend(KMError err)

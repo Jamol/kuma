@@ -57,7 +57,6 @@ public:
     KMError connect(const std::string &host, uint16_t port);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf);
     KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf);
-    KMError attachStream(uint32_t stream_id, HttpResponse::Impl* rsp);
     PushClient* getPushClient(const std::string &cache_key);
     KMError close();
     void setAcceptCallback(AcceptCallback cb) { accept_cb_ = std::move(cb); }
@@ -67,7 +66,8 @@ public:
     
     KMError sendH2Frame(H2Frame *frame);
     
-    bool isReady() { return getState() == State::OPEN; }
+    bool isReady() const { return getState() == State::OPEN; }
+    bool isConnectProtocolEnabled() const { return enable_connect_protocol_; }
     
     void setConnectionKey(const std::string &key);
     std::string getConnectionKey() const { return key_; }
@@ -121,6 +121,8 @@ private:
     bool handleWindowUpdateFrame(WindowUpdateFrame *frame);
     bool handleContinuationFrame(ContinuationFrame *frame);
     
+    bool handleHeadersComplete(uint32_t stream_id, const HeaderVector &header_vec);
+    
     void addStream(H2StreamPtr stream);
     void addPushClient(uint32_t push_id, PushClientPtr client);
     
@@ -142,7 +144,7 @@ private:
         CLOSED
     };
     void setState(State state) { state_ = state; }
-    State getState() { return state_; }
+    State getState() const { return state_; }
     void onStateOpen();
     void cleanup();
     void cleanupAndRemove();
@@ -189,6 +191,7 @@ protected:
     uint32_t max_remote_frame_size_ = H2_DEFAULT_FRAME_SIZE;
     uint32_t init_remote_window_size_ = H2_DEFAULT_WINDOW_SIZE;
     uint32_t init_local_window_size_ = LOCAL_STREAM_INITIAL_WINDOW_SIZE; // initial local stream window size
+    bool enable_connect_protocol_ = false;
     
     FlowControl flow_ctrl_;
     

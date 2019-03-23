@@ -40,10 +40,10 @@ KMError HttpTest::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuf
     return http_.attachSocket(std::move(tcp), std::move(parser), init_buf);
 }
 
-KMError HttpTest::attachStream(H2Connection* conn, uint32_t streamId)
+KMError HttpTest::attachStream(uint32_t streamId, H2Connection* conn)
 {
     setupCallbacks();
-    return conn->attachStream(streamId, &http_);
+    return http_.attachStream(streamId, conn);
 }
 
 int HttpTest::close()

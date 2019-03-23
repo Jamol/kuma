@@ -67,7 +67,7 @@ HttpHeader& Http1xRequest::getRequestHeader()
     return req_message_;
 }
 
-const HttpHeader& Http1xRequest::getResponseHeader() const
+HttpHeader& Http1xRequest::getResponseHeader()
 {
     return rsp_parser_;
 }
@@ -111,29 +111,6 @@ KMError Http1xRequest::sendRequest()
         sendRequestHeader();
         return KMError::NOERR;
     }
-}
-
-bool Http1xRequest::processHttpCache()
-{
-    if (!HttpCache::isCacheable(method_, req_message_.getHeaders())) {
-        return false;
-    }
-    std::string cache_key = getCacheKey();
-    
-    int status_code = 0;
-    HeaderVector rsp_headers;
-    KMBuffer rsp_body;
-    if (HttpCache::instance().getCache(cache_key, status_code, rsp_headers, rsp_body)) {
-        // cache hit
-        setState(State::RECVING_RESPONSE);
-        rsp_parser_.setHeaders(std::move(rsp_headers));
-        rsp_parser_.setStatusCode(status_code);
-        rsp_cache_body_.reset(rsp_body.clone());
-        auto loop = TcpConnection::eventLoop();
-        loop->post([this] { onCacheComplete(); }, &loop_token_);
-        return true;
-    }
-    return false;
 }
 
 bool Http1xRequest::canSendBody() const
@@ -297,6 +274,28 @@ void Http1xRequest::onHttpEvent(HttpEvent ev)
         default:
             break;
     }
+}
+
+bool Http1xRequest::processHttpCache()
+{
+    if (!HttpCache::isCacheable(method_, req_message_.getHeaders())) {
+        return false;
+    }
+    std::string cache_key = getCacheKey();
+    
+    int status_code = 0;
+    HeaderVector rsp_headers;
+    KMBuffer rsp_body;
+    if (HttpCache::instance().getCache(cache_key, status_code, rsp_headers, rsp_body)) {
+        // cache hit
+        setState(State::RECVING_RESPONSE);
+        rsp_parser_.setHeaders(std::move(rsp_headers));
+        rsp_parser_.setStatusCode(status_code);
+        rsp_cache_body_.reset(rsp_body.clone());
+        eventLoop()->post([this] { onCacheComplete(); }, &loop_token_);
+        return true;
+    }
+    return false;
 }
 
 void Http1xRequest::onCacheComplete()

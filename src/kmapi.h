@@ -36,6 +36,7 @@
 KUMA_NS_BEGIN
 
 class KMBuffer;
+class H2Connection;
 
 class KUMA_API EventLoop
 {
@@ -364,6 +365,7 @@ public:
     KMError setSslFlags(uint32_t ssl_flags);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf=nullptr);
     KMError attachSocket(TcpSocket &&tcp, HttpParser &&parser, const KMBuffer *init_buf=nullptr);
+    KMError attachStream(uint32_t stream_id, H2Connection *conn);
     KMError addHeader(const char *name, const char *value);
     KMError addHeader(const char *name, uint32_t value);
     KMError sendResponse(int status_code, const char *desc = nullptr);
@@ -401,15 +403,16 @@ public:
     using DataCallback = std::function<void(KMBuffer &, bool/*is_text*/, bool/*is_fin*/)>;
     using EventCallback = std::function<void(KMError)>;
     /**
-     * HandshakeCallback is called when:
-     *   1. client received server opening handshake
-     *   2. server received client opening handshake
-     * on server side, user can check the request in this callback, and return false to reject the handshake
+     * HandshakeCallback is called when server received client opening handshake
+     * user can check the request in this callback, and return false to reject the handshake
      */
     using HandshakeCallback = std::function<bool(KMError)>;
     using EnumerateCallback = HttpParser::EnumerateCallback;
     
-    WebSocket(EventLoop *loop);
+    /*
+     * @param ver, http version, "HTTP/2.0" for HTTP2, "HTTP/1.1"
+     */
+    WebSocket(EventLoop *loop, const char *http_ver = "HTTP/1.1");
     ~WebSocket();
     
     KMError setSslFlags(uint32_t ssl_flags);
@@ -429,9 +432,10 @@ public:
     KMError addHeader(const char *name, const char *value);
     KMError addHeader(const char *name, uint32_t value);
     
-    KMError connect(const char *ws_url, HandshakeCallback cb);
+    KMError connect(const char *ws_url);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf, HandshakeCallback cb);
     KMError attachSocket(TcpSocket &&tcp, HttpParser &&parser, const KMBuffer *init_buf, HandshakeCallback cb);
+    KMError attachStream(uint32_t stream_id, H2Connection *conn, HandshakeCallback cb);
     
     /**
      * @param flags, bit 1 -- no compression flag when PMCE is negotiated
@@ -442,11 +446,10 @@ public:
     KMError close();
     
     const char* getPath() const;
-    const char* getQuery() const;
-    const char* getParamValue(const char *name) const;
     const char* getHeaderValue(const char *name) const;
     void forEachHeader(const EnumerateCallback &cb) const;
     
+    void setOpenCallback(EventCallback cb);
     void setDataCallback(DataCallback cb);
     void setWriteCallback(EventCallback cb);
     void setErrorCallback(EventCallback cb);
@@ -461,7 +464,8 @@ private:
 class KUMA_API H2Connection
 {
 public:
-    using AcceptCallback = std::function<bool(uint32_t/* stream ID */)>;
+    // (Stream ID, Method, Path, Origin, Protocol)
+    using AcceptCallback = std::function<bool(uint32_t, const char*, const char*, const char*, const char*)>;
     using ErrorCallback = std::function<void(int)>;
     
     H2Connection(EventLoop *loop);
@@ -470,12 +474,6 @@ public:
     KMError setSslFlags(uint32_t ssl_flags);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf=nullptr);
     KMError attachSocket(TcpSocket &&tcp, HttpParser &&parser, const KMBuffer *init_buf=nullptr);
-    /* associate H2 stream with HttpResponse
-     *
-     * @param stream_id stream ID
-     * @param rsp HttpResponse to be associated
-     */
-    KMError attachStream(uint32_t stream_id, HttpResponse *rsp);
     
     KMError close();
     

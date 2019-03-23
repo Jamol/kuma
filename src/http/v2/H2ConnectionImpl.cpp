@@ -27,6 +27,7 @@
 #include "Http2Response.h"
 #include "Http2Request.h"
 #include "PushClient.h"
+#include "ws/WebSocketImpl.h"
 
 #include <sstream>
 #include <algorithm>
@@ -94,7 +95,7 @@ KMError H2Connection::Impl::connect(const std::string &host, uint16_t port)
         KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
         return KMError::INVALID_STATE;
     }
-    
+    enable_connect_protocol_ = false;
     // add to EventLoop to get notification when loop exit
     eventLoop()->appendObserver([this] (LoopActivity acti) {
         onLoopActivity(acti);
@@ -125,7 +126,7 @@ KMError H2Connection::Impl::connect_i(const std::string &host, uint16_t port)
 KMError H2Connection::Impl::attachFd(SOCKET_FD fd, const KMBuffer *init_buf)
 {
     next_stream_id_ = 2;
-    
+    enable_connect_protocol_ = true;
     auto ret = TcpConnection::attachFd(fd, init_buf);
     if (ret == KMError::NOERR) {
         if (sslEnabled()) {
@@ -145,6 +146,7 @@ KMError H2Connection::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl
     KUMA_ASSERT(parser.isRequest());
     http_parser_ = std::move(parser);
     next_stream_id_ = 2;
+    enable_connect_protocol_ = true;
     if (tcp.sslEnabled()) {
         setState(State::HANDSHAKE);
     } else {
@@ -162,14 +164,6 @@ KMError H2Connection::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl
     } else {
         return handleUpgradeRequest();
     }
-}
-
-KMError H2Connection::Impl::attachStream(uint32_t stream_id, HttpResponse::Impl* rsp)
-{
-    if (isPromisedStream(stream_id)) {
-        return KMError::INVALID_PARAM;
-    }
-    return rsp->attachStream(this, stream_id);
 }
 
 KMError H2Connection::Impl::close()
@@ -330,11 +324,13 @@ bool H2Connection::Impl::handleHeadersFrame(HeadersFrame *frame)
     if (!stream) {
         // new stream arrived on server side
         stream = createStream(frame->getStreamId());
-        if (accept_cb_ && !accept_cb_(frame->getStreamId())) {
-            removeStream(frame->getStreamId());
-            return false;
-        }
         last_stream_id_ = frame->getStreamId();
+        if (frame->hasEndHeaders()) {
+            if (!handleHeadersComplete(frame->getStreamId(), frame->getHeaders())) {
+                // user rejects the request
+                return false;
+            }
+        }
     }
     return stream->handleHeadersFrame(frame);
 }
@@ -456,6 +452,11 @@ bool H2Connection::Impl::handlePushFrame(PushPromiseFrame *frame)
     PushClientPtr client(new PushClient());
     client->attachStream(this, stream);
     addPushClient(stream->getStreamId(), std::move(client));
+    if (frame->hasEndHeaders()) {
+        if (!handleHeadersComplete(frame->getPromisedStreamId(), frame->getHeaders())) {
+            return false;
+        }
+    }
     return stream->handlePushFrame(frame);
 }
 
@@ -534,10 +535,6 @@ bool H2Connection::Impl::handleWindowUpdateFrame(WindowUpdateFrame *frame)
         if (!stream && isServer()) {
             // new stream arrived on server side
             stream = createStream(frame->getStreamId());
-            if (accept_cb_ && !accept_cb_(frame->getStreamId())) {
-                removeStream(frame->getStreamId());
-                return false;
-            }
             last_stream_id_ = frame->getStreamId();
         }
         if (stream) {
@@ -578,10 +575,43 @@ bool H2Connection::Impl::handleContinuationFrame(ContinuationFrame *frame)
             frame->setHeaders(std::move(headers), 0);
             expect_continuation_frame_ = false;
             headers_block_buf_.clear();
+            if (!handleHeadersComplete(frame->getStreamId(), frame->getHeaders())) {
+                // the stream is rejected by user
+                return false;
+            }
         }
         return stream->handleContinuationFrame(frame);
     }
     return false;
+}
+
+bool H2Connection::Impl::handleHeadersComplete(uint32_t stream_id, const HeaderVector &header_vec)
+{
+    if (isServer() && !isPromisedStream(stream_id) && accept_cb_) {
+        std::string method, path, host, protocol;
+        for (auto const &kv : header_vec) {
+            if (kv.first[0] != ':') {
+                break;
+            }
+            if (method.empty() && is_equal(kv.first, H2HeaderMethod)) {
+                method = kv.second;
+            } else if (path.empty() && is_equal(kv.first, H2HeaderPath)) {
+                path = kv.second;
+            } else if (protocol.empty() && is_equal(kv.first, H2HeaderProtocol)) {
+                protocol = kv.second;
+            } else if (host.empty() && is_equal(kv.first, H2HeaderAuthority)) {
+                host = kv.second;
+            }
+            if (!method.empty() && !path.empty() && !host.empty() && !protocol.empty()) {
+                break;
+            }
+        }
+        if (!accept_cb_(stream_id, method.c_str(), path.c_str(), host.c_str(), protocol.c_str())) {
+            removeStream(stream_id);
+            return false;
+        }
+    }
+    return true;
 }
 
 KMError H2Connection::Impl::handleInputData(uint8_t *buf, size_t len)
@@ -917,6 +947,8 @@ void H2Connection::Impl::sendPreface()
     } else {
         params.emplace_back(std::make_pair(MAX_CONCURRENT_STREAMS, max_concurrent_streams_));
         setting_size += H2_SETTING_ITEM_SIZE;
+        params.emplace_back(std::make_pair(ENABLE_CONNECT_PROTOCOL, enable_connect_protocol_?1:0));
+        setting_size += H2_SETTING_ITEM_SIZE;
         size_t total_len = setting_size + H2_WINDOW_UPDATE_FRAME_SIZE;
         buf.allocBuffer(total_len);
     }
@@ -956,7 +988,8 @@ void H2Connection::Impl::onConnect(KMError err)
         sendPreface();
         return ;
     }
-    next_stream_id_ += 2; // stream id 1 is for upgrade request
+    //next_stream_id_ += 2; // stream id 1 is for upgrade request
+    
     sendUpgradeRequest();
 }
 
@@ -1040,6 +1073,9 @@ bool H2Connection::Impl::applySettings(const ParamVector &params)
                     connectionError(H2Error::PROTOCOL_ERROR);
                     return false;
                 }
+                break;
+            case ENABLE_CONNECT_PROTOCOL:
+                enable_connect_protocol_ = kv.second == 1;
                 break;
         }
     }
@@ -1162,6 +1198,9 @@ void H2Connection::Impl::onStateOpen()
     KUMA_INFOXTRACE("onStateOpen");
     setState(State::OPEN);
     if (!isServer()) {
+        // stream 1 for upgrade response
+        // stream 1 data is discarded
+        auto stream = createStream();
         notifyListeners(KMError::NOERR);
     }
 }

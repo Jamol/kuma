@@ -34,6 +34,10 @@ H2Stream::H2Stream(uint32_t stream_id, H2Connection::Impl* conn, uint32_t init_l
     flow_ctrl_.initLocalWindowSize(init_local_window_size);
     flow_ctrl_.initRemoteWindowSize(init_remote_window_size);
     flow_ctrl_.setLocalWindowStep(init_local_window_size);
+    
+    if (stream_id == 1 && !conn->sslEnabled()) { // upgrade stream, set state to HALF_CLOSED_L
+        endStreamSent();
+    }
     KM_SetObjKey("H2Stream_"<<stream_id);
 }
 
@@ -492,10 +496,12 @@ bool H2Stream::verifyFrame(H2Frame *frame)
 
 void H2Stream::setState(State state)
 {
-    if (!isInOpenState(state_) && isInOpenState(state)) {
-        conn_->streamOpened(stream_id_);
-    } else if (isInOpenState(state_) && state == State::CLOSED) {
-        conn_->streamClosed(stream_id_);
+    if (conn_) {
+        if (!isInOpenState(state_) && isInOpenState(state)) {
+            conn_->streamOpened(stream_id_);
+        } else if (isInOpenState(state_) && state == State::CLOSED) {
+            conn_->streamClosed(stream_id_);
+        }
     }
     state_ = state;
 }
