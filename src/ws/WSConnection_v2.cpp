@@ -21,7 +21,6 @@
 
 
 #include "WSConnection_v2.h"
-#include "http/v2/H2ConnectionMgr.h"
 #include "http/v2/H2StreamProxy.h"
 #include "util/kmtrace.h"
 
@@ -84,7 +83,7 @@ const std::string& WSConnection_V2::getPath() const
 
 const HttpHeader& WSConnection_V2::getHeaders() const
 {
-    return stream_->getHeaders();
+    return stream_->getIncomingHeaders();
 }
 
 KMError WSConnection_V2::connect(const std::string& ws_url)
@@ -165,7 +164,7 @@ KMError WSConnection_V2::close()
 
 bool WSConnection_V2::canSendData() const
 {
-    return stream_->canSendBody();
+    return stream_->canSendData();
 }
 
 void WSConnection_V2::handleHandshakeRequest()

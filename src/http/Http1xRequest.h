@@ -67,7 +67,7 @@ private:
     KMError sendRequest() override;
     bool canSendBody() const override;
     HttpHeader& getRequestHeader() override;
-    const HttpHeader& getResponseHeader() const override;
+    HttpHeader& getResponseHeader() override;
     void buildRequest();
     void cleanup();
     void sendRequestHeader();

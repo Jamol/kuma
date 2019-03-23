@@ -53,9 +53,10 @@ public:
     KMError close();
     
     bool isServer() const { return is_server_; }
-    bool canSendBody() const;
+    bool canSendData() const;
     
-    const HttpHeader& getHeaders() const { return incoming_header_; }
+    HttpHeader& getOutgoingHeaders() { return outgoing_header_; }
+    HttpHeader& getIncomingHeaders() { return incoming_header_; }
     const std::string& getMethod() const { return method_; }
     const std::string& getPath() const { return path_; }
     int getStatusCode() const { return status_code_; }
@@ -97,10 +98,6 @@ protected:
     
     void setupStreamCallbacks();
     
-    /*
-     * check if HTTP cache is available
-     */
-    bool processHttpCache();
     void saveRequestData(const void *data, size_t len);
     void saveRequestData(const KMBuffer &buf);
     void saveResponseData(const void *data, size_t len);
@@ -126,7 +123,6 @@ protected:
     //{ on loop_ thread
     void onHeaders(bool end_stream);
     void onData(bool end_stream);
-    void onCacheComplete();
     void onPushPromise(bool end_stream);
     void onWrite();
     void onError(KMError err);

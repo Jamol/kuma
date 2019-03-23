@@ -24,7 +24,6 @@
 #include "util/kmtrace.h"
 #include "util/util.h"
 #include "h2utils.h"
-#include "http/HttpCache.h"
 
 #include <sstream>
 #include <string>
@@ -75,11 +74,6 @@ KMError H2StreamProxy::sendRequest(std::string method, std::string url, uint32_t
     ssl_flags_ = ssl_flags;
     
     setState(State::CONNECTING);
-    
-    if (processHttpCache()) {
-        // cache hit
-        return KMError::NOERR;
-    }
     
     std::string str_port = uri_.getPort();
     uint16_t port = 80;
@@ -286,7 +280,7 @@ void H2StreamProxy::onError_i(KMError err)
     runOnLoopThread([this, err] { onError(err); });
 }
 
-bool H2StreamProxy::canSendBody() const
+bool H2StreamProxy::canSendData() const
 {
     if (getState() != State::OPEN) {
         return false;
@@ -300,7 +294,7 @@ bool H2StreamProxy::canSendBody() const
 
 int H2StreamProxy::sendData(const void* data, size_t len)
 {
-    if (!canSendBody()) {
+    if (!canSendData()) {
         return 0;
     }
     if (is_same_loop_ && send_buf_queue_.empty()) {
@@ -316,7 +310,7 @@ int H2StreamProxy::sendData(const void* data, size_t len)
 
 int H2StreamProxy::sendData(const KMBuffer &buf)
 {
-    if (!canSendBody()) {
+    if (!canSendData()) {
         return 0;
     }
     if (is_same_loop_ && send_buf_queue_.empty()) {
@@ -515,11 +509,6 @@ void H2StreamProxy::onData(bool end_stream)
     }
 }
 
-void H2StreamProxy::onCacheComplete()
-{// on loop_ thread
-    checkResponseStatus(true);
-}
-
 void H2StreamProxy::onPushPromise(bool end_stream)
 {// on loop_ thread
     checkResponseStatus(end_stream);
@@ -624,32 +613,6 @@ void H2StreamProxy::close_i()
         stream_.reset();
     }
     setState(State::CLOSED);
-}
-
-bool H2StreamProxy::processHttpCache()
-{
-    if (!HttpCache::isCacheable(method_, outgoing_header_.getHeaders())) {
-        return false;
-    }
-    std::string cache_key = getCacheKey();
-    
-    int status_code = 0;
-    HeaderVector rsp_headers;
-    KMBuffer rsp_body;
-    if (HttpCache::instance().getCache(cache_key, status_code, rsp_headers, rsp_body)) {
-        // cache hit
-        setState(State::OPEN);
-        status_code_ = status_code;
-        incoming_header_.setHeaders(std::move(rsp_headers));
-        if (!rsp_body.empty()) {
-            saveResponseData(rsp_body);
-        }
-        header_complete_ = true;
-        
-        runOnLoopThread([this] { onCacheComplete(); }, false);
-        return true;
-    }
-    return false;
 }
 
 bool H2StreamProxy::processPushPromise()

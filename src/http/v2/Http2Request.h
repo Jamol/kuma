@@ -32,6 +32,8 @@
 
 KUMA_NS_BEGIN
 
+class H2StreamProxy;
+
 /**
  * this class implement HTTP2 request
  *
@@ -56,85 +58,34 @@ public:
     
     bool isHttp2() const override { return true; }
     
-    int getStatusCode() const override { return status_code_; }
+    int getStatusCode() const override;
     const std::string& getVersion() const override { return VersionHTTP2_0; }
     const std::string& getHeaderValue(const std::string &name) const override;
     void forEachHeader(const EnumerateCallback &cb) const override;
     
 protected:
-    //{ on conn_ thread
-    void onConnect(KMError err);
-    void onError(KMError err);
-    void onHeaders(const HeaderVector &headers, bool end_stream);
-    void onData(KMBuffer &buf, bool end_stream);
-    void onRSTStream(int err);
-    void onWrite();
-    //}
-    
     KMError sendRequest() override;
     bool canSendBody() const override;
     void checkResponseHeaders() override;
     HttpHeader& getRequestHeader() override;
-    const HttpHeader& getResponseHeader() const override;
-    void setupStreamCallbacks();
+    HttpHeader& getResponseHeader() override;
+    const HttpHeader& getResponseHeader() const;
     
-    /*
-     * check if HTTP cache is available
-     */
-    bool processHttpCache(const EventLoopPtr &loop);
-    void saveRequestData(const void *data, size_t len);
-    void saveRequestData(const KMBuffer &buf);
-    void saveResponseData(const void *data, size_t len);
-    void saveResponseData(const KMBuffer &buf);
-    
-    //{ on conn_ thread
-    size_t buildHeaders(HeaderVector &headers);
-    KMError sendRequest_i();
-    KMError sendHeaders();
-    int sendData_i(const void* data, size_t len);
-    int sendData_i(const KMBuffer &buf);
-    int sendData_i();
-    void close_i();
-    
-    /*
-     * check if server push is available
-     */
-    bool processPushPromise();
-    //}
-    
-    //{ on loop_ thread
-    void onHeaders();
-    void onData();
+    bool processHttpCache();
     void onCacheComplete();
-    void onPushPromise();
-    void onWrite_i();
-    void onError_i(KMError err);
-    void checkResponseStatus();
-    //}
+    
+    void onHeader(bool end_stream);
+    void onData(KMBuffer &buf, bool end_stream);
+    void onWrite();
+    void onError(KMError err);
+    void onComplete();
     
 protected:
-    EventLoopWeakPtr loop_;
-    H2ConnectionPtr conn_;
-    H2StreamPtr stream_;
+    std::unique_ptr<H2StreamProxy> stream_;
     
-    // request
-    size_t body_bytes_sent_ = 0;
-    uint32_t ssl_flags_ = 0;
-    HttpHeader req_header_{true, true};
-    
-    // response
-    int status_code_ = 0;
-    HttpHeader rsp_header_{false, true};
-    KMQueue<KMBuffer::Ptr> rsp_queue_;
-    bool header_complete_ = false;
-    bool response_complete_ = false;
-    
-    bool closing_ = { false };
-    bool write_blocked_ { false };
-    KMQueue<KMBuffer::Ptr> req_queue_;
-    
-    EventLoopToken loop_token_;
-    EventLoopToken conn_token_;
+    uint32_t                ssl_flags_ = 0;
+    int                     rsp_cache_status_ = 0;
+    KMBuffer::Ptr           rsp_cache_body_;
 };
 
 KUMA_NS_END

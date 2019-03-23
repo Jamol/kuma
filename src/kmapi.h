@@ -464,7 +464,7 @@ private:
 class KUMA_API H2Connection
 {
 public:
-    // (Stream ID, Method, Path, Protocol)
+    // (Stream ID, Method, Path, Origin, Protocol)
     using AcceptCallback = std::function<bool(uint32_t, const char*, const char*, const char*, const char*)>;
     using ErrorCallback = std::function<void(int)>;
     
