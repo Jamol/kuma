@@ -249,10 +249,14 @@ KMError H2Stream::sendRSTStream(H2Error err)
 {
     rst_stream_sent_ = true;
     
-    RSTStreamFrame frame;
-    frame.setStreamId(stream_id_);
-    frame.setErrorCode(uint32_t(err));
-    return conn_->sendH2Frame(&frame);
+    if (conn_) {
+        RSTStreamFrame frame;
+        frame.setStreamId(stream_id_);
+        frame.setErrorCode(uint32_t(err));
+        return conn_->sendH2Frame(&frame);
+    }
+    
+    return KMError::NOERR;
 }
 
 void H2Stream::connectionError(H2Error err)
@@ -351,7 +355,6 @@ bool H2Stream::handleRSTStreamFrame(RSTStreamFrame *frame)
         return true;
     }
     rst_stream_received_ = true;
-    setState(State::CLOSED);
     if (reset_cb_) {
         reset_cb_(frame->getErrorCode());
     }

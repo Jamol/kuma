@@ -35,6 +35,8 @@ WSConnection_V1::WSConnection_V1(const EventLoopPtr &loop)
 : TcpConnection(loop)
 {
     loop_token_.eventLoop(loop);
+    http_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
+    http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     KM_SetObjKey("WSConnection_V1");
 }
 
