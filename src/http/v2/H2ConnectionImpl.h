@@ -40,8 +40,7 @@ using namespace hpack;
 
 KUMA_NS_BEGIN
 
-const uint32_t LOCAL_CONN_INITIAL_WINDOW_SIZE = 20*1024*1024;
-const uint32_t LOCAL_STREAM_INITIAL_WINDOW_SIZE = 6*1024*1024;
+class H2Handshake;
 
 class H2Connection::Impl : public KMObject, public DestroyDetector, public FrameCallback, public TcpConnection
 {
@@ -103,11 +102,8 @@ private:
     void onError(KMError err) override;
     
 private:
-    void onHttpData(KMBuffer &buf);
-    void onHttpEvent(HttpEvent ev);
-    
-private:
     KMError connect_i(const std::string &host, uint16_t port);
+    KMError sendData(const KMBuffer &buf);
     KMError sendHeadersFrame(HeadersFrame *frame);
     KMError parseInputData(const uint8_t *buf, size_t len);
     bool handleDataFrame(DataFrame *frame);
@@ -126,18 +122,13 @@ private:
     void addStream(H2StreamPtr stream);
     void addPushClient(uint32_t push_id, PushClientPtr client);
     
-    std::string buildUpgradeRequest();
-    std::string buildUpgradeResponse();
-    void sendUpgradeRequest();
-    void sendUpgradeResponse();
-    void sendPreface();
-    KMError handleUpgradeRequest();
-    KMError handleUpgradeResponse();
+    void setupH2Handshake();
+    void onHandshakeComplete(SettingsFrame *frame);
+    void onHandshakeError(KMError err);
     
     enum State {
         IDLE,
         CONNECTING,
-        UPGRADING,
         HANDSHAKE,
         OPEN,
         IN_ERROR,
@@ -172,7 +163,7 @@ protected:
     
     std::string key_;
     
-    HttpParser::Impl http_parser_;
+    std::unique_ptr<H2Handshake> handshake_;
     FrameParser frame_parser_;
     HPacker hp_encoder_;
     HPacker hp_decoder_;
@@ -185,13 +176,10 @@ protected:
     
     std::map<uint32_t, PushClientPtr> push_clients_;
     
-    std::string cmp_preface_; // server only
-    
     uint32_t max_local_frame_size_ = 65536;
     uint32_t max_remote_frame_size_ = H2_DEFAULT_FRAME_SIZE;
     uint32_t init_remote_window_size_ = H2_DEFAULT_WINDOW_SIZE;
-    uint32_t init_local_window_size_ = LOCAL_STREAM_INITIAL_WINDOW_SIZE; // initial local stream window size
-    bool enable_connect_protocol_ = false;
+    uint32_t init_local_window_size_ = H2_LOCAL_STREAM_INITIAL_WINDOW_SIZE; // initial local stream window size
     
     FlowControl flow_ctrl_;
     
@@ -201,10 +189,10 @@ protected:
     uint32_t max_concurrent_streams_ = 128;
     uint32_t opened_stream_count_ = 0;
     
+    bool enable_connect_protocol_ = false;
     bool expect_continuation_frame_ = false;
     uint32_t stream_id_of_expected_continuation_ = 0;
     
-    bool preface_received_ = false;
     EventLoopToken loop_token_;
 };
 

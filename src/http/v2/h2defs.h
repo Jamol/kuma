@@ -28,6 +28,9 @@ const uint8_t H2_FRAME_FLAG_END_HEADERS = 0x4;
 const uint8_t H2_FRAME_FLAG_PADDED = 0x8;
 const uint8_t H2_FRAME_FLAG_PRIORITY = 0x20;
 
+const uint32_t H2_LOCAL_CONN_INITIAL_WINDOW_SIZE = 20*1024*1024;
+const uint32_t H2_LOCAL_STREAM_INITIAL_WINDOW_SIZE = 6*1024*1024;
+
 enum H2FrameType : uint8_t {
     DATA            = 0,
     HEADERS         = 1,

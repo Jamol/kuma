@@ -188,6 +188,7 @@
     <ClCompile Include="..\..\src\http\v2\H2ConnectionImpl.cpp" />
     <ClCompile Include="..\..\src\http\v2\H2ConnectionMgr.cpp" />
     <ClCompile Include="..\..\src\http\v2\H2Frame.cpp" />
+    <ClCompile Include="..\..\src\http\v2\H2Handshake.cpp" />
     <ClCompile Include="..\..\src\http\v2\H2Stream.cpp" />
     <ClCompile Include="..\..\src\http\v2\H2StreamProxy.cpp" />
     <ClCompile Include="..\..\src\http\v2\h2utils.cpp" />
@@ -262,6 +263,7 @@
     <ClInclude Include="..\..\src\http\v2\H2ConnectionMgr.h" />
     <ClInclude Include="..\..\src\http\v2\h2defs.h" />
     <ClInclude Include="..\..\src\http\v2\H2Frame.h" />
+    <ClInclude Include="..\..\src\http\v2\H2Handshake.h" />
     <ClInclude Include="..\..\src\http\v2\H2Stream.h" />
     <ClInclude Include="..\..\src\http\v2\H2StreamProxy.h" />
     <ClInclude Include="..\..\src\http\v2\h2utils.h" />

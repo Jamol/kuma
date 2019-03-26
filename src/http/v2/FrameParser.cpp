@@ -38,68 +38,80 @@ FrameParser::~FrameParser()
 
 FrameParser::ParseState FrameParser::parseInputData(const uint8_t *data, size_t size)
 {
-    const uint8_t *ptr = data;
-    size_t sz = size;
-    while (sz > 0) {
-        if (ReadState::READ_HEADER == read_state_) {
-            if (hdr_used_ + sz < H2_FRAME_HEADER_SIZE) {
-                memcpy(hdr_buf_ + hdr_used_, ptr, sz);
-                hdr_used_ += (uint8_t)sz;
-                return ParseState::INCOMPLETE;
-            }
-            const uint8_t *p = ptr;
-            if (hdr_used_ > 0) {
-                memcpy(hdr_buf_ + hdr_used_, ptr, H2_FRAME_HEADER_SIZE - hdr_used_);
-                p = hdr_buf_;
-            }
-            hdr_.decode(p, H2_FRAME_HEADER_SIZE);
-            sz -= H2_FRAME_HEADER_SIZE - hdr_used_;
-            ptr += H2_FRAME_HEADER_SIZE - hdr_used_;
-            hdr_used_ = 0;
-            payload_.clear();
-            payload_used_ = 0;
-            if (hdr_.getLength() > max_frame_size_) {
-                bool stream_err = isStreamError(hdr_, H2Error::FRAME_SIZE_ERROR);
-                cb_->onFrameError(hdr_, H2Error::FRAME_SIZE_ERROR, stream_err);
-                return ParseState::FAILURE;
-            }
-            read_state_ = ReadState::READ_PAYLOAD;
-        }
-        if (ReadState::READ_PAYLOAD == read_state_) {
-            if (payload_.empty()) {
-                if (sz >= hdr_.getLength()) {
-                    auto parse_state = parseFrame(hdr_, ptr);
-                    if (parse_state != ParseState::SUCCESS) {
-                        return parse_state;
-                    }
-                    sz -= hdr_.getLength();
-                    ptr += hdr_.getLength();
-                    read_state_ = ReadState::READ_HEADER;
-                } else {
-                    payload_.resize(hdr_.getLength());
-                    memcpy(&payload_[0], ptr, sz);
-                    payload_used_ = sz;
-                    return ParseState::INCOMPLETE;
-                }
-            } else {
-                size_t copy_len = std::min<size_t>(sz, hdr_.getLength() - payload_used_);
-                memcpy(&payload_[payload_used_], ptr, copy_len);
-                payload_used_ += copy_len;
-                if (payload_used_ < hdr_.getLength()) {
-                    return ParseState::INCOMPLETE;
-                }
-                sz -= copy_len;
-                ptr += copy_len;
-                read_state_ = ReadState::READ_HEADER;
-                auto parse_state = parseFrame(hdr_, &payload_[0]);
-                if (parse_state != ParseState::SUCCESS) {
-                    return parse_state;
-                }
-                payload_.clear();
-                payload_used_ = 0;
-            }
+    size_t offset = 0;
+    while (offset < size) {
+        size_t used = 0;
+        auto ret = parseOneFrame(data + offset, size - offset, used);
+        if (ret == ParseState::SUCCESS) {
+            offset += used;
+        } else {
+            return ret;
         }
     }
+    return ParseState::SUCCESS;
+}
+
+FrameParser::ParseState FrameParser::parseOneFrame(const uint8_t *buf, size_t len, size_t &used)
+{
+    used = 0;
+    if (ReadState::READ_HEADER == read_state_) {
+        if (hdr_used_ + len < H2_FRAME_HEADER_SIZE) {
+            memcpy(hdr_buf_ + hdr_used_, buf, len);
+            hdr_used_ += (uint8_t)len;
+            used = len;
+            return ParseState::INCOMPLETE;
+        }
+        const uint8_t *p = buf;
+        if (hdr_used_ > 0) {
+            memcpy(hdr_buf_ + hdr_used_, buf, H2_FRAME_HEADER_SIZE - hdr_used_);
+            p = hdr_buf_;
+        }
+        hdr_.decode(p, H2_FRAME_HEADER_SIZE);
+        used += H2_FRAME_HEADER_SIZE - hdr_used_;
+        len -= H2_FRAME_HEADER_SIZE - hdr_used_;
+        buf += H2_FRAME_HEADER_SIZE - hdr_used_;
+        hdr_used_ = 0;
+        payload_.clear();
+        payload_used_ = 0;
+        if (hdr_.getLength() > max_frame_size_ && cb_) {
+            bool stream_err = isStreamError(hdr_, H2Error::FRAME_SIZE_ERROR);
+            cb_->onFrameError(hdr_, H2Error::FRAME_SIZE_ERROR, stream_err);
+            return ParseState::FAILURE;
+        }
+        read_state_ = ReadState::READ_PAYLOAD;
+    }
+    if (ReadState::READ_PAYLOAD == read_state_) {
+        const uint8_t *pl = buf;
+        if (payload_.empty()) {
+            if (len >= hdr_.getLength()) {
+                used += hdr_.getLength();
+            } else {
+                payload_.resize(hdr_.getLength());
+                memcpy(&payload_[0], buf, len);
+                payload_used_ = len;
+                used += len;
+                return ParseState::INCOMPLETE;
+            }
+        } else {
+            size_t copy_len = std::min<size_t>(len, hdr_.getLength() - payload_used_);
+            memcpy(&payload_[payload_used_], buf, copy_len);
+            payload_used_ += copy_len;
+            used += copy_len;
+            if (payload_used_ < hdr_.getLength()) {
+                return ParseState::INCOMPLETE;
+            }
+            pl = &payload_[0];
+        }
+        
+        auto parse_state = parseFrame(hdr_, pl);
+        if (parse_state != ParseState::SUCCESS) {
+            return parse_state;
+        }
+        read_state_ = ReadState::READ_HEADER;
+        payload_.clear();
+        payload_used_ = 0;
+    }
+    
     return ParseState::SUCCESS;
 }
 

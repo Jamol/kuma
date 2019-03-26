@@ -143,6 +143,26 @@ void HttpRequest::Impl::checkRequestHeaders()
             compression_enable_ = false;
         }
     }
+    
+    if (compression_enable_ && !req_encoding_type_.empty()) {
+        bool is_content_encoding = true;
+        if (is_content_encoding) {
+            addHeader(strContentEncoding, req_encoding_type_);
+            KUMA_INFOXTRACE("checkRequestHeaders, add Content-Encoding=" << req_encoding_type_);
+            if (!req_header.isChunked()) {
+                addHeader(strTransferEncoding, strChunked);
+            }
+        } else {
+            addHeader(strTransferEncoding, req_encoding_type_ + ", chunked");
+            KUMA_INFOXTRACE("checkRequestHeaders, add Transfer-Encoding=" << req_encoding_type_);
+        }
+        if (req_header.hasContentLength()) {
+            // the Content-Length is no longer correct when compression is enabled
+            req_header.removeHeader(strContentLength);
+        }
+    } else {
+        compression_enable_ = false;
+    }
 }
 
 void HttpRequest::Impl::checkResponseHeaders()
@@ -170,6 +190,21 @@ int HttpRequest::Impl::sendData(const void* data, size_t len)
     if (!canSendBody()) {
         return 0;
     }
+    if (req_complete_) {
+        return 0;
+    }
+    
+    bool finish = false;
+    auto send_len = len;
+    auto const &req_header = getRequestHeader();
+    if (req_header.hasContentLength()) {
+        if (raw_bytes_sent_ + send_len >= req_header.getContentLength()) {
+            send_len = req_header.getContentLength() - raw_bytes_sent_;
+            finish = true;
+        }
+    } else if (req_header.isChunked()){
+        finish = (!data || send_len == 0);
+    }
     
     if (compressor_) {
         if (!compression_buffer_.empty()) {
@@ -177,25 +212,23 @@ int HttpRequest::Impl::sendData(const void* data, size_t len)
         }
         
         Compressor::DataBuffer cbuf;
-        if (data && len > 0) {
-            auto compr_ret = compressor_->compress(data, len, cbuf);
+        if (data && send_len > 0) {
+            auto compr_ret = compressor_->compress(data, send_len, cbuf);
             if (compr_ret != KMError::NOERR) {
                 return -1;
             }
         }
-        raw_bytes_sent_ += len;
         
-        auto &req_header = getRequestHeader();
-        bool finish = (!data || len == 0) ||
-            (req_header.hasContentLength() && raw_bytes_sent_ >= req_header.getContentLength());
         if (finish) {
             // body end, finish the compression
             auto compr_ret = compressor_->compress(nullptr, 0, cbuf);
             if (compr_ret != KMError::NOERR) {
                 return -1;
             }
+            req_complete_ = true;
         }
         
+        raw_bytes_sent_ += send_len;
         if (!cbuf.empty()) {
             auto ret = sendBody(&cbuf[0], cbuf.size());
             if (ret < 0) {
@@ -203,7 +236,7 @@ int HttpRequest::Impl::sendData(const void* data, size_t len)
             } else if (ret == 0) {
                 compression_buffer_ = std::move(cbuf);
                 compression_finish_ = finish;
-                return (int)len;
+                return (int)send_len;
             }
         }
         
@@ -211,9 +244,16 @@ int HttpRequest::Impl::sendData(const void* data, size_t len)
             sendBody(nullptr, 0);
         }
         
-        return (int)len;
+        return (int)send_len;
     } else {
-        return sendBody(data, len);
+        auto ret =  sendBody(data, send_len);
+        if (ret > 0) {
+            raw_bytes_sent_ += ret;
+        }
+        if (finish && ret >= send_len) {
+            req_complete_ = true;
+        }
+        return ret;
     }
 }
 
@@ -222,34 +262,54 @@ int HttpRequest::Impl::sendData(const KMBuffer &buf)
     if (!canSendBody()) {
         return 0;
     }
+    if (req_complete_) {
+        return 0;
+    }
+    
+    auto buf_len = buf.chainLength();
+    bool finish = false;
+    auto send_len = buf_len;
+    auto const &req_header = getRequestHeader();
+    if (req_header.hasContentLength()) {
+        if (raw_bytes_sent_ + send_len >= req_header.getContentLength()) {
+            send_len = req_header.getContentLength() - raw_bytes_sent_;
+            finish = true;
+        }
+    } else if (req_header.isChunked()){
+        finish = send_len == 0;
+    }
     
     if (compressor_) {
         if (!compression_buffer_.empty()) {
             return 0;
         }
         
-        auto buf_len = buf.chainLength();
+        const KMBuffer *send_buf = &buf;
+        if (send_len < buf_len) {
+            send_buf = buf.subbuffer(0, send_len);
+        }
         
         Compressor::DataBuffer cbuf;
-        if (buf_len > 0) {
-            auto ret = compressor_->compress(buf, cbuf);
+        if (send_len > 0) {
+            auto ret = compressor_->compress(*send_buf, cbuf);
+            if (send_buf != &buf) {
+                const_cast<KMBuffer*>(send_buf)->destroy();
+            }
             if (ret != KMError::NOERR) {
                 return -1;
             }
         }
-        raw_bytes_sent_ += buf_len;
         
-        auto &req_header = getRequestHeader();
-        bool finish = buf_len == 0 ||
-            (req_header.hasContentLength() && raw_bytes_sent_ >= req_header.getContentLength());
         if (finish) {
             // body end, finish the compression
             auto compr_ret = compressor_->compress(nullptr, 0, cbuf);
             if (compr_ret != KMError::NOERR) {
                 return -1;
             }
+            req_complete_ = true;
         }
         
+        raw_bytes_sent_ += send_len;
         if (!cbuf.empty()) {
             auto ret = sendBody(&cbuf[0], cbuf.size());
             if (ret < 0) {
@@ -257,7 +317,7 @@ int HttpRequest::Impl::sendData(const KMBuffer &buf)
             } else if (ret == 0) {
                 compression_buffer_ = std::move(cbuf);
                 compression_finish_ = finish;
-                return (int)buf_len;
+                return (int)send_len;
             }
         }
         
@@ -265,9 +325,23 @@ int HttpRequest::Impl::sendData(const KMBuffer &buf)
             sendBody(nullptr, 0);
         }
         
-        return (int)buf_len;
+        return (int)send_len;
     } else {
-        return sendBody(buf);
+        const KMBuffer *send_buf = &buf;
+        if (send_len < buf_len) {
+            send_buf = buf.subbuffer(0, send_len);
+        }
+        auto ret = sendBody(*send_buf);
+        if (send_buf != &buf) {
+            const_cast<KMBuffer*>(send_buf)->destroy();
+        }
+        if (ret > 0) {
+            raw_bytes_sent_ += ret;
+        }
+        if (finish && ret >= send_len) {
+            req_complete_ = true;
+        }
+        return ret;
     }
 }
 
@@ -285,6 +359,7 @@ void HttpRequest::Impl::reset()
 {
     req_encoding_type_.clear();
     rsp_encoding_type_.clear();
+    req_complete_ = false;
     raw_bytes_sent_ = 0;
     compressor_.reset();
     decompressor_.reset();

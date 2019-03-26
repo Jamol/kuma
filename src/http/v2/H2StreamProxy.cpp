@@ -228,7 +228,8 @@ KMError H2StreamProxy::sendHeaders_i()
     } else {
         headers_size = buildRequestHeaders(headers);
     }
-    bool end_stream = protocol_.empty() && !outgoing_header_.hasContentLength() && !outgoing_header_.isChunked();
+    bool end_stream = protocol_.empty() && !outgoing_header_.isChunked() &&
+        (!outgoing_header_.hasContentLength() || outgoing_header_.getContentLength() == 0);
     auto ret = stream_->sendHeaders(headers, headers_size, end_stream);
     if (ret == KMError::NOERR) {
         setState(State::OPEN);

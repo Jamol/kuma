@@ -155,7 +155,7 @@ void Http2Response::onHeader(bool end_stream)
 void Http2Response::onData(KMBuffer &buf, bool end_stream)
 {
     DESTROY_DETECTOR_SETUP();
-    onRequestHeaderComplete();
+    onRequestData(buf);
     DESTROY_DETECTOR_CHECK_VOID();
     
     if (end_stream) {

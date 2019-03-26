@@ -74,6 +74,8 @@ protected:
     void onHttpData(KMBuffer &buf);
     void onHttpEvent(HttpEvent ev);
     
+    void onWsData(uint8_t *src, size_t len);
+    
 protected:
     void onStateError(KMError err) override;
     

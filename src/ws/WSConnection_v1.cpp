@@ -339,12 +339,7 @@ void WSConnection_V1::onStateError(KMError err)
 KMError WSConnection_V1::handleInputData(uint8_t *src, size_t len)
 {
     if (getState() == State::OPEN) {
-        if (data_cb_) {
-            DESTROY_DETECTOR_SETUP();
-            KMBuffer buf(src, len, len);
-            data_cb_(buf);
-            DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
-        }
+        onWsData(src, len);
     } else if (getState() == State::UPGRADING) {
         DESTROY_DETECTOR_SETUP();
         int bytes_used = http_parser_.parse((char*)src, len);
@@ -352,9 +347,8 @@ KMError WSConnection_V1::handleInputData(uint8_t *src, size_t len)
         if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
             return KMError::INVALID_STATE;
         }
-        if(bytes_used < (int)len && getState() == State::OPEN && data_cb_) {
-            KMBuffer buf(src + bytes_used, len - bytes_used, len - bytes_used);
-            data_cb_(buf);
+        if(bytes_used < (int)len && getState() == State::OPEN) {
+            onWsData(src + bytes_used, len - bytes_used);
         }
     } else {
         KUMA_WARNXTRACE("handleInputData, invalid state: "<<getState());
@@ -397,6 +391,14 @@ void WSConnection_V1::onError(KMError err)
 {
     //KUMA_INFOXTRACE("onError, err="<<int(err));
     onStateError(err);
+}
+
+void WSConnection_V1::onWsData(uint8_t *src, size_t len)
+{
+    if (data_cb_) {
+        KMBuffer buf(src, len, len);
+        data_cb_(buf);
+    }
 }
 
 void WSConnection_V1::onHttpData(KMBuffer &buf)

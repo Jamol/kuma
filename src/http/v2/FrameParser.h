@@ -56,6 +56,7 @@ public:
     };
     void setMaxFrameSize(uint32_t max_frame_size) { max_frame_size_ = max_frame_size; }
     ParseState parseInputData(const uint8_t *buf, size_t len);
+    ParseState parseOneFrame(const uint8_t *buf, size_t len, size_t &used);
     
 private:
     ParseState parseFrame(const FrameHeader &hdr, const uint8_t *payload);

@@ -118,6 +118,7 @@ protected:
     std::string             req_encoding_type_;
     std::string             rsp_encoding_type_;
     
+    bool                    req_complete_ = false;
     size_t                  raw_bytes_sent_ = 0;
     std::unique_ptr<Compressor> compressor_;
     std::unique_ptr<Decompressor> decompressor_;

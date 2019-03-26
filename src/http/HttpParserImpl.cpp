@@ -452,7 +452,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(const char*& cur_pos, 
                 str.append(p_line, p_end);
                 // need not parse chunk extension
                 chunk_size_ = strtol(str.c_str(), NULL, 16);
-                KUMA_INFOTRACE("HttpParser::parseChunk, chunk_size="<<chunk_size_);
+                //KUMA_INFOTRACE("HttpParser::parseChunk, chunk_size="<<chunk_size_);
                 if(0 == chunk_size_)
                 {// chunk completed
                     chunk_state_ = CHUNK_READ_TRAILER;

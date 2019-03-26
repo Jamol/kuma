@@ -55,6 +55,7 @@ LOCAL_SRC_FILES := \
     http/v2/H2Frame.cpp \
     http/v2/FrameParser.cpp \
     http/v2/FlowControl.cpp \
+    http/v2/H2Handshake.cpp \
     http/v2/H2Stream.cpp \
     http/v2/H2StreamProxy.cpp \
     http/v2/Http2Request.cpp \

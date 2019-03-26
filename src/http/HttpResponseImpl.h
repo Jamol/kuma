@@ -115,6 +115,7 @@ protected:
     HttpEventCallback       request_cb_;
     HttpEventCallback       response_cb_;
     
+    bool                    rsp_complete_ = false;
     size_t                  raw_bytes_sent_ = 0;
     std::unique_ptr<Compressor> compressor_;
     std::unique_ptr<Decompressor> decompressor_;
