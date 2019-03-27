@@ -181,19 +181,20 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
         SSL_CTX_set_mode(ssl_ctx, SSL_MODE_ENABLE_PARTIAL_WRITE);
         SSL_CTX_set_mode(ssl_ctx, SSL_MODE_AUTO_RETRY);
         
-#if 0
+#if 1
         if (clientMode) {
-            const char* cipherList =
-            "ECDHE-RSA-AES128-GCM-SHA256"
-            "ECDHE-RSA-AES256-GCM-SHA384"
-            "ECDHE-ECDSA-AES128-GCM-SHA256"
-            "ECDHE-ECDSA-AES256-GCM-SHA384"
-            "DHE-RSA-AES128-GCM-SHA256"
-            "DHE-DSS-AES128-GCM-SHA256"
-            "DHE-RSA-AES256-GCM-SHA384"
-            "DHE-DSS-AES256-GCM-SHA384"
-            ;
-            if (SSL_CTX_set_cipher_list(ssl_ctx, "ECDHE-RSA-AES128-GCM-SHA256") != 1) {
+            const char* kDefaultCipherList =
+            "ECDHE-ECDSA-AES256-GCM-SHA384:"
+            "ECDHE-RSA-AES256-GCM-SHA384:"
+            "ECDHE-ECDSA-CHACHA20-POLY1305:"
+            "ECDHE-RSA-CHACHA20-POLY1305:"
+            "ECDHE-ECDSA-AES128-GCM-SHA256:"
+            "ECDHE-RSA-AES128-GCM-SHA256:"
+            "ECDHE-ECDSA-AES256-SHA384:"
+            "ECDHE-RSA-AES256-SHA384:"
+            "ECDHE-ECDSA-AES128-SHA256:"
+            "ECDHE-RSA-AES128-SHA256";
+            if (SSL_CTX_set_cipher_list(ssl_ctx, kDefaultCipherList) != 1) {
                 KUMA_WARNTRACE("SSL_CTX_set_cipher_list failed, err="<<ERR_reason_error_string(ERR_get_error()));
             }
         }

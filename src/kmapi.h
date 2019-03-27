@@ -70,9 +70,16 @@ public:
     bool init();
     
     /* NOTE: cb must be valid untill unregisterFd called
+     * this API is thread-safe
      */
     KMError registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
+    /*
+     * this API is thread-safe
+     */
     KMError updateFd(SOCKET_FD fd, uint32_t events);
+    /*
+     * this API is thread-safe
+     */
     KMError unregisterFd(SOCKET_FD fd, bool close_fd);
     
     PollType getPollType() const;
@@ -117,6 +124,7 @@ public:
      * but will wait untill the task completion
      *
      * @param token token of the tasks
+     * this API is thread-safe
      */
     void cancel(Token *token);
     

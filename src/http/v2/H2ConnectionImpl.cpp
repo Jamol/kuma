@@ -162,7 +162,7 @@ KMError H2Connection::Impl::close()
 
 KMError H2Connection::Impl::sendData(const KMBuffer &buf)
 {
-    auto ret = send(buf);
+    auto ret = TcpConnection::send(buf);
     if (ret > 0) {
         return KMError::NOERR;
     } else if (ret == 0) {
@@ -170,7 +170,7 @@ KMError H2Connection::Impl::sendData(const KMBuffer &buf)
         appendSendBuffer(buf);
         return KMError::NOERR;
     } else {
-        return KMError::FAILED;
+        return KMError::SOCK_ERROR;
     }
 }
 
@@ -214,8 +214,7 @@ KMError H2Connection::Impl::sendH2Frame(H2Frame *frame)
     }
     KUMA_ASSERT(ret == (int)frameSize);
     buf.bytesWritten(ret);
-    appendSendBuffer(buf);
-    return sendBufferedData();
+    return sendData(buf);
 }
 
 KMError H2Connection::Impl::sendHeadersFrame(HeadersFrame *frame)
@@ -238,8 +237,7 @@ KMError H2Connection::Impl::sendHeadersFrame(HeadersFrame *frame)
     ret = frame->encode((uint8_t*)buf.writePtr(), len1, bsize);
     KUMA_ASSERT(ret == (int)len1);
     buf.bytesWritten(len1 + bsize);
-    appendSendBuffer(buf);
-    return sendBufferedData();
+    return sendData(buf);
 }
 
 H2StreamPtr H2Connection::Impl::createStream()
