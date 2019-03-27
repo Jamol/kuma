@@ -238,7 +238,7 @@ KMError WSConnection_V1::sendUpgradeResponse(KMError result,
     if (ret == (int)str.size()) {
         if (handshake_result_ == KMError::NOERR) {
             setState(State::OPEN);
-            eventLoop()->post([this] { onStateOpen(); }, &loop_token_);
+            onStateOpen();
         } else {
             setState(State::IN_ERROR);
         }

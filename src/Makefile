@@ -6,7 +6,8 @@ ROOTDIR = ..
 SRCDIR = $(ROOTDIR)/src
 VENDORDIR = $(ROOTDIR)/vendor
 
-OPENSSLDIR = $(VENDORDIR)/openssl
+#OPENSSLDIR = $(VENDORDIR)/openssl
+OPENSSLDIR = /usr/include
 ZLIBDIR = $(VENDORDIR)/zlib
 
 BINDIR = $(ROOTDIR)/bin/linux
@@ -18,7 +19,7 @@ TARGET = libkuma.so
 ##############################################################################
 #
 
-INCLUDES = -I. -I$(VENDORDIR) -I$(OPENSSLDIR)/include
+INCLUDES = -I. -I$(VENDORDIR) -I$(OPENSSLDIR)
 #
 ##############################################################################
 #

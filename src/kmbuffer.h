@@ -31,143 +31,141 @@
 #include <string.h> // for memcpy
 #endif
 
-namespace {
-    class _SharedBase
+KUMA_NS_BEGIN
+
+class _SharedBase
+{
+public:
+    virtual ~_SharedBase() {}
+    virtual void* data() = 0;
+    virtual const void* data() const = 0;
+    virtual size_t size() const = 0;
+    virtual long increment() = 0;
+    virtual long decrement() = 0;
+};
+
+class _SharedBasePtr final
+{
+    _SharedBase* base_ptr_ = nullptr;
+public:
+    _SharedBasePtr() = default;
+    _SharedBasePtr(const _SharedBasePtr &other)
     {
-    public:
-        virtual ~_SharedBase() {}
-        virtual void* data() = 0;
-        virtual const void* data() const = 0;
-        virtual size_t size() const = 0;
-        virtual long increment() = 0;
-        virtual long decrement() = 0;
-    };
+        *this = other.base_ptr_;
+    }
+    _SharedBasePtr(_SharedBasePtr &&other) : base_ptr_(other.base_ptr_)
+    {
+        other.base_ptr_ = nullptr;
+    }
+    _SharedBasePtr(_SharedBase *ptr)
+    {
+        *this = ptr;
+    }
     
-    class _SharedBasePtr final
+    ~_SharedBasePtr()
     {
-        _SharedBase* base_ptr_ = nullptr;
-    public:
-        _SharedBasePtr() = default;
-        _SharedBasePtr(const _SharedBasePtr &other)
-        {
+        reset();
+    }
+    
+    _SharedBasePtr& operator=(const _SharedBasePtr &other)
+    {
+        if (this != &other) {
             *this = other.base_ptr_;
         }
-        _SharedBasePtr(_SharedBasePtr &&other) : base_ptr_(other.base_ptr_)
-        {
+        return *this;
+    }
+    _SharedBasePtr& operator=(_SharedBasePtr &&other)
+    {
+        if (this != &other) {
+            base_ptr_ = other.base_ptr_;
             other.base_ptr_ = nullptr;
         }
-        _SharedBasePtr(_SharedBase *ptr)
-        {
-            *this = ptr;
-        }
-        
-        ~_SharedBasePtr()
-        {
-            reset();
-        }
-        
-        _SharedBasePtr& operator=(const _SharedBasePtr &other)
-        {
-            if (this != &other) {
-                *this = other.base_ptr_;
-            }
-            return *this;
-        }
-        _SharedBasePtr& operator=(_SharedBasePtr &&other)
-        {
-            if (this != &other) {
-                base_ptr_ = other.base_ptr_;
-                other.base_ptr_ = nullptr;
-            }
-            return *this;
-        }
-        _SharedBasePtr& operator=(_SharedBase *ptr)
-        {
-            if (ptr) {
-                ptr->increment();
-            }
-            if (base_ptr_) {
-                base_ptr_->decrement();
-            }
-            base_ptr_ = ptr;
-            return *this;
-        }
-        operator bool () const
-        {
-            return base_ptr_;
-        }
-        
-        void reset()
-        {
-            *this = nullptr;
-        }
-        void reset(_SharedBase *ptr)
-        {
-            *this = ptr;
-        }
-    };
-    
-    template<typename Deleter, typename DataDeleter>
-    class _SharedData final : public _SharedBase
+        return *this;
+    }
+    _SharedBasePtr& operator=(_SharedBase *ptr)
     {
-    public:
-        _SharedData(void *data, size_t size, size_t alloc_size, Deleter md, DataDeleter dd)
-        : data_(data), size_(size), alloc_size_(alloc_size)
-        , deleter_(std::move(md)), data_deleter_(std::move(dd))
-        {
-            
+        if (ptr) {
+            ptr->increment();
         }
-        ~_SharedData()
-        {
-            if (data_) {
-                data_deleter_(data_, size_);
-                data_ = nullptr;
-            }
+        if (base_ptr_) {
+            base_ptr_->decrement();
         }
-        
-        void* data() override
-        {
-            return data_;
-        }
-        
-        const void* data() const override
-        {
-            return data_;
-        }
-        
-        size_t size() const override
-        {
-            return size_;
-        }
-        
-        long increment() override
-        {
-            return ++ref_count_;
-        }
-        
-        long decrement() override
-        {
-            long tmp = --ref_count_;
-            if (tmp == 0){
-                this->~_SharedData();
-                deleter_(this, alloc_size_);
-            }
-            return tmp;
-        }
-        
-    private:
-        void* data_ = nullptr;
-        size_t size_ = 0;
-        
-        std::atomic_long ref_count_{0};
-        
-        size_t alloc_size_ = 0;
-        Deleter deleter_;
-        DataDeleter data_deleter_;
-    };
-}
+        base_ptr_ = ptr;
+        return *this;
+    }
+    operator bool () const
+    {
+        return base_ptr_;
+    }
+    
+    void reset()
+    {
+        *this = nullptr;
+    }
+    void reset(_SharedBase *ptr)
+    {
+        *this = ptr;
+    }
+};
 
-KUMA_NS_BEGIN
+template<typename Deleter, typename DataDeleter>
+class _SharedData final : public _SharedBase
+{
+public:
+    _SharedData(void *data, size_t size, size_t alloc_size, Deleter md, DataDeleter dd)
+    : data_(data), size_(size), alloc_size_(alloc_size)
+    , deleter_(std::move(md)), data_deleter_(std::move(dd))
+    {
+        
+    }
+    ~_SharedData()
+    {
+        if (data_) {
+            data_deleter_(data_, size_);
+            data_ = nullptr;
+        }
+    }
+    
+    void* data() override
+    {
+        return data_;
+    }
+    
+    const void* data() const override
+    {
+        return data_;
+    }
+    
+    size_t size() const override
+    {
+        return size_;
+    }
+    
+    long increment() override
+    {
+        return ++ref_count_;
+    }
+    
+    long decrement() override
+    {
+        long tmp = --ref_count_;
+        if (tmp == 0){
+            this->~_SharedData();
+            deleter_(this, alloc_size_);
+        }
+        return tmp;
+    }
+    
+private:
+    void* data_ = nullptr;
+    size_t size_ = 0;
+    
+    std::atomic_long ref_count_{0};
+    
+    size_t alloc_size_ = 0;
+    Deleter deleter_;
+    DataDeleter data_deleter_;
+};
 
 using IOVEC = std::vector<iovec>;
 //////////////////////////////////////////////////////////////////////////

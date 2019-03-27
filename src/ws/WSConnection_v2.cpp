@@ -123,7 +123,7 @@ KMError WSConnection_V2::sendResponse(int status_code)
     if (ret == KMError::NOERR) {
         if (status_code == 200) {
             setState(State::OPEN);
-            stream_->runOnLoopThread([this] { onStateOpen(); }, false);
+            stream_->runOnLoopThread([this] { onStateOpen(); });
         } else {
             setState(State::IN_ERROR);
         }
