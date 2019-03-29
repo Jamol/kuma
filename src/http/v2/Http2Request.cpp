@@ -20,13 +20,11 @@
  */
 
 #include "Http2Request.h"
-#include "http/Uri.h"
 #include "http/HttpCache.h"
-#include "http/v2/H2StreamProxy.h"
+#include "H2StreamProxy.h"
 #include "util/kmtrace.h"
 #include "util/util.h"
 
-#include <sstream>
 #include <string>
 
 using namespace kuma;

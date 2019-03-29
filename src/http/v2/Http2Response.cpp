@@ -20,7 +20,7 @@
  */
 
 #include "Http2Response.h"
-#include "http/v2/H2StreamProxy.h"
+#include "H2StreamProxy.h"
 
 #include <string>
 

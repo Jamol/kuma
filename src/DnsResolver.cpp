@@ -94,7 +94,6 @@ DnsResolver::~DnsResolver()
 
 DnsResolver& DnsResolver::get()
 {
-    // thread-safe is guaranteed by C++11
     static DnsResolver s_instance;
     static std::once_flag s_once_flag;
     std::call_once(s_once_flag, [] {
@@ -157,7 +156,7 @@ void DnsResolver::stop()
             try {
                 thr.join();
             } catch (...) {
-                KUMA_INFOTRACE("failed to join DNS resolving thread\n");
+                KUMA_INFOTRACE("failed to join DNS resolving thread");
             }
         }
     }

@@ -25,7 +25,6 @@
 #include "util/util.h"
 #include "h2utils.h"
 
-#include <sstream>
 #include <string>
 
 using namespace kuma;

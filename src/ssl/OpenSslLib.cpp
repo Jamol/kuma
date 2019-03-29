@@ -242,6 +242,7 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
             SSL_CTX_set_tlsext_servername_arg(ssl_ctx, ssl_ctx);
 #endif
         }
+        //SSL_CTX_set_max_send_fragment(ssl_ctx, 8192);
         ctx_ok = true;
     } while(0);
     if(!ctx_ok && ssl_ctx) {

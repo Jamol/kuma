@@ -5,15 +5,14 @@ kuma is a multi-platform support network library developed in C++. It implements
 
 * Support epoll, poll/WSAPoll, IOCP, kqueue and select
 * Portable/cross platform(linux, windows, macOS, iOS and Android)
-* Support UDP multicast
-* Support OpenSSL 0.xx and 1.xx
+* Support OpenSSL 1.0 and 1.1
 * IPv6 support
 * Flexible/Scalable timer manager
 * Support HTTP compression gzip and deflate
 * Support secure HTTP/2 and HTTP/1.1 upgrade to HTTP/2 (rfc7540, rfc7541)
 * Support WebSocket(rfc6455) and extension permessage_deflate(rfc7692)
 * Support WebSocket over HTTP/2(rfc8441)
-* All interface objects, except Timer, are not thread safe, must run on their EventLoop thread, but close method is thread-safe
+* All interface objects, except Timer, are not thread-safe, must run on their EventLoop thread, but close method is thread-safe
 
 
 ## Build

@@ -21,17 +21,10 @@
 
 #include "H2ConnectionImpl.h"
 #include "util/kmtrace.h"
-#include "util/base64.h"
-#include "util/util.h"
 #include "H2ConnectionMgr.h"
-#include "Http2Response.h"
-#include "Http2Request.h"
 #include "H2Handshake.h"
 #include "PushClient.h"
-#include "ws/WebSocketImpl.h"
 
-#include <sstream>
-#include <algorithm>
 
 using namespace kuma;
 
