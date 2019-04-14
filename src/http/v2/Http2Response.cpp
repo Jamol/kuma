@@ -29,11 +29,11 @@ using namespace kuma;
 Http2Response::Http2Response(const EventLoopPtr &loop, std::string ver)
 : HttpResponse::Impl(std::move(ver)), stream_(new H2StreamProxy(loop))
 {
-    stream_->setHeaderCallback([this] (bool end_stream) {
-        onHeader(end_stream);
+    stream_->setHeaderCallback([this] {
+        onHeader();
     });
-    stream_->setDataCallback([this] (KMBuffer &buf, bool end_stream) {
-        onData(buf, end_stream);
+    stream_->setDataCallback([this] (KMBuffer &buf) {
+        onData(buf);
     });
     stream_->setErrorCallback([this] (KMError err) {
         onError(err);
@@ -41,7 +41,10 @@ Http2Response::Http2Response(const EventLoopPtr &loop, std::string ver)
     stream_->setWriteCallback([this] (KMError err) {
         onWrite();
     });
-    stream_->setCompleteCallback([this] {
+    stream_->setIncomingCompleteCallback([this] {
+        onRequestComplete();
+    });
+    stream_->setOutgoingCompleteCallback([this] {
         onComplete();
     });
     KM_SetObjKey("Http2Response");
@@ -115,12 +118,22 @@ const std::string& Http2Response::getPath() const
     return stream_->getPath();
 }
 
+HttpHeader& Http2Response::getRequestHeader()
+{
+    return stream_->getIncomingHeaders();
+}
+
 const HttpHeader& Http2Response::getRequestHeader() const
 {
     return stream_->getIncomingHeaders();
 }
 
 HttpHeader& Http2Response::getResponseHeader()
+{
+    return stream_->getOutgoingHeaders();
+}
+
+const HttpHeader& Http2Response::getResponseHeader() const
 {
     return stream_->getOutgoingHeaders();
 }
@@ -141,26 +154,14 @@ void Http2Response::forEachHeader(const EnumerateCallback &cb) const {
     }
 }
 
-void Http2Response::onHeader(bool end_stream)
+void Http2Response::onHeader()
 {
-    DESTROY_DETECTOR_SETUP();
     onRequestHeaderComplete();
-    DESTROY_DETECTOR_CHECK_VOID();
-    
-    if (end_stream) {
-        onRequestComplete();
-    }
 }
 
-void Http2Response::onData(KMBuffer &buf, bool end_stream)
+void Http2Response::onData(KMBuffer &buf)
 {
-    DESTROY_DETECTOR_SETUP();
     onRequestData(buf);
-    DESTROY_DETECTOR_CHECK_VOID();
-    
-    if (end_stream) {
-        onRequestComplete();
-    }
 }
 
 void Http2Response::onWrite()

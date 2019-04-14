@@ -60,10 +60,9 @@ protected:
     
 protected:
     void onError(KMError err);
-    void onHeader(bool end_stream);
-    void onData(KMBuffer &buf, bool end_stream);
+    void onHeader();
+    void onData(KMBuffer &buf);
     void onWrite();
-    void onComplete();
     
 protected:
     uint32_t ssl_flags_ = 0;

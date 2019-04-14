@@ -68,16 +68,18 @@ protected:
     bool canSendBody() const override;
     void checkResponseHeaders() override;
     HttpHeader& getRequestHeader() override;
+    const HttpHeader& getRequestHeader() const override;
     HttpHeader& getResponseHeader() override;
-    const HttpHeader& getResponseHeader() const;
+    const HttpHeader& getResponseHeader() const override;
     
     bool processHttpCache();
     void onCacheComplete();
     
-    void onHeader(bool end_stream);
-    void onData(KMBuffer &buf, bool end_stream);
+    void onHeader();
+    void onData(KMBuffer &buf);
     void onWrite();
     void onError(KMError err);
+    void onRequestComplete();
     void onComplete();
     
 protected:

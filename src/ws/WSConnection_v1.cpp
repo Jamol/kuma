@@ -106,15 +106,29 @@ KMError WSConnection_V1::attachSocket(TcpSocket::Impl&& tcp,
     handshake_cb_ = std::move(cb);
     setState(State::UPGRADING);
     
+    bool is_parser_paused = parser.paused();
+    bool is_parser_header_complete = parser.headerComplete();
+    bool is_parser_complete = parser.complete();
     http_parser_.reset();
     http_parser_ = std::move(parser);
     http_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
-
-    auto ret = TcpConnection::attachSocket(std::move(tcp), init_buf);
     if(http_parser_.paused()) {
         http_parser_.resume();
     }
+
+    auto ret = TcpConnection::attachSocket(std::move(tcp), init_buf);
+    if(ret == KMError::NOERR && is_parser_paused) {
+        if (is_parser_header_complete) {
+            DESTROY_DETECTOR_SETUP();
+            onHttpEvent(HttpEvent::HEADER_COMPLETE);
+            DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
+        }
+        if (is_parser_complete) {
+            onHttpEvent(HttpEvent::COMPLETE);
+        }
+    }
+    
     return ret;
 }
 

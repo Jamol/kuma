@@ -40,7 +40,7 @@ public:
     HttpMessage() : HttpHeader(true) {}
     int sendData(const void* data, size_t len);
     int sendData(const KMBuffer &buf);
-    bool isCompleted() const { return !hasBody() || completed_; }
+    bool isComplete() const { return !hasBody() || complete_; }
     void reset() override;
     
     void setSender(MessageSender sender) { sender_ = std::move(sender); }
@@ -52,7 +52,7 @@ protected:
     int sendChunk(const KMBuffer &buf);
     
 protected:
-    bool                    completed_ = false;
+    bool                    complete_ = false;
     size_t                  body_bytes_sent_ = 0;
     
     MessageSender           sender_;

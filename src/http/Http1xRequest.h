@@ -23,11 +23,10 @@
 #define __Http1xRequest_H__
 
 #include "kmdefs.h"
-#include "HttpParserImpl.h"
 #include "TcpConnection.h"
 #include "Uri.h"
 #include "HttpRequestImpl.h"
-#include "HttpMessage.h"
+#include "H1xStream.h"
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
 
@@ -46,15 +45,20 @@ public:
     void reset() override; // reset for connection reuse
     KMError close() override;
     
-    int getStatusCode() const override { return rsp_parser_.getStatusCode(); }
-    const std::string& getVersion() const override { return rsp_parser_.getVersion(); }
+    int getStatusCode() const override { return stream_.getStatusCode(); }
+    const std::string& getVersion() const override { return stream_.getVersion(); }
     const std::string& getHeaderValue(const std::string &name) const override
     {
-        return rsp_parser_.getHeaderValue(name);
+        return getResponseHeader().getHeader(name);
     }
     void forEachHeader(const EnumerateCallback &cb) const override
     {
-        return rsp_parser_.forEachHeader(cb);
+        auto const &header = getResponseHeader();
+        for (auto &kv : header.getHeaders()) {
+            if (!cb(kv.first, kv.second)) {
+                break;
+            }
+        }
     }
     
 protected: // callbacks of tcp_socket
@@ -67,21 +71,22 @@ private:
     KMError sendRequest() override;
     bool canSendBody() const override;
     HttpHeader& getRequestHeader() override;
+    const HttpHeader& getRequestHeader() const override;
     HttpHeader& getResponseHeader() override;
-    void buildRequest();
+    const HttpHeader& getResponseHeader() const override;
     void cleanup();
-    void sendRequestHeader();
+    KMError sendRequestHeader();
     bool isVersion2() override { return false; }
     bool processHttpCache();
     
-    void onHttpData(KMBuffer &buf);
-    void onHttpEvent(HttpEvent ev);
-    
     void onCacheComplete();
+    void onRequestComplete();
     
 private:
-    HttpMessage             req_message_;
-    HttpParser::Impl        rsp_parser_;
+    H1xStream               stream_;
+    
+    int                     rsp_cache_status_ = 0;
+    HttpHeader              rsp_cache_header_{false, false};
     KMBuffer::Ptr           rsp_cache_body_;
     
     EventLoopToken          loop_token_;

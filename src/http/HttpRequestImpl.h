@@ -79,7 +79,9 @@ protected:
     virtual void checkRequestHeaders();
     virtual void checkResponseHeaders();
     virtual HttpHeader& getRequestHeader() = 0;
+    virtual const HttpHeader& getRequestHeader() const = 0;
     virtual HttpHeader& getResponseHeader() = 0;
+    virtual const HttpHeader& getResponseHeader() const = 0;
     virtual bool isVersion2() { return true; }
     
     enum class State {

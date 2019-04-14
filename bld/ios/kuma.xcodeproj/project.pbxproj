@@ -39,6 +39,7 @@
 		6F84E9891D5B032D00AF8E3B /* HPacker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F84E9841D5B032D00AF8E3B /* HPacker.cpp */; };
 		6F84E98A1D5B032D00AF8E3B /* HPackTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F84E9861D5B032D00AF8E3B /* HPackTable.cpp */; };
 		6F87763B1EACEA10002F1165 /* DnsResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F8776391EACEA10002F1165 /* DnsResolver.cpp */; };
+		6F8906F922630D06004D0DE9 /* H1xStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F8906F822630D06004D0DE9 /* H1xStream.cpp */; };
 		6F91F1751D782EF8004A95B9 /* Http1xRequest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F1731D782EF8004A95B9 /* Http1xRequest.cpp */; };
 		6F91F1771D782F1A004A95B9 /* Notifier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F1761D782F1A004A95B9 /* Notifier.cpp */; };
 		6F91F1B41D7B29CB004A95B9 /* KQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F1B31D7B29CB004A95B9 /* KQueue.cpp */; };
@@ -174,6 +175,8 @@
 		6F84E9911D5B1C7200AF8E3B /* httpdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = httpdefs.h; sourceTree = "<group>"; };
 		6F8776391EACEA10002F1165 /* DnsResolver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DnsResolver.cpp; path = ../../src/DnsResolver.cpp; sourceTree = "<group>"; };
 		6F87763A1EACEA10002F1165 /* DnsResolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DnsResolver.h; path = ../../src/DnsResolver.h; sourceTree = "<group>"; };
+		6F8906F722630D05004D0DE9 /* H1xStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H1xStream.h; sourceTree = "<group>"; };
+		6F8906F822630D06004D0DE9 /* H1xStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H1xStream.cpp; sourceTree = "<group>"; };
 		6F91F1731D782EF8004A95B9 /* Http1xRequest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Http1xRequest.cpp; sourceTree = "<group>"; };
 		6F91F1741D782EF8004A95B9 /* Http1xRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Http1xRequest.h; sourceTree = "<group>"; };
 		6F91F1761D782F1A004A95B9 /* Notifier.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Notifier.cpp; sourceTree = "<group>"; };
@@ -431,6 +434,8 @@
 			children = (
 				6F84E96C1D5B02EF00AF8E3B /* v2 */,
 				6F84E9911D5B1C7200AF8E3B /* httpdefs.h */,
+				6F8906F822630D06004D0DE9 /* H1xStream.cpp */,
+				6F8906F722630D05004D0DE9 /* H1xStream.h */,
 				6F91F1731D782EF8004A95B9 /* Http1xRequest.cpp */,
 				6F91F1741D782EF8004A95B9 /* Http1xRequest.h */,
 				6F6D140F1D9A5AE7008B64E6 /* Http1xResponse.cpp */,
@@ -583,6 +588,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 			);
 			mainGroup = 6F7D5F921B33E9E6000FF2F8;
@@ -672,6 +678,7 @@
 				6FD7D0B42244DE460005DDFF /* WSConnection.cpp in Sources */,
 				6FECED241C2139D600310F52 /* WSHandler.cpp in Sources */,
 				6F7FC6831F4D82400038360B /* HttpCache.cpp in Sources */,
+				6F8906F922630D06004D0DE9 /* H1xStream.cpp in Sources */,
 				6F7034662249FEB700556EBE /* H2Handshake.cpp in Sources */,
 				6FECED1E1C2139CA00310F52 /* util.cpp in Sources */,
 				6F84E9801D5B031300AF8E3B /* Http2Request.cpp in Sources */,

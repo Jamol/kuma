@@ -34,11 +34,15 @@ int HttpMessage::sendData(const void* data, size_t len)
     if(!data || 0 == len) {
         return 0;
     }
-    int ret = sender_(data, len);
+    size_t send_len = len;
+    if (has_body_ && hasContentLength() && body_bytes_sent_ + send_len > getContentLength()) {
+        send_len = getContentLength() - body_bytes_sent_;
+    }
+    int ret = sender_(data, send_len);
     if(ret > 0) {
         body_bytes_sent_ += ret;
-        if (has_body_ && has_content_length_ && body_bytes_sent_ >= content_length_) {
-            completed_ = true;
+        if (has_body_ && hasContentLength() && body_bytes_sent_ >= getContentLength()) {
+            complete_ = true;
         }
     }
     return ret;
@@ -53,11 +57,22 @@ int HttpMessage::sendData(const KMBuffer &buf)
     if(buf_len == 0) {
         return 0;
     }
-    int ret = bsender_(buf);
+    
+    size_t send_len = buf_len;
+    const KMBuffer *send_buf = &buf;
+    if (has_body_ && hasContentLength() && body_bytes_sent_ + send_len > getContentLength()) {
+        send_len = getContentLength() - body_bytes_sent_;
+        send_buf = buf.subbuffer(0, send_len);
+    }
+    
+    int ret = bsender_(*send_buf);
+    if (send_buf != &buf) {
+        const_cast<KMBuffer*>(send_buf)->destroy();
+    }
     if(ret > 0) {
         body_bytes_sent_ += ret;
-        if (has_body_ && has_content_length_ && body_bytes_sent_ >= content_length_) {
-            completed_ = true;
+        if (has_body_ && hasContentLength() && body_bytes_sent_ >= getContentLength()) {
+            complete_ = true;
         }
     }
     return ret;
@@ -69,7 +84,7 @@ int HttpMessage::sendChunk(const void* data, size_t len)
         static const std::string _chunk_end_token_ = "0\r\n\r\n";
         int ret = sender_(_chunk_end_token_.c_str(), _chunk_end_token_.length());
         if(ret > 0) {
-            completed_ = true;
+            complete_ = true;
             return 0;
         }
         return ret;
@@ -102,7 +117,7 @@ int HttpMessage::sendChunk(const KMBuffer &buf)
         static const std::string _chunk_end_token_ = "0\r\n\r\n";
         int ret = sender_(_chunk_end_token_.c_str(), _chunk_end_token_.length());
         if(ret > 0) {
-            completed_ = true;
+            complete_ = true;
             return 0;
         }
         return ret;
@@ -135,5 +150,5 @@ void HttpMessage::reset()
 {
     HttpHeader::reset();
     body_bytes_sent_ = 0;
-    completed_ = false;
+    complete_ = false;
 }

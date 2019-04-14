@@ -23,8 +23,8 @@
 
 #include "kmdefs.h"
 #include "H2ConnectionImpl.h"
-#include "http/HttpRequestImpl.h"
 #include "http/HttpHeader.h"
+#include "http/Uri.h"
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
 #include "util/kmqueue.h"
@@ -35,9 +35,9 @@ KUMA_NS_BEGIN
 class H2StreamProxy : public KMObject, public DestroyDetector
 {
 public:
-    using DataCallback = std::function<void(KMBuffer &buf, bool end_stream)>;
+    using DataCallback = std::function<void(KMBuffer &buf)>;
     using EventCallback = HttpRequest::EventCallback;
-    using HeaderCallback = std::function<void(bool end_stream)>;
+    using HeaderCallback = HttpRequest::HttpEventCallback;
     using CompleteCallback = HttpRequest::HttpEventCallback;
     
     H2StreamProxy(const EventLoopPtr &loop);
@@ -82,7 +82,8 @@ public:
     void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
     void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
     void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
-    void setCompleteCallback(CompleteCallback cb) { complete_cb_ = std::move(cb); }
+    void setIncomingCompleteCallback(CompleteCallback cb) { incoming_complete_cb_ = std::move(cb); }
+    void setOutgoingCompleteCallback(CompleteCallback cb) { outgoing_complete_cb_ = std::move(cb); }
     
 protected:
     //{ on conn_ thread
@@ -128,10 +129,8 @@ protected:
     void onError(KMError err);
     void checkResponseStatus(bool end_stream);
     
-    void onHeaderComplete(bool end_stream);
-    void onStreamData(KMBuffer &buf, bool end_stream);
-    void onStreamComplete();
-    
+    void onHeaderComplete();
+    void onStreamData(KMBuffer &buf);    
     void onOutgoingComplete();
     void onIncomingComplete();
     //}
@@ -204,7 +203,8 @@ protected:
     DataCallback            data_cb_;
     EventCallback           write_cb_;
     EventCallback           error_cb_;
-    CompleteCallback        complete_cb_;
+    CompleteCallback        incoming_complete_cb_;
+    CompleteCallback        outgoing_complete_cb_;
     
     EventLoopToken          loop_token_;
     EventLoopToken          conn_token_;

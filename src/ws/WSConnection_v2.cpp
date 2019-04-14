@@ -37,11 +37,11 @@ const std::string kSecWsExtensions { "sec-websocket-extensions" };
 WSConnection_V2::WSConnection_V2(const EventLoopPtr &loop)
 : stream_(new H2StreamProxy(loop))
 {
-    stream_->setHeaderCallback([this] (bool end_stream) {
-        onHeader(end_stream);
+    stream_->setHeaderCallback([this] {
+        onHeader();
     });
-    stream_->setDataCallback([this] (KMBuffer &buf, bool end_stream) {
-        onData(buf, end_stream);
+    stream_->setDataCallback([this] (KMBuffer &buf) {
+        onData(buf);
     });
     stream_->setErrorCallback([this] (KMError err) {
         onError(err);
@@ -49,8 +49,11 @@ WSConnection_V2::WSConnection_V2(const EventLoopPtr &loop)
     stream_->setWriteCallback([this] (KMError err) {
         onWrite();
     });
-    stream_->setCompleteCallback([this] {
-        onComplete();
+    stream_->setIncomingCompleteCallback([this] {
+        onError(KMError::PROTO_ERROR);
+    });
+    stream_->setOutgoingCompleteCallback([this] {
+        onError(KMError::PROTO_ERROR);
     });
     KM_SetObjKey("WSConnection_V2");
 }
@@ -244,13 +247,8 @@ void WSConnection_V2::onError(KMError err)
     onStateError(err);
 }
 
-void WSConnection_V2::onHeader(bool end_stream)
+void WSConnection_V2::onHeader()
 {
-    if (end_stream) {
-        onError(KMError::PROTO_ERROR);
-        return;
-    }
-    
     if (stream_->isServer()) {
         handleHandshakeRequest();
     } else {
@@ -258,18 +256,12 @@ void WSConnection_V2::onHeader(bool end_stream)
     }
 }
 
-void WSConnection_V2::onData(KMBuffer &buf, bool end_stream)
+void WSConnection_V2::onData(KMBuffer &buf)
 {
     if (data_cb_)  data_cb_(buf);
-}
-
-void WSConnection_V2::onComplete()
-{
-    onError(KMError::NOERR);
 }
 
 void WSConnection_V2::onWrite()
 {
     if (write_cb_) write_cb_(KMError::NOERR);
 }
-

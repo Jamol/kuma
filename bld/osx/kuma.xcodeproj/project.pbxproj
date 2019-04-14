@@ -60,6 +60,8 @@
 		6F852E431985EB2B00271D87 /* kuma-Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 6F852E421985EB2B00271D87 /* kuma-Prefix.pch */; };
 		6F8775FE1EAB4AD0002F1165 /* DnsResolver.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F8775FD1EAB4AD0002F1165 /* DnsResolver.h */; };
 		6F8776001EAB4B18002F1165 /* DnsResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F8775FF1EAB4B18002F1165 /* DnsResolver.cpp */; };
+		6F890533225AEE65004D0DE9 /* H1xStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F890531225AEE65004D0DE9 /* H1xStream.cpp */; };
+		6F890534225AEE65004D0DE9 /* H1xStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F890532225AEE65004D0DE9 /* H1xStream.h */; };
 		6F91F1711D782DD3004A95B9 /* Http1xRequest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F16F1D782DD3004A95B9 /* Http1xRequest.cpp */; };
 		6F91F1721D782DD3004A95B9 /* Http1xRequest.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F91F1701D782DD3004A95B9 /* Http1xRequest.h */; };
 		6F91F1B21D7ADF77004A95B9 /* KQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F1B11D7ADF77004A95B9 /* KQueue.cpp */; };
@@ -206,6 +208,8 @@
 		6F852E451985EB4700271D87 /* kumaTarget.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = kumaTarget.xcconfig; sourceTree = "<group>"; };
 		6F8775FD1EAB4AD0002F1165 /* DnsResolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DnsResolver.h; sourceTree = "<group>"; };
 		6F8775FF1EAB4B18002F1165 /* DnsResolver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DnsResolver.cpp; sourceTree = "<group>"; };
+		6F890531225AEE65004D0DE9 /* H1xStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H1xStream.cpp; sourceTree = "<group>"; };
+		6F890532225AEE65004D0DE9 /* H1xStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H1xStream.h; sourceTree = "<group>"; };
 		6F91F16F1D782DD3004A95B9 /* Http1xRequest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Http1xRequest.cpp; sourceTree = "<group>"; };
 		6F91F1701D782DD3004A95B9 /* Http1xRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Http1xRequest.h; sourceTree = "<group>"; };
 		6F91F1B11D7ADF77004A95B9 /* KQueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = KQueue.cpp; sourceTree = "<group>"; };
@@ -518,6 +522,8 @@
 			isa = PBXGroup;
 			children = (
 				6FE0EEEF1D40982B006136B7 /* v2 */,
+				6F890531225AEE65004D0DE9 /* H1xStream.cpp */,
+				6F890532225AEE65004D0DE9 /* H1xStream.h */,
 				6F91F16F1D782DD3004A95B9 /* Http1xRequest.cpp */,
 				6F91F1701D782DD3004A95B9 /* Http1xRequest.h */,
 				6F6D12EC1D965A9D008B64E6 /* Http1xResponse.cpp */,
@@ -613,6 +619,7 @@
 				6F6208FD1A26BDB1000DAF4B /* kmapi.h in Headers */,
 				6FBB2C911D139C430024550F /* Notifier.h in Headers */,
 				6F2963541A18AB0D00C3C79B /* kmtrace.h in Headers */,
+				6F890534225AEE65004D0DE9 /* H1xStream.h in Headers */,
 				6FE0EF0A1D409863006136B7 /* Http2Request.h in Headers */,
 				6FD3F0F01EC06FE70027D04F /* skbuffer.h in Headers */,
 				6FE0EF0E1D409863006136B7 /* H2Stream.h in Headers */,
@@ -672,10 +679,11 @@
 			};
 			buildConfigurationList = 6F852DEC1985E33000271D87 /* Build configuration list for PBXProject "kuma" */;
 			compatibilityVersion = "Xcode 3.2";
-			developmentRegion = English;
+			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				Base,
 			);
 			mainGroup = 6F852DE81985E33000271D87;
 			productRefGroup = 6F852DF21985E33000271D87 /* Products */;
@@ -753,6 +761,7 @@
 				6F77ADDC2202D07300BCBB51 /* PMCE_Base.cpp in Sources */,
 				6FBB2C921D139C430024550F /* SelectPoll.cpp in Sources */,
 				6F2963561A18AB0D00C3C79B /* util.cpp in Sources */,
+				6F890533225AEE65004D0DE9 /* H1xStream.cpp in Sources */,
 				6F7033CB224714BC00556EBE /* H2Handshake.cpp in Sources */,
 				6FD7C454221293080005DDFF /* trees.c in Sources */,
 				6FD7CBEC223394BB0005DDFF /* WSConnection.cpp in Sources */,

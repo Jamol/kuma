@@ -29,16 +29,39 @@ using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
 Http1xResponse::Http1xResponse(const EventLoopPtr &loop, std::string ver)
-: HttpResponse::Impl(std::move(ver)), TcpConnection(loop)
+: HttpResponse::Impl(std::move(ver)), TcpConnection(loop), stream_(loop)
 {
     loop_token_.eventLoop(loop);
-    rsp_message_.setSender([this] (const void* data, size_t len) -> int {
+    
+    stream_.setHeaderCallback([this] () {
+        onRequestHeaderComplete();
+    });
+    stream_.setDataCallback([this] (KMBuffer &buf) {
+        onRequestData(buf);
+    });
+    stream_.setErrorCallback([this] (KMError err) {
+        cleanup();
+        setState(State::IN_ERROR);
+        if(error_cb_) error_cb_(KMError::FAILED);
+    });
+    stream_.setIncomingCompleteCallback([this] {
+        onRequestComplete();
+    });
+    stream_.setOutgoingCompleteCallback([this] {
+        // triggered by sendBody, wait until all data is sent out
+        if (sendBufferEmpty()) {
+            setState(State::COMPLETE);
+            eventLoop()->post([this] { notifyComplete(); }, &loop_token_);
+        }
+    });
+    
+    stream_.setSender([this] (const void* data, size_t len) -> int {
         return TcpConnection::send(data, len);
     });
-    rsp_message_.setVSender([this] (const iovec* iovs, int count) -> int {
+    stream_.setVSender([this] (const iovec* iovs, int count) -> int {
         return TcpConnection::send(iovs, count);
     });
-    rsp_message_.setBSender([this] (const KMBuffer &buf) -> int {
+    stream_.setBSender([this] (const KMBuffer &buf) -> int {
         return TcpConnection::send(buf);
     });
     KM_SetObjKey("Http1xResponse");
@@ -63,52 +86,54 @@ KMError Http1xResponse::setSslFlags(uint32_t ssl_flags)
 KMError Http1xResponse::attachFd(SOCKET_FD fd, const KMBuffer *init_buf)
 {
     setState(State::RECVING_REQUEST);
-    req_parser_.reset();
-    req_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
-    req_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     return TcpConnection::attachFd(fd, init_buf);
 }
 
 KMError Http1xResponse::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf)
 {
     setState(State::RECVING_REQUEST);
-    req_parser_.reset();
-    req_parser_ = std::move(parser);
-    req_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
-    req_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
+    bool is_parser_paused = parser.paused();
+    bool is_parser_header_complete = parser.headerComplete();
+    bool is_parser_complete = parser.complete();
+    stream_.setHttpParser(std::move(parser));
 
     auto ret = TcpConnection::attachSocket(std::move(tcp), init_buf);
-    if(ret == KMError::NOERR && req_parser_.paused()) {
-        if (req_parser_.headerComplete()) {
+    if(ret == KMError::NOERR && is_parser_paused) {
+        if (is_parser_header_complete) {
             DESTROY_DETECTOR_SETUP();
             onRequestHeaderComplete();
             DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
         }
-        req_parser_.resume();
+        if (is_parser_complete) {
+            onRequestComplete();
+        }
     }
     return ret;
 }
 
 KMError Http1xResponse::addHeader(std::string name, std::string value)
 {
-    return rsp_message_.addHeader(std::move(name), std::move(value));
+    return stream_.addHeader(std::move(name), std::move(value));
+}
+
+HttpHeader& Http1xResponse::getRequestHeader()
+{
+    return stream_.getIncomingHeaders();
 }
 
 const HttpHeader& Http1xResponse::getRequestHeader() const
 {
-    return req_parser_;
+    return stream_.getIncomingHeaders();
 }
 
 HttpHeader& Http1xResponse::getResponseHeader()
 {
-    return rsp_message_;
+    return stream_.getOutgoingHeaders();
 }
 
-void Http1xResponse::buildResponse(int status_code, const std::string& desc, const std::string& ver)
+const HttpHeader& Http1xResponse::getResponseHeader() const
 {
-    auto rsp = rsp_message_.buildHeader(status_code, desc, ver, req_parser_.getMethod());
-    KMBuffer buf(rsp.c_str(), rsp.size(), rsp.size());
-    appendSendBuffer(buf);
+    return stream_.getOutgoingHeaders();
 }
 
 KMError Http1xResponse::sendResponse(int status_code, const std::string& desc, const std::string& ver)
@@ -117,20 +142,20 @@ KMError Http1xResponse::sendResponse(int status_code, const std::string& desc, c
     if (getState() != State::WAIT_FOR_RESPONSE) {
         return KMError::INVALID_STATE;
     }
-    buildResponse(status_code, desc, ver);
     setState(State::SENDING_HEADER);
-    auto ret = sendBufferedData();
+    auto ret = stream_.sendResponse(status_code, desc, ver);
     if(ret != KMError::NOERR) {
         cleanup();
         setState(State::IN_ERROR);
-        return KMError::SOCK_ERROR;
+        return ret;
     } else if (sendBufferEmpty()) {
-        if(!rsp_message_.hasBody()) {
+        if(!getResponseHeader().hasBody()) {
             setState(State::COMPLETE);
             eventLoop()->post([this] { notifyComplete(); }, &loop_token_);
         } else {
             setState(State::SENDING_BODY);
-            eventLoop()->post([this] { onSendReady(); }, &loop_token_);
+            //eventLoop()->post([this] { onSendReady(); }, &loop_token_);
+            onSendReady();
         }
     }
     return KMError::NOERR;
@@ -143,28 +168,18 @@ bool Http1xResponse::canSendBody() const
 
 int Http1xResponse::sendBody(const void* data, size_t len)
 {
-    int ret = rsp_message_.sendData(data, len);
+    auto ret = stream_.sendData(data, len);
     if(ret < 0) {
         setState(State::IN_ERROR);
-    } else if(ret >= 0) {
-        if (rsp_message_.isCompleted() && sendBufferEmpty()) {
-            setState(State::COMPLETE);
-            eventLoop()->post([this] { notifyComplete(); }, &loop_token_);
-        }
     }
     return ret;
 }
 
 int Http1xResponse::sendBody(const KMBuffer &buf)
 {
-    int ret = rsp_message_.sendData(buf);
+    auto ret = stream_.sendData(buf);
     if(ret < 0) {
         setState(State::IN_ERROR);
-    } else if(ret >= 0) {
-        if (rsp_message_.isCompleted() && sendBufferEmpty()) {
-            setState(State::COMPLETE);
-            eventLoop()->post([this] { notifyComplete(); }, &loop_token_);
-        }
     }
     return ret;
 }
@@ -175,8 +190,7 @@ void Http1xResponse::reset()
     TcpConnection::reset();
     
     HttpResponse::Impl::reset();
-    req_parser_.reset();
-    rsp_message_.reset();
+    stream_.reset();
     setState(State::RECVING_REQUEST);
 }
 
@@ -191,21 +205,19 @@ KMError Http1xResponse::close()
 KMError Http1xResponse::handleInputData(uint8_t *src, size_t len)
 {
     DESTROY_DETECTOR_SETUP();
-    int bytes_used = req_parser_.parse((char*)src, len);
+    stream_.handleInputData(src, len);
     DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
     if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
         return KMError::FAILED;
     }
-    if(bytes_used != len) {
-        KUMA_WARNXTRACE("handleInputData, bytes_used="<<bytes_used<<", bytes_read="<<len);
-    }
+    
     return KMError::NOERR;
 }
 
 void Http1xResponse::onWrite()
 {
     if (getState() == State::SENDING_HEADER) {
-        if(!rsp_message_.hasBody()) {
+        if(!getResponseHeader().hasBody()) {
             setState(State::COMPLETE);
             notifyComplete();
             return;
@@ -213,7 +225,7 @@ void Http1xResponse::onWrite()
             setState(State::SENDING_BODY);
         }
     } else if (getState() == State::SENDING_BODY) {
-        if(rsp_message_.isCompleted()) {
+        if(stream_.isOutgoingComplete()) {
             setState(State::COMPLETE);
             notifyComplete();
             return ;
@@ -231,33 +243,5 @@ void Http1xResponse::onError(KMError err)
         if(error_cb_) error_cb_(KMError::SOCK_ERROR);
     } else {
         setState(State::CLOSED);
-    }
-}
-
-void Http1xResponse::onHttpData(KMBuffer &buf)
-{
-    onRequestData(buf);
-}
-
-void Http1xResponse::onHttpEvent(HttpEvent ev)
-{
-    KUMA_INFOXTRACE("onHttpEvent, ev="<<int(ev));
-    switch (ev) {
-        case HttpEvent::HEADER_COMPLETE:
-            onRequestHeaderComplete();
-            break;
-            
-        case HttpEvent::COMPLETE:
-            onRequestComplete();
-            break;
-            
-        case HttpEvent::HTTP_ERROR:
-            cleanup();
-            setState(State::IN_ERROR);
-            if(error_cb_) error_cb_(KMError::FAILED);
-            break;
-            
-        default:
-            break;
     }
 }
