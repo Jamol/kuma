@@ -246,7 +246,7 @@ void WebSocket::Impl::onWsWrite()
 
 void WebSocket::Impl::onError(KMError err)
 {
-    KUMA_INFOXTRACE("onError, err="<<int(err));
+    KUMA_ERRXTRACE("onError, err="<<int(err));
     cleanup();
     setState(State::IN_ERROR);
     if(error_cb_) error_cb_(err);

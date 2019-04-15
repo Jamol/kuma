@@ -210,6 +210,7 @@ void WSConnection_V2::handleHandshakeResponse()
     int status_code = stream_->getStatusCode();
     if (status_code != 200) {
         err = KMError::PROTO_ERROR;
+        KUMA_ERRXTRACE("handleHandshakeResponse, invalid status code: "<<status_code);
     }
     
     if (err == KMError::NOERR) {

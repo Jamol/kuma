@@ -61,6 +61,9 @@ HttpParser::Impl& HttpParser::Impl::operator=(const Impl& other)
         paused_ = other.paused_;
         has_content_length_ = other.has_content_length_;
         content_length_ = other.content_length_;
+        has_body_ = other.has_body_;
+        is_http2_ = other.is_http2_;
+        is_outgoing_ = other.is_outgoing_;
         
         is_chunked_ = other.is_chunked_;
         chunk_state_ = other.chunk_state_;
@@ -91,6 +94,8 @@ HttpParser::Impl& HttpParser::Impl::operator=(Impl&& other)
         has_content_length_ = other.has_content_length_;
         content_length_ = other.content_length_;
         has_body_ = other.has_body_;
+        is_http2_ = other.is_http2_;
+        is_outgoing_ = other.is_outgoing_;
         
         is_chunked_ = other.is_chunked_;
         chunk_state_ = other.chunk_state_;
@@ -295,6 +300,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(const char*& cur_pos, c
         {
             if(line == line_end && bufferEmpty())
             {// blank line, header completed
+                is_http2_ = isUpgradeTo("h2c");
                 if (isRequest()) {
                     HttpHeader::processHeader();
                 } else {
