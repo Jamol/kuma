@@ -173,6 +173,7 @@
     <ClCompile Include="..\..\src\compr\compr_zlib.cpp" />
     <ClCompile Include="..\..\src\DnsResolver.cpp" />
     <ClCompile Include="..\..\src\EventLoopImpl.cpp" />
+    <ClCompile Include="..\..\src\http\H1xStream.cpp" />
     <ClCompile Include="..\..\src\http\Http1xRequest.cpp" />
     <ClCompile Include="..\..\src\http\Http1xResponse.cpp" />
     <ClCompile Include="..\..\src\http\HttpCache.cpp" />
@@ -247,6 +248,7 @@
     <ClInclude Include="..\..\src\DnsResolver.h" />
     <ClInclude Include="..\..\src\evdefs.h" />
     <ClInclude Include="..\..\src\EventLoopImpl.h" />
+    <ClInclude Include="..\..\src\http\H1xStream.h" />
     <ClInclude Include="..\..\src\http\Http1xRequest.h" />
     <ClInclude Include="..\..\src\http\Http1xResponse.h" />
     <ClInclude Include="..\..\src\http\HttpCache.h" />

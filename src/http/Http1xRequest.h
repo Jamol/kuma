@@ -23,68 +23,67 @@
 #define __Http1xRequest_H__
 
 #include "kmdefs.h"
-#include "HttpParserImpl.h"
 #include "TcpConnection.h"
 #include "Uri.h"
 #include "HttpRequestImpl.h"
-#include "HttpMessage.h"
+#include "H1xStream.h"
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
 
 KUMA_NS_BEGIN
 
-class Http1xRequest : public DestroyDetector, public HttpRequest::Impl, public TcpConnection
+class Http1xRequest : public DestroyDetector, public HttpRequest::Impl
 {
 public:
     Http1xRequest(const EventLoopPtr &loop, std::string ver);
     ~Http1xRequest();
     
-    KMError setSslFlags(uint32_t ssl_flags) override { return TcpConnection::setSslFlags(ssl_flags); }
+    KMError setSslFlags(uint32_t ssl_flags) override { return stream_->setSslFlags(ssl_flags); }
     KMError addHeader(std::string name, std::string value) override;
     int sendBody(const void* data, size_t len) override;
     int sendBody(const KMBuffer &buf) override;
     void reset() override; // reset for connection reuse
     KMError close() override;
     
-    int getStatusCode() const override { return rsp_parser_.getStatusCode(); }
-    const std::string& getVersion() const override { return rsp_parser_.getVersion(); }
+    int getStatusCode() const override;
+    const std::string& getVersion() const override { return stream_->getVersion(); }
     const std::string& getHeaderValue(const std::string &name) const override
     {
-        return rsp_parser_.getHeaderValue(name);
+        return getResponseHeader().getHeader(name);
     }
     void forEachHeader(const EnumerateCallback &cb) const override
     {
-        return rsp_parser_.forEachHeader(cb);
+        auto const &header = getResponseHeader();
+        for (auto &kv : header.getHeaders()) {
+            if (!cb(kv.first, kv.second)) {
+                break;
+            }
+        }
     }
     
-protected: // callbacks of tcp_socket
-    void onConnect(KMError err) override;
-    KMError handleInputData(uint8_t *src, size_t len) override;
-    void onWrite() override;
-    void onError(KMError err) override;
+protected:
+    void onWrite();
+    void onError(KMError err);
 
 private:
     KMError sendRequest() override;
     bool canSendBody() const override;
     HttpHeader& getRequestHeader() override;
+    const HttpHeader& getRequestHeader() const override;
     HttpHeader& getResponseHeader() override;
-    void buildRequest();
+    const HttpHeader& getResponseHeader() const override;
     void cleanup();
-    void sendRequestHeader();
     bool isVersion2() override { return false; }
     bool processHttpCache();
     
-    void onHttpData(KMBuffer &buf);
-    void onHttpEvent(HttpEvent ev);
-    
     void onCacheComplete();
+    void onRequestComplete();
     
 private:
-    HttpMessage             req_message_;
-    HttpParser::Impl        rsp_parser_;
-    KMBuffer::Ptr           rsp_cache_body_;
+    std::unique_ptr<H1xStream> stream_;
     
-    EventLoopToken          loop_token_;
+    int                     rsp_cache_status_ = 0;
+    KMBuffer::Ptr           rsp_cache_body_;
 };
 
 KUMA_NS_END

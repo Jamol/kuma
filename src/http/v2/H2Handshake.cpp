@@ -67,6 +67,12 @@ KMError H2Handshake::start(bool is_server, bool is_ssl)
             setState(State::UPGRADING);
             if (http_parser_.paused()) {
                 http_parser_.resume();
+                if (http_parser_.headerComplete()) {
+                    onHttpEvent(HttpEvent::HEADER_COMPLETE);
+                }
+                if (http_parser_.complete()) {
+                    onHttpEvent(HttpEvent::COMPLETE);
+                }
             }
             return KMError::NOERR;
         } else {

@@ -32,11 +32,11 @@ using namespace kuma;
 Http2Request::Http2Request(const EventLoopPtr &loop, std::string ver)
 : HttpRequest::Impl(std::move(ver)), stream_(new H2StreamProxy(loop))
 {
-    stream_->setHeaderCallback([this] (bool end_stream) {
-        onHeader(end_stream);
+    stream_->setHeaderCallback([this] {
+        onHeader();
     });
-    stream_->setDataCallback([this] (KMBuffer &buf, bool end_stream) {
-        onData(buf, end_stream);
+    stream_->setDataCallback([this] (KMBuffer &buf) {
+        onData(buf);
     });
     stream_->setErrorCallback([this] (KMError err) {
         onError(err);
@@ -44,8 +44,11 @@ Http2Request::Http2Request(const EventLoopPtr &loop, std::string ver)
     stream_->setWriteCallback([this] (KMError err) {
         onWrite();
     });
-    stream_->setCompleteCallback([this] {
+    stream_->setIncomingCompleteCallback([this] {
         onComplete();
+    });
+    stream_->setOutgoingCompleteCallback([this] {
+        onRequestComplete();
     });
     KM_SetObjKey("Http2Request");
 }
@@ -114,6 +117,11 @@ HttpHeader& Http2Request::getRequestHeader()
     return stream_->getOutgoingHeaders();
 }
 
+const HttpHeader& Http2Request::getRequestHeader() const
+{
+    return stream_->getOutgoingHeaders();
+}
+
 HttpHeader& Http2Request::getResponseHeader()
 {
     return stream_->getIncomingHeaders();
@@ -126,7 +134,7 @@ const HttpHeader& Http2Request::getResponseHeader() const
 
 bool Http2Request::canSendBody() const
 {
-    return stream_->canSendData();
+    return stream_->canSendData() && getState() == State::SENDING_REQUEST;
 }
 
 int Http2Request::sendBody(const void* data, size_t len)
@@ -146,14 +154,19 @@ KMError Http2Request::close()
     return KMError::NOERR;
 }
 
-void Http2Request::onData(KMBuffer &buf, bool end_stream)
+void Http2Request::onData(KMBuffer &buf)
 {
     onResponseData(buf);
 }
 
-void Http2Request::onHeader(bool end_stream)
+void Http2Request::onHeader()
 {
     onResponseHeaderComplete();
+}
+
+void Http2Request::onRequestComplete()
+{
+    setState(State::RECVING_RESPONSE);
 }
 
 void Http2Request::onComplete()

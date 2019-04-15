@@ -24,18 +24,17 @@
 
 #include "kmdefs.h"
 #include "httpdefs.h"
-#include "HttpParserImpl.h"
 #include "TcpConnection.h"
 #include "Uri.h"
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
 #include "HttpResponseImpl.h"
-#include "HttpMessage.h"
+#include "H1xStream.h"
 #include "EventLoopImpl.h"
 
 KUMA_NS_BEGIN
 
-class Http1xResponse : public HttpResponse::Impl, public DestroyDetector, public TcpConnection
+class Http1xResponse : public HttpResponse::Impl, public DestroyDetector
 {
 public:
     Http1xResponse(const EventLoopPtr &loop, std::string ver);
@@ -51,42 +50,44 @@ public:
     void reset() override; // reset for connection reuse
     KMError close() override;
     
-    const std::string& getMethod() const override { return req_parser_.getMethod(); }
-    const std::string& getPath() const override { return req_parser_.getUrlPath(); }
-    const std::string& getQuery() const override { return req_parser_.getUrlQuery(); }
-    const std::string& getVersion() const override { return req_parser_.getVersion(); }
-    const std::string& getParamValue(const std::string &name) const override {
-        return req_parser_.getParamValue(name);
+    const std::string& getMethod() const override { return stream_->getMethod(); }
+    const std::string& getPath() const override { return stream_->getPath(); }
+    const std::string& getQuery() const override { return stream_->getQuery(); }
+    const std::string& getVersion() const override { return stream_->getVersion(); }
+    const std::string& getParamValue(const std::string &name) const override
+    {
+        return stream_->getParamValue(name);
     }
-    const std::string& getHeaderValue(const std::string &name) const override {
-        return req_parser_.getHeaderValue(name);
+    const std::string& getHeaderValue(const std::string &name) const override
+    {
+        return getRequestHeader().getHeader(name);
     }
-    void forEachHeader(const EnumerateCallback &cb) const override {
-        return req_parser_.forEachHeader(cb);
+    void forEachHeader(const EnumerateCallback &cb) const override
+    {
+        auto const &header = getRequestHeader();
+        for (auto &kv : header.getHeaders()) {
+            if (!cb(kv.first, kv.second)) {
+                break;
+            }
+        }
     }
     
 protected:
-    KMError handleInputData(uint8_t *src, size_t len) override;
-    void onWrite() override;
-    void onError(KMError err) override;
+    void onWrite();
+    void onError(KMError err);
     
     bool isVersion2() override { return false; }
     
 protected:
     bool canSendBody() const override;
+    HttpHeader& getRequestHeader() override;
     const HttpHeader& getRequestHeader() const override;
     HttpHeader& getResponseHeader() override;
-    void buildResponse(int status_code, const std::string& desc, const std::string& ver);
+    const HttpHeader& getResponseHeader() const override;
     void cleanup();
     
-    void onHttpData(KMBuffer &buf);
-    void onHttpEvent(HttpEvent ev);
-    
 protected:
-    HttpParser::Impl        req_parser_;
-    HttpMessage             rsp_message_;
-    
-    EventLoopToken          loop_token_;
+    std::unique_ptr<H1xStream> stream_;
 };
 
 KUMA_NS_END

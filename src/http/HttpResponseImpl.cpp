@@ -66,6 +66,7 @@ KMError HttpResponse::Impl::sendResponse(int status_code, const std::string& des
         }
     }
     
+    setState(State::SENDING_RESPONSE);
     return sendResponse(status_code, desc, version_);
 }
 
@@ -337,6 +338,7 @@ void HttpResponse::Impl::reset()
     compression_enable_ = true;
     compression_finish_ = false;
     compression_buffer_.clear();
+    setState(State::RECVING_REQUEST);
 }
 
 void HttpResponse::Impl::onRequestHeaderComplete()
@@ -389,6 +391,7 @@ void HttpResponse::Impl::onRequestComplete()
 void HttpResponse::Impl::notifyComplete()
 {
     KUMA_INFOXTRACE("notifyComplete, raw bytes sent: " << raw_bytes_sent_);
+    setState(State::COMPLETE);
     if(response_cb_) response_cb_();
 }
 

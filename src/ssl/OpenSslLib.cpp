@@ -57,7 +57,10 @@ std::mutex* OpenSslLib::ssl_locks_ = nullptr;
 int OpenSslLib::ssl_index_ = -1;
 
 namespace {
-    const AlpnProtos alpnProtos {2, 'h', '2'};
+    const AlpnProtos alpnProtos {
+        2, 'h', '2',
+        8, 'h', 't', 't', 'p', '/', '1', '.', '1'
+    };
     
     std::mutex& getOpenSslMutex()
     {

@@ -417,7 +417,7 @@ void H2StreamProxy::onData_i(KMBuffer &buf, bool end_stream)
 {// on conn_ thread
     if (is_same_loop_ && recv_buf_queue_.empty()) {
         DESTROY_DETECTOR_SETUP();
-        onStreamData(buf, end_stream);
+        onStreamData(buf);
         DESTROY_DETECTOR_CHECK_VOID();
         
         if (end_stream) {
@@ -486,7 +486,7 @@ void H2StreamProxy::onHeaders(bool end_stream)
 {// on loop_ thread
     if (header_complete_) {
         DESTROY_DETECTOR_SETUP();
-        onHeaderComplete(end_stream);
+        onHeaderComplete();
         DESTROY_DETECTOR_CHECK_VOID();
     }
     if (end_stream) {
@@ -497,10 +497,9 @@ void H2StreamProxy::onHeaders(bool end_stream)
 void H2StreamProxy::onData(bool end_stream)
 {// on loop_ thread
     while (!recv_buf_queue_.empty()) {
-        bool end = end_stream && recv_buf_queue_.size() == 1;
         auto &kmb = recv_buf_queue_.front();
         DESTROY_DETECTOR_SETUP();
-        if (kmb) onStreamData(*kmb, end);
+        if (kmb) onStreamData(*kmb);
         DESTROY_DETECTOR_CHECK_VOID();
         recv_buf_queue_.pop_front();
     }
@@ -529,33 +528,24 @@ void H2StreamProxy::checkResponseStatus(bool end_stream)
     onData(end_stream);
 }
 
-void H2StreamProxy::onHeaderComplete(bool end_stream)
+void H2StreamProxy::onHeaderComplete()
 {
-    if (header_cb_) header_cb_(end_stream);
+    if (header_cb_) header_cb_();
 }
 
-void H2StreamProxy::onStreamData(KMBuffer &buf, bool end_stream)
+void H2StreamProxy::onStreamData(KMBuffer &buf)
 {
-    if (data_cb_) data_cb_(buf, end_stream);
-}
-
-void H2StreamProxy::onStreamComplete()
-{
-    if (complete_cb_) complete_cb_();
+    if (data_cb_) data_cb_(buf);
 }
 
 void H2StreamProxy::onOutgoingComplete()
 {
-    if (isServer()) {
-        onStreamComplete();
-    }
+    if (outgoing_complete_cb_) outgoing_complete_cb_();
 }
 
 void H2StreamProxy::onIncomingComplete()
 {
-    if (!isServer()) {
-        onStreamComplete();
-    }
+    if (incoming_complete_cb_) incoming_complete_cb_();
 }
 
 void H2StreamProxy::onWrite()

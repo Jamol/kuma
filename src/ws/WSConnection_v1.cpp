@@ -32,11 +32,26 @@ using namespace kuma::ws;
 static std::string generate_sec_accept_value(const std::string& sec_ws_key);
 
 WSConnection_V1::WSConnection_V1(const EventLoopPtr &loop)
-: TcpConnection(loop)
+: stream_(new H1xStream(loop))
 {
-    loop_token_.eventLoop(loop);
-    http_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
-    http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
+    stream_->setHeaderCallback([this] () {
+        onHeader();
+    });
+    stream_->setDataCallback([this] (KMBuffer &buf) {
+        onData(buf);
+    });
+    stream_->setWriteCallback([this] (KMError err) {
+        onWrite();
+    });
+    stream_->setErrorCallback([this] (KMError err) {
+        onError(err);
+    });
+    stream_->setIncomingCompleteCallback([this] {
+        onError(KMError::PROTO_ERROR);
+    });
+    stream_->setOutgoingCompleteCallback([this] {
+        onError(KMError::PROTO_ERROR);
+    });
     KM_SetObjKey("WSConnection_V1");
 }
 
@@ -47,20 +62,17 @@ WSConnection_V1::~WSConnection_V1()
 
 void WSConnection_V1::cleanup()
 {
-    TcpConnection::close();
-    loop_token_.reset();
-    
-    http_parser_.reset();
+    stream_->close();
 }
 
 KMError WSConnection_V1::addHeader(std::string name, std::string value)
 {
-    return outgoing_header_.addHeader(std::move(name), std::move(value));
+    return stream_->addHeader(std::move(name), std::move(value));
 }
 
 KMError WSConnection_V1::addHeader(std::string name, uint32_t value)
 {
-    return outgoing_header_.addHeader(std::move(name), value);
+    return addHeader(std::move(name), std::to_string(value));
 }
 
 KMError WSConnection_V1::connect(const std::string& ws_url)
@@ -70,32 +82,56 @@ KMError WSConnection_V1::connect(const std::string& ws_url)
 
 KMError WSConnection_V1::connect_i(const std::string& ws_url)
 {
-    if(!uri_.parse(ws_url)) {
+    Uri uri;
+    if (!uri.parse(ws_url)) {
         return KMError::INVALID_PARAM;
     }
-    setState(State::CONNECTING);
-    std::string str_port = uri_.getPort();
-    uint16_t port = 80;
-    uint32_t ssl_flags = SSL_NONE;
-    if(is_equal("wss", uri_.getScheme())) {
-        port = 443;
-        ssl_flags = SSL_ENABLE | getSslFlags();
+    std::string http_url;
+    if(is_equal("wss", uri.getScheme())) {
+        http_url = "https://";
+    } else {
+        http_url = "http://";
     }
-    if(!str_port.empty()) {
-        port = std::stoi(str_port);
+    http_url += uri.getHost();
+    auto const &str_port = uri.getPort();
+    if (!str_port.empty()) {
+        http_url += ":" + str_port;
     }
-    auto rv = setSslFlags(ssl_flags);
-    if (rv != KMError::NOERR) {
-        return rv;
+    http_url += uri.getPath();
+    auto const &str_query = uri.getQuery();
+    if(!str_query.empty()){
+        http_url += "?";
+        http_url += str_query;
     }
-    return TcpConnection::connect(uri_.getHost().c_str(), port);
+    
+    addHeader(strUpgrade, "websocket");
+    addHeader("Connection", "Upgrade");
+    addHeader(strHost, uri.getHost());
+    if (!origin_.empty()) {
+        addHeader("Origin", origin_);
+    }
+    addHeader(kSecWebSocketKey, "dGhlIHNhbXBsZSBub25jZQ==");
+    if (!subprotocol_.empty()) {
+        addHeader(kSecWebSocketProtocol, subprotocol_);
+    }
+    if (!extensions_.empty()) {
+        addHeader(kSecWebSocketExtensions, extensions_);
+    }
+    addHeader(kSecWebSocketVersion, kWebSocketVersion);
+    
+    setState(State::UPGRADING);
+    auto ret = stream_->sendRequest("GET", http_url, "HTTP/1.1");
+    if (ret != KMError::NOERR) {
+        onStateError(ret);
+    }
+    return ret;
 }
 
 KMError WSConnection_V1::attachFd(SOCKET_FD fd, const KMBuffer *init_buf, HandshakeCallback cb)
 {
     handshake_cb_ = std::move(cb);
     setState(State::UPGRADING);
-    return TcpConnection::attachFd(fd, init_buf);
+    return stream_->attachFd(fd, init_buf);
 }
 
 KMError WSConnection_V1::attachSocket(TcpSocket::Impl&& tcp,
@@ -106,15 +142,30 @@ KMError WSConnection_V1::attachSocket(TcpSocket::Impl&& tcp,
     handshake_cb_ = std::move(cb);
     setState(State::UPGRADING);
     
-    http_parser_.reset();
-    http_parser_ = std::move(parser);
-    http_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
-    http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
+    return stream_->attachSocket(std::move(tcp), std::move(parser), init_buf);
+}
 
-    auto ret = TcpConnection::attachSocket(std::move(tcp), init_buf);
-    if(http_parser_.paused()) {
-        http_parser_.resume();
+int WSConnection_V1::send(const iovec* iovs, int count)
+{
+    if (count > 8) {
+        return -1;
     }
+    KMBuffer bufs[8] {
+        {KMBuffer::StorageType::AUTO},
+        {KMBuffer::StorageType::AUTO},
+        {KMBuffer::StorageType::AUTO},
+        {KMBuffer::StorageType::AUTO},
+        {KMBuffer::StorageType::AUTO},
+        {KMBuffer::StorageType::AUTO},
+        {KMBuffer::StorageType::AUTO},
+        {KMBuffer::StorageType::AUTO}
+    };
+    for (int i = 0; i < count; ++i) {
+        bufs[i].reset(iovs[i].iov_base, iovs[i].iov_len, iovs[i].iov_len);
+        if (i != 0) bufs[0].append(&bufs[i]);
+    }
+    auto ret = stream_->sendData(bufs[0]);
+    bufs[0].reset();
     return ret;
 }
 
@@ -127,145 +178,56 @@ KMError WSConnection_V1::close()
 
 bool WSConnection_V1::canSendData() const
 {
-    return TcpConnection::sendBufferEmpty();
+    return stream_->canSendData();
 }
 
-std::string WSConnection_V1::buildUpgradeRequest(const std::string &origin,
-                                                 const std::string &subprotocol,
-                                                 const std::string &extensions,
-                                                 const HeaderVector &header_vec)
+KMError WSConnection_V1::sendUpgradeResponse(int status_code, const std::string &desc)
 {
-    std::stringstream ss;
-    ss << "GET ";
-    ss << uri_.getPath();
-    auto str_query = uri_.getQuery();
-    if(!str_query.empty()){
-        ss << "?";
-        ss << str_query;
+    if (status_code == 101) {
+        addHeader(strUpgrade, "websocket");
+        addHeader("Connection", "Upgrade");
+        addHeader(kSecWebSocketAccept, generate_sec_accept_value(sec_ws_key_));
+        if (!subprotocol_.empty()) {
+            addHeader(kSecWebSocketProtocol, subprotocol_);
+        }
+        if (!extensions_.empty()) {
+            addHeader(kSecWebSocketExtensions, extensions_);
+        }
     }
-    ss << " HTTP/1.1\r\n";
-    ss << "Host: " << uri_.getHost() << "\r\n";
-    ss << "Upgrade: websocket\r\n";
-    ss << "Connection: Upgrade\r\n";
-    if (!origin.empty()) {
-        ss << "Origin: " << origin << "\r\n";
-    }
-    ss << kSecWebSocketKey << ": " << "dGhlIHNhbXBsZSBub25jZQ==" << "\r\n";
-    if (!subprotocol.empty()) {
-        ss << kSecWebSocketProtocol << ": " << subprotocol << "\r\n";
-    }
+    addHeader(kSecWebSocketVersion, kWebSocketVersion);
     
-    if (!extensions.empty()) {
-        ss << kSecWebSocketExtensions << ": " << extensions << "\r\n";
-    }
-    
-    ss << kSecWebSocketVersion << ": " << kWebSocketVersion << "\r\n";
-    
-    for (auto &kv : header_vec) {
-        ss << kv.first << ": " << kv.second << "\r\n";
-    }
-    
-    ss << "\r\n";
-    return ss.str();
-}
-
-std::string WSConnection_V1::buildUpgradeResponse(KMError result,
-                                                  const std::string &subprotocol,
-                                                  const std::string &extensions,
-                                                  const HeaderVector &header_vec)
-{
-    if (result == KMError::NOERR) {
-        std::stringstream ss;
-        ss << "HTTP/1.1 101 Switching Protocols\r\n";
-        ss << "Upgrade: websocket\r\n";
-        ss << "Connection: Upgrade\r\n";
-        ss << kSecWebSocketAccept << ": " << generate_sec_accept_value(sec_ws_key_) << "\r\n";
-        if(!subprotocol.empty()) {
-            ss << kSecWebSocketProtocol << ": " << subprotocol << "\r\n";
-        }
-        
-        if (!extensions.empty()) {
-            ss << kSecWebSocketExtensions << ": " << extensions << "\r\n";
-        }
-        
-        for (auto &kv : header_vec) {
-            ss << kv.first << ": " << kv.second << "\r\n";
-        }
-        
-        ss << "\r\n";
-        return ss.str();
-    } else {
-        std::stringstream ss;
-        if (result == KMError::REJECTED) {
-            ss << "HTTP/1.1 403 Forbidden\r\n";
-        } else {
-            ss << "HTTP/1.1 400 Bad Request\r\n";
-        }
-        ss << kSecWebSocketVersion << ": " << kWebSocketVersion << "\r\n";
-        
-        for (auto &kv : header_vec) {
-            ss << kv.first << ": " << kv.second << "\r\n";
-        }
-        
-        ss << "\r\n";
-        return ss.str();
-    }
-}
-
-KMError WSConnection_V1::sendUpgradeRequest(const std::string &origin,
-                                            const std::string &subprotocol,
-                                            const std::string &extensions,
-                                            const HeaderVector &header_vec)
-{
-    std::string str(buildUpgradeRequest(origin, subprotocol, extensions, header_vec));
-    setState(State::UPGRADING);
-    if (TcpConnection::send((const uint8_t*)str.c_str(), str.size()) > 0) {
-        return KMError::NOERR;
-    } else {
-        return KMError::FAILED;
-    }
-}
-
-KMError WSConnection_V1::sendUpgradeResponse(KMError result,
-                                             const std::string &subprotocol,
-                                             const std::string &extensions,
-                                             const HeaderVector &header_vec)
-{
-    handshake_result_ = result;
-    std::string str(buildUpgradeResponse(result, subprotocol, extensions, header_vec));
-    setState(State::UPGRADING);
-    int ret = TcpConnection::send((const uint8_t*)str.c_str(), str.size());
-    if (ret == (int)str.size()) {
-        if (handshake_result_ == KMError::NOERR) {
+    auto ret = stream_->sendResponse(status_code, desc, "HTTP/1.1");
+    if (ret == KMError::NOERR) {
+        if (status_code == 101) {
             setState(State::OPEN);
             onStateOpen();
         } else {
             setState(State::IN_ERROR);
         }
     }
-    if (ret > 0) {
-        return KMError::NOERR;
-    } else {
-        return KMError::FAILED;
-    }
+    return ret;
 }
 
 void WSConnection_V1::handleUpgradeRequest()
 {
     auto err = KMError::NOERR;
+    auto const &req_header = stream_->getIncomingHeaders();
+    origin_ = req_header.getHeader("Origin");
     do {
-        if(!http_parser_.isUpgradeTo("WebSocket")) {
+        if (!is_equal(req_header.getHeader("Upgrade"), "WebSocket") ||
+            !contains_token(req_header.getHeader("Connection"), "Upgrade", ',')) {
             KUMA_ERRXTRACE("handleRequest, not WebSocket request");
             err = KMError::PROTO_ERROR;
             break;
         }
-        auto const &sec_ws_ver = http_parser_.getHeaderValue(kSecWebSocketVersion);
+        
+        auto const &sec_ws_ver = req_header.getHeader(kSecWebSocketVersion);
         if (sec_ws_ver.empty() || !contains_token(sec_ws_ver, kWebSocketVersion, ',')) {
             KUMA_ERRXTRACE("handleRequest, unsupported version number, ver="<<sec_ws_ver);
             err = KMError::PROTO_ERROR;
             break;
         }
-        auto const &sec_ws_key = http_parser_.getHeaderValue(kSecWebSocketKey);
+        auto const &sec_ws_key = req_header.getHeader(kSecWebSocketKey);
         if(sec_ws_key.empty()) {
             KUMA_ERRXTRACE("handleRequest, no Sec-WebSocket-Key");
             err = KMError::PROTO_ERROR;
@@ -274,9 +236,8 @@ void WSConnection_V1::handleUpgradeRequest()
         sec_ws_key_ = sec_ws_key;
     } while (0);
     
-    origin_ = http_parser_.getHeader("Origin");
-    checkHandshake();
     if(handshake_cb_) {
+        checkHandshake();
         DESTROY_DETECTOR_SETUP();
         auto rv = handshake_cb_(err);
         DESTROY_DETECTOR_CHECK_VOID();
@@ -284,7 +245,16 @@ void WSConnection_V1::handleUpgradeRequest()
             if (!rv) {
                 err = KMError::REJECTED;
             }
-            err = sendUpgradeResponse(err, subprotocol_, extensions_, outgoing_header_.getHeaders());
+            int status_code = 101;
+            std::string desc = "Switching Protocols";
+            if (err == KMError::REJECTED) {
+                status_code = 403;
+                desc = "Forbidden";
+            } else if (err != KMError::NOERR) {
+                status_code = 400;
+                desc = "Bad Request";
+            }
+            err = sendUpgradeResponse(status_code, desc);
             if (err != KMError::NOERR) {
                 onStateError(err);
             }
@@ -295,8 +265,12 @@ void WSConnection_V1::handleUpgradeRequest()
 void WSConnection_V1::handleUpgradeResponse()
 {
     auto err = KMError::NOERR;
-    if(!http_parser_.isUpgradeTo("WebSocket")) {
-        KUMA_ERRXTRACE("handleResponse, invalid status code: "<<http_parser_.getStatusCode());
+    int status_code = stream_->getStatusCode();
+    auto const &rsp_header = stream_->getIncomingHeaders();
+    if (status_code != 101 ||
+        !is_equal(rsp_header.getHeader("Upgrade"), "WebSocket") ||
+        !contains_token(rsp_header.getHeader("Connection"), "Upgrade", ',')) {
+        KUMA_ERRXTRACE("handleUpgradeResponse, invalid status code: "<<status_code);
         err = KMError::PROTO_ERROR;
     }
     
@@ -336,54 +310,8 @@ void WSConnection_V1::onStateError(KMError err)
     WSConnection::onStateError(err);
 }
 
-KMError WSConnection_V1::handleInputData(uint8_t *src, size_t len)
-{
-    if (getState() == State::OPEN) {
-        onWsData(src, len);
-    } else if (getState() == State::UPGRADING) {
-        DESTROY_DETECTOR_SETUP();
-        int bytes_used = http_parser_.parse((char*)src, len);
-        DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
-        if(getState() == State::IN_ERROR || getState() == State::CLOSED) {
-            return KMError::INVALID_STATE;
-        }
-        if(bytes_used < (int)len && getState() == State::OPEN) {
-            onWsData(src + bytes_used, len - bytes_used);
-        }
-    } else {
-        KUMA_WARNXTRACE("handleInputData, invalid state: "<<getState());
-    }
-    return KMError::NOERR;
-}
-
-void WSConnection_V1::onConnect(KMError err)
-{
-    body_bytes_sent_ = 0;
-    if (err == KMError::NOERR) {
-        err = sendUpgradeRequest(origin_, subprotocol_, extensions_, outgoing_header_.getHeaders());
-        if (err != KMError::NOERR) {
-            onStateError(err);
-        }
-    } else {
-        onStateError(err);
-    }
-}
-
 void WSConnection_V1::onWrite()
 {
-    if(getState() == State::UPGRADING) {
-        if (isServer()) {
-            // response is sent out
-            if (handshake_result_ == KMError::NOERR) {
-                onStateOpen();
-            } else {
-                setState(State::IN_ERROR);
-            }
-            return;
-        } else {
-            return; // wait upgrade response on client side
-        }
-    }
     if (write_cb_) write_cb_(KMError::NOERR);
 }
 
@@ -393,40 +321,19 @@ void WSConnection_V1::onError(KMError err)
     onStateError(err);
 }
 
-void WSConnection_V1::onWsData(uint8_t *src, size_t len)
+void WSConnection_V1::onHeader()
 {
-    if (data_cb_) {
-        KMBuffer buf(src, len, len);
-        data_cb_(buf);
+    if (stream_->isServer()) {
+        handleUpgradeRequest();
+    } else {
+        handleUpgradeResponse();
     }
 }
 
-void WSConnection_V1::onHttpData(KMBuffer &buf)
+void WSConnection_V1::onData(KMBuffer &buf)
 {
-    KUMA_ERRXTRACE("onHttpData, len="<<buf.chainLength());
-}
-
-void WSConnection_V1::onHttpEvent(HttpEvent ev)
-{
-    KUMA_INFOXTRACE("onHttpEvent, ev="<<int(ev));
-    switch (ev) {
-        case HttpEvent::HEADER_COMPLETE:
-            break;
-            
-        case HttpEvent::COMPLETE:
-            if(http_parser_.isRequest()) {
-                handleUpgradeRequest();
-            } else {
-                handleUpgradeResponse();
-            }
-            break;
-            
-        case HttpEvent::HTTP_ERROR:
-            setState(State::IN_ERROR);
-            break;
-            
-        default:
-            break;
+    if (data_cb_) {
+        data_cb_(buf);
     }
 }
 

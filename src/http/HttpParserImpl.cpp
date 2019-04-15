@@ -172,12 +172,6 @@ void HttpParser::Impl::pause() {
 
 void HttpParser::Impl::resume() {
     paused_ = false;
-    if(hasBody() && !upgrade_) {
-        read_state_ = HTTP_READ_BODY;
-    } else {
-        read_state_ = HTTP_READ_DONE;
-        onComplete();
-    }
 }
 
 bool HttpParser::Impl::readEOF()
@@ -301,16 +295,24 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(const char*& cur_pos, c
         {
             if(line == line_end && bufferEmpty())
             {// blank line, header completed
+                if (isRequest()) {
+                    HttpHeader::processHeader();
+                } else {
+                    HttpHeader::processHeader(status_code_, method_);
+                }
+                header_complete_ = true;
+                if(hasBody() && !upgrade_) {
+                    read_state_ = HTTP_READ_BODY;
+                } else {
+                    read_state_ = HTTP_READ_DONE;
+                }
                 DESTROY_DETECTOR_SETUP();
                 onHeaderComplete();
                 DESTROY_DETECTOR_CHECK(PARSE_STATE_DESTROYED);
                 if(paused_) {
                     return PARSE_STATE_CONTINUE;
                 }
-                if(hasBody() && !upgrade_) {
-                    read_state_ = HTTP_READ_BODY;
-                } else {
-                    read_state_ = HTTP_READ_DONE;
+                if(read_state_ == HTTP_READ_DONE) {
                     onComplete();
                     return PARSE_STATE_DONE;
                 }
@@ -534,12 +536,6 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(const char*& cur_pos, 
 
 void HttpParser::Impl::onHeaderComplete()
 {
-    if (isRequest()) {
-        HttpHeader::processHeader();
-    } else {
-        HttpHeader::processHeader(status_code_, method_);
-    }
-    header_complete_ = true;
     if(has_content_length_) {
         KUMA_INFOTRACE("HttpParser::onHeaderComplete, Content-Length="<<content_length_);
     }

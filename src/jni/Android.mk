@@ -46,6 +46,7 @@ LOCAL_SRC_FILES := \
     http/HttpHeader.cpp \
     http/HttpMessage.cpp \
     http/HttpParserImpl.cpp \
+    http/H1xStream.cpp \
     http/HttpRequestImpl.cpp \
     http/Http1xRequest.cpp \
     http/HttpResponseImpl.cpp \

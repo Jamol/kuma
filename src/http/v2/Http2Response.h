@@ -54,18 +54,19 @@ public:
     void forEachHeader(const EnumerateCallback &cb) const override;
     
 protected:
-    void onHeader(bool end_stream);
-    void onData(KMBuffer &buf, bool end_stream);
+    void onHeader();
+    void onData(KMBuffer &buf);
     void onWrite();
     void onError(KMError err);
-    void onComplete();
     
 private:
     bool canSendBody() const override;
     void checkResponseHeaders() override;
     void checkRequestHeaders() override;
+    HttpHeader& getRequestHeader() override;
     const HttpHeader& getRequestHeader() const override;
     HttpHeader& getResponseHeader() override;
+    const HttpHeader& getResponseHeader() const override;
     
 private:
     std::unique_ptr<H2StreamProxy> stream_;
