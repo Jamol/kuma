@@ -45,13 +45,14 @@ Http2Response::Http2Response(const EventLoopPtr &loop, std::string ver)
         onRequestComplete();
     });
     stream_->setOutgoingCompleteCallback([this] {
-        onComplete();
+        notifyComplete();
     });
     KM_SetObjKey("Http2Response");
 }
 
 KMError Http2Response::attachStream(uint32_t stream_id, H2Connection::Impl* conn)
 {
+    setState(State::RECVING_REQUEST);
     return stream_->attachStream(stream_id, conn);
 }
 
@@ -67,7 +68,7 @@ KMError Http2Response::sendResponse(int status_code, const std::string& desc, co
 
 bool Http2Response::canSendBody() const
 {
-    return stream_->canSendData();
+    return stream_->canSendData() && getState() == State::SENDING_RESPONSE;
 }
 
 int Http2Response::sendBody(const void* data, size_t len)
@@ -172,9 +173,4 @@ void Http2Response::onWrite()
 void Http2Response::onError(KMError err)
 {
     if(error_cb_) error_cb_(err);
-}
-
-void Http2Response::onComplete()
-{
-    notifyComplete();
 }

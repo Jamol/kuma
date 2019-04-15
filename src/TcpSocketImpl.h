@@ -86,6 +86,7 @@ public:
     
     SOCKET_FD getFd() const;
     EventLoopPtr eventLoop() const;
+    bool isReady() const;
     
 private:
     void onConnect(KMError err);
@@ -105,7 +106,6 @@ private:
     
 private:
     void cleanup();
-    bool isReady() const;
     
 private:
     EventLoopWeakPtr    loop_;

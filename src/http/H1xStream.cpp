@@ -26,7 +26,19 @@
 using namespace kuma;
 
 H1xStream::H1xStream(const EventLoopPtr &loop)
+: TcpConnection(loop)
 {
+    loop_token_.eventLoop(loop);
+    
+    outgoing_message_.setSender([this] (const void* data, size_t len) -> int {
+        return TcpConnection::send(data, len);
+    });
+    outgoing_message_.setVSender([this] (const iovec* iovs, int count) -> int {
+        return TcpConnection::send(iovs, count);
+    });
+    outgoing_message_.setBSender([this] (const KMBuffer &buf) -> int {
+        return TcpConnection::send(buf);
+    });
     incoming_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
     incoming_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     KM_SetObjKey("H1xStream");
@@ -34,7 +46,7 @@ H1xStream::H1xStream(const EventLoopPtr &loop)
 
 H1xStream::~H1xStream()
 {
-    
+    loop_token_.reset();
 }
 
 KMError H1xStream::addHeader(std::string name, std::string value)
@@ -44,20 +56,42 @@ KMError H1xStream::addHeader(std::string name, std::string value)
 
 KMError H1xStream::sendRequest(const std::string &method, const std::string &url, const std::string &ver)
 {
-    is_server_ = false;
-    auto req = buildRequest(method, url, ver);
-    return sendHeaders(req);
+    if(!uri_.parse(url)) {
+        return KMError::INVALID_PARAM;
+    }
+    method_ = method;
+    version_ = ver;
+    wait_outgoing_complete_ = false;
+    if (!TcpConnection::isOpen()) {
+        std::string str_port = uri_.getPort();
+        uint16_t port = 80;
+        uint32_t ssl_flags = SSL_NONE;
+        if(is_equal("https", uri_.getScheme())) {
+            port = 443;
+            ssl_flags = SSL_ENABLE | getSslFlags();
+        }
+        if(!str_port.empty()) {
+            port = std::stoi(str_port);
+        }
+        TcpConnection::setSslFlags(ssl_flags);
+        return TcpConnection::connect(uri_.getHost().c_str(), port);
+    } else {
+        auto req = buildRequest();
+        return sendHeaders(req);
+    }
 }
 
-KMError H1xStream::sendResponse(int status_code, const std::string &desc, const std::string &ver)
+KMError H1xStream::attachFd(SOCKET_FD fd, const KMBuffer *init_buf)
 {
-    is_server_ = true;
-    auto rsp = buildResponse(status_code, desc, ver);
-    return sendHeaders(rsp);
+    wait_outgoing_complete_ = false;
+    return TcpConnection::attachFd(fd, init_buf);
 }
 
-KMError H1xStream::setHttpParser(HttpParser::Impl&& parser)
+KMError H1xStream::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf)
 {
+    bool is_parser_paused = parser.paused();
+    bool is_parser_header_complete = parser.headerComplete();
+    bool is_parser_complete = parser.complete();
     incoming_parser_.reset();
     incoming_parser_ = std::move(parser);
     incoming_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
@@ -67,12 +101,39 @@ KMError H1xStream::setHttpParser(HttpParser::Impl&& parser)
         incoming_parser_.resume();
     }
     
-    return KMError::NOERR;
+    wait_outgoing_complete_ = false;
+    auto ret = TcpConnection::attachSocket(std::move(tcp), init_buf);
+    if(ret == KMError::NOERR && is_parser_paused) {
+        if (is_parser_header_complete) {
+            DESTROY_DETECTOR_SETUP();
+            onHeaderComplete();
+            DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
+        }
+        if (is_parser_complete) {
+            onIncomingComplete();
+        }
+    }
+    return ret;
 }
 
-std::string H1xStream::buildRequest(const std::string &method, const std::string &url, const std::string &ver)
+KMError H1xStream::sendResponse(int status_code, const std::string &desc, const std::string &ver)
 {
-    auto req = outgoing_message_.buildHeader(method, url, ver);
+    auto rsp = buildResponse(status_code, desc, ver);
+    return sendHeaders(rsp);
+}
+
+std::string H1xStream::buildRequest()
+{
+    std::stringstream ss;
+    ss << uri_.getPath();
+    if(!uri_.getQuery().empty()) {
+        ss << "?" << uri_.getQuery();
+    }
+    if(!uri_.getFragment().empty()) {
+        ss << "#" << uri_.getFragment();
+    }
+    auto url(ss.str());
+    auto req = outgoing_message_.buildHeader(method_, url, version_);
     return req;
 }
 
@@ -84,21 +145,26 @@ std::string H1xStream::buildResponse(int status_code, const std::string &desc, c
 
 KMError H1xStream::sendHeaders(const std::string &headers)
 {
-    if (sender_) {
-        auto ret = sender_(headers.data(), headers.size());
-        if (ret > 0) {
-            bool end_stream = !outgoing_message_.hasBody();
-            if (end_stream) {
-                onOutgoingComplete();
+    auto ret = TcpConnection::send(headers.data(), headers.size());
+    if (ret > 0) {
+        if (outgoing_message_.isComplete()) {
+            if (sendBufferEmpty()) {
+                if (isServer()) {
+                    runOnLoopThread([this] { onOutgoingComplete(); }, false);
+                } else {
+                    onOutgoingComplete();
+                }
+            } else {
+                wait_outgoing_complete_ = true;
             }
-            return KMError::NOERR;
-        } else if (ret < 0) {
-            return KMError::SOCK_ERROR;
-        } else {
-            return KMError::FAILED;
+        } else if (sendBufferEmpty()) {
+            runOnLoopThread([this] { onWrite(); }, false);
         }
+        return KMError::NOERR;
+    } else if (ret < 0) {
+        return KMError::SOCK_ERROR;
     } else {
-        return KMError::INVALID_STATE;
+        return KMError::FAILED;
     }
 }
 
@@ -107,7 +173,15 @@ int H1xStream::sendData(const void* data, size_t len)
     auto ret = outgoing_message_.sendData(data, len);
     if (ret >= 0) {
         if (outgoing_message_.isComplete()) {
-            onOutgoingComplete();
+            if (sendBufferEmpty()) {
+                if (isServer()) {
+                    runOnLoopThread([this] { onOutgoingComplete(); }, false);
+                } else {
+                    onOutgoingComplete();
+                }
+            } else {
+                wait_outgoing_complete_ = true;
+            }
         }
     }
     return ret;
@@ -118,10 +192,28 @@ int H1xStream::sendData(const KMBuffer &buf)
     auto ret = outgoing_message_.sendData(buf);
     if (ret >= 0) {
         if (outgoing_message_.isComplete()) {
-            onOutgoingComplete();
+            if (sendBufferEmpty()) {
+                if (isServer()) {
+                    runOnLoopThread([this] { onOutgoingComplete(); }, false);
+                } else {
+                    onOutgoingComplete();
+                }
+            } else {
+                wait_outgoing_complete_ = true;
+            }
         }
     }
     return ret;
+}
+
+void H1xStream::onConnect(KMError err)
+{
+    if (err == KMError::NOERR) {
+        err = sendHeaders(buildRequest());
+    }
+    if(err != KMError::NOERR) {
+        if(error_cb_) error_cb_(err);
+    }
 }
 
 KMError H1xStream::handleInputData(uint8_t *src, size_t len)
@@ -131,6 +223,16 @@ KMError H1xStream::handleInputData(uint8_t *src, size_t len)
         
     }
     return KMError::NOERR;
+}
+
+void H1xStream::onWrite()
+{
+    if (wait_outgoing_complete_) {
+        wait_outgoing_complete_ = false;
+        onOutgoingComplete();
+    } else if (write_cb_) {
+        write_cb_(KMError::NOERR);
+    }
 }
 
 void H1xStream::onHttpData(KMBuffer &buf)
@@ -181,17 +283,26 @@ void H1xStream::onIncomingComplete()
 
 void H1xStream::onError(KMError err)
 {
-    if(error_cb_) error_cb_(err);
+    bool is_complete = incoming_parser_.setEOF();
+    if(is_complete) {
+        return;
+    } else if(error_cb_) {
+        error_cb_(err);
+    }
 }
 
 void H1xStream::reset()
 {
+    TcpConnection::reset();
     outgoing_message_.reset();
+    wait_outgoing_complete_ = false;
     incoming_parser_.reset();
 }
 
 KMError H1xStream::close()
 {
+    TcpConnection::close();
+    loop_token_.reset();
     return KMError::NOERR;
 }
 

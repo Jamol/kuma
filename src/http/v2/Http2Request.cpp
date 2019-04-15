@@ -134,7 +134,7 @@ const HttpHeader& Http2Request::getResponseHeader() const
 
 bool Http2Request::canSendBody() const
 {
-    return stream_->canSendData();
+    return stream_->canSendData() && getState() == State::SENDING_REQUEST;
 }
 
 int Http2Request::sendBody(const void* data, size_t len)
@@ -166,7 +166,7 @@ void Http2Request::onHeader()
 
 void Http2Request::onRequestComplete()
 {
-    //setState(State::RECVING_RESPONSE);
+    setState(State::RECVING_RESPONSE);
 }
 
 void Http2Request::onComplete()

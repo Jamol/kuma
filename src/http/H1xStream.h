@@ -23,9 +23,11 @@
 
 #include "kmdefs.h"
 #include "EventLoopImpl.h"
+#include "TcpConnection.h"
 #include "http/HttpHeader.h"
 #include "http/HttpMessage.h"
 #include "http/HttpParserImpl.h"
+#include "http/Uri.h"
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
 #include "util/kmqueue.h"
@@ -33,7 +35,7 @@
 KUMA_NS_BEGIN
 
 
-class H1xStream : public KMObject, public DestroyDetector
+class H1xStream : public KMObject, public DestroyDetector, public TcpConnection
 {
 public:
     using DataCallback = std::function<void(KMBuffer &)>;
@@ -49,17 +51,16 @@ public:
     
     KMError addHeader(std::string name, std::string value);
     KMError sendRequest(const std::string &method, const std::string &url, const std::string &ver);
+    KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf);
+    KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf);
     KMError sendResponse(int status_code, const std::string &desc, const std::string &ver);
     int sendData(const void* data, size_t len);
     int sendData(const KMBuffer &buf);
     void reset();
     KMError close();
     
-    KMError setHttpParser(HttpParser::Impl&& parser);
-    KMError handleInputData(uint8_t *src, size_t len);
-    bool setEOF() { return incoming_parser_.setEOF(); }
+    bool canSendData() const { return isOpen() && sendBufferEmpty(); }
     
-    bool isServer() const { return is_server_; }
     bool isOutgoingComplete() const { return outgoing_message_.isComplete(); }
     bool isIncomingComplete() const { return incoming_parser_.complete(); }
     
@@ -79,26 +80,38 @@ public:
     
     void setHeaderCallback(HeaderCallback cb) { header_cb_ = std::move(cb); }
     void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
+    void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
     void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
     void setIncomingCompleteCallback(CompleteCallback cb) { incoming_complete_cb_ = std::move(cb); }
     void setOutgoingCompleteCallback(CompleteCallback cb) { outgoing_complete_cb_ = std::move(cb); }
     
-    void setSender(MessageSender sender)
+    template<typename Runnable> // (void)
+    bool runOnLoopThread(Runnable &&r, bool maybe_sync=true)
     {
-        sender_ = std::move(sender);
-        outgoing_message_.setSender(sender_);
+        auto loop = eventLoop();
+        if (!loop || (maybe_sync && loop->inSameThread())) {
+            r();
+            return true;
+        } else {
+            return loop->post([r = std::move(r)]{
+                r();
+            }, &loop_token_) == KMError::NOERR;
+        }
     }
-    void setVSender(MessageVSender sender) { outgoing_message_.setVSender(std::move(sender)); }
-    void setBSender(MessageBSender sender) { outgoing_message_.setBSender(std::move(sender)); }
+    
+protected: // callbacks of TcpConnection
+    void onConnect(KMError err) override;
+    KMError handleInputData(uint8_t *src, size_t len) override;
+    void onWrite() override;
+    void onError(KMError err) override;
     
 protected:
-    std::string buildRequest(const std::string &method, const std::string &url, const std::string &ver);
+    std::string buildRequest();
     std::string buildResponse(int status_code, const std::string &desc, const std::string &ver);
     KMError sendHeaders(const std::string &headers);
     
     void onHeaderComplete();
     void onStreamData(KMBuffer &buf);
-    void onError(KMError err);
     void onOutgoingComplete();
     void onIncomingComplete();
     
@@ -106,18 +119,21 @@ protected:
     void onHttpEvent(HttpEvent ev);
     
 protected:
-    bool is_server_ = false;
-    
+    std::string             method_;
+    Uri                     uri_;
+    std::string             version_;
     HttpMessage             outgoing_message_;
+    bool                    wait_outgoing_complete_ = false;
     HttpParser::Impl        incoming_parser_;
     
     HeaderCallback          header_cb_;
     DataCallback            data_cb_;
+    EventCallback           write_cb_;
     EventCallback           error_cb_;
     CompleteCallback        incoming_complete_cb_;
     CompleteCallback        outgoing_complete_cb_;
     
-    MessageSender           sender_;
+    EventLoopToken          loop_token_;
 };
 
 KUMA_NS_END

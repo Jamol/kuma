@@ -32,21 +32,21 @@
 
 KUMA_NS_BEGIN
 
-class Http1xRequest : public DestroyDetector, public HttpRequest::Impl, public TcpConnection
+class Http1xRequest : public DestroyDetector, public HttpRequest::Impl
 {
 public:
     Http1xRequest(const EventLoopPtr &loop, std::string ver);
     ~Http1xRequest();
     
-    KMError setSslFlags(uint32_t ssl_flags) override { return TcpConnection::setSslFlags(ssl_flags); }
+    KMError setSslFlags(uint32_t ssl_flags) override { return stream_->setSslFlags(ssl_flags); }
     KMError addHeader(std::string name, std::string value) override;
     int sendBody(const void* data, size_t len) override;
     int sendBody(const KMBuffer &buf) override;
     void reset() override; // reset for connection reuse
     KMError close() override;
     
-    int getStatusCode() const override { return stream_.getStatusCode(); }
-    const std::string& getVersion() const override { return stream_.getVersion(); }
+    int getStatusCode() const override;
+    const std::string& getVersion() const override { return stream_->getVersion(); }
     const std::string& getHeaderValue(const std::string &name) const override
     {
         return getResponseHeader().getHeader(name);
@@ -61,11 +61,9 @@ public:
         }
     }
     
-protected: // callbacks of tcp_socket
-    void onConnect(KMError err) override;
-    KMError handleInputData(uint8_t *src, size_t len) override;
-    void onWrite() override;
-    void onError(KMError err) override;
+protected:
+    void onWrite();
+    void onError(KMError err);
 
 private:
     KMError sendRequest() override;
@@ -75,7 +73,6 @@ private:
     HttpHeader& getResponseHeader() override;
     const HttpHeader& getResponseHeader() const override;
     void cleanup();
-    KMError sendRequestHeader();
     bool isVersion2() override { return false; }
     bool processHttpCache();
     
@@ -83,13 +80,10 @@ private:
     void onRequestComplete();
     
 private:
-    H1xStream               stream_;
+    std::unique_ptr<H1xStream> stream_;
     
     int                     rsp_cache_status_ = 0;
-    HttpHeader              rsp_cache_header_{false, false};
     KMBuffer::Ptr           rsp_cache_body_;
-    
-    EventLoopToken          loop_token_;
 };
 
 KUMA_NS_END

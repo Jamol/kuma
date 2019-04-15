@@ -171,7 +171,7 @@ bool WSConnection_V2::canSendData() const
 }
 
 void WSConnection_V2::handleHandshakeRequest()
-{// from conn_ thread
+{
     auto const &req_header = getHeaders();
     std::string method = stream_->getMethod();
     std::string protocol = req_header.getHeader(H2HeaderProtocol);
@@ -205,7 +205,7 @@ void WSConnection_V2::handleHandshakeRequest()
 }
 
 void WSConnection_V2::handleHandshakeResponse()
-{// from conn_ thread
+{
     auto err = KMError::NOERR;
     int status_code = stream_->getStatusCode();
     if (status_code != 200) {

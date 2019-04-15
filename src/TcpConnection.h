@@ -45,6 +45,9 @@ public:
     int send(const KMBuffer &buf);
     KMError close();
     
+    bool isServer() const { return isServer_; }
+    bool isOpen() const { return tcp_.isReady(); }
+    
 #ifdef KUMA_HAS_OPENSSL
     KMError setAlpnProtocols(const AlpnProtos &protocols);
     KMError getAlpnSelected(std::string &protocol);
@@ -60,7 +63,6 @@ protected:
     virtual void onConnect(KMError err) {};
     virtual void onWrite() = 0;
     virtual void onError(KMError err) = 0;
-    bool isServer() const { return isServer_; }
     bool sendBufferEmpty() const { return !send_buffer_ || send_buffer_->empty(); }
     KMError sendBufferedData();
     void appendSendBuffer(const KMBuffer &buf);

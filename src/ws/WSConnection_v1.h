@@ -24,13 +24,13 @@
 #include "WSConnection.h"
 #include "TcpConnection.h"
 #include "http/HttpParserImpl.h"
-#include "http/Uri.h"
+#include "http/H1xStream.h"
 #include "util/DestroyDetector.h"
 #include "kmbuffer.h"
 
 WS_NS_BEGIN
 
-class WSConnection_V1 : public KMObject, public DestroyDetector, public WSConnection, public TcpConnection
+class WSConnection_V1 : public KMObject, public DestroyDetector, public WSConnection
 {
 public:
     WSConnection_V1(const EventLoopPtr &loop);
@@ -38,7 +38,7 @@ public:
     
     KMError setSslFlags(uint32_t ssl_flags) override
     {
-        return TcpConnection::setSslFlags(ssl_flags);
+        return stream_->setSslFlags(ssl_flags);
     }
     KMError addHeader(std::string name, std::string value) override;
     KMError addHeader(std::string name, uint32_t value) override;
@@ -48,33 +48,23 @@ public:
                          HttpParser::Impl&& parser,
                          const KMBuffer *init_buf,
                          HandshakeCallback cb);
-    int send(const iovec* iovs, int count) override
-    {
-        return TcpConnection::send(iovs, count);
-    }
+    int send(const iovec* iovs, int count) override;
     KMError close() override;
     bool canSendData() const override;
     const std::string& getPath() const override
     {
-        return http_parser_.getUrlPath();
+        return stream_->getPath();
     }
     const HttpHeader& getHeaders() const override
     {
-        return http_parser_;
+        return stream_->getIncomingHeaders();
     }
     
 protected:
-    // TcpConnection
-    void onConnect(KMError err) override;
-    KMError handleInputData(uint8_t *src, size_t len) override;
-    void onWrite() override;
-    void onError(KMError err) override;
-    
-    // HttpParser
-    void onHttpData(KMBuffer &buf);
-    void onHttpEvent(HttpEvent ev);
-    
-    void onWsData(uint8_t *src, size_t len);
+    void onWrite();
+    void onError(KMError err);
+    void onHeader();
+    void onData(KMBuffer &buf);
     
 protected:
     void onStateError(KMError err) override;
@@ -82,36 +72,15 @@ protected:
     KMError connect_i(const std::string& ws_url);
     void cleanup();
     
-    std::string buildUpgradeRequest(const std::string &origin,
-                                    const std::string &subprotocol,
-                                    const std::string &extensions,
-                                    const HeaderVector &header_vec);
-    std::string buildUpgradeResponse(KMError result,
-                                     const std::string &subprotocol,
-                                     const std::string &extensions,
-                                     const HeaderVector &header_vec);
-    KMError sendUpgradeRequest(const std::string &origin,
-                               const std::string &subprotocol,
-                               const std::string &extensions,
-                               const HeaderVector &header_vec);
-    KMError sendUpgradeResponse(KMError result,
-                                const std::string &subprotocol,
-                                const std::string &extensions,
-                                const HeaderVector &header_vec);
+    KMError sendUpgradeResponse(int status_code, const std::string &desc);
     
     void handleUpgradeRequest();
     void handleUpgradeResponse();
     void checkHandshake();
     
 protected:
-    Uri                     uri_;
-    HttpParser::Impl        http_parser_;
-    size_t                  body_bytes_sent_ = 0;
+    std::unique_ptr<H1xStream> stream_;
     std::string             sec_ws_key_;
-    KMError                 handshake_result_ = KMError::FAILED;
-    HttpHeader              outgoing_header_ {true, false};
-    
-    EventLoopToken          loop_token_;
 };
 
 WS_NS_END

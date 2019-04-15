@@ -90,8 +90,7 @@ protected:
         IDLE,
         RECVING_REQUEST,
         WAIT_FOR_RESPONSE,
-        SENDING_HEADER,
-        SENDING_BODY,
+        SENDING_RESPONSE,
         COMPLETE,
         IN_ERROR,
         CLOSED

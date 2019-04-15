@@ -86,9 +86,7 @@ protected:
     
     enum class State {
         IDLE,
-        CONNECTING,
-        SENDING_HEADER,
-        SENDING_BODY,
+        SENDING_REQUEST,
         RECVING_RESPONSE,
         COMPLETE,
         WAIT_FOR_REUSE,

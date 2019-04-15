@@ -58,7 +58,6 @@ protected:
     void onData(KMBuffer &buf);
     void onWrite();
     void onError(KMError err);
-    void onComplete();
     
 private:
     bool canSendBody() const override;
