@@ -114,6 +114,7 @@ protected:
     void onStreamData(KMBuffer &buf);
     void onOutgoingComplete();
     void onIncomingComplete();
+    void onStreamError(KMError err);
     
     void onHttpData(KMBuffer &buf);
     void onHttpEvent(HttpEvent ev);

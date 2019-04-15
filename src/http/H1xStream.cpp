@@ -207,17 +207,17 @@ int H1xStream::sendData(const KMBuffer &buf)
 }
 
 void H1xStream::onConnect(KMError err)
-{
+{// TcpConnection.onConnect
     if (err == KMError::NOERR) {
         err = sendHeaders(buildRequest());
     }
     if(err != KMError::NOERR) {
-        if(error_cb_) error_cb_(err);
+        onStreamError(err);
     }
 }
 
 KMError H1xStream::handleInputData(uint8_t *src, size_t len)
-{
+{// TcpConnection.handleInputData
     int bytes_used = incoming_parser_.parse((char*)src, len);
     if (bytes_used != len) {
         
@@ -226,12 +226,22 @@ KMError H1xStream::handleInputData(uint8_t *src, size_t len)
 }
 
 void H1xStream::onWrite()
-{
+{// TcpConnection.onWrite
     if (wait_outgoing_complete_) {
         wait_outgoing_complete_ = false;
         onOutgoingComplete();
     } else if (write_cb_) {
         write_cb_(KMError::NOERR);
+    }
+}
+
+void H1xStream::onError(KMError err)
+{// TcpConnection.onError
+    bool is_complete = incoming_parser_.setEOF();
+    if(is_complete) {
+        return;
+    } else {
+        onStreamError(err);
     }
 }
 
@@ -281,14 +291,9 @@ void H1xStream::onIncomingComplete()
     if (incoming_complete_cb_) incoming_complete_cb_();
 }
 
-void H1xStream::onError(KMError err)
+void H1xStream::onStreamError(KMError err)
 {
-    bool is_complete = incoming_parser_.setEOF();
-    if(is_complete) {
-        return;
-    } else if(error_cb_) {
-        error_cb_(err);
-    }
+    if(error_cb_) error_cb_(err);
 }
 
 void H1xStream::reset()
@@ -305,4 +310,3 @@ KMError H1xStream::close()
     loop_token_.reset();
     return KMError::NOERR;
 }
-

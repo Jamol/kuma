@@ -66,7 +66,6 @@ public:
 protected:
     enum State {
         IDLE,
-        CONNECTING,
         UPGRADING,
         OPEN,
         IN_ERROR,
