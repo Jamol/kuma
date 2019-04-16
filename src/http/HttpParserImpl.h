@@ -58,6 +58,7 @@ public:
     // true - http completed
     bool setEOF();
     void reset();
+    void setRequestMethod(const std::string &method) { method_ = method; }
     
     bool isRequest() const { return is_request_; }
     bool headerComplete() const { return header_complete_; }
@@ -148,7 +149,6 @@ private:
     
     int                 read_state_{ HTTP_READ_LINE };
     bool                header_complete_{ false };
-    bool                upgrade_{ false };
     bool                paused_{ false };
     
     int                 chunk_state_{ CHUNK_READ_SIZE };

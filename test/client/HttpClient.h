@@ -32,6 +32,9 @@ private:
     HttpRequest http_request_;
     size_t      total_bytes_read_ = 0;
     long        conn_id_;
+    
+    bool        test_reuse_ = true;
+    std::string url_;
 };
 
 #endif

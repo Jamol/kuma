@@ -14,6 +14,7 @@ HttpClient::HttpClient(TestLoop* loop, long conn_id)
 
 void HttpClient::startRequest(const std::string& url)
 {
+    url_ = url;
     http_request_.setSslFlags(SSL_ALLOW_SELF_SIGNED_CERT);
     http_request_.setDataCallback([this] (KMBuffer &buf) { onData(buf); });
     http_request_.setWriteCallback([this] (KMError err) { onSend(err); });
@@ -80,5 +81,17 @@ void HttpClient::onRequestComplete()
     static std::atomic_int req_count{0};
     printf("HttpClient_%ld::onRequestComplete, status=%d, total=%zu, count=%d\n",
            conn_id_, http_request_.getStatusCode(), total_bytes_read_, ++req_count);
-    http_request_.close();
+    
+    if (req_count == 1 && test_reuse_) {
+        // test connection reuse
+        total_bytes_read_ = 0;
+        if (url_.find("/testdata") != std::string::npos) {
+            http_request_.addHeader("Content-Length", 128*1024*1024);
+            http_request_.sendRequest("POST", url_.c_str());
+        } else {
+            http_request_.sendRequest("GET", url_.c_str());
+        }
+    } else {
+        http_request_.close();
+    }
 }

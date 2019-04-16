@@ -51,6 +51,7 @@ public:
     HeaderVector& getHeaders() { return header_vec_; }
     const HeaderVector& getHeaders() const { return header_vec_; }
     
+    bool isUpgradeHeader() const;
     void processHeader();
     void processHeader(int status_code, const std::string &req_method);
     

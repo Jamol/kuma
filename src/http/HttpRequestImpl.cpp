@@ -366,6 +366,9 @@ void HttpRequest::Impl::reset()
     compression_enable_ = true;
     compression_finish_ = false;
     compression_buffer_.clear();
+    if (getState() == State::COMPLETE) {
+        setState(State::WAIT_FOR_REUSE);
+    }
 }
 
 void HttpRequest::Impl::onResponseHeaderComplete()

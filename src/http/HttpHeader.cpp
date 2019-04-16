@@ -133,15 +133,14 @@ const std::string& HttpHeader::getHeader(const std::string &name) const
     return EmptyString;
 }
 
+bool HttpHeader::isUpgradeHeader() const
+{
+    return hasHeader(strUpgrade) && contains_token(getHeader("Connection"), strUpgrade, ',');
+}
+
 void HttpHeader::processHeader()
 {
-    if (!is_http2_) {
-        if (hasHeader(strUpgrade) && contains_token(getHeader("Connection"), strUpgrade, ',')) {
-            has_body_ = true;
-            return;
-        }
-    }
-    has_body_ = is_chunked_ || (has_content_length_ && content_length_ > 0);
+    has_body_ = is_chunked_ || (has_content_length_ && content_length_ > 0) || isUpgradeHeader();
 }
 
 void HttpHeader::processHeader(int status_code, const std::string &req_method)
@@ -154,7 +153,7 @@ void HttpHeader::processHeader(int status_code, const std::string &req_method)
         has_body_ = false;
         return;
     }
-    if (!is_http2_ && status_code == 101 && hasHeader(strUpgrade)) {
+    if (status_code == 101 && isUpgradeHeader()) {
         has_body_ = true;
         return;
     }

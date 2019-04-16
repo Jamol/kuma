@@ -57,7 +57,6 @@ HttpParser::Impl& HttpParser::Impl::operator=(const Impl& other)
         str_buf_ = other.str_buf_;
         read_state_ = other.read_state_;
         header_complete_ = other.header_complete_;
-        upgrade_ = other.upgrade_;
         paused_ = other.paused_;
         has_content_length_ = other.has_content_length_;
         content_length_ = other.content_length_;
@@ -89,7 +88,6 @@ HttpParser::Impl& HttpParser::Impl::operator=(Impl&& other)
         str_buf_.swap(other.str_buf_);
         read_state_ = other.read_state_;
         header_complete_ = other.header_complete_;
-        upgrade_ = other.upgrade_;
         paused_ = other.paused_;
         has_content_length_ = other.has_content_length_;
         content_length_ = other.content_length_;
@@ -127,7 +125,6 @@ void HttpParser::Impl::reset()
     
     status_code_ = 0;
     header_complete_ = false;
-    upgrade_ = false;
     paused_ = false;
 
     chunk_state_ = CHUNK_READ_SIZE;
@@ -300,14 +297,18 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(const char*& cur_pos, c
         {
             if(line == line_end && bufferEmpty())
             {// blank line, header completed
-                is_http2_ = isUpgradeTo("h2c");
+                auto const &upgrade_to = HttpHeader::getHeader(strUpgrade);
+                if(!upgrade_to.empty()) {
+                    is_http2_ = is_equal(upgrade_to, "h2c");
+                    KUMA_INFOTRACE("HttpParser::onHeaderComplete, Upgrade="<<upgrade_to);
+                }
                 if (isRequest()) {
                     HttpHeader::processHeader();
                 } else {
                     HttpHeader::processHeader(status_code_, method_);
                 }
                 header_complete_ = true;
-                if(hasBody() && !upgrade_) {
+                if(hasBody()) {
                     read_state_ = HTTP_READ_BODY;
                 } else {
                     read_state_ = HTTP_READ_DONE;
@@ -552,11 +553,7 @@ void HttpParser::Impl::onHeaderComplete()
     if (!contentEncoding.empty()) {
         KUMA_INFOTRACE("HttpParser::onHeaderComplete, Content-Encoding=" << contentEncoding);
     }
-    auto upgrade_to = HttpHeader::getHeader(strUpgrade);
-    if(!upgrade_to.empty()) {
-        upgrade_ = true;
-        KUMA_INFOTRACE("HttpParser::onHeaderComplete, Upgrade="<<upgrade_to);
-    }
+    
     if(event_cb_) event_cb_(HttpEvent::HEADER_COMPLETE);
 }
 

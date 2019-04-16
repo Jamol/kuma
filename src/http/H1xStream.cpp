@@ -62,6 +62,7 @@ KMError H1xStream::sendRequest(const std::string &method, const std::string &url
     method_ = method;
     version_ = ver;
     wait_outgoing_complete_ = false;
+    incoming_parser_.setRequestMethod(method);
     if (!TcpConnection::isOpen()) {
         std::string str_port = uri_.getPort();
         uint16_t port = 80;

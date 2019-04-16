@@ -139,9 +139,6 @@ void Http1xRequest::reset()
     stream_->reset();
     rsp_cache_status_ = 0;
     rsp_cache_body_.reset();
-    if (getState() == State::COMPLETE) {
-        setState(State::WAIT_FOR_REUSE);
-    }
 }
 
 KMError Http1xRequest::close()
