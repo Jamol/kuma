@@ -143,18 +143,6 @@ const std::string& Http2Response::getParamValue(const std::string &name) const {
     return EmptyString;
 }
 
-const std::string& Http2Response::getHeaderValue(const std::string &name) const {
-    return getRequestHeader().getHeader(name);
-}
-
-void Http2Response::forEachHeader(const EnumerateCallback &cb) const {
-    for (auto &kv : getRequestHeader().getHeaders()) {
-        if (!cb(kv.first, kv.second)) {
-            break;
-        }
-    }
-}
-
 void Http2Response::onHeader()
 {
     onRequestHeaderComplete();

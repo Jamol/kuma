@@ -33,7 +33,7 @@ private:
     size_t      total_bytes_read_ = 0;
     long        conn_id_;
     
-    bool        test_reuse_ = true;
+    bool        test_reuse_ = false;
     std::string url_;
 };
 

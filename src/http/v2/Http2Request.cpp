@@ -88,20 +88,6 @@ int Http2Request::getStatusCode() const
     }
 }
 
-const std::string& Http2Request::getHeaderValue(const std::string &name) const
-{
-    return getResponseHeader().getHeader(name);
-}
-
-void Http2Request::forEachHeader(const EnumerateCallback &cb) const
-{
-    for (auto &kv : getResponseHeader().getHeaders()) {
-        if (!cb(kv.first, kv.second)) {
-            break;
-        }
-    }
-}
-
 void Http2Request::checkResponseHeaders()
 {
     HttpRequest::Impl::checkResponseHeaders();

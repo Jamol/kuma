@@ -60,8 +60,19 @@ public:
     
     virtual int getStatusCode() const = 0;
     virtual const std::string& getVersion() const = 0;
-    virtual const std::string& getHeaderValue(const std::string &name) const = 0;
-    virtual void forEachHeader(const EnumerateCallback &cb) const = 0;
+    const std::string& getHeaderValue(const std::string &name) const
+    {
+        return getResponseHeader().getHeader(name);
+    }
+    void forEachHeader(const EnumerateCallback &cb) const
+    {
+        auto const &header = getResponseHeader();
+        for (auto &kv : header.getHeaders()) {
+            if (!cb(kv.first, kv.second)) {
+                break;
+            }
+        }
+    }
     
     std::string getCacheKey();
     

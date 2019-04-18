@@ -63,8 +63,18 @@ public:
     virtual const std::string& getQuery() const = 0;
     virtual const std::string& getVersion() const = 0;
     virtual const std::string& getParamValue(const std::string &name) const = 0;
-    virtual const std::string& getHeaderValue(const std::string &name) const = 0;
-    virtual void forEachHeader(const EnumerateCallback &cb) const = 0;
+    const std::string& getHeaderValue(const std::string &name) const
+    {
+        return getRequestHeader().getHeader(name);
+    }
+    void forEachHeader(const EnumerateCallback &cb) const
+    {
+        for (auto &kv : getRequestHeader().getHeaders()) {
+            if (!cb(kv.first, kv.second)) {
+                break;
+            }
+        }
+    }
     
     void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
     void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }

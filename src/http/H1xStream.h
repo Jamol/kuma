@@ -126,6 +126,7 @@ protected:
     HttpMessage             outgoing_message_;
     bool                    wait_outgoing_complete_ = false;
     HttpParser::Impl        incoming_parser_;
+    bool                    is_stream_upgraded_ = false;
     
     HeaderCallback          header_cb_;
     DataCallback            data_cb_;

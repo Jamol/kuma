@@ -58,19 +58,6 @@ public:
     {
         return stream_->getParamValue(name);
     }
-    const std::string& getHeaderValue(const std::string &name) const override
-    {
-        return getRequestHeader().getHeader(name);
-    }
-    void forEachHeader(const EnumerateCallback &cb) const override
-    {
-        auto const &header = getRequestHeader();
-        for (auto &kv : header.getHeaders()) {
-            if (!cb(kv.first, kv.second)) {
-                break;
-            }
-        }
-    }
     
 protected:
     void onWrite();

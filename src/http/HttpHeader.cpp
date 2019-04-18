@@ -140,7 +140,7 @@ bool HttpHeader::isUpgradeHeader() const
 
 void HttpHeader::processHeader()
 {
-    has_body_ = is_chunked_ || (has_content_length_ && content_length_ > 0) || isUpgradeHeader();
+    has_body_ = is_chunked_ || (has_content_length_ && content_length_ > 0);
 }
 
 void HttpHeader::processHeader(int status_code, const std::string &req_method)
@@ -151,10 +151,6 @@ void HttpHeader::processHeader(int status_code, const std::string &req_method)
     }
     if (is_equal(req_method, "CONNECT") && status_code >= 200 && status_code <= 299) {
         has_body_ = false;
-        return;
-    }
-    if (status_code == 101 && isUpgradeHeader()) {
-        has_body_ = true;
         return;
     }
     if ((status_code >= 100 && status_code <= 199) || status_code == 204 || status_code == 304) {

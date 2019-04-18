@@ -50,8 +50,6 @@ public:
     const std::string& getQuery() const override { return EmptyString; }
     const std::string& getVersion() const override { return VersionHTTP2_0; }
     const std::string& getParamValue(const std::string &name) const override;
-    const std::string& getHeaderValue(const std::string &name) const override;
-    void forEachHeader(const EnumerateCallback &cb) const override;
     
 protected:
     void onHeader();

@@ -60,8 +60,6 @@ public:
     
     int getStatusCode() const override;
     const std::string& getVersion() const override { return VersionHTTP2_0; }
-    const std::string& getHeaderValue(const std::string &name) const override;
-    void forEachHeader(const EnumerateCallback &cb) const override;
     
 protected:
     KMError sendRequest() override;

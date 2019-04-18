@@ -62,6 +62,7 @@ KMError H1xStream::sendRequest(const std::string &method, const std::string &url
     method_ = method;
     version_ = ver;
     wait_outgoing_complete_ = false;
+    is_stream_upgraded_ = false;
     incoming_parser_.setRequestMethod(method);
     if (!TcpConnection::isOpen()) {
         std::string str_port = uri_.getPort();
@@ -85,6 +86,7 @@ KMError H1xStream::sendRequest(const std::string &method, const std::string &url
 KMError H1xStream::attachFd(SOCKET_FD fd, const KMBuffer *init_buf)
 {
     wait_outgoing_complete_ = false;
+    is_stream_upgraded_ = false;
     return TcpConnection::attachFd(fd, init_buf);
 }
 
@@ -103,6 +105,7 @@ KMError H1xStream::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser
     }
     
     wait_outgoing_complete_ = false;
+    is_stream_upgraded_ = false;
     auto ret = TcpConnection::attachSocket(std::move(tcp), init_buf);
     if(ret == KMError::NOERR && is_parser_paused) {
         if (is_parser_header_complete) {
@@ -149,6 +152,9 @@ KMError H1xStream::sendHeaders(const std::string &headers)
     auto ret = TcpConnection::send(headers.data(), headers.size());
     if (ret > 0) {
         if (outgoing_message_.isComplete()) {
+            if (isServer()) {
+                is_stream_upgraded_ = outgoing_message_.isUpgradeHeader();
+            }
             if (sendBufferEmpty()) {
                 if (isServer()) {
                     runOnLoopThread([this] { onOutgoingComplete(); }, false);
@@ -171,6 +177,10 @@ KMError H1xStream::sendHeaders(const std::string &headers)
 
 int H1xStream::sendData(const void* data, size_t len)
 {
+    if (is_stream_upgraded_) {
+        return TcpConnection::send(data, len);
+    }
+    
     auto ret = outgoing_message_.sendData(data, len);
     if (ret >= 0) {
         if (outgoing_message_.isComplete()) {
@@ -190,6 +200,10 @@ int H1xStream::sendData(const void* data, size_t len)
 
 int H1xStream::sendData(const KMBuffer &buf)
 {
+    if (is_stream_upgraded_) {
+        return TcpConnection::send(buf);
+    }
+    
     auto ret = outgoing_message_.sendData(buf);
     if (ret >= 0) {
         if (outgoing_message_.isComplete()) {
@@ -219,9 +233,21 @@ void H1xStream::onConnect(KMError err)
 
 KMError H1xStream::handleInputData(uint8_t *src, size_t len)
 {// TcpConnection.handleInputData
-    int bytes_used = incoming_parser_.parse((char*)src, len);
-    if (bytes_used != len) {
-        
+    if (!is_stream_upgraded_) {
+        DESTROY_DETECTOR_SETUP();
+        int bytes_used = incoming_parser_.parse((char*)src, len);
+        DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
+        if (bytes_used < len) {
+            if (is_stream_upgraded_) {
+                KMBuffer buf(src + bytes_used, len - bytes_used, len - bytes_used);
+                onStreamData(buf);
+            } else {
+                KUMA_WARNXTRACE("handleInputData, data is not consumed, len="<<len<<", used="<<bytes_used);
+            }
+        }
+    } else {
+        KMBuffer buf(src, len, len);
+        onStreamData(buf);
     }
     return KMError::NOERR;
 }
@@ -289,6 +315,9 @@ void H1xStream::onOutgoingComplete()
 
 void H1xStream::onIncomingComplete()
 {
+    if (!isServer()) {
+        is_stream_upgraded_ = incoming_parser_.getStatusCode() == 101 && incoming_parser_.isUpgradeHeader();
+    }
     if (incoming_complete_cb_) incoming_complete_cb_();
 }
 
@@ -303,6 +332,7 @@ void H1xStream::reset()
     outgoing_message_.reset();
     wait_outgoing_complete_ = false;
     incoming_parser_.reset();
+    is_stream_upgraded_ = false;
 }
 
 KMError H1xStream::close()

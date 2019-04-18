@@ -47,10 +47,14 @@ WSConnection_V1::WSConnection_V1(const EventLoopPtr &loop)
         onError(err);
     });
     stream_->setIncomingCompleteCallback([this] {
-        onError(KMError::PROTO_ERROR);
+        if (stream_->isServer()) {
+            handleUpgradeRequest();
+        } else {
+            handleUpgradeResponse();
+        }
     });
     stream_->setOutgoingCompleteCallback([this] {
-        onError(KMError::PROTO_ERROR);
+        //onError(KMError::PROTO_ERROR);
     });
     KM_SetObjKey("WSConnection_V1");
 }
@@ -323,11 +327,7 @@ void WSConnection_V1::onError(KMError err)
 
 void WSConnection_V1::onHeader()
 {
-    if (stream_->isServer()) {
-        handleUpgradeRequest();
-    } else {
-        handleUpgradeResponse();
-    }
+    
 }
 
 void WSConnection_V1::onData(KMBuffer &buf)

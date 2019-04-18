@@ -47,19 +47,6 @@ public:
     
     int getStatusCode() const override;
     const std::string& getVersion() const override { return stream_->getVersion(); }
-    const std::string& getHeaderValue(const std::string &name) const override
-    {
-        return getResponseHeader().getHeader(name);
-    }
-    void forEachHeader(const EnumerateCallback &cb) const override
-    {
-        auto const &header = getResponseHeader();
-        for (auto &kv : header.getHeaders()) {
-            if (!cb(kv.first, kv.second)) {
-                break;
-            }
-        }
-    }
     
 protected:
     void onWrite();

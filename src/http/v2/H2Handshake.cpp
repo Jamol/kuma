@@ -283,14 +283,14 @@ void H2Handshake::onHttpEvent(HttpEvent ev)
     KUMA_INFOTRACE("H2Handshake::onHttpEvent, ev="<<int(ev));
     switch (ev) {
         case HttpEvent::HEADER_COMPLETE:
+            break;
+            
+        case HttpEvent::COMPLETE:
             if(http_parser_.isRequest()) {
                 handleUpgradeRequest();
             } else {
                 handleUpgradeResponse();
             }
-            break;
-            
-        case HttpEvent::COMPLETE:
             break;
             
         case HttpEvent::HTTP_ERROR:

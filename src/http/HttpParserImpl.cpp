@@ -549,7 +549,7 @@ void HttpParser::Impl::onHeaderComplete()
     if(is_chunked_) {
         KUMA_INFOTRACE("HttpParser::onHeaderComplete, Transfer-Encoding=" << getHeaderValue(strTransferEncoding));
     }
-    auto contentEncoding = getHeaderValue(strContentEncoding);
+    auto const &contentEncoding = getHeaderValue(strContentEncoding);
     if (!contentEncoding.empty()) {
         KUMA_INFOTRACE("HttpParser::onHeaderComplete, Content-Encoding=" << contentEncoding);
     }
