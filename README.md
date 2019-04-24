@@ -57,7 +57,7 @@ copy your server private key to cert/server.key
 ```
 
 ## Simple example
-Please refer to test/client and test/server for more examples
+Please refer to [test](https://github.com/Jamol/kuma/tree/master/test) for more examples
 ### client
 ```
 #include "kmapi.h"
