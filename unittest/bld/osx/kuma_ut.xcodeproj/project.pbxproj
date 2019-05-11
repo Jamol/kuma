@@ -10,6 +10,8 @@
 		6F7FC48A1F4ADFD10038360B /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F7FC4891F4ADFD10038360B /* main.cpp */; };
 		6F7FC4E41F4AE1780038360B /* libgtest.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F7FC4D71F4AE11D0038360B /* libgtest.a */; };
 		6FE4B69E1FB746C400B22C9D /* KMBufferTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FE4B6951FB746C400B22C9D /* KMBufferTest.cpp */; };
+		6FF2523822864B0F00663403 /* Base64Test.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF2523722864B0F00663403 /* Base64Test.cpp */; };
+		6FF2524E22864F3200663403 /* kuma.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F30AFFA1FBC090000532B8B /* kuma.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -103,6 +105,8 @@
 		6F7FC4891F4ADFD10038360B /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../../../main.cpp; sourceTree = "<group>"; };
 		6F7FC4C81F4AE11D0038360B /* gtest.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = gtest.xcodeproj; path = ../../../vendor/gtest/googletest/xcode/gtest.xcodeproj; sourceTree = "<group>"; };
 		6FE4B6951FB746C400B22C9D /* KMBufferTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = KMBufferTest.cpp; path = ../../../KMBufferTest.cpp; sourceTree = "<group>"; };
+		6FF2521C2286487E00663403 /* testutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = testutil.h; path = ../../../testutil.h; sourceTree = "<group>"; };
+		6FF2523722864B0F00663403 /* Base64Test.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Base64Test.cpp; path = ../../../Base64Test.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -110,6 +114,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6FF2524E22864F3200663403 /* kuma.dylib in Frameworks */,
 				6F7FC4E41F4AE1780038360B /* libgtest.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -131,6 +136,7 @@
 				6F7FC48B1F4AE0BD0038360B /* Dependencies */,
 				6F7FC4811F4ADF510038360B /* kuma_ut */,
 				6F7FC4801F4ADF510038360B /* Products */,
+				6FF2524D22864F3200663403 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -145,6 +151,8 @@
 		6F7FC4811F4ADF510038360B /* kuma_ut */ = {
 			isa = PBXGroup;
 			children = (
+				6FF2523722864B0F00663403 /* Base64Test.cpp */,
+				6FF2521C2286487E00663403 /* testutil.h */,
 				6FE4B6951FB746C400B22C9D /* KMBufferTest.cpp */,
 				6F7FC4891F4ADFD10038360B /* main.cpp */,
 			);
@@ -172,6 +180,13 @@
 				6F7FC4E11F4AE11D0038360B /* sample1_unittest-static */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		6FF2524D22864F3200663403 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -216,6 +231,7 @@
 			developmentRegion = English;
 			hasScannedForEncodings = 0;
 			knownRegions = (
+				English,
 				en,
 			);
 			mainGroup = 6F7FC4761F4ADF510038360B;
@@ -302,6 +318,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6FF2523822864B0F00663403 /* Base64Test.cpp in Sources */,
 				6F7FC48A1F4ADFD10038360B /* main.cpp in Sources */,
 				6FE4B69E1FB746C400B22C9D /* KMBufferTest.cpp in Sources */,
 			);

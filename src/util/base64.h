@@ -18,26 +18,26 @@
 
 #include "kmdefs.h"
 #include <stdint.h>
+#include <string>
 
 KUMA_NS_BEGIN
 
-typedef struct __X64_CTX{
-    uint8_t l;
-    uint8_t b[3];
-}X64_CTX;
+typedef struct __X64_CTX    x64_ctx_t;
 
-uint32_t x64_calc_encode_buf_size(uint32_t len);
-uint32_t x64_calc_decode_buf_size(uint32_t len);
-uint32_t x64_encode(const uint8_t* data, uint32_t data_len,
-                    uint8_t* buf, uint32_t buf_len, bool url_safe);
-uint32_t x64_decode(const uint8_t* buf, uint32_t buf_len,
-                    uint8_t* data, uint32_t data_len);
+size_t x64_calc_encode_buf_size(size_t len);
+size_t x64_calc_decode_buf_size(size_t len);
+size_t x64_encode(const void* src, size_t src_len, void* dst, size_t dst_len, bool url_safe);
+size_t x64_decode(const void* src, size_t src_len, void* dst, size_t dst_len);
+std::string x64_encode(const void* src, size_t src_len, bool url_safe);
+std::string x64_decode(const void* src, size_t src_len);
+std::string x64_encode(const std::string &src, bool url_safe);
+std::string x64_decode(const std::string &src);
 
-void x64_init_ctx(X64_CTX* ctx);
-uint32_t x64_encode_ctx(X64_CTX* ctx, const uint8_t* data, uint32_t data_len,
-                        uint8_t* buf, uint32_t buf_len, bool url_safe, bool final);
-uint32_t x64_decode_ctx(X64_CTX* ctx, const uint8_t* buf, uint32_t buf_len,
-                        uint8_t* data, uint32_t data_len, bool final);
+x64_ctx_t* x64_ctx_create();
+void x64_ctx_destroy(x64_ctx_t *ctx);
+void x64_ctx_reset(x64_ctx_t *ctx);
+size_t x64_ctx_encode(x64_ctx_t* ctx, const void* src, size_t src_len, void* dst, size_t dst_len, bool url_safe, bool finish);
+size_t x64_ctx_decode(x64_ctx_t* ctx, const void* src, size_t src_len, void* dst, size_t dst_len, bool finish);
 
 KUMA_NS_END
 
