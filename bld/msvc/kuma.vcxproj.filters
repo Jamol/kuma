@@ -70,6 +70,9 @@
     <Filter Include="Source Files\compr">
       <UniqueIdentifier>{32bb0506-8263-4fc2-a942-64672c48b332}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\proxy">
+      <UniqueIdentifier>{e7c39218-61b1-4f94-ac78-40d5b64f7a47}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\EventLoopImpl.cpp">
@@ -288,6 +291,18 @@
     <ClCompile Include="..\..\src\http\H1xStream.cpp">
       <Filter>Source Files\http</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\proxy\ProxyConnection.cpp">
+      <Filter>Source Files\proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\proxy\ProxyAuthenticator.cpp">
+      <Filter>Source Files\proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\proxy\BasicAuthenticator.cpp">
+      <Filter>Source Files\proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\proxy\SspiAuthenticator.cpp">
+      <Filter>Source Files\proxy</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\kmconf.h">
@@ -496,6 +511,18 @@
     </ClInclude>
     <ClInclude Include="..\..\src\http\H1xStream.h">
       <Filter>Header Files\http</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\proxy\ProxyConnection.h">
+      <Filter>Source Files\proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\proxy\ProxyAuthenticator.h">
+      <Filter>Source Files\proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\proxy\BasicAuthenticator.h">
+      <Filter>Source Files\proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\proxy\SspiAuthenticator.h">
+      <Filter>Source Files\proxy</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

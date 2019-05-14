@@ -206,6 +206,10 @@
     <ClCompile Include="..\..\src\poll\Notifier.cpp" />
     <ClCompile Include="..\..\src\poll\SelectPoll.cpp" />
     <ClCompile Include="..\..\src\poll\VPoll.cpp" />
+    <ClCompile Include="..\..\src\proxy\BasicAuthenticator.cpp" />
+    <ClCompile Include="..\..\src\proxy\ProxyAuthenticator.cpp" />
+    <ClCompile Include="..\..\src\proxy\ProxyConnection.cpp" />
+    <ClCompile Include="..\..\src\proxy\SspiAuthenticator.cpp" />
     <ClCompile Include="..\..\src\SocketBase.cpp" />
     <ClCompile Include="..\..\src\ssl\BioHandler.cpp" />
     <ClCompile Include="..\..\src\ssl\OpenSslLib.cpp" />
@@ -287,6 +291,10 @@
     <ClInclude Include="..\..\src\kmdefs.h" />
     <ClInclude Include="..\..\src\poll\IOPoll.h" />
     <ClInclude Include="..\..\src\poll\Notifier.h" />
+    <ClInclude Include="..\..\src\proxy\BasicAuthenticator.h" />
+    <ClInclude Include="..\..\src\proxy\ProxyAuthenticator.h" />
+    <ClInclude Include="..\..\src\proxy\ProxyConnection.h" />
+    <ClInclude Include="..\..\src\proxy\SspiAuthenticator.h" />
     <ClInclude Include="..\..\src\SocketBase.h" />
     <ClInclude Include="..\..\src\ssl\BioHandler.h" />
     <ClInclude Include="..\..\src\ssl\OpenSslLib.h" />
