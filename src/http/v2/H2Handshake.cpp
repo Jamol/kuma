@@ -135,9 +135,7 @@ std::string H2Handshake::buildUpgradeRequest()
     SettingsFrame settings;
     settings.encodePayload(buf, sizeof(buf), params);
     
-    uint8_t x64_encode_buf[sizeof(buf) * 3 / 2] = {0};
-    auto x64_encode_len = x64_encode(buf, sizeof(buf), x64_encode_buf, sizeof(x64_encode_buf), false);
-    std::string settings_str((char*)x64_encode_buf, x64_encode_len);
+    auto settings_str = x64_encode(buf, sizeof(buf), false);
     
     std::stringstream ss;
     ss << "GET / HTTP/1.1\r\n";

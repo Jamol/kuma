@@ -605,9 +605,7 @@ KMError TcpSocket::Impl::checkSslHandshake(KMError err)
     KUMA_INFOXTRACE("checkSslHandshake, completed, err=" << int(err));
     if (connect_cb_) {
         auto connect_cb(std::move(connect_cb_));
-        DESTROY_DETECTOR_SETUP();
         connect_cb(err);
-        DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
     }
     else if (err != KMError::NOERR) {
         onClose(err);

@@ -42,7 +42,7 @@ KUMA_NS_BEGIN
 
 class H2Handshake;
 
-class H2Connection::Impl : public KMObject, public DestroyDetector, public FrameCallback, public TcpConnection
+class H2Connection::Impl : public KMObject, public DestroyDetector, public FrameCallback
 {
 public:
     using ConnectCallback = std::function<void(KMError)>;
@@ -52,7 +52,9 @@ public:
     Impl(const EventLoopPtr &loop);
 	~Impl();
     
-    //KMError connect(const std::string &host, uint16_t port, ConnectCallback cb);
+    KMError setSslFlags(uint32_t ssl_flags) { return tcp_conn_.setSslFlags(ssl_flags); }
+    uint32_t getSslFlags() const { return tcp_conn_.getSslFlags(); }
+    bool sslEnabled() const { return tcp_conn_.sslEnabled(); }
     KMError connect(const std::string &host, uint16_t port);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf);
     KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf);
@@ -85,6 +87,7 @@ public:
     bool sync(EventLoop::Task task);
     bool async(EventLoop::Task task, EventLoopToken *token=nullptr);
     bool isInSameThread() const { return std::this_thread::get_id() == thread_id_; }
+    EventLoopPtr eventLoop() { return tcp_conn_.eventLoop(); }
     
     void connectionError(H2Error err);
     void streamError(uint32_t stream_id, H2Error err);
@@ -96,10 +99,10 @@ public:
     void onFrameError(const FrameHeader &hdr, H2Error err, bool stream_err) override;
     
 private:
-    void onConnect(KMError err) override;
-    KMError handleInputData(uint8_t *src, size_t len) override;
-    void onWrite() override;
-    void onError(KMError err) override;
+    void onConnect(KMError err, const std::string &host);
+    KMError handleInputData(uint8_t *src, size_t len);
+    void onWrite();
+    void onError(KMError err);
     
 private:
     KMError connect_i(const std::string &host, uint16_t port);
@@ -193,6 +196,7 @@ protected:
     bool expect_continuation_frame_ = false;
     uint32_t stream_id_of_expected_continuation_ = 0;
     
+    TcpConnection tcp_conn_;
     EventLoopToken loop_token_;
 };
 

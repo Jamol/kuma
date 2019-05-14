@@ -42,6 +42,9 @@ const std::string strHost = "Host";
 const std::string strUpgrade = "Upgrade";
 const std::string strAcceptEncoding = "Accept-Encoding";
 const std::string strContentEncoding = "Content-Encoding";
+const std::string strProxyAuthenticate = "Proxy-Authenticate";
+const std::string strProxyAuthorization = "Proxy-Authorization";
+const std::string strProxyConnection = "Proxy-Connection";
 
 using KeyValuePair = std::pair<std::string, std::string>;
 using KeyValueList = std::vector<KeyValuePair>;

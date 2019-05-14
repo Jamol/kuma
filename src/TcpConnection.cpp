@@ -30,7 +30,9 @@ using namespace kuma;
 TcpConnection::TcpConnection(const EventLoopPtr &loop)
 : tcp_(loop)
 {
-    
+    tcp_.setReadCallback([this] (KMError err) { onReceive(err); });
+    tcp_.setWriteCallback([this] (KMError err) { onSend(err); });
+    tcp_.setErrorCallback([this] (KMError err) { onClose(err); });
 }
 
 TcpConnection::~TcpConnection()
@@ -43,26 +45,13 @@ void TcpConnection::cleanup()
     tcp_.close();
 }
 
-KMError TcpConnection::setSslFlags(uint32_t ssl_flags)
-{
-    return tcp_.setSslFlags(ssl_flags);
-}
-
-void TcpConnection::setupCallbacks()
-{
-    tcp_.setReadCallback([this] (KMError err) { onReceive(err); });
-    tcp_.setWriteCallback([this] (KMError err) { onSend(err); });
-    tcp_.setErrorCallback([this] (KMError err) { onClose(err); });
-}
-
-KMError TcpConnection::connect(const std::string &host, uint16_t port)
+KMError TcpConnection::connect(const std::string &host, uint16_t port, EventCallback cb)
 {
     isServer_ = false;
     host_ = host;
     port_ = port;
-    setupCallbacks();
     
-    return tcp_.connect(host.c_str(), port, [this] (KMError err) { onConnect(err); });
+    return tcp_.connect(host.c_str(), port, std::move(cb));
 }
 
 void TcpConnection::saveInitData(const KMBuffer *init_buf)
@@ -77,7 +66,6 @@ void TcpConnection::saveInitData(const KMBuffer *init_buf)
 KMError TcpConnection::attachFd(SOCKET_FD fd, const KMBuffer *init_buf)
 {
     isServer_ = true;
-    setupCallbacks();
     saveInitData(init_buf);
     
     return tcp_.attachFd(fd);
@@ -86,7 +74,6 @@ KMError TcpConnection::attachFd(SOCKET_FD fd, const KMBuffer *init_buf)
 KMError TcpConnection::attachSocket(TcpSocket::Impl &&tcp, const KMBuffer *init_buf)
 {
     isServer_ = true;
-    setupCallbacks();
     saveInitData(init_buf);
     
     return tcp_.attach(std::move(tcp));
@@ -225,15 +212,15 @@ void TcpConnection::onSend(KMError err)
         onError(KMError::SOCK_ERROR);
         return;
     }
-    if (sendBufferEmpty()) {
-        onWrite();
+    if (sendBufferEmpty() && write_cb_) {
+        write_cb_(err);
     }
 }
 
 void TcpConnection::onReceive(KMError err)
 {
     if(!initData_.empty()) {
-        auto ret = handleInputData(&initData_[0], initData_.size());
+        auto ret = data_cb_(&initData_[0], initData_.size());
         if (ret != KMError::NOERR) {
             return;
         }
@@ -243,7 +230,7 @@ void TcpConnection::onReceive(KMError err)
     do {
         int ret = tcp_.receive(buf, sizeof(buf));
         if (ret > 0) {
-            if (handleInputData(buf, ret) != KMError::NOERR) {
+            if (data_cb_(buf, ret) != KMError::NOERR) {
                 break;
             }
         } else if (0 == ret) {
@@ -263,19 +250,8 @@ void TcpConnection::onClose(KMError err)
     onError(err);
 }
 
-#ifdef KUMA_HAS_OPENSSL
-KMError TcpConnection::setAlpnProtocols(const AlpnProtos &protocols)
+void TcpConnection::onError(KMError err)
 {
-    return tcp_.setAlpnProtocols(protocols);
+    if (error_cb_) error_cb_(err);
 }
 
-KMError TcpConnection::getAlpnSelected(std::string &protocol)
-{
-    return tcp_.getAlpnSelected(protocol);
-}
-
-KMError TcpConnection::setSslServerName(std::string serverName)
-{
-    return tcp_.setSslServerName(std::move(serverName));
-}
-#endif

@@ -35,7 +35,7 @@
 KUMA_NS_BEGIN
 
 
-class H1xStream : public KMObject, public DestroyDetector, public TcpConnection
+class H1xStream : public KMObject, public DestroyDetector
 {
 public:
     using DataCallback = std::function<void(KMBuffer &)>;
@@ -49,6 +49,7 @@ public:
     H1xStream(const EventLoopPtr &loop);
     ~H1xStream();
     
+    KMError setSslFlags(uint32_t ssl_flags) { return tcp_conn_.setSslFlags(ssl_flags); }
     KMError addHeader(std::string name, std::string value);
     KMError sendRequest(const std::string &method, const std::string &url, const std::string &ver);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf);
@@ -59,7 +60,8 @@ public:
     void reset();
     KMError close();
     
-    bool canSendData() const { return isOpen() && sendBufferEmpty(); }
+    bool isServer() const { return tcp_conn_.isServer(); }
+    bool canSendData() const { return tcp_conn_.canSendData(); }
     
     bool isOutgoingComplete() const { return outgoing_message_.isComplete(); }
     bool isIncomingComplete() const { return incoming_parser_.complete(); }
@@ -88,7 +90,7 @@ public:
     template<typename Runnable> // (void)
     bool runOnLoopThread(Runnable &&r, bool maybe_sync=true)
     {
-        auto loop = eventLoop();
+        auto loop = tcp_conn_.eventLoop();
         if (!loop || (maybe_sync && loop->inSameThread())) {
             r();
             return true;
@@ -100,10 +102,10 @@ public:
     }
     
 protected: // callbacks of TcpConnection
-    void onConnect(KMError err) override;
-    KMError handleInputData(uint8_t *src, size_t len) override;
-    void onWrite() override;
-    void onError(KMError err) override;
+    void onConnect(KMError err);
+    KMError handleInputData(uint8_t *src, size_t len);
+    void onWrite();
+    void onError(KMError err);
     
 protected:
     std::string buildRequest();
@@ -135,6 +137,7 @@ protected:
     CompleteCallback        incoming_complete_cb_;
     CompleteCallback        outgoing_complete_cb_;
     
+    TcpConnection           tcp_conn_;
     EventLoopToken          loop_token_;
 };
 

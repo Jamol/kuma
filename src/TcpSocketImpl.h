@@ -45,7 +45,7 @@
 KUMA_NS_BEGIN
 class SocketBase;
 
-class TcpSocket::Impl : public KMObject, public DestroyDetector
+class TcpSocket::Impl : public KMObject
 {
 public:
     using EventCallback = TcpSocket::EventCallback;

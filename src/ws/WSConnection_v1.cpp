@@ -358,9 +358,6 @@ static std::string generate_sec_accept_value(const std::string& sec_ws_key)
     uint8_t uShaRst2[SHA1_DIGEST_SIZE] = {0};
     SHA1((const uint8_t *)accept.c_str(), accept.size(), uShaRst2);
     
-    uint8_t x64_encode_buf[32] = {0};
-    uint32_t x64_encode_len = x64_encode(uShaRst2, SHA1_DIGEST_SIZE, x64_encode_buf, sizeof(x64_encode_buf), false);
-    
-    return std::string((char*)x64_encode_buf, x64_encode_len);
+    return x64_encode(uShaRst2, SHA1_DIGEST_SIZE, false);
 }
 

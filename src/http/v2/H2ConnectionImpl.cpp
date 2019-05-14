@@ -36,10 +36,20 @@ namespace {
 
 //////////////////////////////////////////////////////////////////////////
 H2Connection::Impl::Impl(const EventLoopPtr &loop)
-: TcpConnection(loop), thread_id_(loop->threadId()), frame_parser_(this)
+: tcp_conn_(loop), thread_id_(loop->threadId()), frame_parser_(this)
 , flow_ctrl_(0, [this] (uint32_t w) { sendWindowUpdate(0, w); })
 {
     loop_token_.eventLoop(loop);
+    tcp_conn_.setDataCallback([this](uint8_t *data, size_t size) {
+        return handleInputData(data, size);
+    });
+    tcp_conn_.setWriteCallback([this] (KMError) {
+        onWrite();
+    });
+    tcp_conn_.setErrorCallback([this] (KMError err) {
+        onError(err);
+    });
+    
     flow_ctrl_.initLocalWindowSize(H2_LOCAL_CONN_INITIAL_WINDOW_SIZE);
     flow_ctrl_.setMinLocalWindowSize(init_local_window_size_);
     flow_ctrl_.setLocalWindowStep(H2_LOCAL_CONN_INITIAL_WINDOW_SIZE);
@@ -63,14 +73,14 @@ H2Connection::Impl::~Impl()
 void H2Connection::Impl::cleanup()
 {
     setState(State::CLOSED);
-    TcpConnection::close();
+    tcp_conn_.close();
     push_clients_.clear();
 }
 
 void H2Connection::Impl::cleanupAndRemove()
 {
     cleanup();
-    H2ConnectionMgr::removeConnection(key_, sslEnabled());
+    H2ConnectionMgr::removeConnection(key_, tcp_conn_.sslEnabled());
 }
 
 void H2Connection::Impl::setConnectionKey(const std::string &key)
@@ -100,29 +110,31 @@ KMError H2Connection::Impl::connect_i(const std::string &host, uint16_t port)
     setState(State::CONNECTING);
     
     if (0 == port) {
-        port = sslEnabled() ? 443 : 80;
+        port = tcp_conn_.sslEnabled() ? 443 : 80;
     }
     
 #ifdef KUMA_HAS_OPENSSL
-    if (sslEnabled()) {
-        tcp_.setAlpnProtocols(alpnProtos);
+    if (tcp_conn_.sslEnabled()) {
+        tcp_conn_.setAlpnProtocols(alpnProtos);
     }
 #endif
 
-    return TcpConnection::connect(host.c_str(), port);
+    return tcp_conn_.connect(host, port, [this, host] (KMError err) {
+        onConnect(err, host);
+    });
 }
 
 KMError H2Connection::Impl::attachFd(SOCKET_FD fd, const KMBuffer *init_buf)
 {
     setupH2Handshake();
     next_stream_id_ = 2;
-    auto ret = TcpConnection::attachFd(fd, init_buf);
+    auto ret = tcp_conn_.attachFd(fd, init_buf);
     if (ret != KMError::NOERR) {
         return ret;
     }
     
     setState(State::HANDSHAKE);
-    return handshake_->start(true, sslEnabled());
+    return handshake_->start(true, tcp_conn_.sslEnabled());
 }
 
 KMError H2Connection::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf)
@@ -132,13 +144,13 @@ KMError H2Connection::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl
     handshake_->setHttpParser(std::move(parser));
     next_stream_id_ = 2;
     
-    auto ret = TcpConnection::attachSocket(std::move(tcp), init_buf);
+    auto ret = tcp_conn_.attachSocket(std::move(tcp), init_buf);
     if (ret != KMError::NOERR) {
         return ret;
     }
     
     setState(State::HANDSHAKE);
-    return handshake_->start(true, sslEnabled());
+    return handshake_->start(true, tcp_conn_.sslEnabled());
 }
 
 KMError H2Connection::Impl::close()
@@ -155,12 +167,12 @@ KMError H2Connection::Impl::close()
 
 KMError H2Connection::Impl::sendData(const KMBuffer &buf)
 {
-    auto ret = TcpConnection::send(buf);
+    auto ret = tcp_conn_.send(buf);
     if (ret > 0) {
         return KMError::NOERR;
     } else if (ret == 0) {
         // send blocked
-        appendSendBuffer(buf);
+        tcp_conn_.appendSendBuffer(buf);
         return KMError::NOERR;
     } else {
         return KMError::SOCK_ERROR;
@@ -169,7 +181,7 @@ KMError H2Connection::Impl::sendData(const KMBuffer &buf)
 
 KMError H2Connection::Impl::sendH2Frame(H2Frame *frame)
 {
-    if (!sendBufferEmpty() && !isControlFrame(frame) && 
+    if (!tcp_conn_.sendBufferEmpty() && !isControlFrame(frame) &&
         !(frame->getFlags() & H2_FRAME_FLAG_END_STREAM)) {
         appendBlockedStream(frame->getStreamId());
         return KMError::AGAIN;
@@ -287,7 +299,7 @@ bool H2Connection::Impl::handleHeadersFrame(HeadersFrame *frame)
             streamError(frame->getStreamId(), H2Error::REFUSED_STREAM);
             return false;
         }
-        if (!isServer()) {
+        if (!tcp_conn_.isServer()) {
             KUMA_WARNXTRACE("handleHeadersFrame, no local stream or promised stream, streamId="<<frame->getStreamId());
             return false; // client: no local steram or promised stream
         }
@@ -467,7 +479,7 @@ bool H2Connection::Impl::handleGoawayFrame(GoawayFrame *frame)
         connectionError(H2Error::PROTOCOL_ERROR);
         return false;
     }
-    TcpConnection::close();
+    tcp_conn_.close();
     auto streams = std::move(streams_);
     for (auto it : streams) {
         it.second->onError(frame->getErrorCode());
@@ -513,7 +525,7 @@ bool H2Connection::Impl::handleWindowUpdateFrame(WindowUpdateFrame *frame)
         return true;
     } else {
         H2StreamPtr stream = getStream(frame->getStreamId());
-        if (!stream && isServer()) {
+        if (!stream && tcp_conn_.isServer()) {
             // new stream arrived on server side
             stream = createStream(frame->getStreamId());
             last_stream_id_ = frame->getStreamId();
@@ -568,7 +580,7 @@ bool H2Connection::Impl::handleContinuationFrame(ContinuationFrame *frame)
 
 bool H2Connection::Impl::handleHeadersComplete(uint32_t stream_id, const HeaderVector &header_vec)
 {
-    if (isServer() && !isPromisedStream(stream_id) && accept_cb_) {
+    if (tcp_conn_.isServer() && !isPromisedStream(stream_id) && accept_cb_) {
         std::string method, path, host, protocol;
         for (auto const &kv : header_vec) {
             if (kv.first[0] != ':') {
@@ -790,12 +802,12 @@ void H2Connection::Impl::appendBlockedStream(uint32_t stream_id)
 
 void H2Connection::Impl::notifyBlockedStreams()
 {
-    if (!sendBufferEmpty() || remoteWindowSize() == 0) {
+    if (!tcp_conn_.sendBufferEmpty() || remoteWindowSize() == 0) {
         return;
     }
     auto streams = std::move(blocked_streams_);
     auto it = streams.begin();
-    while (it != streams.end() && sendBufferEmpty() && remoteWindowSize() > 0) {
+    while (it != streams.end() && tcp_conn_.sendBufferEmpty() && remoteWindowSize() > 0) {
         uint32_t stream_id = it->second;
         it = streams.erase(it);
         auto stream = getStream(stream_id);
@@ -813,7 +825,7 @@ void H2Connection::Impl::onLoopActivity(LoopActivity acti)
     if (acti == LoopActivity::EXIT) {
         KUMA_INFOXTRACE("loop exit");
         setState(State::CLOSED);
-        TcpConnection::close();
+        tcp_conn_.close();
         push_clients_.clear();
         loop_token_.reset();
         removeSelf();
@@ -873,7 +885,7 @@ void H2Connection::Impl::onHandshakeError(KMError err)
     onConnectError(err);
 }
 
-void H2Connection::Impl::onConnect(KMError err)
+void H2Connection::Impl::onConnect(KMError err, const std::string &host)
 {
     KUMA_INFOXTRACE("onConnect, err="<<int(err));
     if(err != KMError::NOERR) {
@@ -882,8 +894,8 @@ void H2Connection::Impl::onConnect(KMError err)
     }
     setState(State::HANDSHAKE);
     setupH2Handshake();
-    handshake_->setHost(host_);
-    handshake_->start(false, sslEnabled());
+    handshake_->setHost(host);
+    handshake_->start(false, tcp_conn_.sslEnabled());
 }
 
 void H2Connection::Impl::onWrite()
@@ -909,7 +921,7 @@ void H2Connection::Impl::onConnectError(KMError err)
     setState(State::IN_ERROR);
     cleanup();
     auto conn_key(std::move(key_));
-    auto secure = sslEnabled();
+    auto secure = tcp_conn_.sslEnabled();
     notifyListeners(err);
     H2ConnectionMgr::removeConnection(conn_key, secure);
 }
@@ -1029,10 +1041,10 @@ void H2Connection::Impl::onStateOpen()
     KUMA_INFOXTRACE("onStateOpen");
     setState(State::OPEN);
     handshake_.reset();
-    if (!isServer()) {
+    if (!tcp_conn_.isServer()) {
         // stream 1 for upgrade response
         // stream 1 data is discarded
-        if (!sslEnabled()) {
+        if (!tcp_conn_.sslEnabled()) {
             auto stream = createStream();
         }
         notifyListeners(KMError::NOERR);
@@ -1054,6 +1066,6 @@ void H2Connection::Impl::removeSelf()
     if (!key_.empty()) {
         std::string key(std::move(key_));
         // will destroy self when calling from loop stop
-        H2ConnectionMgr::removeConnection(key, sslEnabled());
+        H2ConnectionMgr::removeConnection(key, tcp_conn_.sslEnabled());
     }
 }
