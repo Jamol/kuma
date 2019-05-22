@@ -27,7 +27,7 @@
 # include <windows.h>
 # include "SspiAuthenticator.h"
 #elif defined(KUMA_OS_MAC)
-# include "GssAuthenticator.h"
+# include "GssapiAuthenticator.h"
 #elif defined(KUMA_OS_LINUX)
 
 #else
@@ -48,29 +48,65 @@ ProxyAuthenticator::~ProxyAuthenticator()
     
 }
 
-ProxyAuthenticator::Ptr ProxyAuthenticator::create(const std::string scheme,
-                                                   const std::string &domain_user,
-                                                   const std::string &passwd)
+ProxyAuthenticator::AuthScheme ProxyAuthenticator::getAuthScheme(const std::string &scheme)
 {
     if (is_equal(scheme, "Basic")) {
+        return AuthScheme::BASIC;
+    } else if (is_equal(scheme, "NTLM")) {
+        return AuthScheme::NTLM;
+    }
+    else if (is_equal(scheme, "Digest")) {
+        return AuthScheme::DIGEST;
+    }
+    else if (is_equal(scheme, "Negotiate")) {
+        return AuthScheme::NEGOTIATE;
+    }
+    else {
+        return AuthScheme::UNKNOWN;
+    }
+}
+
+std::string ProxyAuthenticator::getAuthScheme(AuthScheme scheme)
+{
+    switch (scheme)
+    {
+    case AuthScheme::BASIC:
+        return "Basic";
+    case AuthScheme::NTLM:
+        return "NTLM";
+    case AuthScheme::DIGEST:
+        return "Digest";
+    case AuthScheme::NEGOTIATE:
+        return "Negotiate";
+    default:
+        return "";
+    }
+}
+
+ProxyAuthenticator::Ptr ProxyAuthenticator::create(const AuthInfo &auth_info, const RequestInfo &req_info)
+{
+    auto auth_scheme = auth_info.scheme;
+    if (auth_scheme == AuthScheme::BASIC) {
         auto *basic = new BasicAuthenticator();
         auto ptr =  Ptr(basic);
-        if (!basic->init(domain_user, passwd)) {
+        if (!basic->init(auth_info.user, auth_info.passwd)) {
             ptr.reset();
         }
         return ptr;
-    } else if (is_equal(scheme, "NTLM") || is_equal(scheme, "Negotiate")) {
+    } else if (auth_scheme == AuthScheme::NTLM ||
+        auth_scheme == AuthScheme::DIGEST  ||
+        auth_scheme == AuthScheme::NEGOTIATE) {
 #if defined(KUMA_OS_WIN)
         auto *sspi = new SspiAuthenticator();
         auto ptr =  Ptr(sspi);
-        if (!sspi->init("", scheme, domain_user, passwd)) {
+        if (!sspi->init(auth_info, req_info)) {
             ptr.reset();
         }
         return ptr;
 #elif defined(KUMA_OS_MAC)
-        auto *gss = new GssAuthenticator();
-        auto ptr =  Ptr(gss);
-        if (!gss->init("", scheme, domain_user, passwd)) {
+        auto *gssapi = new GssapiAuthenticator();
+        auto ptr =  Ptr(gssapi);
+        if (!gssapi->init(auth_info, req_info)) {
             ptr.reset();
         }
         return ptr;

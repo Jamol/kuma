@@ -291,9 +291,6 @@
     <ClCompile Include="..\..\src\http\H1xStream.cpp">
       <Filter>Source Files\http</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\proxy\ProxyConnection.cpp">
-      <Filter>Source Files\proxy</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\proxy\ProxyAuthenticator.cpp">
       <Filter>Source Files\proxy</Filter>
     </ClCompile>
@@ -301,6 +298,9 @@
       <Filter>Source Files\proxy</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\proxy\SspiAuthenticator.cpp">
+      <Filter>Source Files\proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\proxy\ProxyConnectionImpl.cpp">
       <Filter>Source Files\proxy</Filter>
     </ClCompile>
   </ItemGroup>
@@ -512,9 +512,6 @@
     <ClInclude Include="..\..\src\http\H1xStream.h">
       <Filter>Header Files\http</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\proxy\ProxyConnection.h">
-      <Filter>Source Files\proxy</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\proxy\ProxyAuthenticator.h">
       <Filter>Source Files\proxy</Filter>
     </ClInclude>
@@ -522,6 +519,9 @@
       <Filter>Source Files\proxy</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\proxy\SspiAuthenticator.h">
+      <Filter>Source Files\proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\proxy\ProxyConnectionImpl.h">
       <Filter>Source Files\proxy</Filter>
     </ClInclude>
   </ItemGroup>

@@ -33,7 +33,7 @@ class BasicAuthenticator : public ProxyAuthenticator
 {
 public:
     BasicAuthenticator();
-    virtual ~BasicAuthenticator();
+    ~BasicAuthenticator();
 
     bool init(const std::string &user, const std::string &passwd);
     bool nextAuthToken(const std::string& challenge) override;

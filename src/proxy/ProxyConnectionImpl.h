@@ -26,6 +26,7 @@
 #include "TcpConnection.h"
 #include "http/HttpParserImpl.h"
 #include "ProxyAuthenticator.h"
+#include "proxydefs.h"
 
 KUMA_NS_BEGIN
 
@@ -38,8 +39,10 @@ public:
     Impl(const EventLoopPtr &loop);
     virtual ~Impl();
     
-    KMError setProxyInfo(const std::string &proxy_url, const std::string &user, const std::string &passwd);
+    KMError setProxyInfo(const ProxyInfo &proxy_info);
     KMError connect(const std::string &host, uint16_t port, EventCallback cb) override;
+    KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf) override;
+    KMError attachSocket(TcpSocket::Impl &&tcp, const KMBuffer *init_buf) override;
     
     void setDataCallback(DataCallback cb) override { proxy_data_cb_ = std::move(cb); }
     void setWriteCallback(EventCallback cb) override { proxy_write_cb_ = std::move(cb); }
@@ -69,6 +72,7 @@ protected:
         IDLE,
         CONNECTING,
         AUTHENTICATING,
+        SSL_CONNECTING,
         OPEN,
         CLOSED
     };
@@ -79,14 +83,14 @@ private:
     State                   state_ = State::IDLE;
     std::string             connect_host_;
     uint16_t                connect_port_;
+    ProxyInfo               proxy_info_;
     std::string             proxy_addr_;
     uint16_t                proxy_port_;
-    std::string             proxy_user_; // domain\user
-    std::string             proxy_passwd_;
     HttpParser::Impl        http_parser_;
     std::unique_ptr<ProxyAuthenticator> proxy_auth_;
     
     bool                    need_reconnect_ = false;
+    uint32_t                proxy_ssl_flags_ = 0;
     
     EventCallback           proxy_connect_cb_;
     DataCallback            proxy_data_cb_;

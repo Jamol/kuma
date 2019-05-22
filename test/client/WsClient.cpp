@@ -6,6 +6,10 @@
 # include <arpa/inet.h>
 #endif
 
+extern std::string g_proxy_url;
+extern std::string g_proxy_user;
+extern std::string g_proxy_passwd;
+
 uint32_t getSendInterval();
 
 extern std::string getHttpVersion();
@@ -30,6 +34,7 @@ void WsClient::startRequest(const std::string& url)
     });
     ws_.setWriteCallback([this] (KMError err) { onSend(err); });
     ws_.setErrorCallback([this] (KMError err) { onClose(err); });
+    ws_.setProxyInfo(g_proxy_url.c_str(), g_proxy_user.c_str(), g_proxy_passwd.c_str());
     ws_.setSubprotocol("jws");
     ws_.setOrigin("www.jamol.cn");
     ws_.addHeader("x-forward-addr", "123");

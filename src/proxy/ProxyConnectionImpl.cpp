@@ -19,7 +19,7 @@
 * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-#include "ProxyConnection.h"
+#include "ProxyConnectionImpl.h"
 #include "util/kmtrace.h"
 #include "http/Uri.h"
 
@@ -39,18 +39,7 @@ using namespace kuma;
 ProxyConnection::Impl::Impl(const EventLoopPtr &loop)
 : TcpConnection(loop)
 {
-    TcpConnection::setDataCallback([this](uint8_t *data, size_t size) {
-        return onTcpData(data, size);
-    });
-    TcpConnection::setWriteCallback([this] (KMError) {
-        onTcpWrite();
-    });
-    TcpConnection::setErrorCallback([this] (KMError err) {
-        onTcpError(err);
-    });
     
-    http_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
-    http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
 }
 
 ProxyConnection::Impl::~Impl()
@@ -58,34 +47,81 @@ ProxyConnection::Impl::~Impl()
     
 }
 
-KMError ProxyConnection::Impl::setProxyInfo(const std::string &proxy_url, const std::string &user, const std::string &passwd)
+KMError ProxyConnection::Impl::setProxyInfo(const ProxyInfo &proxy_info)
 {
+    KUMA_INFOTRACE("ProxyConnection::setProxyInfo, proxy=" << proxy_info.url);
     Uri uri;
-    if (!uri.parse(proxy_url)) {
+    if (!uri.parse(proxy_info.url)) {
         return KMError::INVALID_PARAM;
     }
+    proxy_info_ = proxy_info;
     proxy_addr_ = uri.getHost();
     proxy_port_ = static_cast<uint16_t>(std::stoi(uri.getPort()));
-    proxy_user_ = user;
-    proxy_passwd_ = passwd;
     return KMError::NOERR;
 }
 
 KMError ProxyConnection::Impl::connect(const std::string &host, uint16_t port, EventCallback cb)
 {
-    connect_host_ = host;
-    connect_port_ = port;
-    proxy_connect_cb_ = std::move(cb);
+    if (proxy_addr_.empty()) {
+        TcpConnection::setDataCallback(proxy_data_cb_);
+        TcpConnection::setWriteCallback(proxy_write_cb_);
+        TcpConnection::setErrorCallback(proxy_error_cb_);
+        
+        return TcpConnection::connect(host, port, std::move(cb));
+    } else {
+        TcpConnection::setDataCallback([this](uint8_t *data, size_t size) {
+            return onTcpData(data, size);
+        });
+        TcpConnection::setWriteCallback([this] (KMError) {
+            onTcpWrite();
+        });
+        TcpConnection::setErrorCallback([this] (KMError err) {
+            onTcpError(err);
+        });
+        
+        http_parser_.reset();
+        http_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
+        http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
+        
+        connect_host_ = host;
+        connect_port_ = port;
+        proxy_connect_cb_ = std::move(cb);
+        if (TcpConnection::sslEnabled()) {
+            proxy_ssl_flags_ = getSslFlags();
+            TcpConnection::setSslFlags(0);
+        }
+        
+        setState(State::CONNECTING);
+        return TcpConnection::connect(proxy_addr_, proxy_port_, [this] (KMError err) {
+            onTcpConnect(err);
+        });
+    }
+}
+
+KMError ProxyConnection::Impl::attachFd(SOCKET_FD fd, const KMBuffer *init_buf)
+{
+    TcpConnection::setDataCallback(proxy_data_cb_);
+    TcpConnection::setWriteCallback(proxy_write_cb_);
+    TcpConnection::setErrorCallback(proxy_error_cb_);
     
-    setState(State::CONNECTING);
-    return TcpConnection::connect(proxy_addr_, proxy_port_, [this] (KMError err) {
-        onTcpConnect(err);
-    });
+    return TcpConnection::attachFd(fd, init_buf);
+}
+
+KMError ProxyConnection::Impl::attachSocket(TcpSocket::Impl &&tcp, const KMBuffer *init_buf)
+{
+    TcpConnection::setDataCallback(proxy_data_cb_);
+    TcpConnection::setWriteCallback(proxy_write_cb_);
+    TcpConnection::setErrorCallback(proxy_error_cb_);
+    
+    return TcpConnection::attachSocket(std::move(tcp), init_buf);
 }
 
 KMError ProxyConnection::Impl::sendProxyRequest()
 {
+    http_parser_.reset();
+    http_parser_.setRequestMethod("CONNECT");
     setState(State::AUTHENTICATING);
+
     auto req = buildProxyRequest();
     auto ret = TcpConnection::send(req.c_str(), req.size());
     if (ret < 0) {
@@ -117,23 +153,25 @@ std::string ProxyConnection::Impl::buildProxyRequest()
 
 KMError ProxyConnection::Impl::handleProxyResponse()
 {
+    KUMA_INFOTRACE("ProxyConnection::handleProxyResponse, code=" << http_parser_.getStatusCode());
     if (http_parser_.getStatusCode() == 407) {
         auto str_conn = http_parser_.getHeaderValue("Connection");
         if (str_conn.empty()) {
             str_conn = http_parser_.getHeaderValue(strProxyConnection);
         }
         bool need_reconnect = is_equal(str_conn, "Close");
-        std::string scheme, chellage;
-        http_parser_.forEachHeader([&scheme, &chellage] (const std::string &name, const std::string &value) {
+        std::string scheme, challenge;
+        http_parser_.forEachHeader([&scheme, &challenge] (const std::string &name, const std::string &value) {
             if (is_equal(name, strProxyAuthenticate)) {
                 const auto pos = value.find(' ');
                 const auto s = value.substr(0, pos);
                 if (is_equal(s, "NTLM") ||
                     is_equal(s, "Negotiate") ||
+                    is_equal(s, "Digest") ||
                     is_equal(s, "Basic")) {
                     scheme = std::move(s);
                     if (pos != std::string::npos) {
-                        chellage = value.substr(pos + 1);
+                        challenge = value.substr(pos + 1);
                     }
                     return false;
                 }
@@ -141,19 +179,24 @@ KMError ProxyConnection::Impl::handleProxyResponse()
             return true;
         });
         if (scheme.empty()) {
+            KUMA_ERRTRACE("ProxyConnection::handleProxyResponse, auth scheme is empty");
             return KMError::FAILED;
         }
+        KUMA_INFOTRACE("ProxyConnection::handleProxyResponse, token: " << scheme << " " << challenge);
         if (!proxy_auth_) {
-            proxy_auth_ = ProxyAuthenticator::create(scheme, proxy_user_, proxy_passwd_);
+            auto auth_scheme = ProxyAuthenticator::getAuthScheme(scheme);
+            proxy_auth_ = ProxyAuthenticator::create(
+                {auth_scheme, proxy_info_.user, proxy_info_.passwd},
+                {proxy_addr_, proxy_port_, "CONNECT", "/", "HTTP"}
+            );
             if (!proxy_auth_) {
                 return KMError::FAILED;
             }
         }
-        proxy_auth_->nextAuthToken(chellage);
+        proxy_auth_->nextAuthToken(challenge);
         
         if (need_reconnect) {
             TcpConnection::close();
-            http_parser_.reset();
             
             setState(State::CONNECTING);
             auto ret = TcpConnection::connect(proxy_addr_, proxy_port_, [this] (KMError err) {
@@ -166,7 +209,19 @@ KMError ProxyConnection::Impl::handleProxyResponse()
             sendProxyRequest();
         }
     } else if (http_parser_.getStatusCode() == 200) {
-        onProxyConnect(KMError::NOERR);
+#ifdef KUMA_HAS_OPENSSL
+        if (proxy_ssl_flags_ != 0) {
+            setState(State::SSL_CONNECTING);
+            TcpConnection::setSslFlags(proxy_ssl_flags_);
+            proxy_ssl_flags_ = 0;
+            TcpConnection::startSslHandshake(SslRole::CLIENT, [this] (KMError err) {
+                onProxyConnect(err);
+            });
+        } else
+#endif
+        {
+            onProxyConnect(KMError::NOERR);
+        }
     }
     return KMError::NOERR;
 }
@@ -241,7 +296,7 @@ void ProxyConnection::Impl::onHttpData(KMBuffer &buf)
 
 void ProxyConnection::Impl::onHttpEvent(HttpEvent ev)
 {
-    KUMA_INFOTRACE("onHttpEvent, ev="<<int(ev));
+    KUMA_INFOTRACE("ProxyConnection::onHttpEvent, ev="<<int(ev));
     switch (ev) {
         case HttpEvent::HEADER_COMPLETE:
             break;

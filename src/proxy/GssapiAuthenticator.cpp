@@ -19,7 +19,7 @@
 * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-#include "GssAuthenticator.h"
+#include "GssapiAuthenticator.h"
 #include "util/util.h"
 #include "util/kmtrace.h"
 #include "util/base64.h"
@@ -27,12 +27,12 @@
 
 using namespace kuma;
 
-GssAuthenticator::GssAuthenticator()
+GssapiAuthenticator::GssapiAuthenticator()
 {
-    KM_SetObjKey("GssAuthenticator");
+    KM_SetObjKey("GssapiAuthenticator");
 }
 
-GssAuthenticator::~GssAuthenticator()
+GssapiAuthenticator::~GssapiAuthenticator()
 {
     if(cred_id_ != GSS_C_NO_CREDENTIAL)
     {
@@ -55,16 +55,15 @@ GssAuthenticator::~GssAuthenticator()
     }
 }
 
-bool GssAuthenticator::init(const std::string& proxy_name, const std::string& auth_scheme, const std::string &domain_user, const std::string &password)
+bool GssapiAuthenticator::init(const AuthInfo &auth_info, const RequestInfo &req_info)
 {
-    proxy_name_ = proxy_name;
-    auth_scheme_ = auth_scheme;
+    auth_scheme_ = auth_info.scheme;
     
-    if(is_equal(auth_scheme, "Negotiate"))
+    if(auth_scheme_ == AuthScheme::NEGOTIATE)
     {
         mech_oid_ = GSS_SPNEGO_MECHANISM;
     }
-    else if(is_equal(auth_scheme, "NTLM"))
+    else if(auth_scheme_ == AuthScheme::NTLM)
     {
         mech_oid_ = GSS_NTLM_MECHANISM;
     }
@@ -75,15 +74,15 @@ bool GssAuthenticator::init(const std::string& proxy_name, const std::string& au
 
     std::string domain_name;
     std::string user_name;
-    const auto back_slash_pos = domain_user.find_first_of("\\");
+    const auto back_slash_pos = auth_info.user.find_first_of("\\");
     if(back_slash_pos != std::string::npos)
     {
-        domain_name = domain_user.substr(0, back_slash_pos);
-        user_name = domain_user.substr(back_slash_pos + 1);
+        domain_name = auth_info.user.substr(0, back_slash_pos);
+        user_name = auth_info.user.substr(back_slash_pos + 1);
     }
     else
     {
-        user_name = domain_user;
+        user_name = auth_info.user;
     }
     
     gss_buffer_desc domain_name_token;
@@ -100,7 +99,7 @@ bool GssAuthenticator::init(const std::string& proxy_name, const std::string& au
         return false;
     }
     
-    if(!domain_user.empty())
+    if(!auth_info.user.empty())
     {
         gss_buffer_desc user_name_token;
         user_name_token.value = (void*)user_name.c_str();
@@ -117,8 +116,8 @@ bool GssAuthenticator::init(const std::string& proxy_name, const std::string& au
         }
         
         gss_buffer_desc password_token;
-        password_token.value = (void*)password.c_str();
-        password_token.length = password.length();
+        password_token.value = (void*)auth_info.passwd.c_str();
+        password_token.length = auth_info.passwd.length();
         
         // Binary representation of NTLM OID (https://msdn.microsoft.com/en-us/library/cc236636.aspx)
         static char gss_ntlm_oid_value[] = "\x2b\x06\x01\x04\x01\x82\x37\x02\x02\x0a";
@@ -156,7 +155,7 @@ bool GssAuthenticator::init(const std::string& proxy_name, const std::string& au
     return true;
 }
 
-bool GssAuthenticator::nextAuthToken(const std::string& challenge)
+bool GssapiAuthenticator::nextAuthToken(const std::string& challenge)
 {
     auth_token_ = "";
     if (!hasAuthHeader())
@@ -209,16 +208,16 @@ bool GssAuthenticator::nextAuthToken(const std::string& challenge)
     return true;
 }
 
-std::string GssAuthenticator::getAuthHeader() const
+std::string GssapiAuthenticator::getAuthHeader() const
 {
     if (hasAuthHeader()) {
-        return auth_scheme_ + " " + auth_token_;
+        return getAuthScheme(auth_scheme_) + " " + auth_token_;
     }
     
     return "";
 }
 
-bool GssAuthenticator::hasAuthHeader() const
+bool GssapiAuthenticator::hasAuthHeader() const
 {
     const bool hasCreds = gss_user_name_ != GSS_C_NO_NAME;
     const bool errorHappened = GSS_ERROR(major_status_);

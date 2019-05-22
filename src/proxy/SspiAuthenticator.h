@@ -29,7 +29,10 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-#define SECURITY_WIN32
+
+#undef SECURITY_WIN32
+#undef SECURITY_KERNEL
+#define SECURITY_WIN32 1
 #include <sspi.h>
 
 KUMA_NS_BEGIN
@@ -38,17 +41,24 @@ class SspiAuthenticator : public KMObject, public ProxyAuthenticator
 {
 public:
     SspiAuthenticator();
-    virtual ~SspiAuthenticator();
+    ~SspiAuthenticator();
 
-    bool init(const std::string &proxy_name, const std::string &auth_scheme, const std::string &domain_user, const std::string &password);
+    bool init(const AuthInfo &auth_info, const RequestInfo &req_info);
     bool nextAuthToken(const std::string& challenge) override;
     std::string getAuthHeader() const override;
     bool hasAuthHeader() const override;
 
 protected:
-    bool            initialized_ = false;
-    std::string     proxy_name_;
-    std::string     auth_scheme_;
+    bool parseDigestChallenge(
+        const std::string &challenge, 
+        std::string &realm, 
+        std::string &nonce, 
+        std::string qop);
+    void cleanup();
+
+protected:
+    AuthScheme      auth_scheme_;
+    RequestInfo     req_info_;
     std::string     auth_token_;
     CredHandle      cred_handle_{ 0 };
     CtxtHandle      ctxt_handle_{ 0 };

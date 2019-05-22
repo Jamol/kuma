@@ -297,7 +297,7 @@ KMError TcpSocket::Impl::detachFd(SOCKET_FD &fd, SSL* &ssl, BIO* &nbio)
     return KMError::NOERR;
 }
 
-KMError TcpSocket::Impl::startSslHandshake(SslRole ssl_role)
+KMError TcpSocket::Impl::startSslHandshake(SslRole ssl_role, EventCallback cb)
 {
     KUMA_INFOXTRACE("startSslHandshake, ssl_role=" << int(ssl_role) << ", fd=" << getFd());
     if (!socket_->isReady()) {
@@ -331,8 +331,13 @@ KMError TcpSocket::Impl::startSslHandshake(SslRole ssl_role)
     auto ssl_state = ssl_handler_->handshake();
     if (ssl_state == SslHandler::SslState::SSL_ERROR) {
         return KMError::SSL_ERROR;
+    } else if (ssl_state == SslHandler::SslState::SSL_SUCCESS) {
+        if (cb) cb(KMError::NOERR); // FIXME: callback directly
+        return KMError::NOERR;
+    } else {
+        if (!connect_cb_ && cb) connect_cb_ = std::move(cb);
+        return KMError::NOERR;
     }
-    return KMError::NOERR;
 }
 #endif
 
@@ -493,7 +498,8 @@ void TcpSocket::Impl::onConnect(KMError err)
     if (err != KMError::NOERR) {
         cleanup();
     }
-    auto connect_cb(std::move(connect_cb_));
+    decltype(connect_cb_) connect_cb;
+    connect_cb.swap(connect_cb_);
     if (connect_cb) connect_cb(err);
 }
 
@@ -561,6 +567,7 @@ bool TcpSocket::Impl::createSocket()
     }
     return false;
 }
+
 #ifdef KUMA_HAS_OPENSSL
 bool TcpSocket::Impl::createSslHandler()
 {
@@ -604,7 +611,8 @@ KMError TcpSocket::Impl::checkSslHandshake(KMError err)
     }
     KUMA_INFOXTRACE("checkSslHandshake, completed, err=" << int(err));
     if (connect_cb_) {
-        auto connect_cb(std::move(connect_cb_));
+        decltype(connect_cb_) connect_cb;
+        connect_cb.swap(connect_cb_);
         connect_cb(err);
     }
     else if (err != KMError::NOERR) {

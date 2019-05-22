@@ -86,6 +86,11 @@ KMError WebSocket::Impl::setSslFlags(uint32_t ssl_flags)
     return ws_conn_->setSslFlags(ssl_flags);
 }
 
+KMError WebSocket::Impl::setProxyInfo(const ProxyInfo &proxy_info)
+{
+    return ws_conn_->setProxyInfo(proxy_info);
+}
+
 KMError WebSocket::Impl::connect(const std::string& ws_url)
 {
     if(getState() != State::IDLE && getState() != State::CLOSED) {

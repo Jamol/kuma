@@ -69,7 +69,7 @@ public:
     KMError setSslServerName(std::string serverName);
     KMError attachFd(SOCKET_FD fd, SSL *ssl, BIO *nbio);
     KMError detachFd(SOCKET_FD &fd, SSL* &ssl, BIO* &nbio);
-    KMError startSslHandshake(SslRole ssl_role);
+    KMError startSslHandshake(SslRole ssl_role, EventCallback cb=nullptr);
 #endif
     int send(const void* data, size_t length);
     int send(const iovec* iovs, int count);

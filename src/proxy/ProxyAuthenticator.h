@@ -28,19 +28,45 @@
 
 KUMA_NS_BEGIN
 
+
 class ProxyAuthenticator
 {
 public:
     using Ptr = std::unique_ptr<ProxyAuthenticator>;
-    
+    enum class AuthScheme
+    {
+        UNKNOWN,
+        BASIC,
+        NTLM,
+        DIGEST,
+        NEGOTIATE
+    };
+    struct AuthInfo
+    {
+        AuthScheme scheme;
+        std::string user;
+        std::string passwd;
+    };
+    struct RequestInfo
+    {
+        std::string host;
+        uint16_t port;
+        std::string method;
+        std::string path;
+        std::string service;
+    };
+
     ProxyAuthenticator();
     virtual ~ProxyAuthenticator();
     
     virtual bool nextAuthToken(const std::string& challenge) = 0;
     virtual std::string getAuthHeader() const = 0;
     virtual bool hasAuthHeader() const = 0;
+
+    static AuthScheme getAuthScheme(const std::string &scheme);
+    static std::string getAuthScheme(AuthScheme scheme);
     
-    static Ptr create(const std::string scheme, const std::string &domain_user, const std::string &passwd);
+    static Ptr create(const AuthInfo &auth_info, const RequestInfo &req_info);
 };
 
 KUMA_NS_END

@@ -22,41 +22,14 @@
 #pragma once
 
 #include "kmdefs.h"
-#include "ProxyAuthenticator.h"
-#include "util/kmobject.h"
-
-#include <string>
-
-#include <GSS/gssapi.h>
-#include <GSS/gssapi_krb5.h>
-#include <GSS/gssapi_spnego.h>
-
 
 KUMA_NS_BEGIN
 
-class GssAuthenticator : public KMObject, public ProxyAuthenticator
+struct ProxyInfo
 {
-public:
-    GssAuthenticator();
-    virtual ~GssAuthenticator();
-
-    bool init(const std::string &proxy_name, const std::string &auth_scheme, const std::string &domain_user, const std::string &passwd);
-    bool nextAuthToken(const std::string& challenge) override;
-    std::string getAuthHeader() const override;
-    bool hasAuthHeader() const override;
-
-protected:
-    std::string     proxy_name_;
-    std::string     auth_scheme_;
-    std::string     auth_token_;
-    
-    gss_ctx_id_t    ctx_id_ = GSS_C_NO_CONTEXT;
-    gss_cred_id_t   cred_id_ = GSS_C_NO_CREDENTIAL;
-    OM_uint32       major_status_ = 0;
-    OM_uint32       minor_status_ = 0;
-    gss_OID         mech_oid_ = GSS_C_NO_OID;
-    gss_name_t      gss_domain_name_ = GSS_C_NO_NAME;
-    gss_name_t      gss_user_name_ = GSS_C_NO_NAME;
+    std::string url;
+    std::string user;
+    std::string passwd;
 };
 
 KUMA_NS_END

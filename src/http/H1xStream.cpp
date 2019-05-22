@@ -59,6 +59,11 @@ H1xStream::~H1xStream()
     loop_token_.reset();
 }
 
+KMError H1xStream::setProxyInfo(const ProxyInfo &proxy_info)
+{
+    return tcp_conn_.setProxyInfo(proxy_info);
+}
+
 KMError H1xStream::addHeader(std::string name, std::string value)
 {
     return outgoing_message_.addHeader(std::move(name), std::move(value));

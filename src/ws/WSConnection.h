@@ -26,6 +26,7 @@
 #include "kmbuffer.h"
 #include "http/httpdefs.h"
 #include "http/HttpHeader.h"
+#include "proxy/proxydefs.h"
 
 #include <functional>
 
@@ -47,6 +48,7 @@ public:
     const std::string& getSubprotocol() const { return subprotocol_; }
     KMError setExtensions(const std::string& extensions);
     const std::string& getExtensions() const { return extensions_; }
+    virtual KMError setProxyInfo(const ProxyInfo &proxy_info) = 0;
     virtual KMError addHeader(std::string name, std::string value) = 0;
     virtual KMError addHeader(std::string name, uint32_t value) = 0;
     

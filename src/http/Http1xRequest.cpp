@@ -68,6 +68,11 @@ void Http1xRequest::cleanup()
     stream_->close();
 }
 
+KMError Http1xRequest::setProxyInfo(const ProxyInfo &proxy_info)
+{
+    return stream_->setProxyInfo(proxy_info);
+}
+
 KMError Http1xRequest::addHeader(std::string name, std::string value)
 {
     return stream_->addHeader(std::move(name), std::move(value));

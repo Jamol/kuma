@@ -19,52 +19,43 @@
 * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 */
 
-#include "BasicAuthenticator.h"
-#include "util/kmtrace.h"
-#include "util/base64.h"
+#pragma once
+
+#include "kmdefs.h"
+#include "ProxyAuthenticator.h"
+#include "util/kmobject.h"
+
+#include <string>
+
+#include <GSS/gssapi.h>
+#include <GSS/gssapi_krb5.h>
+#include <GSS/gssapi_spnego.h>
 
 
-using namespace kuma;
+KUMA_NS_BEGIN
 
-BasicAuthenticator::BasicAuthenticator()
+class GssapiAuthenticator : public KMObject, public ProxyAuthenticator
 {
+public:
+    GssapiAuthenticator();
+    ~GssapiAuthenticator();
+
+    bool init(const AuthInfo &auth_info, const RequestInfo &req_info);
+    bool nextAuthToken(const std::string& challenge) override;
+    std::string getAuthHeader() const override;
+    bool hasAuthHeader() const override;
+
+protected:
+    AuthScheme      auth_scheme_;
+    std::string     auth_token_;
     
-}
+    gss_ctx_id_t    ctx_id_ = GSS_C_NO_CONTEXT;
+    gss_cred_id_t   cred_id_ = GSS_C_NO_CREDENTIAL;
+    OM_uint32       major_status_ = 0;
+    OM_uint32       minor_status_ = 0;
+    gss_OID         mech_oid_ = GSS_C_NO_OID;
+    gss_name_t      gss_domain_name_ = GSS_C_NO_NAME;
+    gss_name_t      gss_user_name_ = GSS_C_NO_NAME;
+};
 
-BasicAuthenticator::~BasicAuthenticator()
-{
-    
-}
-
-bool BasicAuthenticator::init(const std::string &user, const std::string &passwd)
-{
-    if (!user.empty()) {
-        std::string str = user + ":" + passwd;
-        auth_token_ = x64_encode(str, false);
-    }
-    return true;
-}
-
-bool BasicAuthenticator::nextAuthToken(const std::string& challenge)
-{
-    if (!hasAuthHeader())
-    {
-        return false;
-    }
-    
-    return true;
-}
-
-std::string BasicAuthenticator::getAuthHeader() const
-{
-    if (hasAuthHeader()) {
-        return "BASIC " + auth_token_;
-    }
-    
-    return "";
-}
-
-bool BasicAuthenticator::hasAuthHeader() const
-{
-    return !auth_token_.empty();
-}
+KUMA_NS_END

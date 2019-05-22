@@ -14,6 +14,7 @@ class TcpClient : public TestObject
 public:
     TcpClient(TestLoop* loop, long conn_id);
     
+    void setSslFlags(uint32_t ssl_flags) { ssl_flags_ = ssl_flags; }
     KMError bind(const std::string &bind_host, uint16_t bind_port);
     KMError connect(const std::string &host, uint16_t port);
     int close();
@@ -24,15 +25,19 @@ public:
     void onClose(KMError err);
     void onTimer();
     
+    KMError onData(uint8_t *data, size_t size);
+    
 private:
     void sendData();
     
 private:
     TestLoop*   loop_;
     TcpSocket   tcp_;
+    ProxyConnection proxy_conn_;
     
     Timer       timer_;
     
+    uint32_t    ssl_flags_ = 0;
     long        conn_id_;
     
     uint32_t    index_;

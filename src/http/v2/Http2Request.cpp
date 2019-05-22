@@ -64,6 +64,11 @@ KMError Http2Request::setSslFlags(uint32_t ssl_flags)
     return KMError::NOERR;
 }
 
+KMError Http2Request::setProxyInfo(const ProxyInfo &proxy_info)
+{
+    return stream_->setProxyInfo(proxy_info);
+}
+
 KMError Http2Request::addHeader(std::string name, std::string value)
 {
     return stream_->addHeader(std::move(name), std::move(value));

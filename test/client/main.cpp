@@ -21,6 +21,9 @@ using namespace kuma;
 #define THREAD_COUNT    10
 static bool g_exit = false;
 bool g_test_http2 = false;
+std::string g_proxy_url;
+std::string g_proxy_user;
+std::string g_proxy_passwd;
 EventLoop main_loop(PollType::NONE);
 
 #ifdef KUMA_OS_WIN
@@ -54,6 +57,9 @@ static const std::string g_usage =
 "   -t ms           send interval\n"
 "   -v              print version\n"
 "   --http2         test http2\n"
+"   --proxy         test proxy setting"
+"   --user          proxy domain user name"
+"   --passwd        proxy password"
 ;
 
 std::vector<std::thread> event_threads;
@@ -125,7 +131,30 @@ int main(int argc, char *argv[])
                     }
                     break;
                 case '-':
-                    g_test_http2 = strcmp(argv[i] + 2, "http2") == 0;
+                    if (strcmp(argv[i] + 2, "http2") == 0) {
+                        g_test_http2 = true;
+                    } else if (strcmp(argv[i] + 2, "proxy") == 0) {
+                        if(++i < argc) {
+                            g_proxy_url = argv[i];
+                        } else {
+                            printUsage();
+                            return -1;
+                        }
+                    } else if (strcmp(argv[i] + 2, "user") == 0) {
+                        if(++i < argc) {
+                            g_proxy_user = argv[i];
+                        } else {
+                            printUsage();
+                            return -1;
+                        }
+                    } else if (strcmp(argv[i] + 2, "passwd") == 0) {
+                        if(++i < argc) {
+                            g_proxy_passwd = argv[i];
+                        } else {
+                            printUsage();
+                            return -1;
+                        }
+                    }
                     break;
                 default:
                     printUsage();

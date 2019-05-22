@@ -69,6 +69,11 @@ void WSConnection_V1::cleanup()
     stream_->close();
 }
 
+KMError WSConnection_V1::setProxyInfo(const ProxyInfo &proxy_info)
+{
+    return stream_->setProxyInfo(proxy_info);
+}
+
 KMError WSConnection_V1::addHeader(std::string name, std::string value)
 {
     return stream_->addHeader(std::move(name), std::move(value));

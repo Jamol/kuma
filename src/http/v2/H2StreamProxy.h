@@ -28,6 +28,7 @@
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
 #include "util/kmqueue.h"
+#include "proxy/proxydefs.h"
 
 KUMA_NS_BEGIN
 
@@ -43,6 +44,7 @@ public:
     H2StreamProxy(const EventLoopPtr &loop);
     ~H2StreamProxy();
     
+    KMError setProxyInfo(const ProxyInfo &proxy_info);
     KMError addHeader(std::string name, std::string value);
     KMError sendRequest(std::string method, std::string url, uint32_t ssl_flags);
     KMError attachStream(uint32_t stream_id, H2Connection::Impl* conn);
@@ -190,6 +192,7 @@ protected:
     Uri uri_;
     std::string protocol_;
     HttpHeader outgoing_header_{true, true};
+    ProxyInfo proxy_info_;
     
     // incoming
     HttpHeader incoming_header_{false, true};

@@ -91,6 +91,11 @@ void H2Connection::Impl::setConnectionKey(const std::string &key)
     }
 }
 
+KMError H2Connection::Impl::setProxyInfo(const ProxyInfo &proxy_info)
+{
+    return tcp_conn_.setProxyInfo(proxy_info);
+}
+
 KMError H2Connection::Impl::connect(const std::string &host, uint16_t port)
 {
     if(getState() != State::IDLE) {

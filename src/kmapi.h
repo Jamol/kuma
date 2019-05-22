@@ -158,7 +158,7 @@ public:
     KMError connect(const char *host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
     KMError attachFd(SOCKET_FD fd);
     KMError detachFd(SOCKET_FD &fd);
-    KMError startSslHandshake(SslRole ssl_role);
+    KMError startSslHandshake(SslRole ssl_role, EventCallback cb);
     KMError getAlpnSelected(char *buf, size_t len);
     int send(const void *data, size_t length);
     int send(const iovec *iovs, int count);
@@ -329,6 +329,13 @@ public:
     ~HttpRequest();
     
     KMError setSslFlags(uint32_t ssl_flags);
+    
+    /* set proxy server info and credentials
+     * @param proxy_url proxy server info, for example, http://proxy.example.com:3128
+     * @param domain_user domain and user name, domain\username or username
+     * @param passwd proxy password
+     */
+    KMError setProxyInfo(const char *proxy_url, const char *domain_user, const char *passwd);
     KMError addHeader(const char *name, const char *value);
     KMError addHeader(const char *name, uint32_t value);
     KMError sendRequest(const char *method, const char *url);
@@ -434,6 +441,13 @@ public:
     const char* getSubprotocol() const;
     const char* getExtensions() const;
     
+    /* set proxy server info and credentials
+     * @param proxy_url proxy server info, for example, http://proxy.example.com:3128
+     * @param domain_user domain and user name, domain\username or username
+     * @param passwd proxy password
+     */
+    KMError setProxyInfo(const char *proxy_url, const char *domain_user, const char *passwd);
+    
     /**
      * add user defined headers
      */
@@ -461,6 +475,46 @@ public:
     void setDataCallback(DataCallback cb);
     void setWriteCallback(EventCallback cb);
     void setErrorCallback(EventCallback cb);
+    
+    class Impl;
+    Impl* pimpl();
+    
+private:
+    Impl* pimpl_;
+};
+
+class KUMA_API ProxyConnection
+{
+public:
+    using EventCallback = std::function<void(KMError)>;
+    using DataCallback = std::function<KMError(uint8_t*, size_t)>;
+    
+    ProxyConnection(EventLoop *loop);
+    ~ProxyConnection();
+    
+    KMError setSslFlags(uint32_t ssl_flags);
+    uint32_t getSslFlags() const;
+    bool sslEnabled() const;
+    KMError setSslServerName(const char *server_name);
+    
+    /* set proxy server info and credentials
+     * @param proxy_url proxy server info, for example, http://proxy.example.com:3128
+     * @param domain_user domain and user name, domain\username or username
+     * @param passwd proxy password
+     */
+    KMError setProxyInfo(const char *proxy_url, const char *domain_user, const char *passwd);
+    KMError connect(const char *host, uint16_t port, EventCallback cb);
+    int send(const void* data, size_t len);
+    int send(const iovec* iovs, int count);
+    int send(const KMBuffer &buf);
+    KMError close();
+    
+    void setDataCallback(DataCallback cb);
+    void setWriteCallback(EventCallback cb);
+    void setErrorCallback(EventCallback cb);
+    
+    bool canSendData() const;
+    bool sendBufferEmpty() const;
     
     class Impl;
     Impl* pimpl();

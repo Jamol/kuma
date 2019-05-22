@@ -57,6 +57,7 @@ public:
     KMError setSubprotocol(const std::string& subprotocol) { return ws_conn_->setSubprotocol(subprotocol); }
     const std::string& getSubprotocol() const { return ws_conn_->getSubprotocol(); }
     const std::string& getExtensions() const { return ws_conn_->getExtensions(); }
+    KMError setProxyInfo(const ProxyInfo &proxy_info);
     KMError addHeader(std::string name, std::string value)
     {
         return ws_conn_->addHeader(std::move(name), std::move(value));

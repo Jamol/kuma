@@ -104,6 +104,9 @@ SRCS =  \
     ssl/BioHandler.cpp \
     ssl/SioHandler.cpp \
     ssl/OpenSslLib.cpp \
+    proxy/ProxyAuthenticator.cpp \
+    proxy/BasicAuthenticator.cpp \
+    proxy/ProxyConnectionImpl.cpp \
     DnsResolver.cpp \
     kmapi.cpp
 
