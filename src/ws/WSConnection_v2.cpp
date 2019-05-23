@@ -69,6 +69,11 @@ KMError WSConnection_V2::setSslFlags(uint32_t ssl_flags)
     return KMError::NOERR;
 }
 
+KMError WSConnection_V2::setProxyInfo(const ProxyInfo &proxy_info)
+{
+    return stream_->setProxyInfo(proxy_info);
+}
+
 KMError WSConnection_V2::addHeader(std::string name, std::string value)
 {
     return stream_->addHeader(std::move(name), std::move(value));

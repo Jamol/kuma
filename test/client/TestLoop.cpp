@@ -81,7 +81,7 @@ void TestLoop::startTest_i(const std::string& addr_url, const std::string& bind_
         return ;
     }
     
-    if(strcmp(proto, "tcp") == 0) {
+    if(strcmp(proto, "tcp") == 0 || strcmp(proto, "tcps") == 0) {
         long conn_id = server_->getConnId();
         TcpClient* client = new TcpClient(this, conn_id);
         addObject(conn_id, client);
@@ -91,6 +91,10 @@ void TestLoop::startTest_i(const std::string& addr_url, const std::string& bind_
             if(km_parse_address(bind_addr.c_str(), NULL, 0, bind_host, sizeof(bind_host), &bind_port) == 0) {
                 client->bind(bind_host, bind_port);
             }
+        }
+        if (strcmp(proto, "tcps") == 0) {
+            if (port == 0) port = 443;
+            client->setSslFlags(SSL_ENABLE);
         }
         client->connect(host, port);
     } else if(strcmp(proto, "udp") == 0) {

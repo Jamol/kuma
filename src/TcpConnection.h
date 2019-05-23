@@ -39,8 +39,8 @@ public:
     uint32_t getSslFlags() const { return tcp_.getSslFlags(); }
     bool sslEnabled() const { return tcp_.sslEnabled(); }
     virtual KMError connect(const std::string &host, uint16_t port, EventCallback cb);
-    KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf);
-    KMError attachSocket(TcpSocket::Impl &&tcp, const KMBuffer *init_buf);
+    virtual KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf);
+    virtual KMError attachSocket(TcpSocket::Impl &&tcp, const KMBuffer *init_buf);
     int send(const void* data, size_t len);
     int send(const iovec* iovs, int count);
     int send(const KMBuffer &buf);
@@ -62,6 +62,7 @@ public:
     KMError setAlpnProtocols(const AlpnProtos &protocols) { return tcp_.setAlpnProtocols(protocols); }
     KMError getAlpnSelected(std::string &protocol) { return tcp_.getAlpnSelected(protocol); }
     KMError setSslServerName(std::string serverName) { return tcp_.setSslServerName(std::move(serverName)); }
+    KMError startSslHandshake(SslRole ssl_role, EventCallback cb) { return tcp_.startSslHandshake(ssl_role, std::move(cb)); }
 #endif
     
     EventLoopPtr eventLoop() { return tcp_.eventLoop(); }

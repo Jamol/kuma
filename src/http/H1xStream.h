@@ -31,6 +31,7 @@
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
 #include "util/kmqueue.h"
+#include "proxy/ProxyConnectionImpl.h"
 
 KUMA_NS_BEGIN
 
@@ -50,6 +51,7 @@ public:
     ~H1xStream();
     
     KMError setSslFlags(uint32_t ssl_flags) { return tcp_conn_.setSslFlags(ssl_flags); }
+    KMError setProxyInfo(const ProxyInfo &proxy_info);
     KMError addHeader(std::string name, std::string value);
     KMError sendRequest(const std::string &method, const std::string &url, const std::string &ver);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf);
@@ -137,7 +139,7 @@ protected:
     CompleteCallback        incoming_complete_cb_;
     CompleteCallback        outgoing_complete_cb_;
     
-    TcpConnection           tcp_conn_;
+    ProxyConnection::Impl   tcp_conn_;
     EventLoopToken          loop_token_;
 };
 

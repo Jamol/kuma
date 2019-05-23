@@ -3,7 +3,12 @@
 #include <string.h> // for memset
 #include <atomic>
 
+extern std::string g_proxy_url;
+extern std::string g_proxy_user;
+extern std::string g_proxy_passwd;
+
 extern std::string getHttpVersion();
+
 HttpClient::HttpClient(TestLoop* loop, long conn_id)
 : loop_(loop)
 , http_request_(loop->eventLoop(), getHttpVersion().c_str())
@@ -21,6 +26,7 @@ void HttpClient::startRequest(const std::string& url)
     http_request_.setErrorCallback([this] (KMError err) { onClose(err); });
     http_request_.setHeaderCompleteCallback([this] { onHeaderComplete(); });
     http_request_.setResponseCompleteCallback([this] { onRequestComplete(); });
+    http_request_.setProxyInfo(g_proxy_url.c_str(), g_proxy_user.c_str(), g_proxy_passwd.c_str());
     if (url.find("/testdata") != std::string::npos) {
         http_request_.addHeader("Content-Length", 128*1024*1024);
         http_request_.sendRequest("POST", url.c_str());

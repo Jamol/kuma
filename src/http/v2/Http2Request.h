@@ -50,6 +50,7 @@ public:
     ~Http2Request();
     
     KMError setSslFlags(uint32_t ssl_flags) override;
+    KMError setProxyInfo(const ProxyInfo &proxy_info) override;
     KMError addHeader(std::string name, std::string value) override;
     int sendBody(const void* data, size_t len) override;
     int sendBody(const KMBuffer &buf) override;

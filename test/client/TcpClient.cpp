@@ -6,15 +6,28 @@
 # include <arpa/inet.h>
 #endif
 
+#define TEST_PROXY_CONNECTION
+
+extern std::string g_proxy_url;
+extern std::string g_proxy_user;
+extern std::string g_proxy_passwd;
+
 TcpClient::TcpClient(TestLoop* loop, long conn_id)
 : loop_(loop)
 , tcp_(loop->eventLoop())
+, proxy_conn_(loop->eventLoop())
 , timer_(loop->eventLoop())
 , conn_id_(conn_id)
 , index_(0)
 , max_send_count_(200000)
 {
-    
+    tcp_.setReadCallback([this] (KMError err) { onReceive(err); });
+    tcp_.setWriteCallback([this] (KMError err) { onSend(err); });
+    tcp_.setErrorCallback([this] (KMError err) { onClose(err); });
+
+    proxy_conn_.setDataCallback([this] (uint8_t *data, size_t size) { return onData(data, size); });
+    proxy_conn_.setWriteCallback([this] (KMError err) { onSend(err); });
+    proxy_conn_.setErrorCallback([this] (KMError err) { onClose(err); });
 }
 
 KMError TcpClient::bind(const std::string &bind_host, uint16_t bind_port)
@@ -24,17 +37,21 @@ KMError TcpClient::bind(const std::string &bind_host, uint16_t bind_port)
 
 KMError TcpClient::connect(const std::string &host, uint16_t port)
 {
-    tcp_.setReadCallback([this] (KMError err) { onReceive(err); });
-    tcp_.setWriteCallback([this] (KMError err) { onSend(err); });
-    tcp_.setErrorCallback([this] (KMError err) { onClose(err); });
-    timer_.schedule(1000, TimerMode::REPEATING, [this] { onTimer(); });
-    return tcp_.connect(host.c_str(), port, [this] (KMError err) { onConnect(err); });
+    if (g_proxy_url.empty()) {
+        timer_.schedule(1000, TimerMode::REPEATING, [this] { onTimer(); });
+        return tcp_.connect(host.c_str(), port, [this] (KMError err) { onConnect(err); });
+    } else {
+        proxy_conn_.setProxyInfo(g_proxy_url.c_str(), g_proxy_user.c_str(), g_proxy_passwd.c_str());
+        proxy_conn_.setSslFlags(ssl_flags_ | SSL_ALLOW_SELF_SIGNED_CERT);
+        return proxy_conn_.connect(host.c_str(), port, [this] (KMError err) { onConnect(err); });
+    }
 }
 
 int TcpClient::close()
 {
     timer_.cancel();
     tcp_.close();
+    proxy_conn_.close();
     return 0;
 }
 
@@ -42,7 +59,11 @@ void TcpClient::sendData()
 {
     uint8_t buf[1024];
     *(uint32_t*)buf = htonl(++index_);
-    tcp_.send(buf, sizeof(buf));
+    if (g_proxy_url.empty()) {
+        tcp_.send(buf, sizeof(buf));
+    } else {
+        proxy_conn_.send(buf, sizeof(buf));
+    }
     // should buffer remain data if send length < sizeof(buf)
 }
 
@@ -86,6 +107,12 @@ void TcpClient::onReceive(KMError err)
             break;
         }
     } while (true);
+}
+
+KMError TcpClient::onData(uint8_t *data, size_t size)
+{
+    printf("TcpClient::onData, size=%zu\n", size);
+    return KMError::NOERR;
 }
 
 void TcpClient::onClose(KMError err)

@@ -28,6 +28,7 @@
 
 #include "h2defs.h"
 #include "H2ConnectionImpl.h"
+#include "proxy/proxydefs.h"
 
 KUMA_NS_BEGIN
 
@@ -40,7 +41,7 @@ public:
     void addConnection(const std::string &key, H2ConnectionPtr &conn);
     void addConnection(const std::string &key, H2ConnectionPtr &&conn);
     H2ConnectionPtr getConnection(const std::string &key);
-    H2ConnectionPtr getConnection(const std::string &host, uint16_t port, uint32_t ssl_flags, const EventLoopPtr &loop);
+    H2ConnectionPtr getConnection(const std::string &host, uint16_t port, uint32_t ssl_flags, const EventLoopPtr &loop, const ProxyInfo &proxy_info);
     void removeConnection(const std::string key);
     
 public:

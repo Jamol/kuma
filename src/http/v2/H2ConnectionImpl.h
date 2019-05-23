@@ -32,6 +32,7 @@
 #include "http/HttpParserImpl.h"
 #include "EventLoopImpl.h"
 #include "util/DestroyDetector.h"
+#include "proxy/ProxyConnectionImpl.h"
 
 #include <map>
 #include <vector>
@@ -55,6 +56,7 @@ public:
     KMError setSslFlags(uint32_t ssl_flags) { return tcp_conn_.setSslFlags(ssl_flags); }
     uint32_t getSslFlags() const { return tcp_conn_.getSslFlags(); }
     bool sslEnabled() const { return tcp_conn_.sslEnabled(); }
+    KMError setProxyInfo(const ProxyInfo &proxy_info);
     KMError connect(const std::string &host, uint16_t port);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf);
     KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf);
@@ -196,7 +198,7 @@ protected:
     bool expect_continuation_frame_ = false;
     uint32_t stream_id_of_expected_continuation_ = 0;
     
-    TcpConnection tcp_conn_;
+    ProxyConnection::Impl tcp_conn_;
     EventLoopToken loop_token_;
 };
 

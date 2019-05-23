@@ -29,6 +29,7 @@
 #include "util/kmobject.h"
 #include "HttpParserImpl.h"
 #include "compr/compr.h"
+#include "proxy/proxydefs.h"
 
 #include <map>
 
@@ -48,6 +49,7 @@ public:
     virtual ~Impl() = default;
     
     virtual KMError setSslFlags(uint32_t ssl_flags) = 0;
+    virtual KMError setProxyInfo(const ProxyInfo &proxy_info) = 0;
     virtual KMError addHeader(std::string name, std::string value) = 0;
     virtual KMError addHeader(std::string name, uint32_t value);
     KMError sendRequest(std::string method, std::string url);

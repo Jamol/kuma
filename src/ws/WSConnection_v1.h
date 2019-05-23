@@ -40,6 +40,7 @@ public:
     {
         return stream_->setSslFlags(ssl_flags);
     }
+    KMError setProxyInfo(const ProxyInfo &proxy_info) override;
     KMError addHeader(std::string name, std::string value) override;
     KMError addHeader(std::string name, uint32_t value) override;
     KMError connect(const std::string& ws_url) override;

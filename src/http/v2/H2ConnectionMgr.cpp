@@ -49,7 +49,7 @@ H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &key)
     return it != conn_map_.end() ? it->second : nullptr;
 }
 
-H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &host, uint16_t port, uint32_t ssl_flags, const EventLoopPtr &loop)
+H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &host, uint16_t port, uint32_t ssl_flags, const EventLoopPtr &loop, const ProxyInfo &proxy_info)
 {
     std::string key;
     std::string ip;
@@ -68,6 +68,7 @@ H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &host, uint16_t
     H2ConnectionPtr conn(new H2Connection::Impl(loop));
     conn->setConnectionKey(key);
     conn->setSslFlags(ssl_flags);
+    conn->setProxyInfo(proxy_info);
     if (conn->connect(host, port) != KMError::NOERR) {
         return H2ConnectionPtr();
     }

@@ -32,6 +32,7 @@
 #include "http/v2/H2ConnectionImpl.h"
 #include "http/v2/Http2Request.h"
 #include "http/v2/Http2Response.h"
+#include "proxy/ProxyConnectionImpl.h"
 
 #ifdef KUMA_HAS_OPENSSL
 #include "ssl/OpenSslLib.h"
@@ -299,10 +300,10 @@ KMError TcpSocket::detachFd(SOCKET_FD &fd)
     return pimpl_->detachFd(fd);
 }
 
-KMError TcpSocket::startSslHandshake(SslRole ssl_role)
+KMError TcpSocket::startSslHandshake(SslRole ssl_role, EventCallback cb)
 {
 #ifdef KUMA_HAS_OPENSSL
-    return pimpl_->startSslHandshake(ssl_role);
+    return pimpl_->startSslHandshake(ssl_role, std::move(cb));
 #else
     return KMError::NOT_SUPPORTED;
 #endif
@@ -697,6 +698,15 @@ KMError HttpRequest::setSslFlags(uint32_t ssl_flags)
     return pimpl_->setSslFlags(ssl_flags);
 }
 
+KMError HttpRequest::setProxyInfo(const char *proxy_url, const char *domain_user, const char *passwd)
+{
+    if (proxy_url && proxy_url[0]) {
+        return pimpl_->setProxyInfo({proxy_url, domain_user?domain_user:"", passwd?passwd:""});
+    } else {
+        return KMError::INVALID_PARAM;
+    }
+}
+
 KMError HttpRequest::addHeader(const char* name, const char* value)
 {
     if (!name || !value) {
@@ -992,6 +1002,15 @@ const char* WebSocket::getExtensions() const
     return pimpl_->getExtensions().c_str();
 }
 
+KMError WebSocket::setProxyInfo(const char *proxy_url, const char *domain_user, const char *passwd)
+{
+    if (proxy_url && proxy_url[0]) {
+        return pimpl_->setProxyInfo({proxy_url, domain_user?domain_user:"", passwd?passwd:""});
+    } else {
+        return KMError::INVALID_PARAM;
+    }
+}
+
 KMError WebSocket::addHeader(const char *name, const char *value)
 {
     if (!name || !value) {
@@ -1086,6 +1105,109 @@ void WebSocket::setErrorCallback(EventCallback cb)
 WebSocket::Impl* WebSocket::pimpl()
 {
     return pimpl_;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////
+ProxyConnection::ProxyConnection(EventLoop* loop)
+: pimpl_(new Impl(EventLoopHelper::implPtr(loop->pimpl())))
+{
+    
+}
+
+ProxyConnection::~ProxyConnection()
+{
+    delete pimpl_;
+}
+
+KMError ProxyConnection::setSslFlags(uint32_t ssl_flags)
+{
+    return pimpl_->setSslFlags(ssl_flags);
+}
+
+uint32_t ProxyConnection::getSslFlags() const
+{
+    return pimpl_->getSslFlags();
+}
+
+bool ProxyConnection::sslEnabled() const
+{
+    return pimpl_->sslEnabled();
+}
+
+KMError ProxyConnection::setSslServerName(const char *server_name)
+{
+#ifdef KUMA_HAS_OPENSSL
+    if (server_name) {
+        return pimpl_->setSslServerName(server_name);
+    } else {
+        return KMError::INVALID_PARAM;
+    }
+#else
+    return KMError::NOT_SUPPORTED;
+#endif
+}
+
+KMError ProxyConnection::setProxyInfo(const char *proxy_url, const char *domain_user, const char *passwd)
+{
+    if (proxy_url && proxy_url[0]) {
+        return pimpl_->setProxyInfo({proxy_url, domain_user?domain_user:"", passwd?passwd:""});
+    } else {
+        return KMError::INVALID_PARAM;
+    }
+}
+
+KMError ProxyConnection::connect(const char *host, uint16_t port, EventCallback cb)
+{
+    if (host) {
+        return pimpl_->connect(host, port, std::move(cb));
+    } else {
+        return KMError::INVALID_PARAM;
+    }
+}
+
+int ProxyConnection::send(const void* data, size_t len)
+{
+    return pimpl_->send(data, len);
+}
+
+int ProxyConnection::send(const iovec* iovs, int count)
+{
+    return pimpl_->send(iovs, count);
+}
+
+int ProxyConnection::send(const KMBuffer &buf)
+{
+    return pimpl_->send(buf);
+}
+
+KMError ProxyConnection::close()
+{
+    return pimpl_->close();
+}
+
+void ProxyConnection::setDataCallback(DataCallback cb)
+{
+    pimpl_->setDataCallback(std::move(cb));
+}
+
+void ProxyConnection::setWriteCallback(EventCallback cb)
+{
+    pimpl_->setWriteCallback(std::move(cb));
+}
+
+void ProxyConnection::setErrorCallback(EventCallback cb)
+{
+    pimpl_->setErrorCallback(std::move(cb));
+}
+
+bool ProxyConnection::canSendData() const
+{
+    return pimpl_->canSendData();
+}
+
+bool ProxyConnection::sendBufferEmpty() const
+{
+    return pimpl_->sendBufferEmpty();
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////

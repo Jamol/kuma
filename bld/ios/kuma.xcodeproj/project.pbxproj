@@ -40,6 +40,9 @@
 		6F84E98A1D5B032D00AF8E3B /* HPackTable.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F84E9861D5B032D00AF8E3B /* HPackTable.cpp */; };
 		6F87763B1EACEA10002F1165 /* DnsResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F8776391EACEA10002F1165 /* DnsResolver.cpp */; };
 		6F8906F922630D06004D0DE9 /* H1xStream.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F8906F822630D06004D0DE9 /* H1xStream.cpp */; };
+		6F8BE43C22951AF800E6EA32 /* BasicAuthenticator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F8BE43722951AF700E6EA32 /* BasicAuthenticator.cpp */; };
+		6F8BE43D22951AF800E6EA32 /* ProxyConnectionImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F8BE43822951AF700E6EA32 /* ProxyConnectionImpl.cpp */; };
+		6F8BE43E22951AF800E6EA32 /* ProxyAuthenticator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F8BE43A22951AF700E6EA32 /* ProxyAuthenticator.cpp */; };
 		6F91F1751D782EF8004A95B9 /* Http1xRequest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F1731D782EF8004A95B9 /* Http1xRequest.cpp */; };
 		6F91F1771D782F1A004A95B9 /* Notifier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F1761D782F1A004A95B9 /* Notifier.cpp */; };
 		6F91F1B41D7B29CB004A95B9 /* KQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F91F1B31D7B29CB004A95B9 /* KQueue.cpp */; };
@@ -177,6 +180,13 @@
 		6F87763A1EACEA10002F1165 /* DnsResolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DnsResolver.h; path = ../../src/DnsResolver.h; sourceTree = "<group>"; };
 		6F8906F722630D05004D0DE9 /* H1xStream.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H1xStream.h; sourceTree = "<group>"; };
 		6F8906F822630D06004D0DE9 /* H1xStream.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H1xStream.cpp; sourceTree = "<group>"; };
+		6F8BE43522951AF700E6EA32 /* BasicAuthenticator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BasicAuthenticator.h; sourceTree = "<group>"; };
+		6F8BE43622951AF700E6EA32 /* proxydefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = proxydefs.h; sourceTree = "<group>"; };
+		6F8BE43722951AF700E6EA32 /* BasicAuthenticator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BasicAuthenticator.cpp; sourceTree = "<group>"; };
+		6F8BE43822951AF700E6EA32 /* ProxyConnectionImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProxyConnectionImpl.cpp; sourceTree = "<group>"; };
+		6F8BE43922951AF700E6EA32 /* ProxyConnectionImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProxyConnectionImpl.h; sourceTree = "<group>"; };
+		6F8BE43A22951AF700E6EA32 /* ProxyAuthenticator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProxyAuthenticator.cpp; sourceTree = "<group>"; };
+		6F8BE43B22951AF700E6EA32 /* ProxyAuthenticator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProxyAuthenticator.h; sourceTree = "<group>"; };
 		6F91F1731D782EF8004A95B9 /* Http1xRequest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Http1xRequest.cpp; sourceTree = "<group>"; };
 		6F91F1741D782EF8004A95B9 /* Http1xRequest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Http1xRequest.h; sourceTree = "<group>"; };
 		6F91F1761D782F1A004A95B9 /* Notifier.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Notifier.cpp; sourceTree = "<group>"; };
@@ -300,6 +310,7 @@
 		6F7D5FD31B33EC43000FF2F8 /* kuma */ = {
 			isa = PBXGroup;
 			children = (
+				6F8BE43422951AC000E6EA32 /* proxy */,
 				6FD7C54C221965830005DDFF /* compr */,
 				6FECECF81C21383900310F52 /* http */,
 				6FECED081C21396F00310F52 /* poll */,
@@ -380,6 +391,21 @@
 				6F84E9881D5B032D00AF8E3B /* StaticTable.h */,
 			);
 			path = hpack;
+			sourceTree = "<group>";
+		};
+		6F8BE43422951AC000E6EA32 /* proxy */ = {
+			isa = PBXGroup;
+			children = (
+				6F8BE43722951AF700E6EA32 /* BasicAuthenticator.cpp */,
+				6F8BE43522951AF700E6EA32 /* BasicAuthenticator.h */,
+				6F8BE43A22951AF700E6EA32 /* ProxyAuthenticator.cpp */,
+				6F8BE43B22951AF700E6EA32 /* ProxyAuthenticator.h */,
+				6F8BE43822951AF700E6EA32 /* ProxyConnectionImpl.cpp */,
+				6F8BE43922951AF700E6EA32 /* ProxyConnectionImpl.h */,
+				6F8BE43622951AF700E6EA32 /* proxydefs.h */,
+			);
+			name = proxy;
+			path = ../../src/proxy;
 			sourceTree = "<group>";
 		};
 		6FD7C46022129B300005DDFF /* zlib */ = {
@@ -637,6 +663,7 @@
 				6F6D148D1D9D098C008B64E6 /* FlowControl.cpp in Sources */,
 				6FECED1D1C2139CA00310F52 /* kmtrace.cpp in Sources */,
 				6FD7D0B32244DE460005DDFF /* WSConnection_v2.cpp in Sources */,
+				6F8BE43E22951AF800E6EA32 /* ProxyAuthenticator.cpp in Sources */,
 				6F27331D1EC75579006E221E /* BioHandler.cpp in Sources */,
 				6FECED0E1C2139A400310F52 /* VPoll.cpp in Sources */,
 				6F84E97E1D5B031300AF8E3B /* H2ConnectionMgr.cpp in Sources */,
@@ -653,6 +680,7 @@
 				6FD7C46F22129C100005DDFF /* crc32.c in Sources */,
 				6FD7CB9D22323C140005DDFF /* httputils.cpp in Sources */,
 				6FECED231C2139D600310F52 /* WebSocketImpl.cpp in Sources */,
+				6F8BE43D22951AF800E6EA32 /* ProxyConnectionImpl.cpp in Sources */,
 				6FD7C47122129C100005DDFF /* trees.c in Sources */,
 				6F66AC3D1C71B03F00BB37B9 /* TcpListenerImpl.cpp in Sources */,
 				6FECED031C2138E700310F52 /* HttpResponseImpl.cpp in Sources */,
@@ -671,6 +699,7 @@
 				6F7D5FE91B33EC65000FF2F8 /* TimerManager.cpp in Sources */,
 				6F7FC6881F4D82550038360B /* h2utils.cpp in Sources */,
 				6F87763B1EACEA10002F1165 /* DnsResolver.cpp in Sources */,
+				6F8BE43C22951AF800E6EA32 /* BasicAuthenticator.cpp in Sources */,
 				6F84E97F1D5B031300AF8E3B /* H2Frame.cpp in Sources */,
 				6F7BBB3E1ED57DF00093BDE3 /* UdpSocketBase.cpp in Sources */,
 				6FD7C47522129C100005DDFF /* infback.c in Sources */,

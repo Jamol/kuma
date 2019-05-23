@@ -49,6 +49,13 @@ H2StreamProxy::~H2StreamProxy()
     loop_token_.reset();
 }
 
+KMError H2StreamProxy::setProxyInfo(const ProxyInfo &proxy_info)
+{
+    proxy_info_ = proxy_info;
+    
+    return KMError::NOERR;
+}
+
 KMError H2StreamProxy::addHeader(std::string name, std::string value)
 {
     if (name == H2HeaderProtocol) {
@@ -86,7 +93,7 @@ KMError H2StreamProxy::sendRequest(std::string method, std::string url, uint32_t
     }
     
     auto &conn_mgr = H2ConnectionMgr::getRequestConnMgr(ssl_flags != SSL_NONE);
-    conn_ = conn_mgr.getConnection(uri_.getHost(), port, ssl_flags, loop);
+    conn_ = conn_mgr.getConnection(uri_.getHost(), port, ssl_flags, loop, proxy_info_);
     if (!conn_ || !conn_->eventLoop()) {
         KUMA_ERRXTRACE("sendRequest, failed to get H2Connection");
         return KMError::INVALID_PARAM;
