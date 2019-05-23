@@ -93,6 +93,7 @@ void TestLoop::startTest_i(const std::string& addr_url, const std::string& bind_
             }
         }
         if (strcmp(proto, "tcps") == 0) {
+            if (port == 0) port = 443;
             client->setSslFlags(SSL_ENABLE);
         }
         client->connect(host, port);

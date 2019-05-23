@@ -54,7 +54,7 @@ protected:
     OM_uint32       major_status_ = 0;
     OM_uint32       minor_status_ = 0;
     gss_OID         mech_oid_ = GSS_C_NO_OID;
-    gss_name_t      gss_domain_name_ = GSS_C_NO_NAME;
+    gss_name_t      gss_spn_name_ = GSS_C_NO_NAME;
     gss_name_t      gss_user_name_ = GSS_C_NO_NAME;
 };
 

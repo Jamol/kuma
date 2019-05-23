@@ -91,6 +91,7 @@ private:
     
     bool                    need_reconnect_ = false;
     uint32_t                proxy_ssl_flags_ = 0;
+    uint32_t                num_of_attempts_ = 0;
     
     EventCallback           proxy_connect_cb_;
     DataCallback            proxy_data_cb_;

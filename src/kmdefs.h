@@ -64,6 +64,7 @@ enum class KMError : int {
     BUFFER_TOO_SMALL    = -16,
     NOT_SUPPORTED       = -17,
     NOT_IMPLEMENTED     = -18,
+    NOT_AUTHORIZED      = -19,
     
     DESTROYED           = -699
 };

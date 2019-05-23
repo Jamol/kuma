@@ -108,6 +108,7 @@ bool SspiAuthenticator::init(const AuthInfo &auth_info, const RequestInfo &req_i
         &expiry);
 
     if (!(SEC_SUCCESS(status))) {
+        KUMA_ERRXTRACE("init, AcquireCredentialsHandle failed, status=" << status);
         return false;
     }
 
@@ -131,7 +132,7 @@ bool SspiAuthenticator::nextAuthToken(const std::string& challenge)
     out_sec_buf.pvBuffer = 0;
 
     std::string target;
-    if (false && auth_scheme_ == AuthScheme::DIGEST)
+    if (auth_scheme_ == AuthScheme::DIGEST)
     {
         target = req_info_.path; // Service Principle Name
     }
@@ -207,12 +208,14 @@ bool SspiAuthenticator::nextAuthToken(const std::string& challenge)
         status = ::CompleteAuthToken(&ctxt_handle_, &out_sec_buf_desc);
         if (!SEC_SUCCESS(status))
         {
+            KUMA_ERRXTRACE("nextAuthToken, InitializeSecurityContext failed, status=" << status);
             return false;
         }
     }
 
     if (!out_sec_buf.pvBuffer)
     {
+        KUMA_ERRXTRACE("nextAuthToken, the output security buffer is null");
         return false;
     }
 

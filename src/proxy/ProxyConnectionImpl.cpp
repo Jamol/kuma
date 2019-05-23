@@ -91,6 +91,7 @@ KMError ProxyConnection::Impl::connect(const std::string &host, uint16_t port, E
             TcpConnection::setSslFlags(0);
         }
         
+        num_of_attempts_ = 0;
         setState(State::CONNECTING);
         return TcpConnection::connect(proxy_addr_, proxy_port_, [this] (KMError err) {
             onTcpConnect(err);
@@ -155,6 +156,10 @@ KMError ProxyConnection::Impl::handleProxyResponse()
 {
     KUMA_INFOTRACE("ProxyConnection::handleProxyResponse, code=" << http_parser_.getStatusCode());
     if (http_parser_.getStatusCode() == 407) {
+        if (num_of_attempts_ >= 5) {
+            onProxyError(KMError::NOT_AUTHORIZED);
+            return KMError::FAILED;
+        }
         auto str_conn = http_parser_.getHeaderValue("Connection");
         if (str_conn.empty()) {
             str_conn = http_parser_.getHeaderValue(strProxyConnection);
@@ -180,9 +185,10 @@ KMError ProxyConnection::Impl::handleProxyResponse()
         });
         if (scheme.empty()) {
             KUMA_ERRTRACE("ProxyConnection::handleProxyResponse, auth scheme is empty");
+            onProxyError(KMError::FAILED);
             return KMError::FAILED;
         }
-        KUMA_INFOTRACE("ProxyConnection::handleProxyResponse, token: " << scheme << " " << challenge);
+        KUMA_INFOTRACE("ProxyConnection::handleProxyResponse, token: \"" << scheme << " " << challenge << "\"");
         if (!proxy_auth_) {
             auto auth_scheme = ProxyAuthenticator::getAuthScheme(scheme);
             proxy_auth_ = ProxyAuthenticator::create(
@@ -190,10 +196,12 @@ KMError ProxyConnection::Impl::handleProxyResponse()
                 {proxy_addr_, proxy_port_, "CONNECT", "/", "HTTP"}
             );
             if (!proxy_auth_) {
+                onProxyError(KMError::NOT_AUTHORIZED);
                 return KMError::FAILED;
             }
         }
         proxy_auth_->nextAuthToken(challenge);
+        ++num_of_attempts_;
         
         if (need_reconnect) {
             TcpConnection::close();

@@ -45,7 +45,7 @@ Http1xRequest::Http1xRequest(const EventLoopPtr &loop, std::string ver)
     stream_->setErrorCallback([this] (KMError err) {
         cleanup();
         setState(State::IN_ERROR);
-        if(error_cb_) error_cb_(KMError::FAILED);
+        if(error_cb_) error_cb_(err);
         //onError(err);
     });
     stream_->setIncomingCompleteCallback([this] {

@@ -57,9 +57,8 @@ static const std::string g_usage =
 "   -t ms           send interval\n"
 "   -v              print version\n"
 "   --http2         test http2\n"
-"   --proxy         test proxy setting"
-"   --user          proxy domain user name"
-"   --passwd        proxy password"
+"   --proxy         test proxy setting\n"
+"   --proxy-cred    proxy credential \"[domain\\]username[:password]\"\n"
 ;
 
 std::vector<std::thread> event_threads;
@@ -140,16 +139,15 @@ int main(int argc, char *argv[])
                             printUsage();
                             return -1;
                         }
-                    } else if (strcmp(argv[i] + 2, "user") == 0) {
+                    } else if (strcmp(argv[i] + 2, "proxy-cred") == 0) {
                         if(++i < argc) {
-                            g_proxy_user = argv[i];
-                        } else {
-                            printUsage();
-                            return -1;
-                        }
-                    } else if (strcmp(argv[i] + 2, "passwd") == 0) {
-                        if(++i < argc) {
-                            g_proxy_passwd = argv[i];
+                            auto *p = strchr(argv[i], ':');
+                            if (p) {
+                                g_proxy_user = std::string(argv[i], p);
+                                g_proxy_passwd = p + 1;
+                            } else {
+                                g_proxy_user = argv[i];
+                            }
                         } else {
                             printUsage();
                             return -1;
