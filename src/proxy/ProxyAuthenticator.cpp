@@ -83,36 +83,45 @@ std::string ProxyAuthenticator::getAuthScheme(AuthScheme scheme)
     }
 }
 
-ProxyAuthenticator::Ptr ProxyAuthenticator::create(const AuthInfo &auth_info, const RequestInfo &req_info)
+ProxyAuthenticator::Ptr ProxyAuthenticator::create(const std::string &scheme, const AuthInfo &auth_info, const RequestInfo &req_info)
 {
-    auto auth_scheme = auth_info.scheme;
-    if (auth_scheme == AuthScheme::BASIC) {
-        auto *basic = new BasicAuthenticator();
-        auto ptr =  Ptr(basic);
-        if (!basic->init(auth_info.user, auth_info.passwd)) {
-            ptr.reset();
+    switch (auth_info.scheme) {
+        case AuthScheme::BASIC:
+        {
+            auto *basic = new BasicAuthenticator();
+            auto ptr =  Ptr(basic);
+            if (!basic->init(auth_info.user, auth_info.passwd)) {
+                ptr.reset();
+            }
+            return ptr;
         }
-        return ptr;
-    } else if (auth_scheme == AuthScheme::NTLM ||
-        auth_scheme == AuthScheme::DIGEST  ||
-        auth_scheme == AuthScheme::NEGOTIATE) {
-#if defined(KUMA_OS_WIN)
-        auto *sspi = new SspiAuthenticator();
-        auto ptr =  Ptr(sspi);
-        if (!sspi->init(auth_info, req_info)) {
-            ptr.reset();
+            
+        case AuthScheme::NTLM:
+        case AuthScheme::NEGOTIATE:
+#if defined(KUMA_OS_MAC)
+        {
+            auto *gssapi = new GssapiAuthenticator();
+            auto ptr =  Ptr(gssapi);
+            if (!gssapi->init(auth_info, req_info)) {
+                ptr.reset();
+            }
+            return ptr;
         }
-        return ptr;
-#elif defined(KUMA_OS_MAC)
-        auto *gssapi = new GssapiAuthenticator();
-        auto ptr =  Ptr(gssapi);
-        if (!gssapi->init(auth_info, req_info)) {
-            ptr.reset();
-        }
-        return ptr;
-#else
 #endif
+        case AuthScheme::DIGEST:
+#if defined(KUMA_OS_WIN)
+        {
+            auto *sspi = new SspiAuthenticator();
+            auto ptr =  Ptr(sspi);
+            if (!sspi->init(auth_info, req_info)) {
+                ptr.reset();
+            }
+            return ptr;
+        }
+#endif
+            
+        default:
+            KUMA_ERRTRACE("ProxyAuthenticator::create, unsupported auth scheme: " << scheme);
+            return Ptr();
     }
-    
-    return Ptr();
 }

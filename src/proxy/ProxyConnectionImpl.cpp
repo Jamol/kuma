@@ -191,7 +191,7 @@ KMError ProxyConnection::Impl::handleProxyResponse()
         KUMA_INFOTRACE("ProxyConnection::handleProxyResponse, token: \"" << scheme << " " << challenge << "\"");
         if (!proxy_auth_) {
             auto auth_scheme = ProxyAuthenticator::getAuthScheme(scheme);
-            proxy_auth_ = ProxyAuthenticator::create(
+            proxy_auth_ = ProxyAuthenticator::create(scheme,
                 {auth_scheme, proxy_info_.user, proxy_info_.passwd},
                 {proxy_addr_, proxy_port_, "CONNECT", "/", "HTTP"}
             );
@@ -216,7 +216,7 @@ KMError ProxyConnection::Impl::handleProxyResponse()
         } else {
             sendProxyRequest();
         }
-    } else if (http_parser_.getStatusCode() == 200) {
+    } else if (http_parser_.getStatusCode() >= 200 && http_parser_.getStatusCode() < 300) {
 #ifdef KUMA_HAS_OPENSSL
         if (proxy_ssl_flags_ != 0) {
             setState(State::SSL_CONNECTING);

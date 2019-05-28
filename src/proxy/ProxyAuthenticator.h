@@ -66,7 +66,7 @@ public:
     static AuthScheme getAuthScheme(const std::string &scheme);
     static std::string getAuthScheme(AuthScheme scheme);
     
-    static Ptr create(const AuthInfo &auth_info, const RequestInfo &req_info);
+    static Ptr create(const std::string &scheme, const AuthInfo &auth_info, const RequestInfo &req_info);
 };
 
 KUMA_NS_END
