@@ -376,7 +376,7 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
     TimerNode tmp_head;
     list_init_head(&tmp_head);
     mutex_.lock();
-    while(cur_jiffies >= next_jiffies)
+    while(std::make_signed<TICK_COUNT_TYPE>::type(cur_jiffies - next_jiffies) >= 0)
     {
         int idx = next_jiffies & TIMER_VECTOR_MASK;
 #if 1
