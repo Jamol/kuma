@@ -414,13 +414,23 @@ KMError WebSocket::Impl::sendWsFrame(ws::FrameHeader hdr, const KMBuffer &buf)
     }
     hdr.length = uint32_t(plen);
     hdr_len = ws_handler_.encodeFrameHeader(hdr, hdr_buf);
-    IOVEC iovs;
-    iovec iov;
-    iov.iov_base = (char*)hdr_buf;
-    iov.iov_len = hdr_len;
-    iovs.emplace_back(iov);
-    buf.fillIov(iovs);
-    auto ret = ws_conn_->send(&iovs[0], static_cast<int>(iovs.size()));
+    
+    iovec iovs[129];
+    int count = 0;
+    iovs[count].iov_base = (char*)hdr_buf;
+    iovs[count++].iov_len = hdr_len;
+    for (auto it = buf.begin(); it != buf.end(); ++it) {
+        if (it->length() > 0) {
+            if (count < 129) {
+                iovs[count].iov_base = static_cast<char*>(it->readPtr());
+                iovs[count++].iov_len = static_cast<decltype(iovs[0].iov_len)>(it->length());
+            } else {
+                return KMError::BUFFER_TOO_LONG;
+            }
+        }
+    }
+    
+    auto ret = ws_conn_->send(iovs, count);
     return ret < 0 ? KMError::SOCK_ERROR : KMError::NOERR;
 }
 

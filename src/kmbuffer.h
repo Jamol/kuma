@@ -21,9 +21,8 @@
 
 #ifndef __KMBuffer_H__
 #define __KMBuffer_H__
-#include "kmdefs.h"
+
 #include <memory>
-#include <vector>
 #include <atomic>
 
 #ifndef KUMA_OS_WIN
@@ -31,7 +30,7 @@
 #include <string.h> // for memcpy
 #endif
 
-KUMA_NS_BEGIN
+namespace kuma {
 
 class _SharedBase
 {
@@ -167,7 +166,6 @@ private:
     DataDeleter data_deleter_;
 };
 
-using IOVEC = std::vector<iovec>;
 //////////////////////////////////////////////////////////////////////////
 // class KMBuffer
 class KMBuffer
@@ -517,24 +515,6 @@ public:
         rd_ptr_ = wr_ptr_ = nullptr;
     }
     
-    int fillIov(IOVEC& iovs) const
-    {
-        int cnt = 0;
-        auto *kmb = this;
-        do {
-            if (kmb->length() > 0) {
-                iovec v;
-                v.iov_base = (char*)kmb->readPtr();
-                v.iov_len = static_cast<decltype(v.iov_len)>(kmb->length());
-                iovs.emplace_back(v);
-                ++cnt;
-            }
-            kmb = kmb->next_;
-        } while (kmb != this);
-
-        return cnt;
-    }
-    
     void unlink()
     {
         if (is_chain_head_ && next_ != this) {
@@ -750,6 +730,6 @@ public:
     using Ptr = std::unique_ptr<KMBuffer, KMBufferDeleter>;
 };
 
-KUMA_NS_END
+} // namespace kuma
 
 #endif

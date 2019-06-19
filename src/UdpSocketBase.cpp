@@ -424,12 +424,23 @@ int UdpSocketBase::send(const iovec* iovs, int count, const std::string &host, u
 
 int UdpSocketBase::send(const KMBuffer &buf, const char* host, uint16_t port)
 {
-    IOVEC iovs;
-    buf.fillIov(iovs);
-    if (iovs.empty()) {
+    iovec iovs[128] = {0};
+    int count = 0;
+    for (auto it = buf.begin(); it != buf.end(); ++it) {
+        if (it->length() > 0) {
+            if (count < 128) {
+                iovs[count].iov_base = static_cast<char*>(it->readPtr());
+                iovs[count++].iov_len = static_cast<decltype(iovs[0].iov_len)>(it->length());
+            } else {
+                return 0; // buffer too long
+            }
+        }
+    }
+
+    if (count <= 0) {
         return 0;
     }
-    return send(&iovs[0], static_cast<int>(iovs.size()), host, port);
+    return send(iovs, count, host, port);
 }
 
 int UdpSocketBase::receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port)

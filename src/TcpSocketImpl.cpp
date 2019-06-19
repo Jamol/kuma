@@ -421,12 +421,32 @@ int TcpSocket::Impl::send(const iovec* iovs, int count)
 
 int TcpSocket::Impl::send(const KMBuffer &buf)
 {
-    IOVEC iovs;
-    buf.fillIov(iovs);
-    if (iovs.empty()) {
+    if (!isReady()) {
+        KUMA_WARNXTRACE("send 3, invalid state");
         return 0;
     }
-    return send(&iovs[0], static_cast<int>(iovs.size()));
+    
+    int ret = 0;
+#ifdef KUMA_HAS_OPENSSL
+    if (sslEnabled()) {
+        size_t bytes_total = buf.chainLength();
+        if (bytes_total == 0) {
+            return 0;
+        }
+        ret = ssl_handler_->send(buf);
+        if(!is_bio_handler_ && ret >= 0 && static_cast<size_t>(ret) < bytes_total) {
+            socket_->notifySendBlocked();
+        }
+    }
+    else
+#endif
+    {
+        ret = sendData(buf);
+    }
+    if (ret < 0) {
+        cleanup();
+    }
+    return ret;
 }
 
 int TcpSocket::Impl::receive(void* data, size_t length)

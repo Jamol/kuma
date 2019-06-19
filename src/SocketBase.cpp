@@ -366,12 +366,23 @@ int SocketBase::send(const iovec* iovs, int count)
 
 int SocketBase::send(const KMBuffer &buf)
 {
-    IOVEC iovs;
-    buf.fillIov(iovs);
-    if (iovs.empty()) {
+    iovec iovs[128] = {0};
+    int count = 0;
+    for (auto it = buf.begin(); it != buf.end(); ++it) {
+        if (it->length() > 0) {
+            if (count < 128) {
+                iovs[count].iov_base = static_cast<char*>(it->readPtr());
+                iovs[count++].iov_len = static_cast<decltype(iovs[0].iov_len)>(it->length());
+            } else {
+                break; // send partial data
+            }
+        }
+    }
+    
+    if (count <= 0) {
         return 0;
     }
-    return send(&iovs[0], static_cast<int>(iovs.size()));
+    return send(iovs, count);
 }
 
 int SocketBase::receive(void* data, size_t length)

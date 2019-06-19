@@ -18,6 +18,8 @@
 #include "kmdefs.h"
 #include "kmbuffer.h"
 
+#include <vector>
+
 KUMA_NS_BEGIN
 
 class Compressor
