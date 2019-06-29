@@ -344,6 +344,7 @@ int TimerManager::cascadeTimer(int tv_idx, int tl_idx)
     return tl_idx;
 }
 
+#define JIFFIES_COMPARE(j1, j2) std::make_signed<TICK_COUNT_TYPE>::type(j1 - j2)
 #define INDEX(N) ((next_jiffies >> ((N+1) * TIMER_VECTOR_BITS)) & TIMER_VECTOR_MASK)
 int TimerManager::checkExpire(unsigned long* remain_ms)
 {
@@ -376,7 +377,7 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
     TimerNode tmp_head;
     list_init_head(&tmp_head);
     mutex_.lock();
-    while(std::make_signed<TICK_COUNT_TYPE>::type(cur_jiffies - next_jiffies) >= 0)
+    while(JIFFIES_COMPARE(cur_jiffies, next_jiffies) >= 0)
     {
         int idx = next_jiffies & TIMER_VECTOR_MASK;
 #if 1
@@ -388,7 +389,7 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
             idx += delta;
             idx &= TIMER_VECTOR_MASK;
             next_jiffies += delta;
-            if(next_jiffies > cur_jiffies) {
+            if(JIFFIES_COMPARE(next_jiffies, cur_jiffies) > 0) {
                 next_jiffies = cur_jiffies + 1;
                 break;
             }
