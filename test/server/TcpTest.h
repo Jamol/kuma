@@ -4,6 +4,7 @@
 #include "kmapi.h"
 #include "util/util.h"
 #include "TestLoop.h"
+#include "RateReporter.h"
 
 using namespace kuma;
 
@@ -23,6 +24,8 @@ private:
     TestLoop*  loop_;
     TcpSocket   tcp_;
     long        conn_id_;
+    
+    RateReporter    recv_reporter_;
 };
 
 #endif

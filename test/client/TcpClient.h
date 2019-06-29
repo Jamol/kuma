@@ -4,6 +4,7 @@
 #include "kmapi.h"
 #include "util/util.h"
 #include "TestLoop.h"
+#include "DataSender.h"
 
 #include <chrono>
 
@@ -28,7 +29,9 @@ public:
     KMError onData(uint8_t *data, size_t size);
     
 private:
-    void sendData();
+    void sendDataEcho();
+    void sendDataMax();
+    int sendData(void *data, size_t size);
     
 private:
     TestLoop*   loop_;
@@ -36,6 +39,7 @@ private:
     ProxyConnection proxy_conn_;
     
     Timer       timer_;
+    DataSender  data_sender_;
     
     uint32_t    ssl_flags_ = 0;
     long        conn_id_;

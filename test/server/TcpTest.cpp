@@ -1,10 +1,13 @@
 #include "TcpTest.h"
 #include "TcpServer.h"
 
+//#define ECHO_TEST
+
 TcpTest::TcpTest(TestLoop* loop, long conn_id)
 : loop_(loop)
 , tcp_(loop->eventLoop())
 , conn_id_(conn_id)
+, recv_reporter_("recv_bitrate")
 {
     
 }
@@ -31,23 +34,30 @@ void TcpTest::onSend(KMError err)
 
 void TcpTest::onReceive(KMError err)
 {
+    size_t bytes_read = 0;
     char buf[4096] = {0};
     do
     {
-        int bytes_read = tcp_.receive((uint8_t*)buf, sizeof(buf));
-        if(bytes_read < 0) {
+        int ret = tcp_.receive((uint8_t*)buf, sizeof(buf));
+        if(ret < 0) {
             tcp_.close();
             loop_->removeObject(conn_id_);
             return ;
-        } else if (0 == bytes_read){
+        } else if (0 == ret){
             break;
         }
-        int ret = tcp_.send((uint8_t*)buf, bytes_read);
+        bytes_read += ret;
+#ifdef ECHO_TEST
+        ret = tcp_.send((uint8_t*)buf, ret);
         if(ret < 0) {
             tcp_.close();
             loop_->removeObject(conn_id_);
         }// else should buffer remain data if ret < bytes_read
+#endif
     } while(true);
+    if (bytes_read > 0) {
+        recv_reporter_.report(bytes_read * 8, steady_clock::now());
+    }
 }
 
 void TcpTest::onClose(KMError err)

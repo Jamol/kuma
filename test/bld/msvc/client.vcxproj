@@ -166,6 +166,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\client\DataSender.cpp" />
     <ClCompile Include="..\..\client\HttpClient.cpp" />
     <ClCompile Include="..\..\client\LoopPool.cpp" />
     <ClCompile Include="..\..\client\main.cpp" />

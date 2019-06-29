@@ -10,6 +10,7 @@
 		6F29765E1B311D5900EB467D /* kuma.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F29765D1B311D5900EB467D /* kuma.dylib */; };
 		6F29765F1B311D5900EB467D /* kuma.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F29765D1B311D5900EB467D /* kuma.dylib */; };
 		6F8095621DA0C1560098BFD7 /* testutil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F80955F1DA0AD9A0098BFD7 /* testutil.cpp */; };
+		6F8BE8A222C607B400E6EA32 /* DataSender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F8BE8A122C607B400E6EA32 /* DataSender.cpp */; };
 		6FDC9EC71D3F38CF00097089 /* HttpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EB91D3F38CF00097089 /* HttpClient.cpp */; };
 		6FDC9EC81D3F38CF00097089 /* LoopPool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EBB1D3F38CF00097089 /* LoopPool.cpp */; };
 		6FDC9EC91D3F38CF00097089 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EBD1D3F38CF00097089 /* main.cpp */; };
@@ -78,6 +79,9 @@
 		6F29765D1B311D5900EB467D /* kuma.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = kuma.dylib; path = ../../../bin/osx/Debug/kuma.dylib; sourceTree = "<group>"; };
 		6F80955F1DA0AD9A0098BFD7 /* testutil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = testutil.cpp; sourceTree = "<group>"; };
 		6F8095601DA0AD9A0098BFD7 /* testutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = testutil.h; sourceTree = "<group>"; };
+		6F8BE8A022C607B400E6EA32 /* DataSender.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataSender.h; sourceTree = "<group>"; };
+		6F8BE8A122C607B400E6EA32 /* DataSender.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DataSender.cpp; sourceTree = "<group>"; };
+		6F8BE9BA22C7381E00E6EA32 /* RateReporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RateReporter.h; sourceTree = "<group>"; };
 		6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = kuma.xcodeproj; path = ../../../bld/osx/kuma.xcodeproj; sourceTree = "<group>"; };
 		6FDC9EB91D3F38CF00097089 /* HttpClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpClient.cpp; sourceTree = "<group>"; };
 		6FDC9EBA1D3F38CF00097089 /* HttpClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpClient.h; sourceTree = "<group>"; };
@@ -166,6 +170,9 @@
 		6FF211B11B155298006603BB /* client */ = {
 			isa = PBXGroup;
 			children = (
+				6F8BE9BA22C7381E00E6EA32 /* RateReporter.h */,
+				6F8BE8A122C607B400E6EA32 /* DataSender.cpp */,
+				6F8BE8A022C607B400E6EA32 /* DataSender.h */,
 				6FDC9EB91D3F38CF00097089 /* HttpClient.cpp */,
 				6FDC9EBA1D3F38CF00097089 /* HttpClient.h */,
 				6FDC9EBB1D3F38CF00097089 /* LoopPool.cpp */,
@@ -310,6 +317,7 @@
 			files = (
 				6FDC9ECA1D3F38CF00097089 /* TcpClient.cpp in Sources */,
 				6FDC9EC91D3F38CF00097089 /* main.cpp in Sources */,
+				6F8BE8A222C607B400E6EA32 /* DataSender.cpp in Sources */,
 				6FDC9ECC1D3F38CF00097089 /* UdpClient.cpp in Sources */,
 				6FDC9EC71D3F38CF00097089 /* HttpClient.cpp in Sources */,
 				6FDC9ECD1D3F38CF00097089 /* WsClient.cpp in Sources */,

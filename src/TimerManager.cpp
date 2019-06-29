@@ -356,7 +356,7 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
     TICK_COUNT_TYPE delta_tick = calc_time_elapse_delta_ms(now_tick, last_tick_);
     if(0 == delta_tick) {
         if(remain_ms) {
-            if(last_remain_ms_ != -1) {
+            if(last_remain_ms_ != -1 && last_remain_ms_ != 0) {
                 *remain_ms = last_remain_ms_;
             } else {
                 // calc remain time in ms
@@ -437,7 +437,7 @@ int TimerManager::checkExpire(unsigned long* remain_ms)
 
     if(remain_ms) {
         // calc remain time in ms
-        int pos = find_first_set_in_bitmap(next_jiffies & TIMER_VECTOR_MASK);
+        int pos = find_first_set_in_bitmap(cur_jiffies & TIMER_VECTOR_MASK);
         *remain_ms = -1==pos?256:pos;
     }
 

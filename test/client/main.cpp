@@ -24,6 +24,7 @@ bool g_test_http2 = false;
 std::string g_proxy_url;
 std::string g_proxy_user;
 std::string g_proxy_passwd;
+size_t g_bandwidth = 0;
 EventLoop main_loop(PollType::NONE);
 
 #ifdef KUMA_OS_WIN
@@ -56,6 +57,7 @@ static const std::string g_usage =
 "   -c number       concurrent clients\n"
 "   -t ms           send interval\n"
 "   -v              print version\n"
+"   --bw            bandwidth (bps)\n"
 "   --http2         test http2\n"
 "   --proxy         test proxy setting\n"
 "   --proxy-cred    proxy credential \"[domain\\]username[:password]\"\n"
@@ -148,6 +150,13 @@ int main(int argc, char *argv[])
                             } else {
                                 g_proxy_user = argv[i];
                             }
+                        } else {
+                            printUsage();
+                            return -1;
+                        }
+                    } else if (strcmp(argv[i] + 2, "bw") == 0) {
+                        if(++i < argc) {
+                            g_bandwidth = atoll(argv[i]);
                         } else {
                             printUsage();
                             return -1;
