@@ -119,8 +119,7 @@ DnsResolver::Token DnsResolver::resolve(const std::string &host, uint16_t port, 
 
 KMError DnsResolver::resolve(const std::string &host, uint16_t port, sockaddr_storage &addr)
 {
-    if (getAddress(host, addr) == KMError::NOERR) {
-        km_set_addr_port(port, addr);
+    if (getAddress(host, port, addr) == KMError::NOERR) {
         return KMError::NOERR;
     }
     return doResolve(host, port, addr);
@@ -228,7 +227,7 @@ void DnsResolver::addRecord(const DnsRecord &dr)
     s_dns_records[dr.host] = dr;
 }
 
-KMError DnsResolver::getAddress(const std::string &host, sockaddr_storage &addr)
+KMError DnsResolver::getAddress(const std::string &host, uint16_t port, sockaddr_storage &addr)
 {
     LockGuard g(s_records_locker);
     auto it = s_dns_records.find(host);
@@ -237,6 +236,7 @@ KMError DnsResolver::getAddress(const std::string &host, sockaddr_storage &addr)
         auto diff_ms = duration_cast<milliseconds>(current - it->second.time).count();
         if (diff_ms < record_expires_intrval_ms) {
             memcpy(&addr, &it->second.addr, sizeof(addr));
+            km_set_addr_port(port, addr);
             return KMError::NOERR;
         }
         s_dns_records.erase(it);

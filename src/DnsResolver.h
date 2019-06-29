@@ -75,7 +75,7 @@ public:
     using Token = std::weak_ptr<Slot>;
     
     static DnsResolver& get();
-    KMError getAddress(const std::string &host, sockaddr_storage &addr);
+    KMError getAddress(const std::string &host, uint16_t port, sockaddr_storage &addr);
     Token resolve(const std::string &host, uint16_t port, ResolveCallback cb);
     KMError resolve(const std::string &host, uint16_t port, sockaddr_storage &addr);
     void cancel(const std::string &host, const Token &t);

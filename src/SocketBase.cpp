@@ -143,8 +143,7 @@ KMError SocketBase::connect(const std::string &host, uint16_t port, EventCallbac
     }
     if (!km_is_ip_address(host.c_str())) {
         sockaddr_storage ss_addr = { 0 };
-        if (DnsResolver::get().getAddress(host, ss_addr) == KMError::NOERR) {
-            km_set_addr_port(port, ss_addr);
+        if (DnsResolver::get().getAddress(host, port, ss_addr) == KMError::NOERR) {
             return connect_i(ss_addr, timeout_ms);
         }
         setState(RESOLVING);
