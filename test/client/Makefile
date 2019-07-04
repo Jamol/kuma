@@ -36,6 +36,7 @@ SRCS =  \
     LoopPool.cpp\
     TestLoop.cpp\
     TcpClient.cpp\
+    DataSender.cpp\
     HttpClient.cpp\
     UdpClient.cpp\
     WsClient.cpp\

@@ -56,9 +56,9 @@ void DataSender::doSendData()
 {
     auto now_time = steady_clock::now();
     auto time_diff = duration_cast<milliseconds>(now_time - last_send_time_).count();
-    auto avai_token = bandwidth_ * uint32_t(time_diff) / 1000 / 8;
+    auto token_budget = bandwidth_ * time_diff / 1000 / 8;
     last_send_time_ = now_time;
-    sendData(avai_token);
+    sendData(token_budget);
 }
 
 void DataSender::onTimer()
