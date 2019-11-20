@@ -100,7 +100,7 @@ LOCAL_C_INCLUDES := \
 
 LOCAL_LDLIBS := -ldl -llog -l$(OPENSSL_LIB_PATH)/libssl.so -l$(OPENSSL_LIB_PATH)/libcrypto.so
 LOCAL_CFLAGS := -w -O2 -D__ANDROID__ -DKUMA_HAS_OPENSSL
-LOCAL_CPPFLAGS := -std=c++1z
+LOCAL_CPPFLAGS := -std=c++14
 LOCAL_CPP_FEATURES := rtti exceptions
 
 include $(BUILD_SHARED_LIBRARY)
