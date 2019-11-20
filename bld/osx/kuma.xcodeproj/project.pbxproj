@@ -27,7 +27,6 @@
 		6F3731F61E37242200479457 /* HttpHeader.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F3731F41E37242200479457 /* HttpHeader.h */; };
 		6F472B311D43B53500D01201 /* TcpConnection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F472B2F1D43B53500D01201 /* TcpConnection.cpp */; };
 		6F472B321D43B53500D01201 /* TcpConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F472B301D43B53500D01201 /* TcpConnection.h */; };
-		6F4D603D1B9FCA61009132AF /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F4D603C1B9FCA61009132AF /* CoreFoundation.framework */; };
 		6F54A1CA2273DFC400729E9A /* ProxyConnectionImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F54A1C82273DFC400729E9A /* ProxyConnectionImpl.cpp */; };
 		6F54A1CB2273DFC400729E9A /* ProxyConnectionImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 6F54A1C92273DFC400729E9A /* ProxyConnectionImpl.h */; };
 		6F54A2B42275705400729E9A /* ProxyAuthenticator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F54A2B22275705400729E9A /* ProxyAuthenticator.cpp */; };
@@ -157,6 +156,8 @@
 		6FF252A7228A570500663403 /* BasicAuthenticator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF252A5228A570500663403 /* BasicAuthenticator.cpp */; };
 		6FF7478D1B29587D0007F34D /* base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF7478B1B29587D0007F34D /* base64.cpp */; };
 		6FF7478E1B29587D0007F34D /* base64.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF7478C1B29587D0007F34D /* base64.h */; };
+		AF15D611230CEC1B00E14170 /* libcrypto.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF15D60F230CEC1B00E14170 /* libcrypto.dylib */; };
+		AF15D612230CEC1B00E14170 /* libssl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF15D610230CEC1B00E14170 /* libssl.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -182,7 +183,6 @@
 		6F3731F41E37242200479457 /* HttpHeader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpHeader.h; sourceTree = "<group>"; };
 		6F472B2F1D43B53500D01201 /* TcpConnection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TcpConnection.cpp; sourceTree = "<group>"; };
 		6F472B301D43B53500D01201 /* TcpConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpConnection.h; sourceTree = "<group>"; };
-		6F4D603C1B9FCA61009132AF /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
 		6F54A1C82273DFC400729E9A /* ProxyConnectionImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProxyConnectionImpl.cpp; sourceTree = "<group>"; };
 		6F54A1C92273DFC400729E9A /* ProxyConnectionImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProxyConnectionImpl.h; sourceTree = "<group>"; };
 		6F54A2B22275705400729E9A /* ProxyAuthenticator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProxyAuthenticator.cpp; sourceTree = "<group>"; };
@@ -316,6 +316,8 @@
 		6FF252A5228A570500663403 /* BasicAuthenticator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BasicAuthenticator.cpp; sourceTree = "<group>"; };
 		6FF7478B1B29587D0007F34D /* base64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = base64.cpp; sourceTree = "<group>"; };
 		6FF7478C1B29587D0007F34D /* base64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = base64.h; sourceTree = "<group>"; };
+		AF15D60F230CEC1B00E14170 /* libcrypto.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libcrypto.dylib; path = ../../vendor/openssl/lib/osx/x86_64/libcrypto.dylib; sourceTree = "<group>"; };
+		AF15D610230CEC1B00E14170 /* libssl.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.dylib; path = ../../vendor/openssl/lib/osx/x86_64/libssl.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -323,8 +325,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AF15D611230CEC1B00E14170 /* libcrypto.dylib in Frameworks */,
+				AF15D612230CEC1B00E14170 /* libssl.dylib in Frameworks */,
 				6F54A30122758DC900729E9A /* GSS.framework in Frameworks */,
-				6F4D603D1B9FCA61009132AF /* CoreFoundation.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -365,6 +368,8 @@
 		6F54A2FF22758DC900729E9A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				AF15D60F230CEC1B00E14170 /* libcrypto.dylib */,
+				AF15D610230CEC1B00E14170 /* libssl.dylib */,
 				6F54A30022758DC900729E9A /* GSS.framework */,
 			);
 			name = Frameworks;
@@ -388,7 +393,6 @@
 		6F852DE81985E33000271D87 = {
 			isa = PBXGroup;
 			children = (
-				6F4D603C1B9FCA61009132AF /* CoreFoundation.framework */,
 				6F852E441985EB4700271D87 /* kumaProj.xcconfig */,
 				6F852E451985EB4700271D87 /* kumaTarget.xcconfig */,
 				6F852DF31985E33000271D87 /* kuma */,
@@ -904,18 +908,15 @@
 		6F852DFF1985E33000271D87 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "kuma-Prefix.pch";
 				HEADER_SEARCH_PATHS = ../../vendor/openssl/include;
-				INSTALL_PATH = .;
+				INSTALL_PATH = "@rpath";
 				LIBRARY_SEARCH_PATHS = "../../vendor/openssl/lib/osx/$(ARCHS)";
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				OBJROOT = ../../objs/osx;
-				OTHER_LDFLAGS = (
-					"-lssl",
-					"-lcrypto",
-				);
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SYMROOT = ../../bin/osx;
 				USER_HEADER_SEARCH_PATHS = "../../src ../../vendor";
@@ -925,18 +926,15 @@
 		6F852E001985E33000271D87 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
+				CLANG_CXX_LANGUAGE_STANDARD = "c++14";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "kuma-Prefix.pch";
 				HEADER_SEARCH_PATHS = ../../vendor/openssl/include;
-				INSTALL_PATH = .;
+				INSTALL_PATH = "@rpath";
 				LIBRARY_SEARCH_PATHS = "../../vendor/openssl/lib/osx/$(ARCHS)";
-				MACOSX_DEPLOYMENT_TARGET = 10.13;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				OBJROOT = ../../objs/osx;
-				OTHER_LDFLAGS = (
-					"-lssl",
-					"-lcrypto",
-				);
+				OTHER_LDFLAGS = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SYMROOT = ../../bin/osx;
 				USER_HEADER_SEARCH_PATHS = "../../src ../../vendor";

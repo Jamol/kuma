@@ -3,6 +3,7 @@
 
 #include "kmapi.h"
 
+#include <string>
 #include <thread>
 #include <vector>
 #include <map>

@@ -3,6 +3,8 @@
 
 #include "kmapi.h"
 
+#include <string>
+
 #ifdef KUMA_OS_WIN
 # define PATH_SEPARATOR '\\'
 # define strcasecmp     _stricmp
