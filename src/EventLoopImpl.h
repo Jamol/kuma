@@ -111,6 +111,24 @@ public:
     std::thread::id threadId() const { return thread_id_; }
     KMError appendTask(Task task, EventLoopToken *token);
     KMError removeTask(EventLoopToken *token);
+
+    template <class Callable>
+    auto invoke(Callable &&f)
+    {
+        if (inSameThread()) {
+            return f();
+        }
+        KMError err;
+        return Invoker<decltype(f()), Callable>::sync(std::forward<Callable>(f), this, err);
+    }
+    template <class Callable>
+    auto invoke(Callable &&f, KMError &err)
+    {
+        if (inSameThread()) {
+            return f();
+        }
+        return Invoker<decltype(f()), Callable>::sync(std::forward<Callable>(f), this, err);
+    }
     KMError sync(Task task);
     KMError async(Task task, EventLoopToken *token=nullptr);
     KMError post(Task task, EventLoopToken *token=nullptr);

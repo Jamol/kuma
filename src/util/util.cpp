@@ -132,7 +132,7 @@ s_hmod_ws2_32 = NULL;\
 break;\
 }
         
-        s_hmod_ws2_32 = LoadLibrary("Ws2_32.dll");
+        s_hmod_ws2_32 = LoadLibrary(L"Ws2_32.dll");
         do
         {
             if(NULL == s_hmod_ws2_32)
@@ -247,21 +247,24 @@ extern "C" int km_resolve_2_ip(const char* host_name, char *ip_buf, int ip_buf_l
                 continue;
             if(IN6_IS_ADDR_SITELOCAL(&(sa6->sin6_addr)))
                 continue;
-            if(km_getnameinfo(aii->ai_addr, aii->ai_addrlen, ip_buf, ip_buf_len, NULL, 0, NI_NUMERICHOST|NI_NUMERICSERV) != 0)
+            if(km_getnameinfo(aii->ai_addr, static_cast<socklen_t>(aii->ai_addrlen), 
+                ip_buf, ip_buf_len, NULL, 0, NI_NUMERICHOST|NI_NUMERICSERV) != 0)
                 continue;
             else
                 break; // found a ipv6 address
         }
         else if(AF_INET == aii->ai_family && (KM_RESOLVE_IPV4 == ipv || KM_RESOLVE_IPV0 == ipv))
         {
-            if(km_getnameinfo(aii->ai_addr, aii->ai_addrlen, ip_buf, ip_buf_len, NULL, 0, NI_NUMERICHOST|NI_NUMERICSERV) != 0)
+            if(km_getnameinfo(aii->ai_addr, static_cast<socklen_t>(aii->ai_addrlen), 
+                ip_buf, ip_buf_len, NULL, 0, NI_NUMERICHOST|NI_NUMERICSERV) != 0)
                 continue;
             else
                 break; // found a ipv4 address
         }
     }
     if('\0' == ip_buf[0] && KM_RESOLVE_IPV0 == ipv &&
-       km_getnameinfo(ai->ai_addr, ai->ai_addrlen, ip_buf, ip_buf_len, NULL, 0, NI_NUMERICHOST|NI_NUMERICSERV) != 0)
+       km_getnameinfo(ai->ai_addr, static_cast<socklen_t>(ai->ai_addrlen), 
+           ip_buf, ip_buf_len, NULL, 0, NI_NUMERICHOST|NI_NUMERICSERV) != 0)
     {
         km_freeaddrinfo(ai);
         return -1;
@@ -694,8 +697,17 @@ int generateRandomBytes(uint8_t *buf, int len)
 {
     using bytes_randomizer = std::independent_bits_engine<std::default_random_engine, CHAR_BIT, unsigned long>;
     
+    auto sl = len / sizeof(unsigned long);
+    auto rl = len - sl * sizeof(unsigned long);
+    auto *p = reinterpret_cast<unsigned long*>(buf);
     bytes_randomizer br(std::random_device{}());
-    std::generate(buf, buf + len, std::ref(br));
+    if (sl > 0) {
+        std::generate(p, p + sl, std::ref(br));
+    }
+    if (rl > 0) {
+        unsigned long ul = br();
+        memcpy(buf + len - rl, &ul, rl);
+    }
     return len;
 }
 
@@ -704,7 +716,7 @@ std::string getExecutablePath()
     std::string str_path;
 #ifdef KUMA_OS_WIN
     char c_path[MAX_PATH] = { 0 };
-    GetModuleFileName(NULL, c_path, sizeof(c_path));
+    GetModuleFileNameA(NULL, c_path, sizeof(c_path));
     str_path = c_path;
 #elif defined(KUMA_OS_MAC)
 # ifndef KUMA_OS_IOS
@@ -762,7 +774,7 @@ std::string getCurrentModulePath()
     char c_path[MAX_PATH] = { 0 };
     HMODULE hModule = NULL;
     GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, reinterpret_cast<LPCTSTR>(getCurrentModulePath), &hModule);
-    GetModuleFileName(hModule, c_path, sizeof(c_path));
+    GetModuleFileNameA(hModule, c_path, sizeof(c_path));
     str_path = c_path;
 #else
     Dl_info dlInfo;
@@ -854,7 +866,7 @@ void kuma_init()
         accept_ex = nullptr;
     }
     closeFd(sock);
-    cancel_io_ex = (LPFN_CANCELIOEX)GetProcAddress(GetModuleHandle("KERNEL32"), "CancelIoEx");
+    cancel_io_ex = (LPFN_CANCELIOEX)GetProcAddress(GetModuleHandle(L"KERNEL32"), "CancelIoEx");
 }
 
 void kuma_fini()

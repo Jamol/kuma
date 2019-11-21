@@ -24,7 +24,6 @@
 
 #include "kmdefs.h"
 #include "kmapi.h"
-#include "util/util.h"
 
 #include <memory>
 #include <mutex>

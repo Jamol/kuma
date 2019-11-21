@@ -20,6 +20,7 @@
 */
 
 #include "SocketBase.h"
+#include "util/util.h"
 #include "util/kmtrace.h"
 
 #if defined(KUMA_OS_WIN)

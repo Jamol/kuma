@@ -50,7 +50,7 @@ public:
             return false;
         }
         auto lfd = ::socket(AF_INET, SOCK_STREAM, 0);
-        DEFER([lfd]{ closeFd(lfd); });
+        DEFER(closeFd(lfd));
         if(::bind(lfd, (const sockaddr*)&ss_addr, sizeof(sockaddr_in)) != 0) {
             return false;
         }

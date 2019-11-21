@@ -127,7 +127,7 @@ EventLoop::Token EventLoop::createToken()
 {
     Token t;
     t.pimpl()->eventLoop(EventLoopHelper::implPtr(pimpl()));
-    return std::move(t);
+    return t;
 }
 
 PollType EventLoop::getPollType() const
@@ -173,6 +173,11 @@ void EventLoop::stop()
 EventLoop::Impl* EventLoop::pimpl()
 {
     return pimpl_;
+}
+
+bool EventLoop::inSameThread() const
+{
+    return pimpl_->inSameThread();
 }
 
 KMError EventLoop::sync(Task task)

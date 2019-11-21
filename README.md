@@ -68,9 +68,7 @@ using namespace kuma;
 int main(int argc, char *argv[])
 {
     kuma::init();
-    DEFER([]{
-        kuma::fini();
-    });
+    DEFER(kuma::fini());
     
     EventLoop main_loop(PollType::NONE);
     if (!main_loop.init()) {
@@ -114,9 +112,7 @@ using namespace kuma;
 int main(int argc, char *argv[])
 {
     kuma::init();
-    DEFER([]{
-        kuma::fini();
-    });
+    DEFER(kuma::fini());
     
     EventLoop main_loop(PollType::NONE);
     if (!main_loop.init()) {

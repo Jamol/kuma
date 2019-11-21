@@ -6,28 +6,33 @@
 //  Copyright © 2015 kuma. All rights reserved.
 //
 
-#ifndef __defer_h__
-#define __defer_h__
+#pragma once
 
-#include <functional>
 
 namespace kuma {
 
+template<class Callable>
 class DeferExec final
 {
 public:
-    DeferExec(std::function<void(void)> f) : f_(std::move(f)) {};
-    ~DeferExec() { if(f_) f_(); }
-    void reset() { f_ = nullptr; }
+    DeferExec(Callable c) : c_(std::move(c)) {}
+    DeferExec(DeferExec &&other) : c_(std::move(other.c_)) {}
+    ~DeferExec() { c_(); }
     
+    DeferExec(const DeferExec &) = delete;
+    void operator=(const DeferExec &) = delete;
 private:
-    std::function<void(void)> f_;
+    Callable c_;
 };
+
+template <typename Callable>
+DeferExec<Callable> make_defer(Callable c) {
+    return {std::move(c)};
+}
 
 } // namespace kuma
 
 #define CONCAT_XY(x, y) x##y
-#define MAKE_DEFER(r, l) kuma::DeferExec CONCAT_XY(defer_exec_, l)(r)
+#define MAKE_DEFER(r, l) auto CONCAT_XY(defer_exec_, l) = kuma::make_defer([&] () { r; })
 #define DEFER(r) MAKE_DEFER(r, __LINE__)
 
-#endif // __defer_h__

@@ -117,7 +117,7 @@ int main(int argc, char *argv[])
     }
     
     kuma::init();
-    DEFER([]{ kuma::fini(); });
+    DEFER(kuma::fini());
     if (!main_loop.init()) {
         printf("failed to init EventLoop\n");
         return -1;

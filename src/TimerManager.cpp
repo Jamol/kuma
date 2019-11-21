@@ -21,7 +21,6 @@
 
 #include "TimerManager.h"
 #include "EventLoopImpl.h"
-#include "util/kmtrace.h"
 
 #include <string.h>
 

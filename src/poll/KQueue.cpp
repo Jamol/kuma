@@ -51,7 +51,7 @@ public:
     
 private:
     int             kqueue_fd_ { -1 };
-    NotifierPtr     notifier_ { std::move(Notifier::createNotifier()) };
+    NotifierPtr     notifier_ { Notifier::createNotifier() };
     
     // on ET mode (EV_CLEAR is set), it seems EVFILT_READ won't be triggered
     // if EVFILT_READ is set after data arrived

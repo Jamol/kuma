@@ -61,9 +61,7 @@ TEST_F(Base64_TEST, Test_Encode_Decode_String)
 TEST_F(Base64_TEST, Test_Encode_Decode_Context)
 {
     auto *ctx = x64_ctx_create();
-    DEFER([ctx]{
-        x64_ctx_destroy(ctx);
-    });
+    DEFER(x64_ctx_destroy(ctx));
     
     auto calc_len = x64_calc_encode_buf_size(raw_buf_.size());
     std::vector<char> enc_buf(calc_len, '\0');

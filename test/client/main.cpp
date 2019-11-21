@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
     }
     
     kuma::init();
-    DEFER([]{ kuma::fini(); });
+    DEFER(kuma::fini());
     
     char proto[16] = {0};
     char host[64] = {0};

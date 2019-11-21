@@ -52,7 +52,7 @@ private:
     
 private:
     typedef std::vector<pollfd> PollFdVector;
-    NotifierPtr     notifier_ { std::move(Notifier::createNotifier()) };
+    NotifierPtr     notifier_ { Notifier::createNotifier() };
     PollFdVector    poll_fds_;
 };
 
@@ -142,7 +142,7 @@ KMError VPoll::registerFd(SOCKET_FD fd, KMEvent events, IOCallback cb)
 
 KMError VPoll::unregisterFd(SOCKET_FD fd)
 {
-    int max_fd = int(poll_items_.size() - 1);
+    auto max_fd = SOCKET_FD(poll_items_.size() - 1);
     KUMA_INFOTRACE("VPoll::unregisterFd, fd="<<fd<<", max_fd="<<max_fd);
     if (fd < 0 || -1 == max_fd || fd > max_fd) {
         KUMA_WARNTRACE("VPoll::unregisterFd, failed, max_fd="<<max_fd);
@@ -169,7 +169,7 @@ KMError VPoll::unregisterFd(SOCKET_FD fd)
 
 KMError VPoll::updateFd(SOCKET_FD fd, KMEvent events)
 {
-    int max_fd = int(poll_items_.size() - 1);
+    auto max_fd = SOCKET_FD(poll_items_.size() - 1);
     if (fd < 0 || -1 == max_fd || fd > max_fd) {
         KUMA_WARNTRACE("VPoll::updateFd, failed, fd="<<fd<<", max_fd="<<max_fd);
         return KMError::INVALID_PARAM;
@@ -179,7 +179,7 @@ KMError VPoll::updateFd(SOCKET_FD fd, KMEvent events)
         return KMError::INVALID_PARAM;
     }
     int idx = poll_items_[fd].idx;
-    if (idx < 0 || idx >= poll_fds_.size()) {
+    if (idx < 0 || idx >= (int)poll_fds_.size()) {
         KUMA_WARNTRACE("VPoll::updateFd, failed, index="<<idx);
         return KMError::INVALID_STATE;
     }
@@ -195,7 +195,7 @@ KMError VPoll::updateFd(SOCKET_FD fd, KMEvent events)
 KMError VPoll::wait(uint32_t wait_ms)
 {
 #ifdef KUMA_OS_WIN
-    int num_revts = WSAPoll(&poll_fds_[0], poll_fds_.size(), wait_ms);
+    int num_revts = WSAPoll(&poll_fds_[0], static_cast<ULONG>(poll_fds_.size()), wait_ms);
 #else
     int num_revts = poll(&poll_fds_[0], (nfds_t)poll_fds_.size(), wait_ms);
 #endif

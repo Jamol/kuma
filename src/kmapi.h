@@ -99,6 +99,42 @@ public:
      * the task will be executed at once if called on loop thread
      * token is always unnecessary for sync task
      *
+     * @param f the task to be executed. it will always be executed when call success
+     *
+     * @return return the result of f()
+     */
+    template<typename Callable>
+    auto invoke(Callable &&f)
+    {
+        if (inSameThread()) {
+            return f();
+        }
+        KMError err;
+        return Invoker<decltype(f()), Callable>::sync(std::forward<Callable>(f), this, err);
+    }
+
+    /* run the task in loop thread and wait untill task is executed.
+     * the task will be executed at once if called on loop thread
+     * token is always unnecessary for sync task
+     *
+     * @param f the task to be executed. it will always be executed when call success
+     * @param err when f is executed, err is KMError::NOERR, otherwise is KMError
+     *
+     * @return return the result of f()
+     */
+    template<typename Callable>
+    auto invoke(Callable &&f, KMError &err)
+    {
+        if (inSameThread()) {
+            return f();
+        }
+        return Invoker<decltype(f()), Callable>::sync(std::forward<Callable>(f), this, err);
+    }
+
+    /* run the task in loop thread and wait untill task is executed.
+     * the task will be executed at once if called on loop thread
+     * token is always unnecessary for sync task
+     *
      * @param task the task to be executed. it will always be executed when call success
      */
     KMError sync(Task task);
@@ -134,6 +170,28 @@ public:
     
     class Impl;
     Impl* pimpl();
+
+protected:
+    template <typename ReturnType, typename Callable>
+    struct Invoker
+    {
+        template<typename LoopType>
+        static ReturnType sync(Callable &&f, LoopType *loop, KMError &err) {
+            ReturnType retval;
+            auto task_sync = [&] { retval = f(); };
+            err = loop->sync(std::move(task_sync));
+            return retval;
+        }
+    };
+
+    template <typename Callable>
+    struct Invoker<void, Callable>
+    {
+        template<typename LoopType>
+        static void sync(Callable &&f, LoopType *loop, KMError &err) {
+            err = loop->sync(std::forward<Callable>(f));
+        }
+    };
 
 private:
     Impl* pimpl_;

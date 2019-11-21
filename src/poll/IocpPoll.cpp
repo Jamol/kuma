@@ -22,7 +22,6 @@
 #include "IOPoll.h"
 #include "util/kmtrace.h"
 #include "util/util.h"
-#include "iocp/Iocp.h"
 
 KUMA_NS_BEGIN
 
