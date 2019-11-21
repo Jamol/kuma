@@ -143,9 +143,30 @@ public:
         err = sync(std::forward<F>(f));
     }
 
+    template<typename F>
+    KMError sync(F &&f)
+    {
+        wrapper<F> wf{std::forward<F>(f)};
+        return sync(Task(std::move(wf)));
+    }
     KMError sync(Task task);
+
+    template<typename F>
+    KMError async(F &&f, Token *token=nullptr)
+    {
+        wrapper<F> wf{std::forward<F>(f)};
+        return async(Task(std::move(wf)), token);
+    }
     KMError async(Task task, EventLoopToken *token=nullptr);
+
+    template<typename F>
+    KMError post(F &&f, Token *token=nullptr)
+    {
+        wrapper<F> wf{std::forward<F>(f)};
+        return post(Task(std::move(wf)), token);
+    }
     KMError post(Task task, EventLoopToken *token=nullptr);
+    
     void loopOnce(uint32_t max_wait_ms);
     void loop(uint32_t max_wait_ms = -1);
     void notify();
