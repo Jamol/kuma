@@ -152,7 +152,7 @@ public:
     KMError sync(Task task);
 
     template<typename F>
-    KMError async(F &&f, Token *token=nullptr)
+    KMError async(F &&f, EventLoopToken *token=nullptr)
     {
         wrapper<F> wf{std::forward<F>(f)};
         return async(Task(std::move(wf)), token);
@@ -160,7 +160,7 @@ public:
     KMError async(Task task, EventLoopToken *token=nullptr);
 
     template<typename F>
-    KMError post(F &&f, Token *token=nullptr)
+    KMError post(F &&f, EventLoopToken *token=nullptr)
     {
         wrapper<F> wf{std::forward<F>(f)};
         return post(Task(std::move(wf)), token);
