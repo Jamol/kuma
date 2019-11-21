@@ -149,6 +149,12 @@ public:
      *
      * @param task the task to be executed. it will always be executed when call success
      */
+    template<typename F>
+    KMError sync(F &&f)
+    {
+        wrapper<F> wf{std::forward<F>(f)};
+        return sync(Task(std::move(wf)));
+    }
     KMError sync(Task task);
     
     /* run the task in loop thread.
@@ -158,6 +164,12 @@ public:
      * @param token to be used to cancel the task. If token is null, the caller should
      *              make sure the resources referenced by task are valid when task running
      */
+    template<typename F>
+    KMError async(F &&f, Token *token=nullptr)
+    {
+        wrapper<F> wf{std::forward<F>(f)};
+        return async(Task(std::move(wf)), token);
+    }
     KMError async(Task task, Token *token=nullptr);
     
     /* run the task in loop thread at next time.
@@ -166,6 +178,12 @@ public:
      * @param token to be used to cancel the task. If token is null, the caller should
      *              make sure the resources referenced by task are valid when task running
      */
+    template<typename F>
+    KMError post(F &&f, Token *token=nullptr)
+    {
+        wrapper<F> wf{std::forward<F>(f)};
+        return post(Task(std::move(wf)), token);
+    }
     KMError post(Task task, Token *token=nullptr);
     
     /* cancel the tasks that are scheduled with token. you cannot cancel the task that is in running,
@@ -296,6 +314,12 @@ public:
     /**
      * Schedule the timer. This API is thread-safe
      */
+    template<typename F>
+    bool schedule(uint32_t delay_ms, TimerMode mode, F &&f)
+    {
+        wrapper<F> wf{std::forward<F>(f)};
+        return schedule(delay_ms, mode, TimerCallback(std::move(wf)));
+    }
     bool schedule(uint32_t delay_ms, TimerMode mode, TimerCallback cb);
     
     /**
