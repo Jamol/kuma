@@ -112,23 +112,37 @@ public:
     KMError appendTask(Task task, EventLoopToken *token);
     KMError removeTask(EventLoopToken *token);
 
-    template <class Callable>
-    auto invoke(Callable &&f)
+    template<typename F>
+    auto invoke(F &&f)
     {
-        if (inSameThread()) {
-            return f();
-        }
         KMError err;
-        return Invoker<decltype(f()), Callable>::sync(std::forward<Callable>(f), this, err);
+        return invoke(std::forward<F>(f), err);
     }
-    template <class Callable>
-    auto invoke(Callable &&f, KMError &err)
+
+    template<typename F, std::enable_if_t<!std::is_same<decltype((*(F*)0)()), void>{}, int> = 0>
+    auto invoke(F &&f, KMError &err)
     {
+        static_assert(!std::is_same<decltype(f()), void>{}, "is void");
         if (inSameThread()) {
             return f();
         }
-        return Invoker<decltype(f()), Callable>::sync(std::forward<Callable>(f), this, err);
+        using ReturnType = decltype(f());
+        ReturnType retval;
+        auto task_sync = [&] { retval = f(); };
+        err = sync(std::move(task_sync));
+        return retval;
     }
+
+    template<typename F, std::enable_if_t<std::is_same<decltype((*(F*)0)()), void>{}, int> = 0>
+    void invoke(F &&f, KMError &err)
+    {
+        static_assert(std::is_same<decltype(f()), void>{}, "not void");
+        if (inSameThread()) {
+            return f();
+        }
+        err = sync(std::forward<F>(f));
+    }
+
     KMError sync(Task task);
     KMError async(Task task, EventLoopToken *token=nullptr);
     KMError post(Task task, EventLoopToken *token=nullptr);
