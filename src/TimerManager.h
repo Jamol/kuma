@@ -127,6 +127,12 @@ public:
     Impl(TimerManagerPtr mgr);
     ~Impl();
     
+    template<typename F>
+    bool schedule(uint32_t delay_ms, TimerMode mode, F &&f)
+    {
+        wrapper<F> wf{std::forward<F>(f)};
+        return schedule(delay_ms, mode, TimerCallback(std::move(wf)));
+    }
     bool schedule(uint32_t delay_ms, TimerMode mode, TimerCallback cb);
     void cancel();
     
