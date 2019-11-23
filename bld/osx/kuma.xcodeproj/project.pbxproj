@@ -156,8 +156,8 @@
 		6FF252A7228A570500663403 /* BasicAuthenticator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF252A5228A570500663403 /* BasicAuthenticator.cpp */; };
 		6FF7478D1B29587D0007F34D /* base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FF7478B1B29587D0007F34D /* base64.cpp */; };
 		6FF7478E1B29587D0007F34D /* base64.h in Headers */ = {isa = PBXBuildFile; fileRef = 6FF7478C1B29587D0007F34D /* base64.h */; };
-		AF15D611230CEC1B00E14170 /* libcrypto.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF15D60F230CEC1B00E14170 /* libcrypto.dylib */; };
-		AF15D612230CEC1B00E14170 /* libssl.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF15D610230CEC1B00E14170 /* libssl.dylib */; };
+		AFE987222388BC9E00CBB429 /* libcrypto.1.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE987202388BC9E00CBB429 /* libcrypto.1.1.dylib */; };
+		AFE987232388BC9E00CBB429 /* libssl.1.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AFE987212388BC9E00CBB429 /* libssl.1.1.dylib */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -316,8 +316,8 @@
 		6FF252A5228A570500663403 /* BasicAuthenticator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BasicAuthenticator.cpp; sourceTree = "<group>"; };
 		6FF7478B1B29587D0007F34D /* base64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = base64.cpp; sourceTree = "<group>"; };
 		6FF7478C1B29587D0007F34D /* base64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = base64.h; sourceTree = "<group>"; };
-		AF15D60F230CEC1B00E14170 /* libcrypto.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libcrypto.dylib; path = ../../vendor/openssl/lib/osx/x86_64/libcrypto.dylib; sourceTree = "<group>"; };
-		AF15D610230CEC1B00E14170 /* libssl.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.dylib; path = ../../vendor/openssl/lib/osx/x86_64/libssl.dylib; sourceTree = "<group>"; };
+		AFE987202388BC9E00CBB429 /* libcrypto.1.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libcrypto.1.1.dylib; path = ../../vendor/openssl/lib/osx/x86_64/libcrypto.1.1.dylib; sourceTree = "<group>"; };
+		AFE987212388BC9E00CBB429 /* libssl.1.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.1.1.dylib; path = ../../vendor/openssl/lib/osx/x86_64/libssl.1.1.dylib; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -325,8 +325,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AF15D611230CEC1B00E14170 /* libcrypto.dylib in Frameworks */,
-				AF15D612230CEC1B00E14170 /* libssl.dylib in Frameworks */,
+				AFE987222388BC9E00CBB429 /* libcrypto.1.1.dylib in Frameworks */,
+				AFE987232388BC9E00CBB429 /* libssl.1.1.dylib in Frameworks */,
 				6F54A30122758DC900729E9A /* GSS.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -368,8 +368,8 @@
 		6F54A2FF22758DC900729E9A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				AF15D60F230CEC1B00E14170 /* libcrypto.dylib */,
-				AF15D610230CEC1B00E14170 /* libssl.dylib */,
+				AFE987202388BC9E00CBB429 /* libcrypto.1.1.dylib */,
+				AFE987212388BC9E00CBB429 /* libssl.1.1.dylib */,
 				6F54A30022758DC900729E9A /* GSS.framework */,
 			);
 			name = Frameworks;

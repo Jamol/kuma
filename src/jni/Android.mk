@@ -98,7 +98,7 @@ LOCAL_C_INCLUDES := \
 	$(MY_ROOT)/vendor \
 	$(OPENSSL_PATH)/include
 
-LOCAL_LDLIBS := -ldl -llog -l$(OPENSSL_LIB_PATH)/libssl.so -l$(OPENSSL_LIB_PATH)/libcrypto.so
+LOCAL_LDLIBS := -ldl -llog -l$(OPENSSL_LIB_PATH)/libssl.1.1.so -l$(OPENSSL_LIB_PATH)/libcrypto.1.1.so
 LOCAL_CFLAGS := -w -O2 -D__ANDROID__ -DKUMA_HAS_OPENSSL
 LOCAL_CPPFLAGS := -std=c++14
 LOCAL_CPP_FEATURES := rtti exceptions

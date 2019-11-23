@@ -185,7 +185,7 @@ protected:
     using LockGuard = std::lock_guard<LockType>;
     
     IOPoll*             poll_;
-    bool                stop_loop_{ false };
+    volatile bool       stop_loop_{ false };
     std::thread::id     thread_id_;
     
     TaskQueue           task_queue_;
