@@ -143,7 +143,7 @@ public:
         err = sync(std::forward<F>(f));
     }
 
-    template<typename F>
+    template<typename F, std::enable_if_t<!std::is_copy_constructible<F>{}, int> = 0>
     KMError sync(F &&f)
     {
         wrapper<F> wf{std::forward<F>(f)};
@@ -151,7 +151,7 @@ public:
     }
     KMError sync(Task task);
 
-    template<typename F>
+    template<typename F, std::enable_if_t<!std::is_copy_constructible<F>{}, int> = 0>
     KMError async(F &&f, EventLoopToken *token=nullptr)
     {
         wrapper<F> wf{std::forward<F>(f)};
@@ -159,7 +159,7 @@ public:
     }
     KMError async(Task task, EventLoopToken *token=nullptr);
 
-    template<typename F>
+    template<typename F, std::enable_if_t<!std::is_copy_constructible<F>{}, int> = 0>
     KMError post(F &&f, EventLoopToken *token=nullptr)
     {
         wrapper<F> wf{std::forward<F>(f)};

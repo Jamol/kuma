@@ -150,7 +150,7 @@ public:
      *
      * @param task the task to be executed. it will always be executed when call success
      */
-    template<typename F>
+    template<typename F, std::enable_if_t<!std::is_copy_constructible<F>{}, int> = 0>
     KMError sync(F &&f)
     {
         wrapper<F> wf{std::forward<F>(f)};
@@ -165,7 +165,7 @@ public:
      * @param token to be used to cancel the task. If token is null, the caller should
      *              make sure the resources referenced by task are valid when task running
      */
-    template<typename F>
+    template<typename F, std::enable_if_t<!std::is_copy_constructible<F>{}, int> = 0>
     KMError async(F &&f, Token *token=nullptr)
     {
         wrapper<F> wf{std::forward<F>(f)};
@@ -179,7 +179,7 @@ public:
      * @param token to be used to cancel the task. If token is null, the caller should
      *              make sure the resources referenced by task are valid when task running
      */
-    template<typename F>
+    template<typename F, std::enable_if_t<!std::is_copy_constructible<F>{}, int> = 0>
     KMError post(F &&f, Token *token=nullptr)
     {
         wrapper<F> wf{std::forward<F>(f)};
@@ -315,7 +315,7 @@ public:
     /**
      * Schedule the timer. This API is thread-safe
      */
-    template<typename F>
+    template<typename F, std::enable_if_t<!std::is_copy_constructible<F>{}, int> = 0>
     bool schedule(uint32_t delay_ms, TimerMode mode, F &&f)
     {
         wrapper<F> wf{std::forward<F>(f)};

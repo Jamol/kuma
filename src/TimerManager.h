@@ -127,7 +127,7 @@ public:
     Impl(TimerManagerPtr mgr);
     ~Impl();
     
-    template<typename F>
+    template<typename F, std::enable_if_t<!std::is_copy_constructible<F>{}, int> = 0>
     bool schedule(uint32_t delay_ms, TimerMode mode, F &&f)
     {
         wrapper<F> wf{std::forward<F>(f)};
