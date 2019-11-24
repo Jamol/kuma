@@ -83,7 +83,7 @@ KMError SioHandler::init(SslRole ssl_role, SOCKET_FD fd, uint32_t ssl_flags)
         return err;
     }
     
-    int ret = SSL_set_fd(ssl_, fd_);
+    int ret = SSL_set_fd(ssl_, static_cast<int>(fd_));
     if(0 == ret) {
         KUMA_ERRXTRACE("init, SSL_set_fd failed, err="<<ERR_reason_error_string(ERR_get_error()));
         SSL_free(ssl_);

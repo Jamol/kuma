@@ -17,6 +17,7 @@
 #define __IOCP_H__
 
 #include "kmdefs.h"
+#include "util/util.h"
 #include "util/kmtrace.h"
 #include "util/skbuffer.h"
 #include "EventLoopImpl.h"
