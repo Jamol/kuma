@@ -67,7 +67,7 @@ bool SspiAuthenticator::init(const AuthInfo &auth_info, const RequestInfo &req_i
     req_info_ = req_info;
 
     TimeStamp expiry;
-    SEC_WINNT_AUTH_IDENTITY auth_data;
+    SEC_WINNT_AUTH_IDENTITY_A auth_data;
     PVOID p_auth_data = nullptr;
     std::string package_name = getAuthScheme(auth_scheme_);
     if (auth_scheme_ == AuthScheme::DIGEST) {
