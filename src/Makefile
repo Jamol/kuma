@@ -4,11 +4,11 @@
 
 ROOTDIR = ..
 SRCDIR = $(ROOTDIR)/src
-VENDORDIR = $(ROOTDIR)/vendor
+THIRDPARTYDIR = $(ROOTDIR)/third_party
 
-#OPENSSLDIR = $(VENDORDIR)/openssl
+#OPENSSLDIR = $(THIRDPARTYDIR)/openssl
 OPENSSLDIR = /usr/include
-ZLIBDIR = $(VENDORDIR)/zlib
+ZLIBDIR = $(THIRDPARTYDIR)/zlib
 
 BINDIR = $(ROOTDIR)/bin/linux
 LIBDIR = $(ROOTDIR)/lib
@@ -19,7 +19,7 @@ TARGET = libkuma.so
 ##############################################################################
 #
 
-INCLUDES = -I. -I$(VENDORDIR) -I$(OPENSSLDIR)
+INCLUDES = -I. -I../include -I$(THIRDPARTYDIR) -I$(OPENSSLDIR)
 #
 ##############################################################################
 #

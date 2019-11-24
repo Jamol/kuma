@@ -2,7 +2,7 @@ LOCAL_PATH := $(call my-dir)/..
 MY_ROOT := $(LOCAL_PATH)/..
 include $(CLEAR_VARS)
 
-OPENSSL_PATH := $(MY_ROOT)/vendor/openssl
+OPENSSL_PATH := $(MY_ROOT)/third_party/openssl
 OPENSSL_LIB_PATH := $(OPENSSL_PATH)/lib/android/$(APP_ABI)
 
 ifeq ($(NDK_DEBUG), 1)
@@ -13,7 +13,7 @@ endif
 
 LOCAL_MODULE := kuma
 
-MY_ZLIB_DIR := ../vendor/zlib
+MY_ZLIB_DIR := ../third_party/zlib
 
 MY_ZLIB_SRC_FILES := \
     $(MY_ZLIB_DIR)/adler32.c \
@@ -95,7 +95,8 @@ LOCAL_SRC_FILES += $(MY_ZLIB_SRC_FILES)
 
 LOCAL_C_INCLUDES := \
 	$(LOCAL_PATH) \
-	$(MY_ROOT)/vendor \
+    $(MY_ROOT)/include \
+	$(MY_ROOT)/third_party \
 	$(OPENSSL_PATH)/include
 
 LOCAL_LDLIBS := -ldl -llog -l$(OPENSSL_LIB_PATH)/libssl.1.1.so -l$(OPENSSL_LIB_PATH)/libcrypto.1.1.so

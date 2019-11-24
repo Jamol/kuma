@@ -31,25 +31,11 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		6F8E7CFC1B31375F00DA073C /* PBXContainerItemProxy */ = {
+		1F91033E238A51F200A39F5C /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */;
 			proxyType = 2;
 			remoteGlobalIDString = 6F852DF11985E33000271D87;
-			remoteInfo = kuma;
-		};
-		6F8E7CFE1B3137D300DA073C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 6F852DF01985E33000271D87;
-			remoteInfo = kuma;
-		};
-		6F8E7D001B3137D900DA073C /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */;
-			proxyType = 1;
-			remoteGlobalIDString = 6F852DF01985E33000271D87;
 			remoteInfo = kuma;
 		};
 /* End PBXContainerItemProxy section */
@@ -82,7 +68,7 @@
 		6F8BE8A022C607B400E6EA32 /* DataSender.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataSender.h; sourceTree = "<group>"; };
 		6F8BE8A122C607B400E6EA32 /* DataSender.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DataSender.cpp; sourceTree = "<group>"; };
 		6F8BE9BA22C7381E00E6EA32 /* RateReporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RateReporter.h; sourceTree = "<group>"; };
-		6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = kuma.xcodeproj; path = ../../../bld/osx/kuma.xcodeproj; sourceTree = "<group>"; };
+		6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = kuma.xcodeproj; path = ../../../bld/mac/kuma.xcodeproj; sourceTree = "<group>"; };
 		6FDC9EB91D3F38CF00097089 /* HttpClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpClient.cpp; sourceTree = "<group>"; };
 		6FDC9EBA1D3F38CF00097089 /* HttpClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpClient.h; sourceTree = "<group>"; };
 		6FDC9EBB1D3F38CF00097089 /* LoopPool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LoopPool.cpp; sourceTree = "<group>"; };
@@ -139,10 +125,10 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		6F8E7CF91B31375F00DA073C /* Products */ = {
+		1F91033B238A51F200A39F5C /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				6F8E7CFD1B31375F00DA073C /* kuma.dylib */,
+				1F91033F238A51F200A39F5C /* kuma.dylib */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -234,7 +220,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				6F8E7CFF1B3137D300DA073C /* PBXTargetDependency */,
 			);
 			name = client;
 			productName = client;
@@ -252,7 +237,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				6F8E7D011B3137D900DA073C /* PBXTargetDependency */,
 			);
 			name = server;
 			productName = server;
@@ -288,7 +272,7 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = 6F8E7CF91B31375F00DA073C /* Products */;
+					ProductGroup = 1F91033B238A51F200A39F5C /* Products */;
 					ProjectRef = 6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */;
 				},
 			);
@@ -301,11 +285,11 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		6F8E7CFD1B31375F00DA073C /* kuma.dylib */ = {
+		1F91033F238A51F200A39F5C /* kuma.dylib */ = {
 			isa = PBXReferenceProxy;
 			fileType = "compiled.mach-o.dylib";
 			path = kuma.dylib;
-			remoteRef = 6F8E7CFC1B31375F00DA073C /* PBXContainerItemProxy */;
+			remoteRef = 1F91033E238A51F200A39F5C /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -345,19 +329,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		6F8E7CFF1B3137D300DA073C /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = kuma;
-			targetProxy = 6F8E7CFE1B3137D300DA073C /* PBXContainerItemProxy */;
-		};
-		6F8E7D011B3137D900DA073C /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = kuma;
-			targetProxy = 6F8E7D001B3137D900DA073C /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		6FF211A91B1551CD006603BB /* Debug */ = {
@@ -410,7 +381,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					../../../bin/osx/Debug,
+					"../../../bin/mac/$(CONFIGURATION)",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = YES;
@@ -419,7 +390,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SYMROOT = ../../../bin/osx;
-				USER_HEADER_SEARCH_PATHS = ../../../src;
+				USER_HEADER_SEARCH_PATHS = "../../../include ../../../src";
 			};
 			name = Debug;
 		};
@@ -455,7 +426,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					../../../bin/osx/Debug,
+					"../../../bin/mac/$(CONFIGURATION)",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -463,7 +434,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SYMROOT = ../../../bin/osx;
-				USER_HEADER_SEARCH_PATHS = ../../../src;
+				USER_HEADER_SEARCH_PATHS = "../../../include ../../../src";
 			};
 			name = Release;
 		};
@@ -505,7 +476,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					../../../bin/osx/Debug,
+					"../../../bin/mac/$(CONFIGURATION)",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = YES;
@@ -514,7 +485,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SYMROOT = ../../../bin/osx;
-				USER_HEADER_SEARCH_PATHS = ../../../src;
+				USER_HEADER_SEARCH_PATHS = "../../../include ../../../src";
 			};
 			name = Debug;
 		};
@@ -550,7 +521,7 @@
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path";
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					../../../bin/osx/Debug,
+					"../../../bin/mac/$(CONFIGURATION)",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
@@ -558,7 +529,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SYMROOT = ../../../bin/osx;
-				USER_HEADER_SEARCH_PATHS = ../../../src;
+				USER_HEADER_SEARCH_PATHS = "../../../include ../../../src";
 			};
 			name = Release;
 		};
