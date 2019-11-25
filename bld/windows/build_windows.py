@@ -18,8 +18,8 @@ def build_x86_version(workingPath):
     run_and_check_error('cmake -G "Visual Studio 15 2017" ../../../..')
 
     #patch = ' /t:Rebuild'
-    run_and_check_error('MSBuild.exe kev.vcxproj /p:Configuration=Debug /p:Platform=x86')
-    run_and_check_error('MSBuild.exe kev.vcxproj /p:Configuration=Release /p:Platform=x86')
+    run_and_check_error('MSBuild.exe kuma.vcxproj /p:Configuration=Debug /p:Platform=x86')
+    run_and_check_error('MSBuild.exe kuma.vcxproj /p:Configuration=Release /p:Platform=x86')
     
 def build_x64_version(workingPath):
     platformPath = workingPath + '/x64'
@@ -29,8 +29,8 @@ def build_x64_version(workingPath):
     run_and_check_error('cmake -G "Visual Studio 15 2017 Win64" ../../../..')
 
     #patch = ' /t:Rebuild'
-    run_and_check_error('MSBuild.exe kev.vcxproj /p:Configuration=Debug /p:Platform=x64')
-    run_and_check_error('MSBuild.exe kev.vcxproj /p:Configuration=Release /p:Platform=x64')
+    run_and_check_error('MSBuild.exe kuma.vcxproj /p:Configuration=Debug /p:Platform=x64')
+    run_and_check_error('MSBuild.exe kuma.vcxproj /p:Configuration=Release /p:Platform=x64')
 
 def build_windows(workingPath):
     build_x86_version(workingPath)

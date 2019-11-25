@@ -254,7 +254,7 @@ KMError H1xStream::handleInputData(uint8_t *src, size_t len)
         DESTROY_DETECTOR_SETUP();
         int bytes_used = incoming_parser_.parse((char*)src, len);
         DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
-        if (bytes_used < len) {
+        if (bytes_used < static_cast<int>(len)) {
             if (is_stream_upgraded_) {
                 KMBuffer buf(src + bytes_used, len - bytes_used, len - bytes_used);
                 onStreamData(buf);

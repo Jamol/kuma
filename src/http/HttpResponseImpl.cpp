@@ -232,7 +232,7 @@ int HttpResponse::Impl::sendData(const void* data, size_t len)
         if (ret > 0) {
             raw_bytes_sent_ += ret;
         }
-        if (finish && ret >= send_len) {
+        if (finish && ret >= static_cast<int>(send_len)) {
             rsp_complete_ = true;
         }
         return ret;
@@ -320,7 +320,7 @@ int HttpResponse::Impl::sendData(const KMBuffer &buf)
         if (ret > 0) {
             raw_bytes_sent_ += ret;
         }
-        if (finish && ret >= send_len) {
+        if (finish && ret >= static_cast<int>(send_len)) {
             rsp_complete_ = true;
         }
         return ret;

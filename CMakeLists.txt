@@ -55,6 +55,7 @@ set(SOURCE_FILES ${SOURCE_FILES} ${ZLIB_FILES})
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     include_directories(${PROJ_ROOT_DIR}/third_party/openssl/include)
     file(GLOB WINDOWS_SOURCES 
+        ${PROJ_ROOT_DIR}/src/iocp/*.cpp
         ${PROJ_ROOT_DIR}/src/poll/IocpPoll.cpp
         ${PROJ_ROOT_DIR}/src/proxy/SspiAuthenticator.cpp)
     
@@ -195,7 +196,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     else ()
         set(LIBRARY_OUTPUT_PATH "${PROJ_ROOT_DIR}/bin/windows/Win32/${CMAKE_BUILD_TYPE}")
     endif ()
-    target_link_libraries(kuma libcrypto.lib libssl.lib)
+    target_link_libraries(kuma libcrypto.lib libssl.lib ws2_32.lib)
 elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
     if (CMAKE_TARGET_SYSTEM STREQUAL "ios")
         set(LIBRARY_OUTPUT_PATH "${PROJ_ROOT_DIR}/bin/ios/${CMAKE_BUILD_TYPE}-${XCODE_IOS_PLATFORM}")
