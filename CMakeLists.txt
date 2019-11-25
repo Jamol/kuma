@@ -77,9 +77,7 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(SOURCE_FILES ${SOURCE_FILES} ${LINUX_SOURCES})
 elseif (CMAKE_SYSTEM_NAME MATCHES "Android")
     include_directories(${PROJ_ROOT_DIR}/third_party/openssl/include)
-    file(GLOB ANDROID_SOURCES 
-        ${PROJ_ROOT_DIR}/src/jni/*.cpp
-        ${PROJ_ROOT_DIR}/src/poll/EPoll.cpp)
+    file(GLOB ANDROID_SOURCES ${PROJ_ROOT_DIR}/src/poll/EPoll.cpp)
     set(SOURCE_FILES ${SOURCE_FILES} ${ANDROID_SOURCES})
 endif ()
 
