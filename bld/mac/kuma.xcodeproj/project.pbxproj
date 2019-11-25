@@ -7,12 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1FA44484238B71E200C1EC92 /* kmapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA4447E238B71E200C1EC92 /* kmapi.h */; };
-		1FA44485238B71E200C1EC92 /* kmbuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA4447F238B71E200C1EC92 /* kmbuffer.h */; };
-		1FA44486238B71E200C1EC92 /* evdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44480238B71E200C1EC92 /* evdefs.h */; };
-		1FA44487238B71E200C1EC92 /* kmconf.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44481238B71E200C1EC92 /* kmconf.h */; };
-		1FA44488238B71E200C1EC92 /* kmdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44482238B71E200C1EC92 /* kmdefs.h */; };
-		1FA44489238B71E200C1EC92 /* kmtraits.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44483238B71E200C1EC92 /* kmtraits.h */; };
+		1FA44484238B71E200C1EC92 /* kmapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA4447E238B71E200C1EC92 /* kmapi.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		1FA44485238B71E200C1EC92 /* kmbuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA4447F238B71E200C1EC92 /* kmbuffer.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		1FA44486238B71E200C1EC92 /* evdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44480238B71E200C1EC92 /* evdefs.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		1FA44487238B71E200C1EC92 /* kmconf.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44481238B71E200C1EC92 /* kmconf.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		1FA44488238B71E200C1EC92 /* kmdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44482238B71E200C1EC92 /* kmdefs.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		1FA44489238B71E200C1EC92 /* kmtraits.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44483238B71E200C1EC92 /* kmtraits.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		1FA44494238B72EA00C1EC92 /* ProxyConnectionImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA4448B238B72EA00C1EC92 /* ProxyConnectionImpl.cpp */; };
 		1FA44495238B72EA00C1EC92 /* BasicAuthenticator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA4448C238B72EA00C1EC92 /* BasicAuthenticator.cpp */; };
 		1FA44496238B72EA00C1EC92 /* BasicAuthenticator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA4448D238B72EA00C1EC92 /* BasicAuthenticator.h */; };
@@ -649,6 +649,12 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1FA44486238B71E200C1EC92 /* evdefs.h in Headers */,
+				1FA44487238B71E200C1EC92 /* kmconf.h in Headers */,
+				1FA44485238B71E200C1EC92 /* kmbuffer.h in Headers */,
+				1FA44488238B71E200C1EC92 /* kmdefs.h in Headers */,
+				1FA44489238B71E200C1EC92 /* kmtraits.h in Headers */,
+				1FA44484238B71E200C1EC92 /* kmapi.h in Headers */,
 				1FA444E4238B73E100C1EC92 /* Notifier.h in Headers */,
 				1FA444CA238B735100C1EC92 /* HttpParserImpl.h in Headers */,
 				1FA4450D238B746300C1EC92 /* kmqueue.h in Headers */,
@@ -657,8 +663,6 @@
 				1FA44586238B799A00C1EC92 /* hpack_huffman_table.h in Headers */,
 				1FA444CD238B735100C1EC92 /* H1xStream.h in Headers */,
 				1FA4450B238B746300C1EC92 /* util.h in Headers */,
-				1FA44487238B71E200C1EC92 /* kmconf.h in Headers */,
-				1FA44485238B71E200C1EC92 /* kmbuffer.h in Headers */,
 				1FA444C3238B735100C1EC92 /* httpdefs.h in Headers */,
 				1FA4458B238B799A00C1EC92 /* HPacker.h in Headers */,
 				1FA44523238B74C500C1EC92 /* WSHandler.h in Headers */,
@@ -675,12 +679,10 @@
 				1FA44566238B770500C1EC92 /* DnsResolver.h in Headers */,
 				1FA4450F238B746300C1EC92 /* SmartAssert.h in Headers */,
 				1FA445C9238B79EA00C1EC92 /* PMCE_Base.h in Headers */,
-				1FA44488238B71E200C1EC92 /* kmdefs.h in Headers */,
 				1FA44565238B770500C1EC92 /* TimerManager.h in Headers */,
 				1FA444CF238B735100C1EC92 /* Http1xRequest.h in Headers */,
 				1FA444C4238B735100C1EC92 /* HttpResponseImpl.h in Headers */,
 				1FA445AB238B79AD00C1EC92 /* h2utils.h in Headers */,
-				1FA44489238B71E200C1EC92 /* kmtraits.h in Headers */,
 				1FA445B8238B79AD00C1EC92 /* H2Stream.h in Headers */,
 				1FA445BC238B79AD00C1EC92 /* H2Handshake.h in Headers */,
 				1FA4450C238B746300C1EC92 /* DestroyDetector.h in Headers */,
@@ -699,11 +701,9 @@
 				1FA444F4238B742200C1EC92 /* SioHandler.h in Headers */,
 				1FA44512238B746300C1EC92 /* kmtrace.h in Headers */,
 				1FA444D4238B735100C1EC92 /* HttpCache.h in Headers */,
-				1FA44484238B71E200C1EC92 /* kmapi.h in Headers */,
 				1FA444A5238B731100C1EC92 /* compr_zlib.h in Headers */,
 				1FA44567238B770500C1EC92 /* AcceptorBase.h in Headers */,
 				1FA44568238B770500C1EC92 /* SocketBase.h in Headers */,
-				1FA44486238B71E200C1EC92 /* evdefs.h in Headers */,
 				1FA445CC238B79EA00C1EC92 /* WSExtension.h in Headers */,
 				1FA44496238B72EA00C1EC92 /* BasicAuthenticator.h in Headers */,
 				1FA44508238B746300C1EC92 /* base64.h in Headers */,
