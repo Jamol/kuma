@@ -40,6 +40,8 @@ public:
     virtual bool onFrame(H2Frame *frame) = 0;
     
     virtual void onFrameError(const FrameHeader &hdr, H2Error err, bool stream_err) = 0;
+    
+    virtual ~FrameCallback() {}
 };
 
 class FrameParser : public DestroyDetector
