@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		6F29765E1B311D5900EB467D /* kuma.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F29765D1B311D5900EB467D /* kuma.dylib */; };
-		6F29765F1B311D5900EB467D /* kuma.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6F29765D1B311D5900EB467D /* kuma.dylib */; };
+		1FA445D4238B7B4D00C1EC92 /* kuma.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1F91033F238A51F200A39F5C /* kuma.framework */; };
+		1FA445D7238B7B6200C1EC92 /* kuma.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1F91033F238A51F200A39F5C /* kuma.framework */; };
 		6F8095621DA0C1560098BFD7 /* testutil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F80955F1DA0AD9A0098BFD7 /* testutil.cpp */; };
 		6F8BE8A222C607B400E6EA32 /* DataSender.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F8BE8A122C607B400E6EA32 /* DataSender.cpp */; };
 		6FDC9EC71D3F38CF00097089 /* HttpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EB91D3F38CF00097089 /* HttpClient.cpp */; };
@@ -38,6 +38,20 @@
 			remoteGlobalIDString = 6F852DF11985E33000271D87;
 			remoteInfo = kuma;
 		};
+		1FA445D1238B7B2600C1EC92 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 1FA44470238B6FA700C1EC92;
+			remoteInfo = kuma;
+		};
+		1FA445D5238B7B5D00C1EC92 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = 1FA44470238B6FA700C1EC92;
+			remoteInfo = kuma;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -62,7 +76,6 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		6F29765D1B311D5900EB467D /* kuma.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = kuma.dylib; path = ../../../bin/osx/Debug/kuma.dylib; sourceTree = "<group>"; };
 		6F80955F1DA0AD9A0098BFD7 /* testutil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = testutil.cpp; sourceTree = "<group>"; };
 		6F8095601DA0AD9A0098BFD7 /* testutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = testutil.h; sourceTree = "<group>"; };
 		6F8BE8A022C607B400E6EA32 /* DataSender.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataSender.h; sourceTree = "<group>"; };
@@ -110,7 +123,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6F29765E1B311D5900EB467D /* kuma.dylib in Frameworks */,
+				1FA445D7238B7B6200C1EC92 /* kuma.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -118,7 +131,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6F29765F1B311D5900EB467D /* kuma.dylib in Frameworks */,
+				1FA445D4238B7B4D00C1EC92 /* kuma.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -128,19 +141,26 @@
 		1F91033B238A51F200A39F5C /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				1F91033F238A51F200A39F5C /* kuma.dylib */,
+				1F91033F238A51F200A39F5C /* kuma.framework */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		1FA445D3238B7B4D00C1EC92 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 		6FF211A41B1551CD006603BB = {
 			isa = PBXGroup;
 			children = (
-				6F29765D1B311D5900EB467D /* kuma.dylib */,
 				6F8E7CF81B31375F00DA073C /* kuma.xcodeproj */,
 				6FF211B11B155298006603BB /* client */,
 				6FF211BC1B1552AA006603BB /* server */,
 				6FF211B01B155298006603BB /* Products */,
+				1FA445D3238B7B4D00C1EC92 /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -220,6 +240,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				1FA445D6238B7B5D00C1EC92 /* PBXTargetDependency */,
 			);
 			name = client;
 			productName = client;
@@ -237,6 +258,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				1FA445D2238B7B2600C1EC92 /* PBXTargetDependency */,
 			);
 			name = server;
 			productName = server;
@@ -285,10 +307,10 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		1F91033F238A51F200A39F5C /* kuma.dylib */ = {
+		1F91033F238A51F200A39F5C /* kuma.framework */ = {
 			isa = PBXReferenceProxy;
-			fileType = "compiled.mach-o.dylib";
-			path = kuma.dylib;
+			fileType = wrapper.framework;
+			path = kuma.framework;
 			remoteRef = 1F91033E238A51F200A39F5C /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
@@ -329,6 +351,19 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		1FA445D2238B7B2600C1EC92 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = kuma;
+			targetProxy = 1FA445D1238B7B2600C1EC92 /* PBXContainerItemProxy */;
+		};
+		1FA445D6238B7B5D00C1EC92 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = kuma;
+			targetProxy = 1FA445D5238B7B5D00C1EC92 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		6FF211A91B1551CD006603BB /* Debug */ = {
@@ -385,11 +420,11 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = YES;
-				OBJROOT = ../../objs/client/osx;
+				OBJROOT = ../../objs/client/mac;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				SYMROOT = ../../../bin/osx;
+				SYMROOT = ../../../bin/mac;
 				USER_HEADER_SEARCH_PATHS = "../../../include ../../../src";
 			};
 			name = Debug;
@@ -430,10 +465,10 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OBJROOT = ../../objs/client/osx;
+				OBJROOT = ../../objs/client/mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				SYMROOT = ../../../bin/osx;
+				SYMROOT = ../../../bin/mac;
 				USER_HEADER_SEARCH_PATHS = "../../../include ../../../src";
 			};
 			name = Release;
@@ -480,11 +515,11 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = YES;
-				OBJROOT = ../../objs/server/osx;
+				OBJROOT = ../../objs/server/mac;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				SYMROOT = ../../../bin/osx;
+				SYMROOT = ../../../bin/mac;
 				USER_HEADER_SEARCH_PATHS = "../../../include ../../../src";
 			};
 			name = Debug;
@@ -525,10 +560,10 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.10;
 				MTL_ENABLE_DEBUG_INFO = NO;
-				OBJROOT = ../../objs/server/osx;
+				OBJROOT = ../../objs/server/mac;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
-				SYMROOT = ../../../bin/osx;
+				SYMROOT = ../../../bin/mac;
 				USER_HEADER_SEARCH_PATHS = "../../../include ../../../src";
 			};
 			name = Release;

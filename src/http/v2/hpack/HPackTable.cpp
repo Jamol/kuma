@@ -38,7 +38,7 @@ bool HPackTable::getIndexedName(int index, std::string &name) {
     }
     if (index < HPACK_DYNAMIC_START_INDEX) {
         name = hpackStaticTable[index - 1].first;
-    } else if (index - HPACK_DYNAMIC_START_INDEX < dynamicTable_.size()) {
+    } else if (index - HPACK_DYNAMIC_START_INDEX < static_cast<int>(dynamicTable_.size())) {
         name = dynamicTable_[index - HPACK_DYNAMIC_START_INDEX].first;
     } else {
         return false;
@@ -53,7 +53,7 @@ bool HPackTable::getIndexedValue(int index, std::string &value)
     }
     if (index < HPACK_DYNAMIC_START_INDEX) {
         value = hpackStaticTable[index - 1].second;
-    } else if (index - HPACK_DYNAMIC_START_INDEX < dynamicTable_.size()) {
+    } else if (index - HPACK_DYNAMIC_START_INDEX < static_cast<int>(dynamicTable_.size())) {
         value = dynamicTable_[index - HPACK_DYNAMIC_START_INDEX].second;
     } else {
         return false;
@@ -163,7 +163,7 @@ int HPackTable::getIndex(const std::string &name, const std::string &value, bool
     if (!getIndex(key, indexD, indexS)) {
         getIndex(name, indexD, indexS);
     }
-    if (indexD != -1 && indexD < dynamicTable_.size() && name == dynamicTable_[indexD].first) {
+    if (indexD != -1 && indexD < static_cast<int>(dynamicTable_.size()) && name == dynamicTable_[indexD].first) {
         index = indexD + HPACK_DYNAMIC_START_INDEX;
         valueIndexed = dynamicTable_[indexD].second == value;
     } else if (indexS != -1 && indexS < HPACK_STATIC_TABLE_SIZE && name == hpackStaticTable[indexS].first) {

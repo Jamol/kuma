@@ -117,7 +117,7 @@ bool TimerManager::scheduleTimer(Timer::Impl* timer, uint32_t delay_ms, TimerMod
         }
     }
     if(need_notify) {
-        loop_->notify();
+        loop_->wakeup();
     }
     return ret;
 }

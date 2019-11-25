@@ -244,16 +244,11 @@ void EventLoop::Impl::loop(uint32_t max_wait_ms)
     KUMA_INFOXTRACE("loop, stopped");
 }
 
-void EventLoop::Impl::notify()
-{
-    poll_->notify();
-}
-
 void EventLoop::Impl::stop()
 {
     KUMA_INFOXTRACE("stop");
     stop_loop_ = true;
-    poll_->notify();
+    wakeup();
 }
 
 KMError EventLoop::Impl::appendTask(Task task, EventLoopToken *token)
@@ -340,8 +335,13 @@ KMError EventLoop::Impl::post(Task task, EventLoopToken *token)
     if (ret != KMError::NOERR) {
         return ret;
     }
-    poll_->notify();
+    wakeup();
     return KMError::NOERR;
+}
+
+void EventLoop::Impl::wakeup()
+{
+    poll_->notify();
 }
 
 /////////////////////////////////////////////////////////////////

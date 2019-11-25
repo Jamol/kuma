@@ -186,6 +186,8 @@ public:
         return post(Task(std::move(wf)), token);
     }
     KMError post(Task task, Token *token=nullptr);
+
+    void wakeup();
     
     /* cancel the tasks that are scheduled with token. you cannot cancel the task that is in running,
      * but will wait untill the task completion

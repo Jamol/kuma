@@ -156,7 +156,7 @@ static int encodeString(const std::string &str, uint8_t *buf, size_t len) {
             return -1;
         }
         ptr += ret;
-        if (end - ptr < str.length()) {
+        if (static_cast<size_t>(end - ptr) < str.length()) {
             return -1;
         }
         memcpy(ptr, str.c_str(), str.length());
@@ -214,15 +214,15 @@ static int decodeString(const uint8_t *buf, size_t len, std::string &str)
         return -1;
     }
     ptr += ret;
-    if ( slen > end - ptr) {
+    if (slen > static_cast<size_t>(end - ptr)) {
         return -1;
     }
     if (H) {
-        if(huffDecode(ptr, slen, str) < 0) {
+        if(huffDecode(ptr, static_cast<size_t>(slen), str) < 0) {
             return -1;
         }
     } else {
-        str.assign((const char*)ptr, slen);
+        str.assign((const char*)ptr, static_cast<size_t>(slen));
     }
     ptr += slen;
     
@@ -413,7 +413,7 @@ int HPacker::decode(const uint8_t *buf, size_t len, KeyValueVector &headers) {
             if (I > table_.getMaxSize()) {
                 return -1;
             }
-            table_.updateLimitSize(I);
+            table_.updateLimitSize(static_cast<size_t>(I));
             continue;
         }
         headers.emplace_back(std::make_pair(name, value));

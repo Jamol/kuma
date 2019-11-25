@@ -166,10 +166,11 @@ public:
         return post(Task(std::move(wf)), token);
     }
     KMError post(Task task, EventLoopToken *token=nullptr);
+
+    void wakeup();
     
     void loopOnce(uint32_t max_wait_ms);
     void loop(uint32_t max_wait_ms = -1);
-    void notify();
     void stop();
     bool stopped() const { return stop_loop_; }
 

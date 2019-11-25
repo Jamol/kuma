@@ -27,7 +27,9 @@
 
 #include <string>
 
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <Windows.h>
 
 #undef SECURITY_WIN32

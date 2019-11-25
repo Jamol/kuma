@@ -25,14 +25,14 @@ define macro KUMA_HAS_OPENSSL to enable openssl
 open project bld/ios/kuma with xcode and build it
 ```
 
-### OSX
+### MAC
 ```
-open project bld/osx/kuma with xcode and build it
+open project bld/mac/kuma with xcode and build it
 ```
 
 ### Windows
 ```
-open bld/msvc/kuma.sln with VS2017 and build it
+open bld/windows/kuma.sln with VS2017 and build it
 ```
 
 ### Linux

@@ -195,6 +195,11 @@ KMError EventLoop::post(Task task, Token *token)
     return pimpl_->post(std::move(task), token?token->pimpl():nullptr);
 }
 
+void EventLoop::wakeup()
+{
+    pimpl_->wakeup();
+}
+
 void EventLoop::cancel(Token *token)
 {
     if (token) {

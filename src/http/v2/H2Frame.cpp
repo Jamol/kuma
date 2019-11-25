@@ -109,7 +109,7 @@ int DataFrame::encode(uint8_t *dst, size_t len)
         return ret;
     }
     ptr += ret;
-    if (end - ptr < size_) {
+    if (static_cast<size_t>(end - ptr) < size_) {
         return -1;
     }
     if (data_) {
@@ -216,7 +216,7 @@ int HeadersFrame::encode(uint8_t *dst, size_t len)
         ptr += ret;
     }
     
-    if (end - ptr < bsize_) {
+    if (static_cast<size_t>(end - ptr) < bsize_) {
         return -1;
     }
     memcpy(ptr, block_, bsize_);
