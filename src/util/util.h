@@ -223,6 +223,9 @@ inline bool km_is_fatal_error(KMError err)
     return err != KMError::NOERR && err != KMError::AGAIN;
 }
 
+std::string getDateTimeString(bool utc);
+void setCurrentThreadName(const char* name);
+
 KUMA_NS_END
 
 #endif

@@ -47,32 +47,23 @@ void TracePrint(int level, const char* szMessage, ...)
     VSNPRINTF(szMsgBuf, sizeof(szMsgBuf)-1, szMessage, VAList);
     
     std::stringstream ss;
-    
-    /*auto now_p = std::chrono::system_clock::now();
-    auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(now_p.time_since_epoch());
-    auto now_c = std::chrono::system_clock::to_time_t(now_p);
-    struct tm tm_buf;
-    LOCALTIME_R(&now_c, &tm_buf);
-    ss << std::put_time(&tm_buf, "%F %T.");
-    ss.width(3);
-    ss.fill('0');
-    ss << (now_ms.count()%1000) << " ";*/
+    ss << getDateTimeString(false);
     switch(level)
     {
         case KUMA_TRACE_LEVEL_INFO:
-            ss << "INFO: ";
+            ss << " INFO: ";
             break;
         case KUMA_TRACE_LEVEL_WARN:
-            ss << "WARN: ";
+            ss << " WARN: ";
             break;
         case KUMA_TRACE_LEVEL_ERROR:
-            ss << "ERROR: ";
+            ss << " ERROR: ";
             break;
         case KUMA_TRACE_LEVEL_DEBUG:
-            ss << "DEBUG: ";
+            ss << " DEBUG: ";
             break;
         default:
-            ss << "INFO: ";
+            ss << " INFO: ";
             break;
     }
     ss << "[" << getCurrentThreadId() << "] " << szMsgBuf;
@@ -80,8 +71,8 @@ void TracePrint(int level, const char* szMessage, ...)
         trace_func(level, ss.str().c_str());
     } else {
 #ifdef KUMA_OS_WIN
+        ss << "\n";
         auto str(ss.str());
-        str += "\n";
         OutputDebugStringA(str.c_str());
 #else
         ss << std::endl;

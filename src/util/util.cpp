@@ -40,9 +40,13 @@
 # include <dlfcn.h>
 # include <unistd.h>
 # include <netinet/tcp.h>
-# ifdef KUMA_OS_MAC
+# if defined(KUMA_OS_LINUX) || defined(KUMA_OS_ANDROID)
+#  include <sys/prctl.h>
+# endif
+# if defined(KUMA_OS_MAC) || defined(KUMA_OS_IOS)
 #  include "CoreFoundation/CoreFoundation.h"
 #  include <mach-o/dyld.h>
+#  include <pthread.h>
 #  ifndef KUMA_OS_IOS
 #   include <libproc.h>
 #  endif
@@ -53,6 +57,7 @@
 #include <random>
 #include <string>
 #include <sstream>
+#include <iomanip>
 #include <algorithm>
 #include <limits.h>
 
@@ -73,7 +78,7 @@ do{ \
         break; \
     strncpy(d, s, dl-1); \
     d[dl-1]='\0'; \
-}while(0);
+}while(0)
 #define SNPRINTF    snprintf
 #endif
 
@@ -784,6 +789,81 @@ std::string getCurrentModulePath()
     auto pos = str_path.rfind(PATH_SEPARATOR, str_path.size());
     str_path.resize(pos);
     return str_path;
+}
+
+std::string getDateTimeString(bool utc) {
+    auto now = std::chrono::system_clock::now();
+    auto msecs = std::chrono::duration_cast<std::chrono::milliseconds>
+        (now.time_since_epoch()).count() % 1000;
+    auto itt = std::chrono::system_clock::to_time_t(now);
+    struct tm res;
+#ifdef KUMA_OS_WIN
+    utc ? gmtime_s(&res, &itt) : localtime_s(&res, &itt); // windows and C11
+#else
+    utc ? gmtime_r(&itt, &res) : localtime_r(&itt, &res);
+#endif
+    std::ostringstream ss;
+    ss << std::put_time(&res, "%FT%T.") << std::setfill('0')
+       << std::setw(3) << msecs;
+    if (utc) {
+        ss << 'Z';
+    } else {
+        ss << std::put_time(&res, "%z");
+    }
+    return ss.str();
+}
+
+#if defined(KUMA_OS_WIN)
+void setCurrentThreadNameX(const char* name)
+{
+    struct {
+        DWORD dwType;
+        LPCSTR szName;
+        DWORD dwThreadID;
+        DWORD dwFlags;
+    } threadname_info = { 0x1000, name, static_cast<DWORD>(-1), 0 };
+
+    __try {
+        ::RaiseException(0x406D1388, 0, sizeof(threadname_info) / sizeof(DWORD),
+            reinterpret_cast<ULONG_PTR*>(&threadname_info));
+    }
+    __except (EXCEPTION_EXECUTE_HANDLER) {
+    }
+}
+#endif
+
+void setCurrentThreadName(const char* name)
+{
+#if defined(KUMA_OS_WIN)
+#ifndef __WINRT__
+    using PFN_SetThreadDescription = HRESULT(WINAPI *)(HANDLE, PCWSTR);
+    static PFN_SetThreadDescription pfn_SetThreadDescription = nullptr;
+    static HMODULE kernel32 = nullptr;
+
+    if (!kernel32) {
+        kernel32 = LoadLibraryW(L"kernel32.dll");
+        if (kernel32) {
+            pfn_SetThreadDescription = (PFN_SetThreadDescription)GetProcAddress(kernel32, "SetThreadDescription");
+        }
+    }
+
+    if (pfn_SetThreadDescription != nullptr) {
+        auto wstr = utf8_decode(name);
+        if (!wstr.empty()) {
+            auto hr = pfn_SetThreadDescription(::GetCurrentThread(), wstr.c_str());
+            if (SUCCEEDED(hr)) {
+                return;
+            }
+        }
+    }
+#endif
+
+    setCurrentThreadNameX(name);
+#elif defined(KUMA_OS_LINUX) || defined(KUMA_OS_ANDROID)
+    prctl(PR_SET_NAME, reinterpret_cast<unsigned long>(name));
+#elif defined(KUMA_OS_MAC) || defined(KUMA_OS_IOS)
+    pthread_setname_np(name);
+#endif
 }
 
 #ifndef KUMA_OS_MAC
