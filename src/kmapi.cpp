@@ -227,6 +227,9 @@ EventLoop::Token::~Token()
 EventLoop::Token& EventLoop::Token::operator=(Token &&other)
 {
     if (this != &other) {
+        if (pimpl_) {
+            delete pimpl_;
+        }
         pimpl_ = other.pimpl_;
         other.pimpl_ = nullptr;
     }

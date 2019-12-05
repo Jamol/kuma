@@ -281,6 +281,7 @@ KMError EventLoop::Impl::removeTask(EventLoopToken *token)
             if (task_slot.state == TaskSlot::State::RUNNING) {
                 is_running = true;
                 task_slot.state = TaskSlot::State::INACTIVE;
+                task_slot.token = nullptr;
             }
             task_queue_.remove(node);
         }
