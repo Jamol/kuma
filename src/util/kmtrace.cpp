@@ -71,7 +71,7 @@ void TracePrint(int level, const char* szMessage, ...)
         trace_func(level, ss.str().c_str());
     } else {
 #ifdef KUMA_OS_WIN
-        ss << "\n";
+        ss << '\n';
         auto str(ss.str());
         OutputDebugStringA(str.c_str());
 #else

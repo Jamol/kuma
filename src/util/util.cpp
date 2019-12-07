@@ -954,18 +954,27 @@ void kuma_fini()
     WSACleanup();
 }
 
+class KMInitializer {
+  static KMInitializer s_singleton;
+
+  KMInitializer() { kuma_init(); }
+
+ public:
+  ~KMInitializer() { kuma_fini(); }
+};
+KMInitializer KMInitializer::s_singleton;
+
 BOOL WINAPI DllMain(HINSTANCE module_handle, DWORD reason_for_call, LPVOID reserved)
 {
     switch (reason_for_call)
     {
         case DLL_PROCESS_ATTACH:
             //DisableThreadLibraryCalls(module_handle);
-            kuma_init();
             break;
         case DLL_PROCESS_DETACH:
-            kuma_fini();
             break;
     }
     return TRUE;
 }
-#endif
+
+#endif // KUMA_OS_WIN

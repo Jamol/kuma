@@ -126,6 +126,9 @@ bool EventLoop::init()
 EventLoop::Token EventLoop::createToken()
 {
     Token t;
+    if (!t.pimpl_) { // lazy initialize token pimpl
+        t.pimpl_ = new Token::Impl();
+    }
     t.pimpl()->eventLoop(EventLoopHelper::implPtr(pimpl()));
     return t;
 }
@@ -208,7 +211,7 @@ void EventLoop::cancel(Token *token)
 }
 
 EventLoop::Token::Token()
-: pimpl_(new Impl())
+: pimpl_(nullptr) // lazy initialize pimpl_
 {
     
 }
