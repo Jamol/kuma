@@ -33,6 +33,7 @@
 #include "http/v2/Http2Request.h"
 #include "http/v2/Http2Response.h"
 #include "proxy/ProxyConnectionImpl.h"
+#include "util/kmtrace.h"
 
 #ifdef KUMA_HAS_OPENSSL
 #include "ssl/OpenSslLib.h"
@@ -1298,6 +1299,11 @@ void fini()
     OpenSslLib::fini();
 #endif
     DnsResolver::get().stop();
+}
+
+void setLogCallback(LogCallback cb)
+{
+    setTraceFunc(cb);
 }
 
 KUMA_NS_END

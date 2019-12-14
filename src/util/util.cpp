@@ -1004,6 +1004,7 @@ void kuma_fini()
     WSACleanup();
 }
 
+
 class KMInitializer {
   static KMInitializer s_singleton;
 
