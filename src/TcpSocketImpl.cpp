@@ -82,9 +82,58 @@ TcpSocket::Impl::Impl(const EventLoopPtr &loop)
     KM_SetObjKey("TcpSocket");
 }
 
+TcpSocket::Impl::Impl(Impl &&other)
+{
+    *this = std::move(other);
+}
+
 TcpSocket::Impl::~Impl()
 {
     cleanup();
+}
+
+TcpSocket::Impl& TcpSocket::Impl::operator= (Impl &&other)
+{
+    if (this != &other) {
+        cleanup();
+        loop_ = std::move(other.loop_);
+        ssl_flags_ = other.ssl_flags_;
+        socket_ = std::move(other.socket_);
+        if (socket_) {
+            socket_->setReadCallback([this](KMError err) {
+                onReceive(err);
+            });
+            socket_->setWriteCallback([this](KMError err) {
+                onSend(err);
+            });
+            socket_->setErrorCallback([this](KMError err) {
+                onClose(err);
+            });
+        }
+#ifdef KUMA_HAS_OPENSSL
+        is_bio_handler_ = other.is_bio_handler_;
+        ssl_handler_ = std::move(other.ssl_handler_);
+        if (ssl_handler_) {
+            if (is_bio_handler_) {
+                auto bio_handler = (BioHandler*)ssl_handler_.get();
+                bio_handler->setSendFunc([this](const KMBuffer &buf) -> int {
+                    return sendData(buf);
+                });
+                bio_handler->setRecvFunc([this](void *data, size_t length) -> int {
+                    return recvData(data, length);
+                });
+            }
+        }
+        alpn_protos_ = std::move(other.alpn_protos_);
+        ssl_server_name_ = std::move(other.ssl_server_name_);
+        ssl_host_name_ = std::move(other.ssl_host_name_);
+#endif
+        connect_cb_ = std::move(other.connect_cb_);
+        read_cb_ = std::move(other.read_cb_);
+        write_cb_ = std::move(other.write_cb_);
+        error_cb_ = std::move(other.error_cb_);
+    }
+    return *this;
 }
 
 void TcpSocket::Impl::cleanup()

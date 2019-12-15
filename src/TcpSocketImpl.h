@@ -52,8 +52,11 @@ public:
     
     Impl(const EventLoopPtr &loop);
     Impl(const Impl &other) = delete;
-    Impl& operator= (const Impl &other) = delete;
+    Impl(Impl &&other);
     ~Impl();
+    
+    Impl& operator= (const Impl &other) = delete;
+    Impl& operator= (Impl &&other);
     
     KMError setSslFlags(uint32_t ssl_flags);
     uint32_t getSslFlags() const { return ssl_flags_; }

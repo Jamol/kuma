@@ -114,9 +114,28 @@ EventLoop::EventLoop(PollType poll_type)
     
 }
 
+EventLoop::EventLoop(EventLoop &&other)
+: pimpl_(other.pimpl_)
+{
+    other.pimpl_ = nullptr;
+}
+
 EventLoop::~EventLoop()
 {
     EventLoopHelper::destroy(pimpl_);
+}
+
+EventLoop& EventLoop::operator=(EventLoop &&other)
+{
+    if (this != &other) {
+        if (pimpl_) {
+            EventLoopHelper::destroy(pimpl_);
+        }
+        pimpl_ = other.pimpl_;
+        other.pimpl_ = nullptr;
+    }
+    
+    return *this;
 }
 
 bool EventLoop::init()
@@ -259,9 +278,29 @@ TcpSocket::TcpSocket(EventLoop* loop)
 
 }
 
+TcpSocket::TcpSocket(TcpSocket &&other)
+: pimpl_(other.pimpl_)
+{
+    other.pimpl_ = nullptr;
+}
+
 TcpSocket::~TcpSocket()
 {
     delete pimpl_;
+}
+
+TcpSocket& TcpSocket::operator=(TcpSocket &&other)
+{
+    if (this != &other) {
+        if (pimpl_) {
+            pimpl_->close();
+            delete pimpl_;
+        }
+        pimpl_ = other.pimpl_;
+        other.pimpl_ = nullptr;
+    }
+    
+    return *this;
 }
 
 KMError TcpSocket::setSslFlags(uint32_t ssl_flags)
@@ -410,9 +449,30 @@ TcpListener::TcpListener(EventLoop* loop)
 {
 
 }
+
+TcpListener::TcpListener(TcpListener &&other)
+: pimpl_(other.pimpl_)
+{
+    other.pimpl_ = nullptr;
+}
+
 TcpListener::~TcpListener()
 {
     delete pimpl_;
+}
+
+TcpListener& TcpListener::operator=(TcpListener &&other)
+{
+    if (this != &other) {
+        if (pimpl_) {
+            pimpl_->close();
+            delete pimpl_;
+        }
+        pimpl_ = other.pimpl_;
+        other.pimpl_ = nullptr;
+    }
+    
+    return *this;
 }
 
 KMError TcpListener::startListen(const char* host, uint16_t port)
@@ -455,9 +515,29 @@ UdpSocket::UdpSocket(EventLoop* loop)
     
 }
 
+UdpSocket::UdpSocket(UdpSocket &&other)
+: pimpl_(other.pimpl_)
+{
+    other.pimpl_ = nullptr;
+}
+
 UdpSocket::~UdpSocket()
 {
     delete pimpl_;
+}
+
+UdpSocket& UdpSocket::operator=(UdpSocket &&other)
+{
+    if (this != &other) {
+        if (pimpl_) {
+            pimpl_->close();
+            delete pimpl_;
+        }
+        pimpl_ = other.pimpl_;
+        other.pimpl_ = nullptr;
+    }
+    
+    return *this;
 }
 
 KMError UdpSocket::bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags)
@@ -532,9 +612,28 @@ Timer::Timer(EventLoop* loop)
     
 }
 
+Timer::Timer(Timer &&other)
+: pimpl_(other.pimpl_)
+{
+    other.pimpl_ = nullptr;
+}
+
 Timer::~Timer()
 {
     delete pimpl_;
+}
+
+Timer& Timer::operator=(Timer &&other)
+{
+    if (this != &other) {
+        if (pimpl_) {
+            delete pimpl_;
+        }
+        pimpl_ = other.pimpl_;
+        other.pimpl_ = nullptr;
+    }
+    
+    return *this;
 }
 
 bool Timer::schedule(uint32_t delay_ms, TimerMode mode, TimerCallback cb)
@@ -559,9 +658,28 @@ HttpParser::HttpParser()
     
 }
 
+HttpParser::HttpParser(HttpParser &&other)
+: pimpl_(other.pimpl_)
+{
+    other.pimpl_ = nullptr;
+}
+
 HttpParser::~HttpParser()
 {
     delete pimpl_;
+}
+
+HttpParser& HttpParser::operator=(HttpParser &&other)
+{
+    if (this != &other) {
+        if (pimpl_) {
+            delete pimpl_;
+        }
+        pimpl_ = other.pimpl_;
+        other.pimpl_ = nullptr;
+    }
+    
+    return *this;
 }
 
 // return bytes parsed
@@ -705,9 +823,29 @@ HttpRequest::HttpRequest(EventLoop* loop, const char* ver)
     }
 }
 
+HttpRequest::HttpRequest(HttpRequest &&other)
+: pimpl_(other.pimpl_)
+{
+    other.pimpl_ = nullptr;
+}
+
 HttpRequest::~HttpRequest()
 {
     delete pimpl_;
+}
+
+HttpRequest& HttpRequest::operator=(HttpRequest &&other)
+{
+    if (this != &other) {
+        if (pimpl_) {
+            pimpl_->close();
+            delete pimpl_;
+        }
+        pimpl_ = other.pimpl_;
+        other.pimpl_ = nullptr;
+    }
+    
+    return *this;
 }
 
 KMError HttpRequest::setSslFlags(uint32_t ssl_flags)
@@ -832,9 +970,29 @@ HttpResponse::HttpResponse(EventLoop* loop, const char* ver)
     }
 }
 
+HttpResponse::HttpResponse(HttpResponse &&other)
+: pimpl_(other.pimpl_)
+{
+    other.pimpl_ = nullptr;
+}
+
 HttpResponse::~HttpResponse()
 {
     delete pimpl_;
+}
+
+HttpResponse& HttpResponse::operator=(HttpResponse &&other)
+{
+    if (this != &other) {
+        if (pimpl_) {
+            pimpl_->close();
+            delete pimpl_;
+        }
+        pimpl_ = other.pimpl_;
+        other.pimpl_ = nullptr;
+    }
+    
+    return *this;
 }
 
 KMError HttpResponse::setSslFlags(uint32_t ssl_flags)
@@ -847,7 +1005,7 @@ KMError HttpResponse::attachFd(SOCKET_FD fd, const KMBuffer *init_buf)
     return pimpl_->attachFd(fd, init_buf);
 }
 
-KMError HttpResponse::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf)
+KMError HttpResponse::attachSocket(TcpSocket &&tcp, HttpParser &&parser, const KMBuffer *init_buf)
 {
     return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move(*parser.pimpl()), init_buf);
 }
@@ -978,9 +1136,29 @@ WebSocket::WebSocket(EventLoop* loop, const char *http_ver)
     
 }
 
+WebSocket::WebSocket(WebSocket &&other)
+: pimpl_(other.pimpl_)
+{
+    other.pimpl_ = nullptr;
+}
+
 WebSocket::~WebSocket()
 {
     delete pimpl_;
+}
+
+WebSocket& WebSocket::operator=(WebSocket &&other)
+{
+    if (this != &other) {
+        if (pimpl_) {
+            pimpl_->close();
+            delete pimpl_;
+        }
+        pimpl_ = other.pimpl_;
+        other.pimpl_ = nullptr;
+    }
+    
+    return *this;
 }
 
 KMError WebSocket::setSslFlags(uint32_t ssl_flags)
@@ -1057,7 +1235,7 @@ KMError WebSocket::attachFd(SOCKET_FD fd, const KMBuffer *init_buf, HandshakeCal
     return pimpl_->attachFd(fd, init_buf, std::move(cb));
 }
 
-KMError WebSocket::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf, HandshakeCallback cb)
+KMError WebSocket::attachSocket(TcpSocket &&tcp, HttpParser &&parser, const KMBuffer *init_buf, HandshakeCallback cb)
 {
     return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move((*parser.pimpl())), init_buf, std::move(cb));
 }
@@ -1131,9 +1309,29 @@ ProxyConnection::ProxyConnection(EventLoop* loop)
     
 }
 
+ProxyConnection::ProxyConnection(ProxyConnection &&other)
+: pimpl_(other.pimpl_)
+{
+    other.pimpl_ = nullptr;
+}
+
 ProxyConnection::~ProxyConnection()
 {
     delete pimpl_;
+}
+
+ProxyConnection& ProxyConnection::operator=(ProxyConnection &&other)
+{
+    if (this != &other) {
+        if (pimpl_) {
+            pimpl_->close();
+            delete pimpl_;
+        }
+        pimpl_ = other.pimpl_;
+        other.pimpl_ = nullptr;
+    }
+    
+    return *this;
 }
 
 KMError ProxyConnection::setSslFlags(uint32_t ssl_flags)
@@ -1234,9 +1432,29 @@ H2Connection::H2Connection(EventLoop* loop)
     
 }
 
+H2Connection::H2Connection(H2Connection &&other)
+: pimpl_(other.pimpl_)
+{
+    other.pimpl_ = nullptr;
+}
+
 H2Connection::~H2Connection()
 {
     delete pimpl_;
+}
+
+H2Connection& H2Connection::operator=(H2Connection &&other)
+{
+    if (this != &other) {
+        if (pimpl_) {
+            pimpl_->close();
+            delete pimpl_;
+        }
+        pimpl_ = other.pimpl_;
+        other.pimpl_ = nullptr;
+    }
+    
+    return *this;
 }
 
 KMError H2Connection::setSslFlags(uint32_t ssl_flags)

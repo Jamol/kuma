@@ -67,7 +67,12 @@ public:
     
 public:
     EventLoop(PollType poll_type = PollType::NONE);
+    EventLoop(const EventLoop &) = delete;
+    EventLoop(EventLoop &&other);
     ~EventLoop();
+    
+    EventLoop& operator=(const EventLoop &) = delete;
+    EventLoop& operator=(EventLoop &&other);
     
 public:
     bool init();
@@ -216,7 +221,12 @@ public:
     using EventCallback = std::function<void(KMError)>;
     
     TcpSocket(EventLoop *loop);
+    TcpSocket(const TcpSocket &) = delete;
+    TcpSocket(TcpSocket &&other);
     ~TcpSocket();
+    
+    TcpSocket& operator=(const TcpSocket &) = delete;
+    TcpSocket& operator=(TcpSocket &&other);
     
     /**
      * Set SSL flags. only the flags set before connect will take effect
@@ -263,7 +273,12 @@ public:
     using ErrorCallback = std::function<void(KMError)>;
     
     TcpListener(EventLoop *loop);
+    TcpListener(const TcpListener &) = delete;
+    TcpListener(TcpListener &&other);
     ~TcpListener();
+    
+    TcpListener& operator=(const TcpListener &) = delete;
+    TcpListener& operator=(TcpListener &&other);
     
     KMError startListen(const char *host, uint16_t port);
     KMError stopListen(const char *host, uint16_t port);
@@ -285,7 +300,12 @@ public:
     using EventCallback = std::function<void(KMError)>;
     
     UdpSocket(EventLoop *loop);
+    UdpSocket(const UdpSocket &) = delete;
+    UdpSocket(UdpSocket &&other);
     ~UdpSocket();
+    
+    UdpSocket& operator=(const UdpSocket &) = delete;
+    UdpSocket& operator=(UdpSocket &&other);
     
     KMError bind(const char *bind_host, uint16_t bind_port, uint32_t udp_flags=0);
     int send(const void *data, size_t length, const char *host, uint16_t port);
@@ -314,7 +334,12 @@ public:
     using TimerCallback = std::function<void(void)>;
     
     Timer(EventLoop *loop);
+    Timer(const Timer &) = delete;
+    Timer(Timer &&other);
     ~Timer();
+    
+    Timer& operator=(const Timer &) = delete;
+    Timer& operator=(Timer &&other);
     
     /**
      * Schedule the timer. This API is thread-safe
@@ -350,7 +375,12 @@ public:
     using EnumerateCallback = std::function<bool(const char*, const char*)>; // (name, value)
     
     HttpParser();
+    HttpParser(const HttpParser &) = delete;
+    HttpParser(HttpParser &&other);
     ~HttpParser();
+    
+    HttpParser& operator=(const HttpParser &) = delete;
+    HttpParser& operator=(HttpParser &&other);
     
     // return bytes parsed
     int parse(const char *data, size_t len);
@@ -403,7 +433,12 @@ public:
      * @param ver, http version, "HTTP/2.0" for HTTP2
      */
     HttpRequest(EventLoop *loop, const char *ver = "HTTP/1.1");
+    HttpRequest(const HttpRequest &) = delete;
+    HttpRequest(HttpRequest &&other);
     ~HttpRequest();
+    
+    HttpRequest& operator=(const HttpRequest &) = delete;
+    HttpRequest& operator=(HttpRequest &&other);
     
     KMError setSslFlags(uint32_t ssl_flags);
     
@@ -452,7 +487,12 @@ public:
      * @param ver, http version, "HTTP/2.0" for HTTP2
      */
     HttpResponse(EventLoop *loop, const char *ver);
+    HttpResponse(const HttpResponse &) = delete;
+    HttpResponse(HttpResponse &&other);
     ~HttpResponse();
+    
+    HttpResponse& operator=(const HttpResponse &) = delete;
+    HttpResponse& operator=(HttpResponse &&other);
     
     KMError setSslFlags(uint32_t ssl_flags);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf=nullptr);
@@ -505,7 +545,12 @@ public:
      * @param ver, http version, "HTTP/2.0" for HTTP2, "HTTP/1.1"
      */
     WebSocket(EventLoop *loop, const char *http_ver = "HTTP/1.1");
+    WebSocket(const WebSocket &) = delete;
+    WebSocket(WebSocket &&other);
     ~WebSocket();
+    
+    WebSocket& operator=(const WebSocket &) = delete;
+    WebSocket& operator=(WebSocket &&other);
     
     KMError setSslFlags(uint32_t ssl_flags);
     void setOrigin(const char *origin);
@@ -567,7 +612,12 @@ public:
     using DataCallback = std::function<KMError(uint8_t*, size_t)>;
     
     ProxyConnection(EventLoop *loop);
+    ProxyConnection(const ProxyConnection &) = delete;
+    ProxyConnection(ProxyConnection &&other);
     ~ProxyConnection();
+    
+    ProxyConnection& operator=(const ProxyConnection &) = delete;
+    ProxyConnection& operator=(ProxyConnection &&other);
     
     KMError setSslFlags(uint32_t ssl_flags);
     uint32_t getSslFlags() const;
@@ -608,7 +658,12 @@ public:
     using ErrorCallback = std::function<void(int)>;
     
     H2Connection(EventLoop *loop);
+    H2Connection(const H2Connection &) = delete;
+    H2Connection(H2Connection &&other);
     ~H2Connection();
+    
+    H2Connection& operator=(const H2Connection &) = delete;
+    H2Connection& operator=(H2Connection &&other);
     
     KMError setSslFlags(uint32_t ssl_flags);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf=nullptr);
