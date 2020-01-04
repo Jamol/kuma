@@ -68,20 +68,6 @@ KUMA_NS_BEGIN
 
 std::atomic<long> KMObject::objIdSeed_{0};
 
-#ifdef KUMA_OS_WIN
-#define STRNCPY_S   strncpy_s
-#define SNPRINTF(d, dl, fmt, ...)    _snprintf_s(d, dl, _TRUNCATE, fmt, ##__VA_ARGS__)
-#else
-#define STRNCPY_S(d, dl, s, sl) \
-do{ \
-    if(0 == dl) \
-        break; \
-    strncpy(d, s, dl-1); \
-    d[dl-1]='\0'; \
-}while(0)
-#define SNPRINTF    snprintf
-#endif
-
 enum{
     KM_RESOLVE_IPV0    = 0,
     KM_RESOLVE_IPV4    = 1,
@@ -171,7 +157,7 @@ int km_resolve_2_ip_v4(const char* host_name, char *ip_buf, int ip_buf_len)
     }
     
     if (is_digit) {
-        STRNCPY_S(ip_buf, ip_buf_len, host_name, strlen(host_name));
+        strncpy_s(ip_buf, ip_buf_len, host_name, strlen(host_name));
         return 0;
     }
     
@@ -203,7 +189,7 @@ int km_resolve_2_ip_v4(const char* host_name, char *ip_buf, int ip_buf_len)
 #else
         char* tmp = (char*)inet_ntoa((in_addr&)(*he->h_addr_list[0]));
         if(tmp) {
-            STRNCPY_S(ip_buf, ip_buf_len, tmp, strlen(tmp));
+            strncpy_s(ip_buf, ip_buf_len, tmp, strlen(tmp));
             return 0;
         }
 #endif
@@ -307,7 +293,7 @@ extern "C" int km_set_sock_addr(const char* addr, unsigned short port,
     if(!addr && hints) {
         hints->ai_flags |= AI_PASSIVE;
     }
-    SNPRINTF(service, sizeof(service)-1, "%d", port);
+    snprintf(service, sizeof(service)-1, "%d", port);
     auto ret = km_getaddrinfo(addr, service, hints, &ai);
     if(ret != 0 || !ai) {
         if(ai) km_freeaddrinfo(ai);
@@ -915,52 +901,6 @@ void setCurrentThreadName(const char* name)
     pthread_setname_np(name);
 #endif
 }
-
-#ifndef KUMA_OS_MAC
-/**
- * strlcpy - Copy a C-string into a sized buffer
- * @dest: Where to copy the string to
- * @src: Where to copy the string from
- * @size: size of destination buffer
- *
- * Compatible with *BSD: the result is always a valid
- * NUL-terminated string that fits in the buffer (unless,
- * of course, the buffer size is zero). It does not pad
- * out the result like strncpy() does.
- */
-extern "C" size_t strlcpy(char *dest, const char *src, size_t size)
-{
-    size_t ret = strlen(src);
-    
-    if (size) {
-        size_t len = (ret >= size) ? size - 1 : ret;
-        memcpy(dest, src, len);
-        dest[len] = '\0';
-    }
-    return ret;
-}
-
-/**
- * strlcat - Append a length-limited, C-string to another
- * @dest: The string to be appended to
- * @src: The string to append to it
- * @count: The size of the destination buffer.
- */
-extern "C" size_t strlcat(char *dest, const char *src, size_t count)
-{
-    size_t dsize = strlen(dest);
-    size_t len = strlen(src);
-    size_t res = dsize + len;
-    
-    dest += dsize;
-    count -= dsize;
-    if (len >= count)
-        len = count-1;
-    memcpy(dest, src, len);
-    dest[len] = 0;
-    return res;
-}
-#endif
 
 KUMA_NS_END
 

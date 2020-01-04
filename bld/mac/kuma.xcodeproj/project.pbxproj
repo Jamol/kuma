@@ -12,7 +12,6 @@
 		1FA44486238B71E200C1EC92 /* evdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44480238B71E200C1EC92 /* evdefs.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		1FA44487238B71E200C1EC92 /* kmconf.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44481238B71E200C1EC92 /* kmconf.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		1FA44488238B71E200C1EC92 /* kmdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44482238B71E200C1EC92 /* kmdefs.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		1FA44489238B71E200C1EC92 /* kmtraits.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44483238B71E200C1EC92 /* kmtraits.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		1FA44494238B72EA00C1EC92 /* ProxyConnectionImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA4448B238B72EA00C1EC92 /* ProxyConnectionImpl.cpp */; };
 		1FA44495238B72EA00C1EC92 /* BasicAuthenticator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA4448C238B72EA00C1EC92 /* BasicAuthenticator.cpp */; };
 		1FA44496238B72EA00C1EC92 /* BasicAuthenticator.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA4448D238B72EA00C1EC92 /* BasicAuthenticator.h */; };
@@ -165,6 +164,7 @@
 		1FA445CC238B79EA00C1EC92 /* WSExtension.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA445C4238B79E900C1EC92 /* WSExtension.h */; };
 		1FA445CD238B79EA00C1EC92 /* PMCE_Base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA445C5238B79EA00C1EC92 /* PMCE_Base.cpp */; };
 		1FA445CE238B79EA00C1EC92 /* ExtensionHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA445C6238B79EA00C1EC92 /* ExtensionHandler.h */; };
+		1FBE8F6C23C0982400D93E30 /* kmtypes.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FBE8F6B23C0982400D93E30 /* kmtypes.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -175,7 +175,6 @@
 		1FA44480238B71E200C1EC92 /* evdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = evdefs.h; sourceTree = "<group>"; };
 		1FA44481238B71E200C1EC92 /* kmconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmconf.h; sourceTree = "<group>"; };
 		1FA44482238B71E200C1EC92 /* kmdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmdefs.h; sourceTree = "<group>"; };
-		1FA44483238B71E200C1EC92 /* kmtraits.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmtraits.h; sourceTree = "<group>"; };
 		1FA4448B238B72EA00C1EC92 /* ProxyConnectionImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProxyConnectionImpl.cpp; sourceTree = "<group>"; };
 		1FA4448C238B72EA00C1EC92 /* BasicAuthenticator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BasicAuthenticator.cpp; sourceTree = "<group>"; };
 		1FA4448D238B72EA00C1EC92 /* BasicAuthenticator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BasicAuthenticator.h; sourceTree = "<group>"; };
@@ -328,6 +327,7 @@
 		1FA445C4238B79E900C1EC92 /* WSExtension.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WSExtension.h; sourceTree = "<group>"; };
 		1FA445C5238B79EA00C1EC92 /* PMCE_Base.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PMCE_Base.cpp; sourceTree = "<group>"; };
 		1FA445C6238B79EA00C1EC92 /* ExtensionHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExtensionHandler.h; sourceTree = "<group>"; };
+		1FBE8F6B23C0982400D93E30 /* kmtypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmtypes.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -408,7 +408,7 @@
 				1FA4447F238B71E200C1EC92 /* kmbuffer.h */,
 				1FA44481238B71E200C1EC92 /* kmconf.h */,
 				1FA44482238B71E200C1EC92 /* kmdefs.h */,
-				1FA44483238B71E200C1EC92 /* kmtraits.h */,
+				1FBE8F6B23C0982400D93E30 /* kmtypes.h */,
 			);
 			name = include;
 			path = ../include;
@@ -653,7 +653,6 @@
 				1FA44487238B71E200C1EC92 /* kmconf.h in Headers */,
 				1FA44485238B71E200C1EC92 /* kmbuffer.h in Headers */,
 				1FA44488238B71E200C1EC92 /* kmdefs.h in Headers */,
-				1FA44489238B71E200C1EC92 /* kmtraits.h in Headers */,
 				1FA44484238B71E200C1EC92 /* kmapi.h in Headers */,
 				1FA444E4238B73E100C1EC92 /* Notifier.h in Headers */,
 				1FA444CA238B735100C1EC92 /* HttpParserImpl.h in Headers */,
@@ -688,6 +687,7 @@
 				1FA4450C238B746300C1EC92 /* DestroyDetector.h in Headers */,
 				1FA4450E238B746300C1EC92 /* defer.h in Headers */,
 				1FA444E2238B73E100C1EC92 /* SocketNotifier.h in Headers */,
+				1FBE8F6C23C0982400D93E30 /* kmtypes.h in Headers */,
 				1FA445AD238B79AD00C1EC92 /* H2ConnectionMgr.h in Headers */,
 				1FA444D1238B735100C1EC92 /* HttpMessage.h in Headers */,
 				1FA444A3238B731100C1EC92 /* compr.h in Headers */,

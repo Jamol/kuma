@@ -34,6 +34,7 @@
 #include <stdint.h>
 #include <thread>
 #include <list>
+#include <atomic>
 
 KUMA_NS_BEGIN
 
@@ -186,7 +187,7 @@ protected:
     using LockGuard = std::lock_guard<LockType>;
     
     IOPoll*             poll_;
-    volatile bool       stop_loop_{ false };
+    std::atomic<bool>   stop_loop_{ false };
     std::thread::id     thread_id_;
     
     TaskQueue           task_queue_;

@@ -24,7 +24,7 @@
 
 #include "kmdefs.h"
 #include "evdefs.h"
-#include "kmtraits.h"
+#include "kmtypes.h"
 #include "kmbuffer.h"
 
 #include <stdint.h>

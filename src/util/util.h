@@ -36,6 +36,7 @@
 #include <string>
 #include <sstream>
 #include <memory>
+#include <algorithm>
 
 struct addrinfo;
 struct sockaddr;
@@ -43,8 +44,8 @@ struct sockaddr;
 KUMA_NS_BEGIN
 
 #ifdef KUMA_OS_WIN
-# define snprintf       _snprintf
-# define vsnprintf      _vsnprintf
+# define snprintf(d, dl, fmt, ...) _snprintf_s(d, dl, _TRUNCATE, fmt, ##__VA_ARGS__)
+# define vsnprintf(d, dl, fmt, ...) _vsnprintf_s(d, dl, _TRUNCATE, fmt, ##__VA_ARGS__)
 # define strcasecmp     _stricmp
 # define strncasecmp    _strnicmp
 # define getCurrentThreadId() GetCurrentThreadId()
@@ -63,7 +64,7 @@ using LPFN_CANCELIOEX = BOOL(WINAPI*)(HANDLE, LPOVERLAPPED);
 # define PATH_SEPARATOR '\\'
 #else
 # define PATH_SEPARATOR '/'
-# define strncpy_s(d, dl, s, c) strlcpy(d, s, dl)
+# define strncpy_s(d, dl, s, c) strncpy(d, s, (std::min)(dl - 1, c))
 #endif
 
 #ifndef TICK_COUNT_TYPE
@@ -206,11 +207,6 @@ extern "C" {
     KUMA_API bool km_is_ipv6_address(const char* addr);
     KUMA_API bool km_is_ip_address(const char* addr);
     KUMA_API bool km_is_mcast_address(const char* addr);
-    
-#ifndef KUMA_OS_MAC
-    size_t strlcpy(char *, const char *, size_t);
-    size_t strlcat(char *, const char *, size_t);
-#endif
 }
 
 int km_get_sock_addr(const sockaddr *addr, size_t addr_len, std::string &ip, uint16_t *port);

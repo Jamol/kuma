@@ -29,6 +29,7 @@
 
 #ifdef KUMA_OS_WIN
 # define getCurrentThreadId() GetCurrentThreadId()
+# define vsnprintf(d, dl, fmt, ...) _vsnprintf_s(d, dl, _TRUNCATE, fmt, ##__VA_ARGS__)
 #elif defined(KUMA_OS_MAC)
 # define getCurrentThreadId() pthread_mach_thread_np(pthread_self())
 #elif defined(KUMA_OS_ANDROID)
@@ -92,17 +93,12 @@ const int kAndroidLogLevels[] = {
 };
 #endif
 
-#ifdef KUMA_OS_WIN
-# define VSNPRINTF(d, dl, fmt, ...)    _vsnprintf_s(d, dl, _TRUNCATE, fmt, ##__VA_ARGS__)
-#else
-# define VSNPRINTF   vsnprintf
-#endif
 void tracePrint(int level, const char* szMessage, ...)
 {
     va_list VAList;
     char szMsgBuf[2048] = {0};
     va_start(VAList, szMessage);
-    VSNPRINTF(szMsgBuf, sizeof(szMsgBuf)-1, szMessage, VAList);
+    vsnprintf(szMsgBuf, sizeof(szMsgBuf)-1, szMessage, VAList);
     
     if (level > TRACE_LEVEL_MAX) {
         level = TRACE_LEVEL_MAX;
