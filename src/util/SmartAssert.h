@@ -1,5 +1,6 @@
+#pragma once
+
 #include <string>
-#include <sstream>
 
 namespace kuma {
 
@@ -10,8 +11,7 @@ public:
         expr_(expr), first_print_(true) {}
     
     SmartAssert& print_context(const std::string& file, int line) {
-        std::cout << "Failed: " << expr_ << std::endl;
-        std::cout << "File: " << file << ", Line: " << line << std::endl;
+        printf("Failed: %s\nFile: %s, Line: %d\n", expr_.c_str(), file.c_str(), line);
         return *this;
     }
     
@@ -21,9 +21,7 @@ public:
             first_print_ = false;
             std::cout << "Context Variables:" << std::endl;
         }
-        std::ostringstream ss;
-        ss << value;
-        std::cout << "\t " << name << " = " << ss.str() << std::endl;
+        printf("\t %s=%s\n", name.c_str(), std::to_string(value).c_str());
         return *this;
     }
     

@@ -20,7 +20,8 @@ class KMObject
 {
 public:
     KMObject() {
-        objId_ = ++objIdSeed_;
+        static std::atomic<long> s_objIdSeed{0};
+        objId_ = ++s_objIdSeed;
     }
     
     const std::string& getObjKey() const {
@@ -28,9 +29,6 @@ public:
     }
     
     long getObjId() const { return objId_; }
-    
-private:
-    static std::atomic<long> objIdSeed_;
     
 protected:
     std::string objKey_;

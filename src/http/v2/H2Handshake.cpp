@@ -22,6 +22,7 @@
 #include "H2Handshake.h"
 #include "H2Frame.h"
 #include "util/base64.h"
+#include "util/kmtrace.h"
 
 #include <algorithm>
 

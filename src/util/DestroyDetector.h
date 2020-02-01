@@ -10,69 +10,58 @@
 #define __DestroyDetector_H__
 
 #include "kmdefs.h"
-#include "kmtrace.h"
 
 KUMA_NS_BEGIN
-
-class DestroyGuard
-{
-public:
-    ~DestroyGuard()
-    {
-        prev_->next_ = next_;
-        next_->prev_ = prev_;
-        prev_ = next_ = this;
-    }
-    
-    void setDestroyed()
-    {
-        destroyed_ = true;
-    }
-    
-    bool isDestroyed() const
-    {
-        return destroyed_;
-    }
-    
-protected:
-    friend class DestroyDetector;
-    
-    bool destroyed_ = false;
-    DestroyGuard* prev_ = this;
-    DestroyGuard* next_ = this;
-};
 
 class DestroyDetector
 {
 public:
-    ~DestroyDetector() {
-        auto next = dd_root_.next_;
-        for (; next != &dd_root_; next = next->next_) {
-            next->setDestroyed();
+    virtual ~DestroyDetector()
+    {
+        for (auto *c = head_.next_; c != &head_; c = c->next_) {
+            c->destroyed_ = true;
         }
     }
     
-    void appendDestroyGuard(DestroyGuard *dg)
+    class Checker final
     {
-        auto *last = dd_root_.prev_->next_;
-        last->next_ = dg;
-        dg->prev_ = last;
-        dg->next_ = &dd_root_;
-        dd_root_.prev_ = dg;
-    }
+    public:
+        Checker() = default;
+        Checker(DestroyDetector *dd)
+        {
+            prev_ = &dd->head_;
+            next_ = prev_->next_;
+            next_->prev_ = this;
+            prev_->next_ = this;
+        }
+        ~Checker()
+        {
+            prev_->next_ = next_;
+            next_->prev_ = prev_;
+            prev_ = next_ = this;
+        }
+        bool isDestroyed() const
+        {
+            return destroyed_;
+        }
+        
+    protected:
+        friend class DestroyDetector;
+        
+        bool destroyed_ = false;
+        Checker* prev_ = this;
+        Checker* next_ = this;
+    };
 
 protected:
-    DestroyGuard dd_root_;
+    Checker head_;
 };
 
 #define DESTROY_DETECTOR_SETUP() \
-DestroyGuard __dguard; \
-appendDestroyGuard(&__dguard);
+    kuma::DestroyDetector::Checker __dd_check(this);
 
 #define DESTROY_DETECTOR_CHECK(ret) \
-if(__dguard.isDestroyed()) { \
-return ret; \
-}
+    if(__dd_check.isDestroyed()) return ret;
 
 #define DESTROY_DETECTOR_CHECK_VOID() DESTROY_DETECTOR_CHECK((void()))
 

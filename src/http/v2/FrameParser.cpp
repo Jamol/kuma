@@ -20,6 +20,8 @@
  */
 
 #include "FrameParser.h"
+#include "util/kmtrace.h"
+
 #include <algorithm>
 
 using namespace kuma;

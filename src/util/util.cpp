@@ -61,12 +61,9 @@
 #include <algorithm>
 #include <limits.h>
 
-#include "kmobject.h"
 #include "kmtrace.h"
 
 KUMA_NS_BEGIN
-
-std::atomic<long> KMObject::objIdSeed_{0};
 
 enum{
     KM_RESOLVE_IPV0    = 0,

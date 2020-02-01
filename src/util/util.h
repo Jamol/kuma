@@ -64,7 +64,13 @@ using LPFN_CANCELIOEX = BOOL(WINAPI*)(HANDLE, LPOVERLAPPED);
 # define PATH_SEPARATOR '\\'
 #else
 # define PATH_SEPARATOR '/'
-# define strncpy_s(d, dl, s, c) strncpy(d, s, (std::min)(dl - 1, c))
+# define strncpy_s(d, dl, s, c) \
+    do { \
+        if (0 == dl) break; \
+        size_t sz = (dl - 1) > c ? c : (dl - 1); \
+        strncpy(d, s, sz); \
+        d[sz] = '\0'; \
+    } while(0)
 #endif
 
 #ifndef TICK_COUNT_TYPE
@@ -179,17 +185,23 @@ inline uint16_t decode_u16(const uint8_t *src)
 
 inline void encode_u32(uint8_t *dst, uint32_t u)
 {
-    dst[0] = u >> 24, dst[1] = u >> 16, dst[2] = u >> 8, dst[3] = u;
+    dst[0] = u >> 24;
+    dst[1] = u >> 16;
+    dst[2] = u >> 8;
+    dst[3] = u;
 }
 
 inline void encode_u24(uint8_t *dst, uint32_t u)
 {
-    dst[0] = u >> 16, dst[1] = u >> 8, dst[2] = u;
+    dst[0] = u >> 16;
+    dst[1] = u >> 8;
+    dst[2] = u;
 }
 
 inline void encode_u16(uint8_t *dst, uint32_t u)
 {
-    dst[0] = u >> 8, dst[1] = u;
+    dst[0] = u >> 8;
+    dst[1] = u;
 }
 
 int generateRandomBytes(uint8_t *buf, int len);
