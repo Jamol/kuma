@@ -24,6 +24,7 @@
 
 #include "util/util.h"
 #include "util/defer.h"
+#include "util/skutils.h"
 #include "Notifier.h"
 
 KUMA_NS_BEGIN
@@ -89,7 +90,7 @@ public:
     }
     void notify() {
         char c = 1;
-        ::send(fds_[WRITE_FD], &c, sizeof(c), 0);
+        SKUtils::send(fds_[WRITE_FD], &c, sizeof(c), 0);
     }
     
     SOCKET_FD getReadFD() override {
@@ -98,10 +99,10 @@ public:
     
     KMError onEvent(KMEvent ev) override {
         char buf[1024];
-        int ret = ::recv(fds_[READ_FD], buf, sizeof(buf), 0);
-        while (ret == sizeof(buf)) {
-            ret = ::recv(fds_[READ_FD], buf, sizeof(buf), 0);
-        }
+        ssize_t ret = 0;
+        do {
+            ret = SKUtil::recv(fds_[READ_FD], buf, sizeof(buf), 0);
+        } while(ret == sizeof(buf));
         return KMError::NOERR;
     }
 private:

@@ -22,6 +22,7 @@
 #include "SocketBase.h"
 #include "util/util.h"
 #include "util/kmtrace.h"
+#include "util/skutils.h"
 
 #if defined(KUMA_OS_WIN)
 # include <Ws2tcpip.h>
@@ -281,7 +282,7 @@ int SocketBase::send(const void* data, size_t length)
         return 0;
     }
 
-    int ret = (int)::send(fd_, (const char*)data, int(length), 0);
+    auto ret = SKUtils::send(fd_, data, length, 0);
     if (0 == ret) {
         KUMA_WARNXTRACE("send, peer closed, err=" << getLastError());
         ret = -1;
@@ -309,7 +310,7 @@ int SocketBase::send(const void* data, size_t length)
     }
     
     //KUMA_INFOXTRACE("send, ret="<<ret<<", len="<<length);
-    return ret;
+    return static_cast<int>(ret);
 }
 
 int SocketBase::send(const iovec* iovs, int count)
@@ -327,14 +328,7 @@ int SocketBase::send(const iovec* iovs, int count)
         return 0;
     }
 
-    int ret = 0;
-#ifdef KUMA_OS_WIN
-    DWORD bytes_sent = 0;
-    ret = ::WSASend(fd_, (LPWSABUF)iovs, count, &bytes_sent, 0, NULL, NULL);
-    if (0 == ret) ret = bytes_sent;
-#else
-    ret = (int)::writev(fd_, iovs, count);
-#endif
+    auto ret = SKUtils::send(fd_, iovs, count);
     if (0 == ret) {
         KUMA_WARNXTRACE("send 2, peer closed");
         ret = -1;
@@ -362,7 +356,7 @@ int SocketBase::send(const iovec* iovs, int count)
     }
 
     //KUMA_INFOXTRACE("send, ret="<<ret);
-    return ret;
+    return static_cast<int>(ret);
 }
 
 int SocketBase::send(const KMBuffer &buf)
@@ -392,7 +386,7 @@ int SocketBase::receive(void* data, size_t length)
         return 0;
     }
     
-    int ret = (int)::recv(fd_, (char*)data, int(length), 0);
+    auto ret = SKUtils::recv(fd_, data, length, 0);
     if (0 == ret) {
         KUMA_WARNXTRACE("receive, peer closed, err=" << getLastError());
         ret = -1;
@@ -418,7 +412,7 @@ int SocketBase::receive(void* data, size_t length)
     }
 
     //KUMA_INFOXTRACE("receive, ret="<<ret<<", len="<<length);
-    return ret;
+    return static_cast<int>(ret);
 }
 
 KMError SocketBase::close()

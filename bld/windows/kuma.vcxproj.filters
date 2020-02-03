@@ -524,6 +524,9 @@
     <ClInclude Include="..\..\src\proxy\ProxyConnectionImpl.h">
       <Filter>Source Files\proxy</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\util\skutils.h">
+      <Filter>Header Files\util</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc">

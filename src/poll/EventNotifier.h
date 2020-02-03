@@ -38,7 +38,7 @@ public:
     }
     bool init() override {
         cleanup();
-        efd_ = eventfd(0, EFD_NONBLOCK);
+        efd_ = eventfd(0, EFD_CLOEXEC | EFD_NONBLOCK);
         return efd_ >= 0;
     }
     bool ready() override {
@@ -47,10 +47,11 @@ public:
     void notify() override {
         if (efd_ >= 0) {
             //eventfd_write(efd_, 1);
-            uint64_t count = 1;
-            int ret = write(efd_, &count, sizeof(count));
-            if (ret != sizeof(count)) {
-            }
+            ssize_t ret = 0;
+            do {
+                uint64_t count = 1;
+                ret = write(efd_, &count, sizeof(count));
+            } while (ret < 0 && errno == EINTR);
         }
     }
     
@@ -59,16 +60,13 @@ public:
     }
     
     KMError onEvent(KMEvent ev) override {
-        while (true) {
+        uint64_t count = 0;
+        ssize_t ret = 0;
+        do {
             //eventfd_t val;
             //eventfd_read(efd_, &val);
-            uint64_t count = 0;
-            int ret = read(efd_, &count, sizeof(count));
-            if (ret < 0 && errno == EINTR) {
-                continue;
-            }
-            break;
-        }
+            ret = read(efd_, &count, sizeof(count));
+        } while (ret < 0 && errno == EINTR);
         return KMError::NOERR;
     }
 private:

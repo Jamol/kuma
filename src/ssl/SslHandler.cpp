@@ -68,6 +68,9 @@ KMError SslHandler::init(SslRole ssl_role, SOCKET_FD fd, uint32_t ssl_flags)
     OpenSslLib::setSSLData(ssl_, this);
     //SSL_set_mode(ssl_, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
     //SSL_set_mode(ssl_, SSL_MODE_ENABLE_PARTIAL_WRITE);
+#if defined(SSL_MODE_RELEASE_BUFFERS)
+    SSL_set_mode(ssl_, SSL_MODE_RELEASE_BUFFERS);
+#endif
     return KMError::NOERR;
 }
 

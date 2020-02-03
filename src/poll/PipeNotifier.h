@@ -43,12 +43,8 @@ public:
             cleanup();
             return false;
         } else {
-            int fl = fcntl(fds_[READ_FD], F_GETFL);
-            fl |= O_NONBLOCK;
-            fcntl(fds_[READ_FD], F_SETFL, fl);
-            fl = fcntl(fds_[WRITE_FD], F_GETFL);
-            fl |= O_NONBLOCK;
-            fcntl(fds_[WRITE_FD], F_SETFL, fl);
+            fcntl(fds_[READ_FD], F_SETFL, O_RDONLY | O_NONBLOCK);
+            fcntl(fds_[WRITE_FD], F_SETFL, O_WRONLY | O_NONBLOCK);
             return true;
         }
     }
@@ -57,8 +53,11 @@ public:
     }
     void notify() override {
         if(fds_[WRITE_FD] != INVALID_FD) {
-            char c = 1;
-            write(fds_[WRITE_FD], &c, sizeof(c));
+            ssize_t ret = 0;
+            do {
+                char c = 1;
+                ret = write(fds_[WRITE_FD], &c, sizeof(c));
+            } while(ret < 0 && errno == EINTR);
         }
     }
     
@@ -67,17 +66,11 @@ public:
     }
     
     KMError onEvent(KMEvent ev) override {
-        while (true) {
-            char buf[1024];
-            auto ret = read(fds_[READ_FD], buf, sizeof(buf));
-            if (ret < 0 && errno == EINTR) {
-                continue;
-            }
-            while(ret == sizeof(buf)) {
-                ret = read(fds_[READ_FD], buf, sizeof(buf));
-            }
-            break;
-        }
+        char buf[1024];
+        ssize_t ret = 0;
+        do {
+            ret = ::read(fds_[READ_FD], buf, sizeof(buf));
+        } while(ret == sizeof(buf) || (ret < 0 && getLastError() == EINTR));
         return KMError::NOERR;
     }
 private:

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1F2D097E23E7AE220032D123 /* skutils.h in Headers */ = {isa = PBXBuildFile; fileRef = 1F2D097D23E7AE220032D123 /* skutils.h */; };
 		1FA44484238B71E200C1EC92 /* kmapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA4447E238B71E200C1EC92 /* kmapi.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		1FA44485238B71E200C1EC92 /* kmbuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA4447F238B71E200C1EC92 /* kmbuffer.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		1FA44486238B71E200C1EC92 /* evdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44480238B71E200C1EC92 /* evdefs.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -168,6 +169,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		1F2D097D23E7AE220032D123 /* skutils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = skutils.h; sourceTree = "<group>"; };
 		1FA44471238B6FA700C1EC92 /* kuma.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = kuma.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		1FA44475238B6FA700C1EC92 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1FA4447E238B71E200C1EC92 /* kmapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmapi.h; sourceTree = "<group>"; };
@@ -515,6 +517,7 @@
 				1FA44503238B746300C1EC92 /* kmtrace.cpp */,
 				1FA44505238B746300C1EC92 /* kmtrace.h */,
 				1FA44507238B746300C1EC92 /* skbuffer.h */,
+				1F2D097D23E7AE220032D123 /* skutils.h */,
 				1FA44502238B746300C1EC92 /* SmartAssert.h */,
 				1FA444FC238B746300C1EC92 /* util.cpp */,
 				1FA444FE238B746300C1EC92 /* util.h */,
@@ -706,6 +709,7 @@
 				1FA44568238B770500C1EC92 /* SocketBase.h in Headers */,
 				1FA445CC238B79EA00C1EC92 /* WSExtension.h in Headers */,
 				1FA44496238B72EA00C1EC92 /* BasicAuthenticator.h in Headers */,
+				1F2D097E23E7AE220032D123 /* skutils.h in Headers */,
 				1FA44508238B746300C1EC92 /* base64.h in Headers */,
 				1FA444C2238B735100C1EC92 /* httputils.h in Headers */,
 				1FA445CE238B79EA00C1EC92 /* ExtensionHandler.h in Headers */,

@@ -183,6 +183,9 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
         SSL_CTX_set_mode(ssl_ctx, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
         SSL_CTX_set_mode(ssl_ctx, SSL_MODE_ENABLE_PARTIAL_WRITE);
         SSL_CTX_set_mode(ssl_ctx, SSL_MODE_AUTO_RETRY);
+#if defined(SSL_MODE_RELEASE_BUFFERS)
+        SSL_CTX_set_mode(ssl_ctx, SSL_MODE_RELEASE_BUFFERS);
+#endif
         
 #if 1
         if (clientMode) {

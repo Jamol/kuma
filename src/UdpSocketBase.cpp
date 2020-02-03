@@ -64,6 +64,7 @@
 #include "UdpSocketBase.h"
 #include "util/util.h"
 #include "util/kmtrace.h"
+#include "util/skutils.h"
 #include "DnsResolver.h"
 
 #ifdef KUMA_OS_MAC
@@ -325,7 +326,7 @@ int UdpSocketBase::send(const void* data, size_t length, const std::string &host
         }
     }
     int addr_len = km_get_addr_length(ss_addr);
-    int ret = (int)::sendto(fd_, (const char*)data, (int)length, 0, (struct sockaddr*)&ss_addr, addr_len);
+    auto ret = SKUtils::sendto(fd_, data, length, 0, (struct sockaddr*)&ss_addr, addr_len);
     if(0 == ret) {
         KUMA_ERRXTRACE("send, peer closed, err="<<getLastError()<<", host="<<host<<", port="<<port);
         ret = -1;
@@ -349,7 +350,7 @@ int UdpSocketBase::send(const void* data, size_t length, const std::string &host
         //cleanup();
     }
     //KUMA_INFOXTRACE("send, ret="<<ret<<", len="<<length);
-    return ret;
+    return static_cast<int>(ret);
 }
 
 int UdpSocketBase::send(const iovec* iovs, int count, const std::string &host, uint16_t port)
@@ -366,8 +367,6 @@ int UdpSocketBase::send(const iovec* iovs, int count, const std::string &host, u
     if (bytes_total == 0) {
         return 0;
     }
-
-    int ret = 0;
     
     sockaddr_storage ss_addr = {0};
     struct addrinfo hints = {0};
@@ -375,27 +374,8 @@ int UdpSocketBase::send(const iovec* iovs, int count, const std::string &host, u
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_flags = AI_NUMERICHOST|AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
     km_set_sock_addr(host.c_str(), port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr));
-#ifdef KUMA_OS_WIN
-    DWORD bytes_sent = 0;
-    ret = ::WSASendTo(fd_, (LPWSABUF)iovs, count, &bytes_sent, 0,
-                      (const sockaddr *)&ss_addr, sizeof(ss_addr), NULL, NULL);
-    if(0 == ret) ret = (int)bytes_sent;
-#else // KUMA_OS_WIN
-    msghdr send_msg;
-    send_msg.msg_iov = (iovec *)&iovs[0];
-    send_msg.msg_iovlen = count;
-    send_msg.msg_name = (struct sockaddr *)&ss_addr;
-    send_msg.msg_namelen = km_get_addr_length(ss_addr);
-#if defined(SOLARIS)
-    send_msg.msg_accrights = 0;
-    send_msg.msg_accrightslen = 0;
-#else
-    send_msg.msg_control = 0;
-    send_msg.msg_controllen = 0;
-    send_msg.msg_flags = 0;
-#endif
-    ret = (int)::sendmsg(fd_, &send_msg, 0);
-#endif // _WIN32
+    auto addr_len = km_get_addr_length(ss_addr);
+    auto ret = SKUtils::sendto(fd_, iovs, count, 0, (const sockaddr *)&ss_addr, addr_len);
     if(0 == ret) {
         KUMA_ERRXTRACE("send, peer closed, err: "<<getLastError()<<", host="<<host<<", port="<<port);
         ret = -1;
@@ -419,7 +399,7 @@ int UdpSocketBase::send(const iovec* iovs, int count, const std::string &host, u
         //cleanup();
     }
     //KUMA_INFOXTRACE("send, ret=" << ret);
-    return ret;
+    return static_cast<int>(ret);
 }
 
 int UdpSocketBase::send(const KMBuffer &buf, const char* host, uint16_t port)
@@ -450,14 +430,9 @@ int UdpSocketBase::receive(void* data, size_t length, char* ip, size_t ip_len, u
         return -1;
     }
     
-    int ret = 0;
     sockaddr_storage ss_addr = {0};
-#if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
     socklen_t addr_len = sizeof(ss_addr);
-#else
-    int addr_len = sizeof(ss_addr);
-#endif
-    ret = (int)::recvfrom(fd_, (char*)data, (int)length, 0, (struct sockaddr*)&ss_addr, &addr_len);
+    auto ret = SKUtils::recvfrom(fd_, data, length, 0, (struct sockaddr*)&ss_addr, &addr_len);
     if(0 == ret) {
         KUMA_ERRXTRACE("recv, peer closed, err"<<getLastError());
         ret = -1;
@@ -481,7 +456,7 @@ int UdpSocketBase::receive(void* data, size_t length, char* ip, size_t ip_len, u
         //cleanup();
     }
     //KUMA_INFOXTRACE("receive, ret=" << ret << ", len=" << length);
-    return ret;
+    return static_cast<int>(ret);
 }
 
 KMError UdpSocketBase::close()

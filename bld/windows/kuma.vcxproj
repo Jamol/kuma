@@ -311,6 +311,7 @@
     <ClInclude Include="..\..\src\util\kmqueue.h" />
     <ClInclude Include="..\..\src\util\kmtrace.h" />
     <ClInclude Include="..\..\src\util\skbuffer.h" />
+    <ClInclude Include="..\..\src\util\skutils.h" />
     <ClInclude Include="..\..\src\util\util.h" />
     <ClInclude Include="..\..\src\ws\WebSocketImpl.h" />
     <ClInclude Include="..\..\src\ws\WSConnection.h" />
