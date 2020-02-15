@@ -246,11 +246,16 @@
     <ClCompile Include="..\..\third_party\zlib\zutil.c" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\include\evdefs.h" />
+    <ClInclude Include="..\..\include\kmapi.h" />
+    <ClInclude Include="..\..\include\kmbuffer.h" />
+    <ClInclude Include="..\..\include\kmconf.h" />
+    <ClInclude Include="..\..\include\kmdefs.h" />
+    <ClInclude Include="..\..\include\kmtypes.h" />
     <ClInclude Include="..\..\src\AcceptorBase.h" />
     <ClInclude Include="..\..\src\compr\compr.h" />
     <ClInclude Include="..\..\src\compr\compr_zlib.h" />
     <ClInclude Include="..\..\src\DnsResolver.h" />
-    <ClInclude Include="..\..\src\evdefs.h" />
     <ClInclude Include="..\..\src\EventLoopImpl.h" />
     <ClInclude Include="..\..\src\http\H1xStream.h" />
     <ClInclude Include="..\..\src\http\Http1xRequest.h" />
@@ -285,10 +290,6 @@
     <ClInclude Include="..\..\src\iocp\IocpBase.h" />
     <ClInclude Include="..\..\src\iocp\IocpSocket.h" />
     <ClInclude Include="..\..\src\iocp\IocpUdpSocket.h" />
-    <ClInclude Include="..\..\src\kmapi.h" />
-    <ClInclude Include="..\..\src\kmbuffer.h" />
-    <ClInclude Include="..\..\src\kmconf.h" />
-    <ClInclude Include="..\..\src\kmdefs.h" />
     <ClInclude Include="..\..\src\poll\IOPoll.h" />
     <ClInclude Include="..\..\src\poll\Notifier.h" />
     <ClInclude Include="..\..\src\proxy\BasicAuthenticator.h" />

@@ -101,7 +101,7 @@ public:
         char buf[1024];
         ssize_t ret = 0;
         do {
-            ret = SKUtil::recv(fds_[READ_FD], buf, sizeof(buf), 0);
+            ret = SKUtils::recv(fds_[READ_FD], buf, sizeof(buf), 0);
         } while(ret == sizeof(buf));
         return KMError::NOERR;
     }
