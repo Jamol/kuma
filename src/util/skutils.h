@@ -10,6 +10,11 @@
 
 #include "evdefs.h"
 
+#ifndef KUMA_OS_WIN
+# include <unistd.h>
+# include <sys/uio.h>
+#endif
+
 KUMA_NS_BEGIN
 
 
@@ -18,7 +23,6 @@ KUMA_NS_BEGIN
 # define SK_BUF_LEN         static_cast<char*>(buf),static_cast<int>(len)
 using ssize_t = std::make_signed_t<size_t>;
 #else
-# include <unistd.h>
 # define SK_CONST_BUF_LEN   buf,len
 # define SK_BUF_LEN         buf,len
 #endif
