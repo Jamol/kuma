@@ -30,7 +30,6 @@
 #include "http/Uri.h"
 #include "util/kmobject.h"
 #include "util/DestroyDetector.h"
-#include "util/kmqueue.h"
 #include "proxy/ProxyConnectionImpl.h"
 
 KUMA_NS_BEGIN

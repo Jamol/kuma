@@ -21,6 +21,7 @@
 
 #include "IocpSocket.h"
 #include "util/kmtrace.h"
+#include "util/skutils.h"
 
 #include <MSWSock.h>
 #include <Ws2tcpip.h>
@@ -64,7 +65,7 @@ KMError IocpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
     if (INVALID_FD == fd_) {
         fd_ = createFd(ss_addr.ss_family);
         if (INVALID_FD == fd_) {
-            KUMA_ERRXTRACE("connect_i, socket failed, err=" << getLastError());
+            KUMA_ERRXTRACE("connect_i, socket failed, err=" << SKUtils::getLastError());
             return KMError::FAILED;
         }
         // need bind before ConnectEx
@@ -73,7 +74,7 @@ KMError IocpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
         int addr_len = km_get_addr_length(ss_any);
         int ret = ::bind(fd_, (struct sockaddr*)&ss_any, addr_len);
         if (ret < 0) {
-            KUMA_ERRXTRACE("connect_i, bind failed, err=" << getLastError());
+            KUMA_ERRXTRACE("connect_i, bind failed, err=" << SKUtils::getLastError());
         }
     }
     setSocketOption();
@@ -154,11 +155,12 @@ int IocpSocket::send(const iovec* iovs, int count)
         ret = -1;
     }
     else if (ret < 0) {
-        if (WSAEWOULDBLOCK == getLastError() || WSA_IO_PENDING == getLastError()) {
+        if (WSAEWOULDBLOCK == SKUtils::getLastError() || 
+            WSA_IO_PENDING == SKUtils::getLastError()) {
             ret = 0;
         }
         else {
-            KUMA_ERRXTRACE("send, fail, err=" << getLastError());
+            KUMA_ERRXTRACE("send, fail, err=" << SKUtils::getLastError());
         }
     }
 

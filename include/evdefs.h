@@ -38,16 +38,12 @@ KUMA_NS_BEGIN
 #define KUMA_EV_NETWORK (KUMA_EV_READ|KUMA_EV_WRITE|KUMA_EV_ERROR)
 
 #ifdef KUMA_OS_WIN
-# define SOCKET_FD   SOCKET
-# define closeFd   ::closesocket
-# define getLastError() WSAGetLastError()
+using SOCKET_FD = SOCKET;
+const SOCKET_FD INVALID_FD = INVALID_SOCKET;
 #else
-# define SOCKET_FD   int
-# define closeFd   ::close
-# define getLastError() errno
+using SOCKET_FD = int;
+const SOCKET_FD INVALID_FD = ((SOCKET_FD)-1);
 #endif
-
-#define INVALID_FD  ((SOCKET_FD)-1)
 
 using KMEvent = uint32_t;
 using IOCallback = std::function<void(KMEvent, void*, size_t)>;

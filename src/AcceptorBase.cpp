@@ -64,6 +64,7 @@
 #include "AcceptorBase.h"
 #include "util/util.h"
 #include "util/kmtrace.h"
+#include "util/skutils.h"
 
 using namespace kuma;
 
@@ -106,20 +107,20 @@ KMError AcceptorBase::listen(const std::string &host, uint16_t port)
     ss_family_ = ss_addr.ss_family;
     fd_ = ::socket(ss_addr.ss_family, SOCK_STREAM, 0);
     if(INVALID_FD == fd_) {
-        KUMA_ERRXTRACE("startListen, socket failed, err="<<getLastError());
+        KUMA_ERRXTRACE("startListen, socket failed, err="<<SKUtils::getLastError());
         return KMError::FAILED;
     }
     setSocketOption();
     int addr_len = km_get_addr_length(ss_addr);
     int ret = ::bind(fd_, (struct sockaddr*)&ss_addr, addr_len);
     if(ret < 0) {
-        KUMA_ERRXTRACE("startListen, bind failed, err="<<getLastError());
+        KUMA_ERRXTRACE("startListen, bind failed, err="<<SKUtils::getLastError());
         return KMError::FAILED;
     }
     if(::listen(fd_, 128) != 0) {
-        closeFd(fd_);
+        SKUtils::close(fd_);
         fd_ = INVALID_FD;
-        KUMA_ERRXTRACE("startListen, socket listen fail, err="<<getLastError());
+        KUMA_ERRXTRACE("startListen, socket listen fail, err="<<SKUtils::getLastError());
         return KMError::FAILED;
     }
     closed_ = false;
@@ -150,7 +151,7 @@ void AcceptorBase::unregisterFd(SOCKET_FD fd, bool close_fd)
     }
     // uregistered or loop stopped
     if (close_fd && fd != INVALID_FD) {
-        closeFd(fd);
+        SKUtils::close(fd);
     }
 }
 
@@ -218,12 +219,12 @@ void AcceptorBase::onAccept(SOCKET_FD fd)
         km_get_sock_addr((struct sockaddr*)&ss_addr, sizeof(ss_addr), peer_ip, sizeof(peer_ip), &peer_port);
     }
     else {
-        KUMA_WARNXTRACE("onAccept, getpeername failed, err=" << getLastError());
+        KUMA_WARNXTRACE("onAccept, getpeername failed, err=" << SKUtils::getLastError());
     }
 
     KUMA_INFOXTRACE("onAccept, fd=" << fd << ", peer_ip=" << peer_ip << ", peer_port=" << peer_port);
     if (!accept_cb_ || !accept_cb_(fd, peer_ip, peer_port)) {
-        closeFd(fd);
+        SKUtils::close(fd);
     }
 }
 
@@ -237,7 +238,7 @@ void AcceptorBase::onClose(KMError err)
 void AcceptorBase::ioReady(KMEvent events, void* ol, size_t io_size)
 {
     if (events & KUMA_EV_ERROR) {
-        KUMA_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events=" << events << ", err=" << getLastError());
+        KUMA_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events=" << events << ", err=" << SKUtils::getLastError());
         onClose(KMError::POLL_ERROR);
     }
     else {

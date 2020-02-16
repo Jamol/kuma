@@ -114,7 +114,7 @@ KMError UdpSocketBase::bind(const std::string &bind_host, uint16_t bind_port, ui
     }
     fd_ = socket(bind_addr_.ss_family, SOCK_DGRAM, 0);
     if(INVALID_FD == fd_) {
-        KUMA_ERRXTRACE("bind, socket error, err="<<getLastError());
+        KUMA_ERRXTRACE("bind, socket error, err="<<SKUtils::getLastError());
         return KMError::FAILED;
     }
     setSocketOption();
@@ -139,7 +139,7 @@ KMError UdpSocketBase::bind(const std::string &bind_host, uint16_t bind_port, ui
     int addr_len = km_get_addr_length(bind_addr_);
 
     if(::bind(fd_, (struct sockaddr *)&bind_addr_, addr_len) < 0) {
-        KUMA_ERRXTRACE("bind, bind error: "<<getLastError());
+        KUMA_ERRXTRACE("bind, bind error: "<<SKUtils::getLastError());
         return KMError::FAILED;
     }
     
@@ -182,7 +182,7 @@ void UdpSocketBase::unregisterFd(SOCKET_FD fd, bool close_fd)
     }
     // uregistered or loop stopped
     if (close_fd && fd != INVALID_FD) {
-        closeFd(fd);
+        SKUtils::close(fd);
     }
 }
 
@@ -223,7 +223,7 @@ KMError UdpSocketBase::mcastJoin(const std::string &mcast_addr, uint16_t mcast_p
     if(INVALID_FD == fd_) {
         fd_ = socket(mcast_addr_.ss_family, SOCK_DGRAM, 0);
         if(INVALID_FD == fd_) {
-            KUMA_ERRXTRACE("mcastJoin, socket error, err="<<getLastError());
+            KUMA_ERRXTRACE("mcastJoin, socket error, err="<<SKUtils::getLastError());
             return KMError::SOCK_ERROR;
         }
     }
@@ -231,7 +231,7 @@ KMError UdpSocketBase::mcastJoin(const std::string &mcast_addr, uint16_t mcast_p
     if(AF_INET == mcast_addr_.ss_family) {
         sockaddr_in *pa = (sockaddr_in *)&bind_addr_;
         if(setsockopt(fd_,IPPROTO_IP, IP_MULTICAST_IF,(char *)&pa->sin_addr, sizeof(pa->sin_addr)) < 0) {
-            KUMA_ERRXTRACE("mcastJoin, failed to set IP_MULTICAST_IF, err"<<getLastError());
+            KUMA_ERRXTRACE("mcastJoin, failed to set IP_MULTICAST_IF, err"<<SKUtils::getLastError());
         }
         
         //memcpy(&mcast_req_v4_.imr_interface,
@@ -244,13 +244,13 @@ KMError UdpSocketBase::mcastJoin(const std::string &mcast_addr, uint16_t mcast_p
         mcast_req_v4_.imr_interface.s_addr = htonl(INADDR_ANY);
         
         if (setsockopt(fd_, IPPROTO_IP, IP_ADD_MEMBERSHIP, (char*) &mcast_req_v4_, sizeof(mcast_req_v4_)) != 0) {
-            KUMA_ERRXTRACE("mcastJoin, failed to join in multicast group, err="<<getLastError());
+            KUMA_ERRXTRACE("mcastJoin, failed to join in multicast group, err="<<SKUtils::getLastError());
             return KMError::SOCK_ERROR;
         }
     } else if(AF_INET6 == mcast_addr_.ss_family) {
         sockaddr_in6 *pa = (sockaddr_in6 *)&bind_addr_;
         if(setsockopt(fd_,IPPROTO_IP, IPV6_MULTICAST_IF,(char *)&pa->sin6_scope_id, sizeof(pa->sin6_scope_id)) < 0) {
-            KUMA_ERRXTRACE("mcastJoin, failed to set IPV6_MULTICAST_IF, err"<<getLastError());
+            KUMA_ERRXTRACE("mcastJoin, failed to set IPV6_MULTICAST_IF, err"<<SKUtils::getLastError());
         }
         pa = (sockaddr_in6*)&mcast_addr_;
         memcpy(&mcast_req_v6_.ipv6mr_multiaddr,
@@ -259,7 +259,7 @@ KMError UdpSocketBase::mcastJoin(const std::string &mcast_addr, uint16_t mcast_p
         mcast_req_v6_.ipv6mr_interface = 0;
         
         if (setsockopt(fd_, IPPROTO_IPV6, IPV6_ADD_MEMBERSHIP, (char*) &mcast_req_v6_, sizeof(mcast_req_v6_)) != 0) {
-            KUMA_ERRXTRACE("mcastJoin, failed to join in multicast group, err="<<getLastError());
+            KUMA_ERRXTRACE("mcastJoin, failed to join in multicast group, err="<<SKUtils::getLastError());
             return KMError::SOCK_ERROR;
         }
     } else {
@@ -271,7 +271,7 @@ KMError UdpSocketBase::mcastJoin(const std::string &mcast_addr, uint16_t mcast_p
                    AF_INET6 == mcast_addr_.ss_family ? IPV6_MULTICAST_HOPS : IP_MULTICAST_TTL,
                    (char*) &ttl, sizeof(ttl)) != 0)
     {
-        KUMA_WARNXTRACE("mcastJoin, failed to set TTL, err="<<getLastError());
+        KUMA_WARNXTRACE("mcastJoin, failed to set TTL, err="<<SKUtils::getLastError());
     }
     char loop = 0;
     if (setsockopt(fd_,
@@ -279,7 +279,7 @@ KMError UdpSocketBase::mcastJoin(const std::string &mcast_addr, uint16_t mcast_p
                    AF_INET6 == mcast_addr_.ss_family ? IPV6_MULTICAST_LOOP : IP_MULTICAST_LOOP,
                    (char*) &loop, sizeof(loop)) != 0)
     {
-        KUMA_WARNXTRACE("mcastJoin, failed to disable loop, err="<<getLastError());
+        KUMA_WARNXTRACE("mcastJoin, failed to disable loop, err="<<SKUtils::getLastError());
     }
     return KMError::NOERR;
 }
@@ -292,11 +292,11 @@ KMError UdpSocketBase::mcastLeave(const std::string &mcast_addr, uint16_t mcast_
     }
     if(AF_INET == mcast_addr_.ss_family) {
         if(setsockopt(fd_, IPPROTO_IP, IP_DROP_MEMBERSHIP, (char*)&mcast_req_v4_, sizeof(mcast_req_v4_)) != 0) {
-            KUMA_INFOXTRACE("mcastLeave, failed, err"<<getLastError());
+            KUMA_INFOXTRACE("mcastLeave, failed, err"<<SKUtils::getLastError());
         }
     } else if(AF_INET6 == mcast_addr_.ss_family) {
         if(setsockopt(fd_, IPPROTO_IPV6, IPV6_DROP_MEMBERSHIP, (char*)&mcast_req_v6_, sizeof(mcast_req_v6_)) != 0) {
-            KUMA_INFOXTRACE("mcastLeave, failed, err="<<getLastError());
+            KUMA_INFOXTRACE("mcastLeave, failed, err="<<SKUtils::getLastError());
         }
     }
     return KMError::NOERR;
@@ -328,19 +328,19 @@ int UdpSocketBase::send(const void* data, size_t length, const std::string &host
     int addr_len = km_get_addr_length(ss_addr);
     auto ret = SKUtils::sendto(fd_, data, length, 0, (struct sockaddr*)&ss_addr, addr_len);
     if(0 == ret) {
-        KUMA_ERRXTRACE("send, peer closed, err="<<getLastError()<<", host="<<host<<", port="<<port);
+        KUMA_ERRXTRACE("send, peer closed, err="<<SKUtils::getLastError()<<", host="<<host<<", port="<<port);
         ret = -1;
     } else if(ret < 0) {
-        if(EAGAIN == getLastError() ||
+        if(EAGAIN == SKUtils::getLastError() ||
 #ifdef KUMA_OS_WIN
            WSAEWOULDBLOCK
 #else
            EWOULDBLOCK
 #endif
-           == getLastError()) {
+           == SKUtils::getLastError()) {
             ret = 0;
         } else {
-            KUMA_ERRXTRACE("send, failed, err: "<<getLastError()<<", host="<<host<<", port="<<port);
+            KUMA_ERRXTRACE("send, failed, err: "<<SKUtils::getLastError()<<", host="<<host<<", port="<<port);
         }
     }
     
@@ -377,19 +377,19 @@ int UdpSocketBase::send(const iovec* iovs, int count, const std::string &host, u
     auto addr_len = km_get_addr_length(ss_addr);
     auto ret = SKUtils::sendto(fd_, iovs, count, 0, (const sockaddr *)&ss_addr, addr_len);
     if(0 == ret) {
-        KUMA_ERRXTRACE("send, peer closed, err: "<<getLastError()<<", host="<<host<<", port="<<port);
+        KUMA_ERRXTRACE("send, peer closed, err: "<<SKUtils::getLastError()<<", host="<<host<<", port="<<port);
         ret = -1;
     } else if(ret < 0) {
-        if(EAGAIN == getLastError() ||
+        if(EAGAIN == SKUtils::getLastError() ||
 #ifdef WIN32
-           WSAEWOULDBLOCK == getLastError() || WSA_IO_PENDING
+           WSAEWOULDBLOCK == SKUtils::getLastError() || WSA_IO_PENDING
 #else
            EWOULDBLOCK
 #endif
-           == getLastError()) {
+           == SKUtils::getLastError()) {
             ret = 0;
         } else {
-            KUMA_ERRXTRACE("sendto 2, failed, err="<<getLastError());
+            KUMA_ERRXTRACE("sendto 2, failed, err="<<SKUtils::getLastError());
         }
     }
     
@@ -434,19 +434,19 @@ int UdpSocketBase::receive(void* data, size_t length, char* ip, size_t ip_len, u
     socklen_t addr_len = sizeof(ss_addr);
     auto ret = SKUtils::recvfrom(fd_, data, length, 0, (struct sockaddr*)&ss_addr, &addr_len);
     if(0 == ret) {
-        KUMA_ERRXTRACE("recv, peer closed, err"<<getLastError());
+        KUMA_ERRXTRACE("recv, peer closed, err"<<SKUtils::getLastError());
         ret = -1;
     } else if(ret < 0) {
-        if(EAGAIN == getLastError() ||
+        if(EAGAIN == SKUtils::getLastError() ||
 #ifdef WIN32
            WSAEWOULDBLOCK
 #else
            EWOULDBLOCK
 #endif
-           == getLastError()) {
+           == SKUtils::getLastError()) {
             ret = 0;
         } else {
-            KUMA_ERRXTRACE("recv, failed, err="<<getLastError());
+            KUMA_ERRXTRACE("recv, failed, err="<<SKUtils::getLastError());
         }
     } else {
         km_get_sock_addr((struct sockaddr*)&ss_addr, sizeof(ss_addr), ip, (uint32_t)ip_len, &port);
@@ -518,7 +518,7 @@ void UdpSocketBase::ioReady(KMEvent events, void* ol, size_t io_size)
     DESTROY_DETECTOR_CHECK_VOID();
     if ((events & KUMA_EV_ERROR) && fd_ != INVALID_FD) {
         KUMA_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events=" << events
-            << ", err=" << getLastError());
+            << ", err=" << SKUtils::getLastError());
         onClose(KMError::POLL_ERROR);
         return;
     }

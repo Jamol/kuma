@@ -880,6 +880,7 @@ void H2Connection::Impl::setupH2Handshake()
 
 void H2Connection::Impl::onHandshakeComplete(SettingsFrame *frame)
 {
+    KUMA_INFOXTRACE("onHandshakeComplete, state=" << getState());
     if (handleSettingsFrame(frame)) {
         onStateOpen();
     }
@@ -887,6 +888,7 @@ void H2Connection::Impl::onHandshakeComplete(SettingsFrame *frame)
 
 void H2Connection::Impl::onHandshakeError(KMError err)
 {
+    KUMA_INFOXTRACE("onHandshakeError, err=" << int(err));
     onConnectError(err);
 }
 

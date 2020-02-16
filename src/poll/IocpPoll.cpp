@@ -120,7 +120,7 @@ KMError IocpPoll::wait(uint32_t wait_ms)
         }
     }
     else {
-        auto err = getLastError();
+        auto err = ::GetLastError();
         if (err != WAIT_TIMEOUT) {
             KUMA_ERRTRACE("IocpPoll::wait, err="<<err);
         }

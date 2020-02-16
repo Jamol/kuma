@@ -25,6 +25,7 @@
 #include "IocpAcceptor.h"
 #include "util/util.h"
 #include "util/kmtrace.h"
+#include "util/skutils.h"
 
 #include <MSWSock.h>
 #include <Ws2tcpip.h>
@@ -41,7 +42,7 @@ IocpAcceptor::IocpAcceptor(const EventLoopPtr &loop)
 IocpAcceptor::~IocpAcceptor()
 {
     if (accept_fd_ != INVALID_FD) {
-        closeFd(accept_fd_);
+        SKUtils::close(accept_fd_);
         accept_fd_ = INVALID_FD;
     }
 }
@@ -70,7 +71,7 @@ bool IocpAcceptor::postAcceptOperation()
 {
     accept_fd_ = WSASocketW(ss_family_, SOCK_STREAM, IPPROTO_IP, NULL, 0, WSA_FLAG_OVERLAPPED);
     if (INVALID_FD == accept_fd_) {
-        KUMA_ERRXTRACE("postAcceptOperation, socket failed, err=" << getLastError());
+        KUMA_ERRXTRACE("postAcceptOperation, socket failed, err=" << SKUtils::getLastError());
         return false;
     }
     return IocpBase::postAcceptOperation(fd_, accept_fd_);
@@ -82,7 +83,7 @@ void IocpAcceptor::onAccept()
     accept_fd_ = INVALID_FD;
     if (closed_) {
         if (fd != INVALID_FD) {
-            closeFd(fd);
+            SKUtils::close(fd);
         }
         cleanup();
         return;

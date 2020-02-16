@@ -13,15 +13,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __KMQUEUE_H__
-#define __KMQUEUE_H__
+#pragma once
 
 #include "kmdefs.h"
-#include <type_traits>
 #include <memory>
+#include <atomic>
 
 KUMA_NS_BEGIN
 
+const size_t kPaddingSize = 128;
 ///
 // enqueue on a thread and dequene on another thread
 ///
@@ -31,180 +31,87 @@ class KMQueue
 public:
     KMQueue()
     {
-        head_ = new TLNode(E());
+        head_ = new TLNode();
         tail_ = head_;
     }
     ~KMQueue()
     {
-        TLNode* node = nullptr;
+        TLNode *node = nullptr;
         while(head_) {
             node = head_;
-            head_ = head_->next_;
+            head_ = head_->next_.load(std::memory_order_relaxed);
             delete node;
         }
     }
 
-    void enqueue(const E &element)
+    template <class... Args>
+    void enqueue(Args&&... args)
     {
-        TLNode* node = new TLNode(element);
-        tail_->next_ = node;
+        TLNode *node = new TLNode(std::forward<Args>(args)...);
+        tail_->next_.store(node, std::memory_order_release);
         tail_ = node;
-        ++en_count_;
-    }
-    
-    void enqueue(E &&element)
-    {
-        TLNode* node = new TLNode(std::move(element));
-        tail_->next_ = node;
-        tail_ = node;
-        ++en_count_;
+        ++count_;
     }
 
     bool dequeue(E &element)
     {
-        if(empty()) {
+        auto *node = head_->next_.load(std::memory_order_acquire);
+        if (node == nullptr) {
             return false;
         }
-        TLNode* node_to_delete = head_;
-        ++de_count_;
-        element = std::move(head_->next_->element_);
-        head_ = head_->next_;
-        delete node_to_delete;
+        --count_;
+        element = std::move(node->element_);
+        delete head_;
+        head_ = node;
         return true;
     }
     
     E& front() {
-        if(empty()) {
+        auto *node = head_->next_.load(std::memory_order_acquire);
+        if (node == nullptr) {
             static E E_empty = E();
             return E_empty;
         }
-        return head_->next_->element_;
+        return node->element_;
     }
     
     void pop_front() {
-        if(!empty()) {
-            TLNode* node_to_delete = head_;
-            ++de_count_;
-            head_ = head_->next_;
-            delete node_to_delete;
+        auto *node = head_->next_.load(std::memory_order_acquire);
+        if (node != nullptr) {
+            --count_;
+            delete head_;
+            head_ = node;
         }
     }
     
     bool empty()
-    {// correct on producer side
-        return nullptr == head_->next_;
+    {
+        return size() == 0;
     }
     
-    uint32_t size()
-    {// it is not precise
-        return en_count_ - de_count_;
+    size_t size()
+    {
+        return count_.load(std::memory_order_relaxed);
     }
     
 protected:
     class TLNode
     {
     public:
-        TLNode(const E &e) : element_(e), next_(nullptr) {}
-        TLNode(E &&e) : element_(std::move(e)), next_(nullptr) {}
+        template<class... Args>
+        TLNode(Args&&... args) : element_{ std::forward<Args>(args)... } {}
 
         E element_;
-        TLNode* next_;
+        std::atomic<TLNode*> next_{ nullptr };
     };
 
-    TLNode* head_;
-    TLNode* tail_;
-    uint32_t en_count_ = 0;
-    uint32_t de_count_ = 0;
+    TLNode* head_{ nullptr };
+    char __pad0__[kPaddingSize - sizeof(TLNode*)];
+    TLNode* tail_{ nullptr };
+    char __pad1__[kPaddingSize - sizeof(TLNode*)];
+    std::atomic<size_t> count_{ 0 };
 };
 
-template <class E, class LockType>
-class KMQueueMT
-{
-public:
-    KMQueueMT()
-    {
-        head_ = new TLNode(E());
-        tail_ = head_;
-    }
-    ~KMQueueMT()
-    {
-        TLNode* node = nullptr;
-        while(head_)
-        {
-            node = head_;
-            head_ = head_->next_;
-            delete node;
-        }
-    }
-
-    void enqueue(const E &element)
-    {
-        TLNode* node = new TLNode(element);
-        lockerT_.lock();
-        tail_->next_ = node;
-        tail_ = node;
-        ++en_count_;
-        lockerT_.unlock();
-    }
-    
-    void enqueue(E &&element)
-    {
-        TLNode* node = new TLNode(std::move(element));
-        lockerT_.lock();
-        tail_->next_ = node;
-        tail_ = node;
-        ++en_count_;
-        lockerT_.unlock();
-    }
-
-    bool dequeue(E &element)
-    {
-        if(empty()) {
-            return false;
-        }
-        TLNode* node_to_delete = nullptr;
-        lockerH_.lock();
-        if(empty()) {
-            lockerH_.unlock();
-            return false;
-        }
-        node_to_delete = head_;
-        element = std::move(head_->next_->element_);
-        head_ = head_->next_;
-        ++de_count_;
-        lockerH_.unlock();
-        delete node_to_delete;
-        return true;
-    }
-    
-    bool empty()
-    {
-        return nullptr == head_->next_;
-    }
-    
-    uint32_t size()
-    {// it is not precise
-        return en_count_ - de_count_;
-    }
-
-protected:
-    class TLNode
-    {
-    public:
-        TLNode(const E &e) : element_(e), next_(nullptr) {}
-        TLNode(E &&e) : element_(std::move(e)), next_(nullptr) {}
-
-        E element_;
-        TLNode* next_;
-    };
-
-    TLNode* head_;
-    TLNode* tail_;
-    LockType lockerH_;
-    LockType lockerT_;
-    uint32_t en_count_ = 0;
-    uint32_t de_count_ = 0;
-};
 
 // double linked list
 template <class E>
@@ -215,10 +122,9 @@ public:
     {
     public:
         using Ptr = std::shared_ptr<DLNode>;
-        DLNode(const E &e) : element_(e) {}
-        DLNode(E &&e) : element_(std::forward<E>(e)) {}
+        
         template<class... Args>
-        DLNode(Args&&... args) : element_(std::forward<Args>(args)...) {}
+        DLNode(Args&&... args) : element_{ std::forward<Args>(args)... } {}
         E& element() { return element_; }
         
     private:
@@ -237,15 +143,10 @@ public:
         }
     }
     
-    NodePtr enqueue(const E &element)
+    template <class... Args>
+    NodePtr enqueue(Args&&... args)
     {
-        auto node = std::make_shared<DLNode>(element);
-        return enqueue(node);
-    }
-    
-    NodePtr enqueue(E &&element)
-    {
-        auto node = std::make_shared<DLNode>(std::forward<E>(element));
+        auto node = std::make_shared<DLNode>(std::forward<Args>(args)...);
         return enqueue(node);
     }
     
@@ -332,9 +233,8 @@ public:
     
 protected:
     NodePtr head_;
+    char __pad__[kPaddingSize - sizeof(NodePtr)];
     NodePtr tail_;
 };
     
 KUMA_NS_END
-
-#endif

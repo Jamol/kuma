@@ -81,6 +81,7 @@ KMError Http2Request::sendRequest()
         return KMError::NOERR;
     }
     
+    setState(State::SENDING_REQUEST);
     return stream_->sendRequest(method_, url_, ssl_flags_);
 }
 

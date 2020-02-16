@@ -23,6 +23,7 @@
 #include "poll/IOPoll.h"
 #include "util/kmqueue.h"
 #include "util/kmtrace.h"
+#include "util/skutils.h"
 #include <thread>
 #include <condition_variable>
 
@@ -111,14 +112,14 @@ KMError EventLoop::Impl::unregisterFd(SOCKET_FD fd, bool close_fd)
     if(inSameThread()) {
         auto ret = poll_->unregisterFd(fd);
         if(close_fd) {
-            closeFd(fd);
+            SKUtils::close(fd);
         }
         return ret;
     } else {
         auto ret = sync([=] {
             poll_->unregisterFd(fd);
             if(close_fd) {
-                closeFd(fd);
+                SKUtils::close(fd);
             }
         });
         if(KMError::NOERR != ret) {

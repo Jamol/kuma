@@ -1,4 +1,5 @@
 #include "TcpClient.h"
+#include "util/skutils.h"
 
 #if defined(KUMA_OS_WIN)
 # include <Ws2tcpip.h>
@@ -151,7 +152,7 @@ void TcpClient::onReceive(KMError err)
         } else if (0 == bytes_read) {
             break;
         } else {
-            printf("TcpClient::onReceive, err=%d\n", getLastError());
+            printf("TcpClient::onReceive, err=%d\n", SKUtils::getLastError());
             break;
         }
     } while (true);

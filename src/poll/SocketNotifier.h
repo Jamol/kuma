@@ -51,7 +51,7 @@ public:
             return false;
         }
         auto lfd = ::socket(AF_INET, SOCK_STREAM, 0);
-        DEFER(closeFd(lfd));
+        DEFER(SKUtils::close(lfd));
         if(::bind(lfd, (const sockaddr*)&ss_addr, sizeof(sockaddr_in)) != 0) {
             return false;
         }
@@ -108,11 +108,11 @@ public:
 private:
     void cleanup() {
         if (fds_[READ_FD] != INVALID_FD) {
-            closeFd(fds_[READ_FD]);
+            SKUtils::close(fds_[READ_FD]);
             fds_[READ_FD] = INVALID_FD;
         }
         if (fds_[WRITE_FD] != INVALID_FD) {
-            closeFd(fds_[WRITE_FD]);
+            SKUtils::close(fds_[WRITE_FD]);
             fds_[WRITE_FD] = INVALID_FD;
         }
     }

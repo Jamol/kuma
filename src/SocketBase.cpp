@@ -118,13 +118,13 @@ KMError SocketBase::bind(const std::string &bind_host, uint16_t bind_port)
     }
     fd_ = createFd(ss_addr.ss_family);
     if (INVALID_FD == fd_) {
-        KUMA_ERRXTRACE("bind, socket failed, err=" << getLastError());
+        KUMA_ERRXTRACE("bind, socket failed, err=" << SKUtils::getLastError());
         return KMError::FAILED;
     }
     int addr_len = km_get_addr_length(ss_addr);
     int ret = ::bind(fd_, (struct sockaddr*)&ss_addr, addr_len);
     if (ret < 0) {
-        KUMA_ERRXTRACE("bind, bind failed, err=" << getLastError());
+        KUMA_ERRXTRACE("bind, bind failed, err=" << SKUtils::getLastError());
         return KMError::FAILED;
     }
     return KMError::NOERR;
@@ -164,7 +164,7 @@ KMError SocketBase::connect_i(const std::string &host, uint16_t port, uint32_t t
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_NUMERICHOST | AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
     if (km_set_sock_addr(host.c_str(), port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
-        auto err = getLastError();
+        auto err = SKUtils::getLastError();
         KUMA_ERRXTRACE("connect_i, DNS resolving failure, host=" << host << ", err=" << err);
         return KMError::INVALID_PARAM;
     }
@@ -176,7 +176,7 @@ KMError SocketBase::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
     if (INVALID_FD == fd_) {
         fd_ = createFd(ss_addr.ss_family);
         if (INVALID_FD == fd_) {
-            KUMA_ERRXTRACE("connect_i, socket failed, err=" << getLastError());
+            KUMA_ERRXTRACE("connect_i, socket failed, err=" << SKUtils::getLastError());
             return KMError::FAILED;
         }
     }
@@ -193,11 +193,11 @@ KMError SocketBase::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
 #else
         EINPROGRESS
 #endif
-        == getLastError()) {
+        == SKUtils::getLastError()) {
         setState(State::CONNECTING);
     }
     else {
-        KUMA_ERRXTRACE("connect_i, error, fd=" << fd_ << ", err=" << getLastError());
+        KUMA_ERRXTRACE("connect_i, error, fd=" << fd_ << ", err=" << SKUtils::getLastError());
         cleanup();
         setState(State::CLOSED);
         return KMError::FAILED;
@@ -271,7 +271,7 @@ void SocketBase::unregisterFd(SOCKET_FD fd, bool close_fd)
     }
     // uregistered or loop stopped
     if (close_fd && fd != INVALID_FD) {
-        closeFd(fd);
+        SKUtils::close(fd);
     }
 }
 
@@ -284,21 +284,21 @@ int SocketBase::send(const void* data, size_t length)
 
     auto ret = SKUtils::send(fd_, data, length, 0);
     if (0 == ret) {
-        KUMA_WARNXTRACE("send, peer closed, err=" << getLastError());
+        KUMA_WARNXTRACE("send, peer closed, err=" << SKUtils::getLastError());
         ret = -1;
     }
     else if (ret < 0) {
-        if (getLastError() == EAGAIN ||
+        if (SKUtils::getLastError() == EAGAIN ||
 #ifdef KUMA_OS_WIN
             WSAEWOULDBLOCK
 #else
             EWOULDBLOCK
 #endif
-            == getLastError()) {
+            == SKUtils::getLastError()) {
             ret = 0;
         }
         else {
-            KUMA_ERRXTRACE("send, failed, err=" << getLastError());
+            KUMA_ERRXTRACE("send, failed, err=" << SKUtils::getLastError());
         }
     }
 
@@ -334,17 +334,17 @@ int SocketBase::send(const iovec* iovs, int count)
         ret = -1;
     }
     else if (ret < 0) {
-        if (EAGAIN == getLastError() ||
+        if (EAGAIN == SKUtils::getLastError() ||
 #ifdef KUMA_OS_WIN
-            WSAEWOULDBLOCK == getLastError() || WSA_IO_PENDING
+            WSAEWOULDBLOCK == SKUtils::getLastError() || WSA_IO_PENDING
 #else
             EWOULDBLOCK
 #endif
-            == getLastError()) {
+            == SKUtils::getLastError()) {
             ret = 0;
         }
         else {
-            KUMA_ERRXTRACE("send 2, fail, err=" << getLastError());
+            KUMA_ERRXTRACE("send 2, fail, err=" << SKUtils::getLastError());
         }
     }
 
@@ -388,21 +388,21 @@ int SocketBase::receive(void* data, size_t length)
     
     auto ret = SKUtils::recv(fd_, data, length, 0);
     if (0 == ret) {
-        KUMA_WARNXTRACE("receive, peer closed, err=" << getLastError());
+        KUMA_WARNXTRACE("receive, peer closed, err=" << SKUtils::getLastError());
         ret = -1;
     }
     else if (ret < 0) {
-        if (EAGAIN == getLastError() ||
+        if (EAGAIN == SKUtils::getLastError() ||
 #ifdef WIN32
             WSAEWOULDBLOCK
 #else
             EWOULDBLOCK
 #endif
-            == getLastError()) {
+            == SKUtils::getLastError()) {
             ret = 0;
         }
         else {
-            KUMA_ERRXTRACE("receive, failed, err=" << getLastError());
+            KUMA_ERRXTRACE("receive, failed, err=" << SKUtils::getLastError());
         }
     }
 
@@ -470,7 +470,7 @@ void SocketBase::setSocketOption()
     }
 
     if (set_tcpnodelay(fd_) != 0) {
-        KUMA_WARNXTRACE("setSocketOption, failed to set TCP_NODELAY, fd=" << fd_ << ", err=" << getLastError());
+        KUMA_WARNXTRACE("setSocketOption, failed to set TCP_NODELAY, fd=" << fd_ << ", err=" << SKUtils::getLastError());
     }
     
 #ifdef KUMA_OS_MAC
@@ -554,7 +554,7 @@ void SocketBase::ioReady(KMEvent events, void* ol, size_t io_size)
     case State::CONNECTING:
     {
         if (events & KUMA_EV_ERROR) {
-            KUMA_ERRXTRACE("ioReady, KUMA_EV_ERROR on CONNECTING, events=" << events << ", err=" << getLastError());
+            KUMA_ERRXTRACE("ioReady, KUMA_EV_ERROR on CONNECTING, events=" << events << ", err=" << SKUtils::getLastError());
             onConnect(KMError::POLL_ERROR);
         }
         else {
@@ -576,7 +576,7 @@ void SocketBase::ioReady(KMEvent events, void* ol, size_t io_size)
             DESTROY_DETECTOR_CHECK_VOID();
         }
         if ((events & KUMA_EV_ERROR) && getState() == State::OPEN) {
-            KUMA_ERRXTRACE("ioReady, KUMA_EV_ERROR on OPEN, events=" << events << ", err=" << getLastError());
+            KUMA_ERRXTRACE("ioReady, KUMA_EV_ERROR on OPEN, events=" << events << ", err=" << SKUtils::getLastError());
             onClose(KMError::POLL_ERROR);
             break;
         }

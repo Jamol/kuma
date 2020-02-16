@@ -22,6 +22,7 @@
 #include "IOPoll.h"
 #include "Notifier.h"
 #include "util/kmtrace.h"
+#include "util/skutils.h"
 
 #ifdef KUMA_OS_WIN
 # include <Ws2tcpip.h>
@@ -203,7 +204,7 @@ KMError VPoll::wait(uint32_t wait_ms)
         if(EINTR == errno) {
             errno = 0;
         } else {
-            KUMA_ERRTRACE("VPoll::wait, err="<<getLastError());
+            KUMA_ERRTRACE("VPoll::wait, err="<<SKUtils::getLastError());
         }
         return KMError::INVALID_STATE;
     }

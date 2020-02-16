@@ -254,18 +254,21 @@ KMError H1xStream::handleInputData(uint8_t *src, size_t len)
         DESTROY_DETECTOR_SETUP();
         int bytes_used = incoming_parser_.parse((char*)src, len);
         DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
-        if (bytes_used < static_cast<int>(len)) {
-            if (is_stream_upgraded_) {
-                KMBuffer buf(src + bytes_used, len - bytes_used, len - bytes_used);
-                onStreamData(buf);
-            } else {
-                KUMA_WARNXTRACE("handleInputData, data is not consumed, len="<<len<<", used="<<bytes_used);
+        if (!is_stream_upgraded_ || bytes_used >= static_cast<int>(len)) {
+            if (bytes_used < static_cast<int>(len)) {
+                KUMA_WARNXTRACE("handleInputData, data is not consumed, len=" << len << ", used=" << bytes_used);
             }
+            return KMError::NOERR;
         }
-    } else {
-        KMBuffer buf(src, len, len);
-        onStreamData(buf);
+        len -= bytes_used;
+        src += bytes_used;
     }
+
+    KMBuffer buf(src, len, len);
+    DESTROY_DETECTOR_SETUP();
+    onStreamData(buf);
+    DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
+    
     return KMError::NOERR;
 }
 

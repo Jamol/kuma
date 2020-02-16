@@ -62,6 +62,7 @@
 #include "BioHandler.h"
 #include "util/kmtrace.h"
 #include "util/util.h"
+#include "util/skutils.h"
 
 #include <openssl/x509v3.h>
 
@@ -257,7 +258,7 @@ BioHandler::SslState BioHandler::doHandshake()
                 KUMA_ERRXTRACE("handshake, error"
                                <<", ssl_status="<<ret
                                <<", ssl_err="<<ssl_err
-                               <<", os_err="<<getLastError()
+                               <<", os_err="<<SKUtils::getLastError()
                                <<", err_msg="<<(err_str?err_str:""));
                 SSL_free(ssl_);
                 ssl_ = NULL;
@@ -307,7 +308,7 @@ int BioHandler::writeAppData(const void* data, size_t size)
                 KUMA_ERRXTRACE("writeAppData, SSL_write failed"
                                <<", ssl_status="<<ret
                                <<", ssl_err="<<ssl_err
-                               <<", errno="<<getLastError()
+                               <<", errno="<<SKUtils::getLastError()
                                <<", err_msg="<<(err_str?err_str:""));
                 ret = -1;
                 break;
@@ -360,7 +361,7 @@ int BioHandler::readAppData(void* data, size_t size)
             KUMA_ERRXTRACE("readAppData, SSL_read failed"
                            <<", ssl_status="<<ret
                            <<", ssl_err="<<ssl_err
-                           <<", os_err="<<getLastError()
+                           <<", os_err="<<SKUtils::getLastError()
                            <<", err_msg="<<(err_str?err_str:""));
             ret = -1;
             break;

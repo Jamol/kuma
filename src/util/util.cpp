@@ -932,7 +932,7 @@ void kuma_init()
     {
         accept_ex = nullptr;
     }
-    closeFd(sock);
+    closesocket(sock);
     cancel_io_ex = (LPFN_CANCELIOEX)GetProcAddress(GetModuleHandle(L"KERNEL32"), "CancelIoEx");
 }
 

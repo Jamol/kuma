@@ -103,6 +103,8 @@ KMError Http1xRequest::sendRequest()
     if (processHttpCache()) {
         return KMError::NOERR;
     }
+
+    setState(State::SENDING_REQUEST);
     return stream_->sendRequest(method_, url_, version_);
 }
 

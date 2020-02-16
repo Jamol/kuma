@@ -20,6 +20,7 @@
 #include "util/util.h"
 #include "util/kmtrace.h"
 #include "util/skbuffer.h"
+#include "util/skutils.h"
 #include "EventLoopImpl.h"
 
 #include <MSWSock.h>
@@ -141,7 +142,7 @@ public:
             loop->unregisterFd(fd, close_fd);
         }
         else if (close_fd) {
-            closeFd(fd);
+            SKUtils::close(fd);
             resetPending();
         }
         return true;
@@ -155,8 +156,8 @@ public:
         int addr_len = km_get_addr_length(ss_addr);
         recv_ctx_->prepare(IocpContext::Op::CONNECT);
         auto ret = connect_ex(fd, (LPSOCKADDR)&ss_addr, addr_len, NULL, 0, NULL, &recv_ctx_->ol);
-        if (!ret && getLastError() != WSA_IO_PENDING) {
-            KUMA_ERRTRACE("postConnectOperation, error, fd=" << fd << ", err=" << getLastError());
+        if (!ret && SKUtils::getLastError() != WSA_IO_PENDING) {
+            KUMA_ERRTRACE("postConnectOperation, error, fd=" << fd << ", err=" << SKUtils::getLastError());
             return false;
         }
         else {
@@ -176,8 +177,8 @@ public:
         recv_ctx_->buf.expand(2 * addr_len);
         recv_ctx_->prepare(IocpContext::Op::ACCEPT);
         auto ret = accept_ex(fd, accept_fd, recv_ctx_->buf.wr_ptr(), 0, addr_len, addr_len, &bytes_recv, &recv_ctx_->ol);
-        if (!ret && getLastError() != WSA_IO_PENDING) {
-            KUMA_ERRTRACE("postAcceptOperation, fd=" << fd << ", err=" << getLastError());
+        if (!ret && SKUtils::getLastError() != WSA_IO_PENDING) {
+            KUMA_ERRTRACE("postAcceptOperation, fd=" << fd << ", err=" << SKUtils::getLastError());
             return false;
         }
         else {
@@ -346,7 +347,7 @@ protected:
     IocpWrapper() = default;
     virtual ~IocpWrapper() {
         if (pending_fd_ != INVALID_FD) {
-            closeFd(pending_fd_);
+            SKUtils::close(pending_fd_);
             pending_fd_ = INVALID_FD;
         }
     }
@@ -375,7 +376,7 @@ protected:
         }
         else {
             if (pending_fd_ != INVALID_FD) {
-                closeFd(pending_fd_);
+                SKUtils::close(pending_fd_);
                 pending_fd_ = INVALID_FD;
             }
         }

@@ -1,4 +1,5 @@
 #include "UdpClient.h"
+#include "util/skutils.h"
 
 #if defined(KUMA_OS_WIN)
 # include <Ws2tcpip.h>
@@ -70,7 +71,7 @@ void UdpClient::onReceive(KMError err)
         } else if (0 == bytes_read) {
             break;
         } else {
-            printf("UdpClient::onReceive, err=%d\n", getLastError());
+            printf("UdpClient::onReceive, err=%d\n", SKUtils::getLastError());
             break;
         }
     } while (true);

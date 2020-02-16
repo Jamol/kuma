@@ -61,6 +61,7 @@
 
 #include "SioHandler.h"
 #include "util/kmtrace.h"
+#include "util/skutils.h"
 
 #include <openssl/x509v3.h>
 
@@ -138,7 +139,7 @@ SioHandler::SslState SioHandler::sslConnect()
             KUMA_ERRXTRACE("sslConnect, error, fd="<<fd_
                            <<", ssl_status="<<ret
                            <<", ssl_err="<<ssl_err
-                           <<", os_err="<<getLastError()
+                           <<", os_err="<<SKUtils::getLastError()
                            <<", err_msg="<<(err_str?err_str:""));
             SSL_free(ssl_);
             ssl_ = NULL;
@@ -173,7 +174,7 @@ SioHandler::SslState SioHandler::sslAccept()
             KUMA_ERRXTRACE("sslAccept, error, fd="<<fd_
                            <<", ssl_status="<<ret
                            <<", ssl_err="<<ssl_err
-                           <<", os_err="<<getLastError()
+                           <<", os_err="<<SKUtils::getLastError()
                            <<", err_msg="<<(err_str?err_str:""));
             SSL_free(ssl_);
             ssl_ = NULL;
@@ -217,7 +218,7 @@ int SioHandler::send(const void* data, size_t size)
                 KUMA_ERRXTRACE("send, SSL_write failed, fd="<<fd_
                                <<", ssl_status="<<ret
                                <<", ssl_err="<<ssl_err
-                               <<", errno="<<getLastError()
+                               <<", errno="<<SKUtils::getLastError()
                                <<", err_msg="<<(err_str?err_str:""));
                 ret = -1;
                 break;
@@ -303,7 +304,7 @@ int SioHandler::receive(void* data, size_t size)
             KUMA_ERRXTRACE("receive, SSL_read failed, fd="<<fd_
                            <<", ssl_status="<<ret
                            <<", ssl_err="<<ssl_err
-                           <<", os_err="<<getLastError()
+                           <<", os_err="<<SKUtils::getLastError()
                            <<", err_msg="<<(err_str?err_str:""));
             ret = -1;
             break;

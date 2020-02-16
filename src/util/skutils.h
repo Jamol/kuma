@@ -18,6 +18,7 @@ KUMA_NS_BEGIN
 # define SK_BUF_LEN         static_cast<char*>(buf),static_cast<int>(len)
 using ssize_t = std::make_signed_t<size_t>;
 #else
+# include <unistd.h>
 # define SK_CONST_BUF_LEN   buf,len
 # define SK_BUF_LEN         buf,len
 #endif
@@ -144,6 +145,24 @@ public:
         } while(ret < 0 && getLastError() == EINTR);
 #endif // KUMA_OS_WIN
         return ret;
+    }
+    
+    static int close(SOCKET_FD fd)
+    {
+#ifdef KUMA_OS_WIN
+        return ::closesocket(fd);
+#else
+        return ::close(fd);
+#endif
+    }
+    
+    static int getLastError()
+    {
+#ifdef KUMA_OS_WIN
+        return ::WSAGetLastError();
+#else
+        return errno;
+#endif
     }
 };
 

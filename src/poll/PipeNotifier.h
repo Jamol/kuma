@@ -70,17 +70,17 @@ public:
         ssize_t ret = 0;
         do {
             ret = ::read(fds_[READ_FD], buf, sizeof(buf));
-        } while(ret == sizeof(buf) || (ret < 0 && getLastError() == EINTR));
+        } while(ret == sizeof(buf) || (ret < 0 && errno == EINTR));
         return KMError::NOERR;
     }
 private:
     void cleanup() {
         if (fds_[READ_FD] != INVALID_FD) {
-            closeFd(fds_[READ_FD]);
+            ::close(fds_[READ_FD]);
             fds_[READ_FD] = INVALID_FD;
         }
         if (fds_[WRITE_FD] != INVALID_FD) {
-            closeFd(fds_[WRITE_FD]);
+            ::close(fds_[WRITE_FD]);
             fds_[WRITE_FD] = INVALID_FD;
         }
     }
