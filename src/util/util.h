@@ -25,13 +25,16 @@
 #include "kmdefs.h"
 #include "evdefs.h" // for SOCKET_FD
 
-#if defined(KUMA_OS_LINUX)
+#ifdef KUMA_OS_WIN
+# include <Ws2tcpip.h>
+#else // KUMA_OS_WIN
+# include <sys/socket.h>
 # include <sys/types.h>
 # include <unistd.h>
-# if !defined(KUMA_OS_ANDROID)
+# if defined(KUMA_OS_LINUX) && !defined(KUMA_OS_ANDROID)
 #  include <sys/syscall.h>
 # endif
-#endif
+#endif // KUMA_OS_WIN
 
 #include <string>
 #include <sstream>

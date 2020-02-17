@@ -10,9 +10,12 @@
 
 #include "evdefs.h"
 
-#ifndef KUMA_OS_WIN
+#ifdef KUMA_OS_WIN
+# include <Ws2tcpip.h>
+#else // KUMA_OS_WIN
 # include <unistd.h>
 # include <sys/uio.h>
+# include <sys/socket.h>
 #endif
 
 KUMA_NS_BEGIN

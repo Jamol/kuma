@@ -23,11 +23,7 @@
 #define __KUMAEVDEFS_H__
 
 #include "kmdefs.h"
-#ifdef KUMA_OS_WIN
-# include <Ws2tcpip.h>
-#else
-# include <sys/socket.h>
-#endif
+
 #include <functional>
 
 KUMA_NS_BEGIN
@@ -38,8 +34,8 @@ KUMA_NS_BEGIN
 #define KUMA_EV_NETWORK (KUMA_EV_READ|KUMA_EV_WRITE|KUMA_EV_ERROR)
 
 #ifdef KUMA_OS_WIN
-using SOCKET_FD = SOCKET;
-const SOCKET_FD INVALID_FD = INVALID_SOCKET;
+using SOCKET_FD = uintptr_t;
+const SOCKET_FD INVALID_FD = (SOCKET_FD)~0;
 #else
 using SOCKET_FD = int;
 const SOCKET_FD INVALID_FD = ((SOCKET_FD)-1);
