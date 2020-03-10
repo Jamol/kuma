@@ -21,7 +21,7 @@
 
 #include "Http1xResponse.h"
 #include "EventLoopImpl.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
 
 #include <iterator>
 
@@ -108,7 +108,7 @@ const HttpHeader& Http1xResponse::getResponseHeader() const
 
 KMError Http1xResponse::sendResponse(int status_code, const std::string& desc, const std::string& ver)
 {
-    KUMA_INFOXTRACE("sendResponse, status_code="<<status_code);
+    KM_INFOXTRACE("sendResponse, status_code="<<status_code);
     return stream_->sendResponse(status_code, desc, ver);
 }
 
@@ -143,7 +143,7 @@ void Http1xResponse::reset()
 
 KMError Http1xResponse::close()
 {
-    KUMA_INFOXTRACE("close");
+    KM_INFOXTRACE("close");
     cleanup();
     setState(State::CLOSED);
     return KMError::NOERR;
@@ -156,7 +156,7 @@ void Http1xResponse::onWrite()
 
 void Http1xResponse::onError(KMError err)
 {
-    KUMA_INFOXTRACE("onError, err="<<int(err));
+    KM_INFOXTRACE("onError, err="<<int(err));
     cleanup();
     if(getState() < State::COMPLETE) {
         setState(State::IN_ERROR);

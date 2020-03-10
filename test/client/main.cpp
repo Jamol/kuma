@@ -1,7 +1,6 @@
 #include "kmapi.h"
-#include "util/util.h"
 #include "LoopPool.h"
-#include "util/defer.h"
+#include "../../third_party/libkev/src/util/defer.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -26,6 +25,10 @@ std::string g_proxy_user;
 std::string g_proxy_passwd;
 size_t g_bandwidth = 0;
 EventLoop main_loop(PollType::NONE);
+int km_parse_address(const char* addr,
+                     char* proto, int proto_len,
+                     char* host, int  host_len, unsigned short* port);
+
 
 #ifdef KUMA_OS_WIN
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)

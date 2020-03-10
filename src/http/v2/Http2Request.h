@@ -26,8 +26,7 @@
 #include "H2ConnectionImpl.h"
 #include "http/HttpRequestImpl.h"
 #include "http/HttpHeader.h"
-#include "util/kmobject.h"
-#include "util/DestroyDetector.h"
+#include "libkev/src/util/DestroyDetector.h"
 
 KUMA_NS_BEGIN
 
@@ -42,7 +41,7 @@ class H2StreamProxy;
  * Http2Request will check HTTP cache firstly, and then check if there is push promise for this request. 
  * if none of them hit, a HTTP2 stream will be launched to complete the request.
  */
-class Http2Request : public DestroyDetector, public HttpRequest::Impl
+class Http2Request : public kev::DestroyDetector, public HttpRequest::Impl
 {
 public:
     Http2Request(const EventLoopPtr &loop, std::string ver);

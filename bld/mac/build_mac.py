@@ -58,6 +58,10 @@ def mac_main(argv):
         os.makedirs(workingPath)
     os.chdir(workingPath)
 
+    #build libkev
+    libkevPath = workingPath+'/../../../third_party/libkev'
+    run_and_check_error('python '+libkevPath+'/bld/mac/build_mac.py')
+    
     build_mac(workingPath)
 
 if __name__ == '__main__':

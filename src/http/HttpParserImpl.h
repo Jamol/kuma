@@ -25,8 +25,8 @@
 #include "kmdefs.h"
 #include "kmapi.h"
 #include "httpdefs.h"
-#include "util/util.h"
-#include "util/DestroyDetector.h"
+#include "libkev/src/util/util.h"
+#include "libkev/src/util/DestroyDetector.h"
 #include "HttpHeader.h"
 
 #include <string>
@@ -36,7 +36,7 @@
 
 KUMA_NS_BEGIN
 
-class HttpParser::Impl : public DestroyDetector, public HttpHeader
+class HttpParser::Impl : public kev::DestroyDetector, public HttpHeader
 {
 public:
     using DataCallback = HttpParser::DataCallback;

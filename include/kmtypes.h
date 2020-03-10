@@ -1,18 +1,20 @@
 // 
-// Functor wrapper for move-only objects
+// wrapper for move-only lambda
 // https://stackoverflow.com/questions/25330716/move-only-version-of-stdfunction
 //
-#pragma once
+
+#ifndef __KEVTYPES_H__
+#define __KEVTYPES_H__
 
 #include <type_traits>
 
-KUMA_NS_BEGIN
+namespace kev {
 
 template<typename Fn, typename En = void>
-struct wrapper;
+struct lambda_wrapper;
 
 template<typename Fn>
-struct wrapper<Fn, std::enable_if_t< std::is_copy_constructible<Fn>{} >>
+struct lambda_wrapper<Fn, std::enable_if_t< std::is_copy_constructible<Fn>{} >>
 {
     Fn fn;
 
@@ -21,21 +23,23 @@ struct wrapper<Fn, std::enable_if_t< std::is_copy_constructible<Fn>{} >>
 };
 
 template<typename Fn>
-struct wrapper<Fn, std::enable_if_t< !std::is_copy_constructible<Fn>{}
+struct lambda_wrapper<Fn, std::enable_if_t< !std::is_copy_constructible<Fn>{}
     && std::is_move_constructible<Fn>{} >>
 {
     Fn fn;
 
-    wrapper(Fn &&fn) : fn(std::forward<Fn>(fn)) { }
+    lambda_wrapper(Fn &&fn) : fn(std::forward<Fn>(fn)) { }
 
-    wrapper(wrapper&&) = default;
-    wrapper& operator=(wrapper&&) = default;
+    lambda_wrapper(lambda_wrapper&&) = default;
+    lambda_wrapper& operator=(lambda_wrapper&&) = default;
 
-    wrapper(const wrapper& rhs) : fn(const_cast<Fn&&>(rhs.fn)) { throw 0; }
-    wrapper& operator=(wrapper&) { throw 0; }
+    lambda_wrapper(const lambda_wrapper& rhs) : fn(const_cast<Fn&&>(rhs.fn)) { throw 0; }
+    lambda_wrapper& operator=(lambda_wrapper&) { throw 0; }
 
     template<typename... Args>
     auto operator()(Args&&... args) { return fn(std::forward<Args>(args)...); }
 };
 
-KUMA_NS_END
+} // namespace kev
+
+#endif // __KEVTYPES_H__

@@ -10,6 +10,12 @@
 
 using namespace kuma;
 
+#ifdef KUMA_OS_WIN
+# define getLastError()  ::WSAGetLastError()
+#else
+# define getLastError()  errno
+#endif
+
 typedef enum {
     PROTO_TCP,
     PROTO_TCPS,
@@ -19,6 +25,10 @@ typedef enum {
     PROTO_WSS,
     PROTO_UDP
 } Proto;
+
+int km_parse_address(const char* addr,
+                     char* proto, int proto_len,
+                     char* host, int  host_len, unsigned short* port);
 
 class TestObject
 {

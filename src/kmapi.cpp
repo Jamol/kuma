@@ -23,7 +23,7 @@
 #include "TcpSocketImpl.h"
 #include "UdpSocketImpl.h"
 #include "TcpListenerImpl.h"
-#include "TimerManager.h"
+#include "libkev/src/TimerManager.h"
 #include "http/HttpParserImpl.h"
 #include "http/Http1xRequest.h"
 #include "http/Http1xResponse.h"
@@ -33,7 +33,8 @@
 #include "http/v2/Http2Request.h"
 #include "http/v2/Http2Response.h"
 #include "proxy/ProxyConnectionImpl.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
+#include "util/util.h"
 
 #ifdef KUMA_HAS_OPENSSL
 #include "ssl/OpenSslLib.h"
@@ -41,6 +42,8 @@
 #include "DnsResolver.h"
 
 #include "kmapi.h"
+
+KEV_NS_USING
 
 KUMA_NS_BEGIN
 
@@ -164,17 +167,17 @@ bool EventLoop::isPollLT() const
 
 KMError EventLoop::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
 {
-    return pimpl_->registerFd(fd, events, std::move(cb));
+    return toKMError(pimpl_->registerFd(fd, events, std::move(cb)));
 }
 
 KMError EventLoop::updateFd(SOCKET_FD fd, uint32_t events)
 {
-    return pimpl_->updateFd(fd, events);
+    return toKMError(pimpl_->updateFd(fd, events));
 }
 
 KMError EventLoop::unregisterFd(SOCKET_FD fd, bool close_fd)
 {
-    return pimpl_->unregisterFd(fd, close_fd);
+    return toKMError(pimpl_->unregisterFd(fd, close_fd));
 }
 
 void EventLoop::loopOnce(uint32_t max_wait_ms)
@@ -204,17 +207,17 @@ bool EventLoop::inSameThread() const
 
 KMError EventLoop::sync(Task task)
 {
-    return pimpl_->sync(std::move(task));
+    return toKMError(pimpl_->sync(std::move(task)));
 }
 
 KMError EventLoop::async(Task task, Token *token)
 {
-    return pimpl_->async(std::move(task), token?token->pimpl():nullptr);
+    return toKMError(pimpl_->async(std::move(task), token?token->pimpl():nullptr));
 }
 
 KMError EventLoop::post(Task task, Token *token)
 {
-    return pimpl_->post(std::move(task), token?token->pimpl():nullptr);
+    return toKMError(pimpl_->post(std::move(task), token?token->pimpl():nullptr));
 }
 
 void EventLoop::wakeup()
@@ -1522,3 +1525,21 @@ void setLogCallback(LogCallback cb)
 }
 
 KUMA_NS_END
+
+
+#ifdef KUMA_OS_WIN
+
+BOOL WINAPI DllMain(HINSTANCE module_handle, DWORD reason_for_call, LPVOID reserved)
+{
+    switch (reason_for_call)
+    {
+        case DLL_PROCESS_ATTACH:
+            //DisableThreadLibraryCalls(module_handle);
+            break;
+        case DLL_PROCESS_DETACH:
+            break;
+    }
+    return TRUE;
+}
+
+#endif // KUMA_OS_WIN

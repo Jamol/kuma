@@ -62,9 +62,9 @@
 
 #include "EventLoopImpl.h"
 #include "AcceptorBase.h"
-#include "util/util.h"
-#include "util/kmtrace.h"
-#include "util/skutils.h"
+#include "libkev/src/util/util.h"
+#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/util/skutils.h"
 
 using namespace kuma;
 
@@ -93,7 +93,7 @@ void AcceptorBase::cleanup()
 
 KMError AcceptorBase::listen(const std::string &host, uint16_t port)
 {
-    KUMA_INFOXTRACE("startListen, host="<<host<<", port="<<port);
+    KM_INFOXTRACE("startListen, host="<<host<<", port="<<port);
     if (INVALID_FD != fd_) {
         return KMError::INVALID_STATE;
     }
@@ -101,26 +101,26 @@ KMError AcceptorBase::listen(const std::string &host, uint16_t port)
     struct addrinfo hints = {0};
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-    if(km_set_sock_addr(host.c_str(), port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
+    if(kev::km_set_sock_addr(host.c_str(), port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
         return KMError::INVALID_PARAM;
     }
     ss_family_ = ss_addr.ss_family;
     fd_ = ::socket(ss_addr.ss_family, SOCK_STREAM, 0);
     if(INVALID_FD == fd_) {
-        KUMA_ERRXTRACE("startListen, socket failed, err="<<SKUtils::getLastError());
+        KM_ERRXTRACE("startListen, socket failed, err="<<kev::SKUtils::getLastError());
         return KMError::FAILED;
     }
     setSocketOption();
-    int addr_len = km_get_addr_length(ss_addr);
+    int addr_len = kev::km_get_addr_length(ss_addr);
     int ret = ::bind(fd_, (struct sockaddr*)&ss_addr, addr_len);
     if(ret < 0) {
-        KUMA_ERRXTRACE("startListen, bind failed, err="<<SKUtils::getLastError());
+        KM_ERRXTRACE("startListen, bind failed, err="<<kev::SKUtils::getLastError());
         return KMError::FAILED;
     }
     if(::listen(fd_, 128) != 0) {
-        SKUtils::close(fd_);
+        kev::SKUtils::close(fd_);
         fd_ = INVALID_FD;
-        KUMA_ERRXTRACE("startListen, socket listen fail, err="<<SKUtils::getLastError());
+        KM_ERRXTRACE("startListen, socket listen fail, err="<<kev::SKUtils::getLastError());
         return KMError::FAILED;
     }
     closed_ = false;
@@ -132,7 +132,7 @@ bool AcceptorBase::registerFd(SOCKET_FD fd)
 {
     auto loop = loop_.lock();
     if (loop && fd != INVALID_FD) {
-        if (loop->registerFd(fd, KUMA_EV_NETWORK, [this](KMEvent ev, void *ol, size_t sz) { ioReady(ev, ol, sz); }) == KMError::NOERR) {
+        if (loop->registerFd(fd, kEventNetwork, [this](KMEvent ev, void *ol, size_t sz) { ioReady(ev, ol, sz); }) == kev::Result::OK) {
             registered_ = true;
         }
     }
@@ -151,7 +151,7 @@ void AcceptorBase::unregisterFd(SOCKET_FD fd, bool close_fd)
     }
     // uregistered or loop stopped
     if (close_fd && fd != INVALID_FD) {
-        SKUtils::close(fd);
+        kev::SKUtils::close(fd);
     }
 }
 
@@ -166,7 +166,7 @@ void AcceptorBase::setSocketOption()
 #endif
     
     // nonblock
-    set_nonblocking(fd_);
+    kev::set_nonblocking(fd_);
     
     int opt_val = 1;
     setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt_val, sizeof(int));
@@ -174,7 +174,7 @@ void AcceptorBase::setSocketOption()
 
 KMError AcceptorBase::close()
 {
-    KUMA_INFOXTRACE("close");
+    KM_INFOXTRACE("close");
     if (!closed_) {
         closed_ = true;
         auto loop = loop_.lock();
@@ -216,29 +216,29 @@ void AcceptorBase::onAccept(SOCKET_FD fd)
 #endif
     int ret = getpeername(fd, (struct sockaddr*)&ss_addr, &ss_len);
     if (ret == 0) {
-        km_get_sock_addr((struct sockaddr*)&ss_addr, sizeof(ss_addr), peer_ip, sizeof(peer_ip), &peer_port);
+        kev::km_get_sock_addr((struct sockaddr*)&ss_addr, sizeof(ss_addr), peer_ip, sizeof(peer_ip), &peer_port);
     }
     else {
-        KUMA_WARNXTRACE("onAccept, getpeername failed, err=" << SKUtils::getLastError());
+        KM_WARNXTRACE("onAccept, getpeername failed, err=" << kev::SKUtils::getLastError());
     }
 
-    KUMA_INFOXTRACE("onAccept, fd=" << fd << ", peer_ip=" << peer_ip << ", peer_port=" << peer_port);
+    KM_INFOXTRACE("onAccept, fd=" << fd << ", peer_ip=" << peer_ip << ", peer_port=" << peer_port);
     if (!accept_cb_ || !accept_cb_(fd, peer_ip, peer_port)) {
-        SKUtils::close(fd);
+        kev::SKUtils::close(fd);
     }
 }
 
 void AcceptorBase::onClose(KMError err)
 {
-    KUMA_INFOXTRACE("onClose, err="<<int(err));
+    KM_INFOXTRACE("onClose, err="<<int(err));
     cleanup();
     if(error_cb_) error_cb_(err);
 }
 
 void AcceptorBase::ioReady(KMEvent events, void* ol, size_t io_size)
 {
-    if (events & KUMA_EV_ERROR) {
-        KUMA_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events=" << events << ", err=" << SKUtils::getLastError());
+    if (events & kEventError) {
+        KM_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events=" << events << ", err=" << kev::SKUtils::getLastError());
         onClose(KMError::POLL_ERROR);
     }
     else {

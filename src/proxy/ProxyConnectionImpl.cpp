@@ -20,7 +20,7 @@
 */
 
 #include "ProxyConnectionImpl.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
 #include "http/Uri.h"
 
 
@@ -49,7 +49,7 @@ ProxyConnection::Impl::~Impl()
 
 KMError ProxyConnection::Impl::setProxyInfo(const ProxyInfo &proxy_info)
 {
-    KUMA_INFOTRACE("ProxyConnection::setProxyInfo, proxy=" << proxy_info.url);
+    KM_INFOTRACE("ProxyConnection::setProxyInfo, proxy=" << proxy_info.url);
     Uri uri;
     if (!uri.parse(proxy_info.url)) {
         return KMError::INVALID_PARAM;
@@ -154,7 +154,7 @@ std::string ProxyConnection::Impl::buildProxyRequest()
 
 KMError ProxyConnection::Impl::handleProxyResponse()
 {
-    KUMA_INFOTRACE("ProxyConnection::handleProxyResponse, code=" << http_parser_.getStatusCode());
+    KM_INFOTRACE("ProxyConnection::handleProxyResponse, code=" << http_parser_.getStatusCode());
     if (http_parser_.getStatusCode() == 407) {
         if (num_of_attempts_ >= 5) {
             onProxyError(KMError::NOT_AUTHORIZED);
@@ -164,16 +164,16 @@ KMError ProxyConnection::Impl::handleProxyResponse()
         if (str_conn.empty()) {
             str_conn = http_parser_.getHeaderValue(strProxyConnection);
         }
-        bool need_reconnect = is_equal(str_conn, "Close");
+        bool need_reconnect = kev::is_equal(str_conn, "Close");
         std::string scheme, challenge;
         http_parser_.forEachHeader([&scheme, &challenge] (const std::string &name, const std::string &value) {
-            if (is_equal(name, strProxyAuthenticate)) {
+            if (kev::is_equal(name, strProxyAuthenticate)) {
                 const auto pos = value.find(' ');
                 const auto s = value.substr(0, pos);
-                if (is_equal(s, "NTLM") ||
-                    is_equal(s, "Negotiate") ||
-                    is_equal(s, "Digest") ||
-                    is_equal(s, "Basic")) {
+                if (kev::is_equal(s, "NTLM") ||
+                    kev::is_equal(s, "Negotiate") ||
+                    kev::is_equal(s, "Digest") ||
+                    kev::is_equal(s, "Basic")) {
                     scheme = std::move(s);
                     if (pos != std::string::npos) {
                         challenge = value.substr(pos + 1);
@@ -184,11 +184,11 @@ KMError ProxyConnection::Impl::handleProxyResponse()
             return true;
         });
         if (scheme.empty()) {
-            KUMA_ERRTRACE("ProxyConnection::handleProxyResponse, auth scheme is empty");
+            KM_ERRTRACE("ProxyConnection::handleProxyResponse, auth scheme is empty");
             onProxyError(KMError::FAILED);
             return KMError::FAILED;
         }
-        KUMA_INFOTRACE("ProxyConnection::handleProxyResponse, token: \"" << scheme << " " << challenge << "\"");
+        KM_INFOTRACE("ProxyConnection::handleProxyResponse, token: \"" << scheme << " " << challenge << "\"");
         if (!proxy_auth_) {
             auto auth_scheme = ProxyAuthenticator::getAuthScheme(scheme);
             proxy_auth_ = ProxyAuthenticator::create(scheme,
@@ -304,7 +304,7 @@ void ProxyConnection::Impl::onHttpData(KMBuffer &buf)
 
 void ProxyConnection::Impl::onHttpEvent(HttpEvent ev)
 {
-    KUMA_INFOTRACE("ProxyConnection::onHttpEvent, ev="<<int(ev));
+    KM_INFOTRACE("ProxyConnection::onHttpEvent, ev="<<int(ev));
     switch (ev) {
         case HttpEvent::HEADER_COMPLETE:
             break;

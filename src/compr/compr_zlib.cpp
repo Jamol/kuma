@@ -14,7 +14,7 @@
  */
 
 #include "compr_zlib.h"
-#include "util/util.h"
+#include "libkev/src/util/util.h"
 
 using namespace kuma;
 
@@ -40,11 +40,11 @@ KMError ZLibCompressor::init(const std::string &type, int max_window_bits)
         deflateEnd(&c_stream);
         initizlized_ = false;
     }
-    if (is_equal(type, "gzip")) {
+    if (kev::is_equal(type, "gzip")) {
         c_max_window_bits = max_window_bits + 16;
-    } else if (is_equal(type, "raw-deflate")) {
+    } else if (kev::is_equal(type, "raw-deflate")) {
         c_max_window_bits = -1 * max_window_bits;
-    } else if (is_equal(type, "deflate")) {
+    } else if (kev::is_equal(type, "deflate")) {
         c_max_window_bits = max_window_bits;
     } else {
         return KMError::INVALID_PARAM;
@@ -160,11 +160,11 @@ KMError ZLibDecompressor::init(const std::string &type, int max_window_bits)
         inflateEnd(&d_stream);
         initizlized_ = false;
     }
-    if (is_equal(type, "gzip")) {
+    if (kev::is_equal(type, "gzip")) {
         d_max_window_bits = max_window_bits + 16;
-    } else if (is_equal(type, "raw-deflate")) {
+    } else if (kev::is_equal(type, "raw-deflate")) {
         d_max_window_bits = -1 * max_window_bits;
-    } else if (is_equal(type, "deflate")) {
+    } else if (kev::is_equal(type, "deflate")) {
         d_max_window_bits = max_window_bits;
     } else {
         return KMError::INVALID_PARAM;

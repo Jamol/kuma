@@ -20,7 +20,7 @@
  */
 
 #include "FlowControl.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
 
 using namespace kuma;
 
@@ -78,7 +78,7 @@ void FlowControl::bytesSent(size_t bytes)
     bytes_sent_ += bytes;
     remote_window_size_ -= (long)bytes;
     if (remote_window_size_ <= 0 && bytes + remote_window_size_ > 0) {
-        //KUMA_INFOTRACE("FlowControl::bytesSent, streamId="<<streamId_<<", bytesSent="<<bytesSent_<<", window="<<remoteWindowSize_);
+        //KM_INFOTRACE("FlowControl::bytesSent, streamId="<<streamId_<<", bytesSent="<<bytesSent_<<", window="<<remoteWindowSize_);
     }
 }
 

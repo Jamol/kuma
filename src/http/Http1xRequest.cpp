@@ -20,8 +20,8 @@
  */
 
 #include "Http1xRequest.h"
-#include "util/kmtrace.h"
-#include "util/util.h"
+#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/util/util.h"
 #include "HttpCache.h"
 
 #include <sstream>
@@ -150,7 +150,7 @@ void Http1xRequest::reset()
 
 KMError Http1xRequest::close()
 {
-    KUMA_INFOXTRACE("close");
+    KM_INFOXTRACE("close");
     cleanup();
     setState(State::CLOSED);
     return KMError::NOERR;
@@ -165,7 +165,7 @@ void Http1xRequest::onWrite()
 
 void Http1xRequest::onError(KMError err)
 {
-    KUMA_INFOXTRACE("onError, err="<<int(err));
+    KM_INFOXTRACE("onError, err="<<int(err));
     cleanup();
     if(getState() < State::COMPLETE) {
         setState(State::IN_ERROR);

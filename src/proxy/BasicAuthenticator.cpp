@@ -20,7 +20,7 @@
 */
 
 #include "BasicAuthenticator.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
 #include "util/base64.h"
 
 

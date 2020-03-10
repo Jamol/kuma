@@ -26,15 +26,14 @@
 #include "httpdefs.h"
 #include "TcpConnection.h"
 #include "Uri.h"
-#include "util/kmobject.h"
-#include "util/DestroyDetector.h"
+#include "libkev/src/util/DestroyDetector.h"
 #include "HttpResponseImpl.h"
 #include "H1xStream.h"
 #include "EventLoopImpl.h"
 
 KUMA_NS_BEGIN
 
-class Http1xResponse : public HttpResponse::Impl, public DestroyDetector
+class Http1xResponse : public HttpResponse::Impl, public kev::DestroyDetector
 {
 public:
     Http1xResponse(const EventLoopPtr &loop, std::string ver);

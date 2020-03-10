@@ -20,6 +20,7 @@
  */
 
 #include "WSExtension.h"
+#include "libkev/src/util/util.h"
 
 using namespace kuma;
 using namespace kuma::ws;
@@ -31,10 +32,10 @@ KMError WSExtension::parseKeyValue(const std::string &str, std::string &key, std
     if (pos != std::string::npos) {
         key = str.substr(0, pos);
         value = str.substr(pos + 1);
-        trim_left(key);
-        trim_right(key);
-        trim_left(value);
-        trim_right(value);
+        kev::trim_left(key, ' ');
+        kev::trim_right(key, ' ');
+        kev::trim_left(value, ' ');
+        kev::trim_right(value, ' ');
         if (!value.empty() && *value.begin() == '\"') {
             value.erase(value.begin());
         }
@@ -50,7 +51,7 @@ KMError WSExtension::parseKeyValue(const std::string &str, std::string &key, std
 
 KMError WSExtension::parseParameterList(const std::string &parameters, KeyValueList &param_list)
 {
-    for_each_token(parameters, ';', [&param_list] (std::string &str) {
+    kev::for_each_token(parameters, ';', [&param_list] (std::string &str) {
         std::string key, value;
         auto ret = parseKeyValue(str, key, value);
         if (ret == KMError::NOERR) {

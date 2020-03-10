@@ -4,8 +4,8 @@
 #include <stdlib.h>
 #include <gtest/gtest.h>
 
-#define UT_SETUPTRACE() KUMA_INFOTRACE("SetUp "<<getTestCaseName())
-#define UT_TEARDOWNTRACE() KUMA_INFOTRACE("TearDown "<<getTestCaseName())
+#define UT_SETUPTRACE() KM_INFOTRACE("SetUp "<<getTestCaseName())
+#define UT_TEARDOWNTRACE() KM_INFOTRACE("TearDown "<<getTestCaseName())
 
 inline std::string getTestCaseName()
 {

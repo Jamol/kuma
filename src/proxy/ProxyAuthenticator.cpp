@@ -20,8 +20,8 @@
 */
 
 #include "ProxyAuthenticator.h"
-#include "util/util.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/util.h"
+#include "libkev/src/util/kmtrace.h"
 
 #if defined(KUMA_OS_WIN)
 # include <windows.h>
@@ -50,15 +50,15 @@ ProxyAuthenticator::~ProxyAuthenticator()
 
 ProxyAuthenticator::AuthScheme ProxyAuthenticator::getAuthScheme(const std::string &scheme)
 {
-    if (is_equal(scheme, "Basic")) {
+    if (kev::is_equal(scheme, "Basic")) {
         return AuthScheme::BASIC;
-    } else if (is_equal(scheme, "NTLM")) {
+    } else if (kev::is_equal(scheme, "NTLM")) {
         return AuthScheme::NTLM;
     }
-    else if (is_equal(scheme, "Digest")) {
+    else if (kev::is_equal(scheme, "Digest")) {
         return AuthScheme::DIGEST;
     }
-    else if (is_equal(scheme, "Negotiate")) {
+    else if (kev::is_equal(scheme, "Negotiate")) {
         return AuthScheme::NEGOTIATE;
     }
     else {
@@ -121,7 +121,7 @@ ProxyAuthenticator::Ptr ProxyAuthenticator::create(const std::string &scheme, co
 #endif
             
         default:
-            KUMA_ERRTRACE("ProxyAuthenticator::create, unsupported auth scheme: " << scheme);
+            KM_ERRTRACE("ProxyAuthenticator::create, unsupported auth scheme: " << scheme);
             return Ptr();
     }
 }

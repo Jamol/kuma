@@ -20,7 +20,7 @@
  */
 
 #include "H1xStream.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
 
 
 using namespace kuma;
@@ -83,7 +83,7 @@ KMError H1xStream::sendRequest(const std::string &method, const std::string &url
         std::string str_port = uri_.getPort();
         uint16_t port = 80;
         uint32_t ssl_flags = SSL_NONE;
-        if(is_equal("https", uri_.getScheme())) {
+        if(kev::is_equal("https", uri_.getScheme())) {
             port = 443;
             ssl_flags = SSL_ENABLE | tcp_conn_.getSslFlags();
         }
@@ -256,7 +256,7 @@ KMError H1xStream::handleInputData(uint8_t *src, size_t len)
         DESTROY_DETECTOR_CHECK(KMError::DESTROYED);
         if (!is_stream_upgraded_ || bytes_used >= static_cast<int>(len)) {
             if (bytes_used < static_cast<int>(len)) {
-                KUMA_WARNXTRACE("handleInputData, data is not consumed, len=" << len << ", used=" << bytes_used);
+                KM_WARNXTRACE("handleInputData, data is not consumed, len=" << len << ", used=" << bytes_used);
             }
             return KMError::NOERR;
         }
@@ -299,7 +299,7 @@ void H1xStream::onHttpData(KMBuffer &buf)
 
 void H1xStream::onHttpEvent(HttpEvent ev)
 {
-    KUMA_INFOXTRACE("onHttpEvent, ev="<<int(ev));
+    KM_INFOXTRACE("onHttpEvent, ev="<<int(ev));
     switch (ev) {
         case HttpEvent::HEADER_COMPLETE:
             onHeaderComplete();

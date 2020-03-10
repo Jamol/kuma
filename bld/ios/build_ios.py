@@ -73,6 +73,11 @@ def ios_main(argv):
     if not os.path.exists(workingPath):
         os.makedirs(workingPath)
     os.chdir(workingPath)
+
+    #build libkev
+    libkevPath = workingPath+'/../../../third_party/libkev'
+    run_and_check_error('python '+libkevPath+'/bld/ios/build_ios.py')
+
     outdir = workingPath + '/../../../lib/ios'
     build_ios(workingPath, outdir)
 

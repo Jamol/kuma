@@ -20,6 +20,7 @@
  */
 
 #include "h2utils.h"
+#include "util/util.h"
 
 KUMA_NS_BEGIN
 
@@ -44,7 +45,7 @@ bool processH2RequestHeaders(const HeaderVector &h2_headers, std::string &method
                     req_headers.emplace_back(name, value);
                 }
             } else {
-                if (is_equal(name, H2HeaderCookie)) {
+                if (kev::is_equal(name, H2HeaderCookie)) {
                     // reassemble cookie
                     if (!str_cookie.empty()) {
                         str_cookie += "; ";
@@ -68,7 +69,7 @@ bool processH2ResponseHeaders(const HeaderVector &h2_headers, int &status_code, 
     if (h2_headers.empty()) {
         return false;
     }
-    if (!is_equal(h2_headers[0].first, H2HeaderStatus)) {
+    if (!kev::is_equal(h2_headers[0].first, H2HeaderStatus)) {
         return false;
     }
     status_code = std::stoi(h2_headers[0].second);
@@ -77,7 +78,7 @@ bool processH2ResponseHeaders(const HeaderVector &h2_headers, int &status_code, 
         auto const &name = kv.first;
         auto const &value = kv.second;
         if (!name.empty()) {
-            if (is_equal(name, H2HeaderCookie)) {
+            if (kev::is_equal(name, H2HeaderCookie)) {
                 // reassemble cookie
                 if (!str_cookie.empty()) {
                     str_cookie += "; ";

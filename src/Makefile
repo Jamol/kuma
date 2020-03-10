@@ -9,6 +9,7 @@ THIRDPARTYDIR = $(ROOTDIR)/third_party
 #OPENSSLDIR = $(THIRDPARTYDIR)/openssl
 OPENSSLDIR = /usr/include
 ZLIBDIR = $(THIRDPARTYDIR)/zlib
+LIBKEVDIR = $(THIRDPARTYDIR)/libkev
 
 BINDIR = $(ROOTDIR)/bin/linux
 LIBDIR = $(ROOTDIR)/lib
@@ -24,6 +25,7 @@ INCLUDES = -I. -I../include -I$(THIRDPARTYDIR) -I$(OPENSSLDIR)
 ##############################################################################
 #
 #LIBS = $(OPENSSLDIR)/lib/linux/libssl.a $(OPENSSLDIR)/lib/linux/libcrypto.a
+LIBS = $(LIBKEVDIR)/lib/linux/libkev.a
 
 #
 ##############################################################################
@@ -32,7 +34,7 @@ CXX=g++
 CC=gcc
 
 CXXFLAGS = -g -std=c++14 -pipe -fPIC -Wall -Wextra -pedantic -DKUMA_HAS_OPENSSL
-LDFLAGS = -shared -Wl,-Bsymbolic -lpthread -ldl -lssl -lcrypto
+LDFLAGS = -shared -Wl,-Bsymbolic -lpthread -ldl $(LIBS) -lssl -lcrypto
 
 ZLIBSRCS = \
     $(ZLIBDIR)/adler32.c \
@@ -48,19 +50,13 @@ ZLIBSRCS = \
     $(ZLIBDIR)/zutil.c
 
 SRCS =  \
-    EventLoopImpl.cpp \
     AcceptorBase.cpp \
     SocketBase.cpp \
     UdpSocketBase.cpp \
     TcpSocketImpl.cpp \
     UdpSocketImpl.cpp \
-    TimerManager.cpp \
     TcpListenerImpl.cpp \
     TcpConnection.cpp \
-    poll/EPoll.cpp \
-    poll/VPoll.cpp \
-    poll/SelectPoll.cpp \
-    poll/Notifier.cpp \
     http/Uri.cpp \
     http/HttpHeader.cpp \
     http/HttpMessage.cpp \
@@ -98,7 +94,6 @@ SRCS =  \
     ws/exts/PMCE_Base.cpp \
     ws/exts/WSExtension.cpp \
     util/util.cpp \
-    util/kmtrace.cpp \
     util/base64.cpp \
     ssl/SslHandler.cpp \
     ssl/BioHandler.cpp \

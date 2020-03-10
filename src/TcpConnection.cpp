@@ -20,7 +20,7 @@
  */
 
 #include "TcpConnection.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
 
 #include <sstream>
 
@@ -169,7 +169,7 @@ int TcpConnection::send(const KMBuffer &buf)
 
 KMError TcpConnection::close()
 {
-    //KUMA_INFOXTRACE("close");
+    //KM_INFOXTRACE("close");
     cleanup();
     return KMError::NOERR;
 }
@@ -245,7 +245,7 @@ void TcpConnection::onReceive(KMError err)
 
 void TcpConnection::onClose(KMError err)
 {
-    //KUMA_INFOXTRACE("onClose");
+    //KM_INFOXTRACE("onClose");
     cleanup();
     onError(err);
 }

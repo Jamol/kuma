@@ -21,7 +21,7 @@
 
 
 #include "WSConnection_v1.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
 #include "util/base64.h"
 #include "exts/ExtensionHandler.h"
 
@@ -96,7 +96,7 @@ KMError WSConnection_V1::connect_i(const std::string& ws_url)
         return KMError::INVALID_PARAM;
     }
     std::string http_url;
-    if(is_equal("wss", uri.getScheme())) {
+    if(kev::is_equal("wss", uri.getScheme())) {
         http_url = "https://";
     } else {
         http_url = "http://";
@@ -223,22 +223,22 @@ void WSConnection_V1::handleUpgradeRequest()
     auto const &req_header = stream_->getIncomingHeaders();
     origin_ = req_header.getHeader("Origin");
     do {
-        if (!is_equal(req_header.getHeader("Upgrade"), "WebSocket") ||
-            !contains_token(req_header.getHeader("Connection"), "Upgrade", ',')) {
-            KUMA_ERRXTRACE("handleRequest, not WebSocket request");
+        if (!kev::is_equal(req_header.getHeader("Upgrade"), "WebSocket") ||
+            !kev::contains_token(req_header.getHeader("Connection"), "Upgrade", ',')) {
+            KM_ERRXTRACE("handleRequest, not WebSocket request");
             err = KMError::PROTO_ERROR;
             break;
         }
         
         auto const &sec_ws_ver = req_header.getHeader(kSecWebSocketVersion);
-        if (sec_ws_ver.empty() || !contains_token(sec_ws_ver, kWebSocketVersion, ',')) {
-            KUMA_ERRXTRACE("handleRequest, unsupported version number, ver="<<sec_ws_ver);
+        if (sec_ws_ver.empty() || !kev::contains_token(sec_ws_ver, kWebSocketVersion, ',')) {
+            KM_ERRXTRACE("handleRequest, unsupported version number, ver="<<sec_ws_ver);
             err = KMError::PROTO_ERROR;
             break;
         }
         auto const &sec_ws_key = req_header.getHeader(kSecWebSocketKey);
         if(sec_ws_key.empty()) {
-            KUMA_ERRXTRACE("handleRequest, no Sec-WebSocket-Key");
+            KM_ERRXTRACE("handleRequest, no Sec-WebSocket-Key");
             err = KMError::PROTO_ERROR;
             break;
         }
@@ -277,9 +277,9 @@ void WSConnection_V1::handleUpgradeResponse()
     int status_code = stream_->getStatusCode();
     auto const &rsp_header = stream_->getIncomingHeaders();
     if (status_code != 101 ||
-        !is_equal(rsp_header.getHeader("Upgrade"), "WebSocket") ||
-        !contains_token(rsp_header.getHeader("Connection"), "Upgrade", ',')) {
-        KUMA_ERRXTRACE("handleUpgradeResponse, invalid status code: "<<status_code);
+        !kev::is_equal(rsp_header.getHeader("Upgrade"), "WebSocket") ||
+        !kev::contains_token(rsp_header.getHeader("Connection"), "Upgrade", ',')) {
+        KM_ERRXTRACE("handleUpgradeResponse, invalid status code: "<<status_code);
         err = KMError::PROTO_ERROR;
     }
     
@@ -297,13 +297,13 @@ void WSConnection_V1::checkHandshake()
     extensions_.clear();
     auto const &incoming_header = getHeaders();
     for (auto const &kv : incoming_header.getHeaders()) {
-        if (is_equal(kv.first, kSecWebSocketProtocol)) {
+        if (kev::is_equal(kv.first, kSecWebSocketProtocol)) {
             if (subprotocol_.empty()) {
                 subprotocol_ = kv.second;
             } else {
                 subprotocol_ += ", " + kv.second;
             }
-        } else if (is_equal(kv.first, kSecWebSocketExtensions)) {
+        } else if (kev::is_equal(kv.first, kSecWebSocketExtensions)) {
             if (extensions_.empty()) {
                 extensions_ = kv.second;
             } else {
@@ -326,7 +326,7 @@ void WSConnection_V1::onWrite()
 
 void WSConnection_V1::onError(KMError err)
 {
-    //KUMA_INFOXTRACE("onError, err="<<int(err));
+    //KM_INFOXTRACE("onError, err="<<int(err));
     onStateError(err);
 }
 

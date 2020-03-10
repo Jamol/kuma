@@ -20,8 +20,8 @@
  */
 
 #include "WSHandler.h"
-#include "util/kmtrace.h"
-#include "util/util.h"
+#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/util/util.h"
 
 
 using namespace kuma;

@@ -28,7 +28,7 @@
 #include "WSConnection.h"
 #include "EventLoopImpl.h"
 #include "http/Uri.h"
-#include "util/DestroyDetector.h"
+#include "libkev/src/util/DestroyDetector.h"
 
 #include <random>
 
@@ -41,7 +41,7 @@ WS_NS_END
 
 KUMA_NS_BEGIN
 
-class WebSocket::Impl : public KMObject, public DestroyDetector
+class WebSocket::Impl : public kev::KMObject, public kev::DestroyDetector
 {
 public:
     using DataCallback = WebSocket::DataCallback;

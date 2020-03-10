@@ -36,6 +36,10 @@ def android_main(argv):
         os.mkdir(workingPath)
     os.chdir(workingPath)
 
+    #build libkev
+    libkevPath = workingPath+'/../../../third_party/libkev'
+    run_and_check_error('python '+libkevPath+'/bld/android/build_android.py')
+
     archs = ["armeabi-v7a", "arm64-v8a", "x86", "x86_64"]
     for arch in archs:
         build_one_arch(arch, workingPath)

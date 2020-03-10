@@ -28,7 +28,7 @@
 
 KUMA_NS_BEGIN
 
-class H2Handshake : public DestroyDetector, public FrameCallback
+class H2Handshake : public kev::DestroyDetector, public FrameCallback
 {
 public:
     using HandshakeSender = std::function<KMError(KMBuffer &)>;

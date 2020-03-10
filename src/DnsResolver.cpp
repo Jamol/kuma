@@ -20,8 +20,8 @@
  */
 
 #include "DnsResolver.h"
-#include "util/util.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/util.h"
+#include "libkev/src/util/kmtrace.h"
 
 #if defined(KUMA_OS_WIN)
 # include <Ws2tcpip.h>
@@ -155,7 +155,7 @@ void DnsResolver::stop()
             try {
                 thr.join();
             } catch (...) {
-                KUMA_INFOTRACE("failed to join DNS resolving thread");
+                KM_INFOTRACE("failed to join DNS resolving thread");
             }
         }
     }
@@ -189,17 +189,17 @@ void DnsResolver::dnsProc()
         sockaddr_storage addr = { 0 };
         auto ret = doResolve(host, 0, addr);
         char ip[128] = { 0 };
-        km_get_sock_addr((struct sockaddr*)&addr, sizeof(addr), ip, sizeof(ip), nullptr);
-        KUMA_INFOTRACE("DNS resolved, host="<<host<<", ip="<<ip);
+        kev::km_get_sock_addr((struct sockaddr*)&addr, sizeof(addr), ip, sizeof(ip), nullptr);
+        KM_INFOTRACE("DNS resolved, host="<<host<<", ip="<<ip);
         for (auto &slot : slots) {
             if (slot) {
-                km_set_addr_port(slot->port, addr);
+                kev::km_set_addr_port(slot->port, addr);
                 (*slot)(ret, addr);
             }
         }
     }
     
-    KUMA_INFOTRACE("DNS resolving thread exited");
+    KM_INFOTRACE("DNS resolving thread exited");
 }
 
 KMError DnsResolver::doResolve(const std::string &host, uint16_t port, sockaddr_storage &addr)
@@ -207,9 +207,9 @@ KMError DnsResolver::doResolve(const std::string &host, uint16_t port, sockaddr_
     struct addrinfo hints = { 0 };
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-    auto ret = km_set_sock_addr(host.c_str(), port, &hints, (struct sockaddr*)&addr, sizeof(addr));
+    auto ret = kev::km_set_sock_addr(host.c_str(), port, &hints, (struct sockaddr*)&addr, sizeof(addr));
     if (ret != 0) {
-        KUMA_ERRTRACE("DNS resolving failure, host=" << host << ", err=" << toEAIString(ret));
+        KM_ERRTRACE("DNS resolving failure, host=" << host << ", err=" << toEAIString(ret));
         return KMError::FAILED;
     } else {
         DnsRecord dr;
@@ -236,7 +236,7 @@ KMError DnsResolver::getAddress(const std::string &host, uint16_t port, sockaddr
         auto diff_ms = duration_cast<milliseconds>(current - it->second.time).count();
         if (diff_ms < record_expires_intrval_ms) {
             memcpy(&addr, &it->second.addr, sizeof(addr));
-            km_set_addr_port(port, addr);
+            kev::km_set_addr_port(port, addr);
             return KMError::NOERR;
         }
         s_dns_records.erase(it);

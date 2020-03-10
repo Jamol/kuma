@@ -22,7 +22,7 @@
 #ifdef KUMA_HAS_OPENSSL
 
 #include "SslHandler.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
 
 #include <openssl/x509v3.h>
 
@@ -57,12 +57,12 @@ KMError SslHandler::init(SslRole ssl_role, SOCKET_FD fd, uint32_t ssl_flags)
         ctx = OpenSslLib::defaultClientContext();
     }
     if(NULL == ctx) {
-        KUMA_ERRXTRACE("init, CTX is NULL");
+        KM_ERRXTRACE("init, CTX is NULL");
         return KMError::SSL_ERROR;
     }
     ssl_ = SSL_new(ctx);
     if(!ssl_) {
-        KUMA_ERRXTRACE("init, SSL_new failed");
+        KM_ERRXTRACE("init, SSL_new failed");
         return KMError::SSL_ERROR;
     }
     OpenSslLib::setSSLData(ssl_, this);

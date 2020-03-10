@@ -17,10 +17,10 @@
 #define __IOCP_H__
 
 #include "kmdefs.h"
-#include "util/util.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/util.h"
+#include "libkev/src/util/kmtrace.h"
 #include "util/skbuffer.h"
-#include "util/skutils.h"
+#include "libkev/src/util/skutils.h"
 #include "EventLoopImpl.h"
 
 #include <MSWSock.h>
@@ -109,7 +109,7 @@ public:
         if (!loop || fd == INVALID_FD) {
             return false;
         }
-        if (loop->registerFd(fd, KUMA_EV_NETWORK, [this](KMEvent ev, void* ol, size_t io_size) {
+        if (loop->registerFd(fd, kEventNetwork, [this](KMEvent ev, void* ol, size_t io_size) {
             ioReady(ev, ol, io_size);
         }) == KMError::NOERR)
         {
@@ -157,7 +157,7 @@ public:
         recv_ctx_->prepare(IocpContext::Op::CONNECT);
         auto ret = connect_ex(fd, (LPSOCKADDR)&ss_addr, addr_len, NULL, 0, NULL, &recv_ctx_->ol);
         if (!ret && SKUtils::getLastError() != WSA_IO_PENDING) {
-            KUMA_ERRTRACE("postConnectOperation, error, fd=" << fd << ", err=" << SKUtils::getLastError());
+            KM_ERRTRACE("postConnectOperation, error, fd=" << fd << ", err=" << SKUtils::getLastError());
             return false;
         }
         else {
@@ -178,7 +178,7 @@ public:
         recv_ctx_->prepare(IocpContext::Op::ACCEPT);
         auto ret = accept_ex(fd, accept_fd, recv_ctx_->buf.wr_ptr(), 0, addr_len, addr_len, &bytes_recv, &recv_ctx_->ol);
         if (!ret && SKUtils::getLastError() != WSA_IO_PENDING) {
-            KUMA_ERRTRACE("postAcceptOperation, fd=" << fd << ", err=" << SKUtils::getLastError());
+            KM_ERRTRACE("postAcceptOperation, fd=" << fd << ", err=" << SKUtils::getLastError());
             return false;
         }
         else {
@@ -226,7 +226,7 @@ public:
             return 0;
         }
         if (!recv_ctx_->bufferEmpty()) {
-            KUMA_WARNTRACE("postRecvOperation, fd=" << fd << ", buf=" << recv_ctx_->buf.size());
+            KM_WARNTRACE("postRecvOperation, fd=" << fd << ", buf=" << recv_ctx_->buf.size());
         }
         DWORD flags = 0, bytes_recv = 0;
         recv_ctx_->buf.expand(TCPRecvPacketSize);
@@ -259,7 +259,7 @@ public:
             }
             if (recv_ctx_->op == IocpContext::Op::RECV) {
                 if (io_size > recvBuffer().space()) {
-                    KUMA_ERRTRACE("ioReady, recv error, io_size=" << io_size << ", space=" << recvBuffer().space());
+                    KM_ERRTRACE("ioReady, recv error, io_size=" << io_size << ", space=" << recvBuffer().space());
                 }
                 recvBuffer().bytes_written(io_size);
             }
@@ -271,13 +271,13 @@ public:
                 return;
             }
             if (io_size != sendBuffer().size()) {
-                KUMA_ERRTRACE("ioReady, send error, io_size=" << io_size << ", buffer=" << sendBuffer().size());
+                KM_ERRTRACE("ioReady, send error, io_size=" << io_size << ", buffer=" << sendBuffer().size());
             }
             sendBuffer().bytes_read(io_size);
             if (callback_) callback_(send_ctx_->op, io_size);
         }
         else {
-            KUMA_WARNTRACE("ioReady, invalid overlapped");
+            KM_WARNTRACE("ioReady, invalid overlapped");
         }
     }
 
@@ -409,7 +409,7 @@ public:
             return 0;
         }
         if (!recv_ctx_->bufferEmpty()) {
-            KUMA_WARNTRACE("postRecvOperation, fd=" << fd << ", buf=" << recv_ctx_->buf.size());
+            KM_WARNTRACE("postRecvOperation, fd=" << fd << ", buf=" << recv_ctx_->buf.size());
         }
 
         DWORD flags = 0;

@@ -20,6 +20,7 @@
  */
 
 #include "HttpHeader.h"
+#include "libkev/src/util/util.h"
 
 #include <sstream>
 #include <algorithm>
@@ -39,13 +40,13 @@ KMError HttpHeader::addHeader(std::string name, std::string value)
         return KMError::INVALID_PARAM;
     }
     
-    if (is_equal(name, strContentLength)) {
+    if (kev::is_equal(name, strContentLength)) {
         has_content_length_ = true;
         content_length_ = std::stol(value);
         if (is_outgoing_ && is_chunked_) {
             return KMError::NOERR;
         }
-    } else if (is_equal(name, strTransferEncoding)) {
+    } else if (kev::is_equal(name, strTransferEncoding)) {
         is_chunked_ = true;
         if (!is_http2_) {
             if (is_outgoing_ && has_content_length_) {
@@ -79,7 +80,7 @@ bool HttpHeader::removeHeader(const std::string &name)
     bool removed = false;
     auto it = header_vec_.begin();
     while (it != header_vec_.end()) {
-        if (is_equal(it->first, name)) {
+        if (kev::is_equal(it->first, name)) {
             it = header_vec_.erase(it);
             removed = true;
         } else {
@@ -96,8 +97,8 @@ bool HttpHeader::removeHeaderValue(const std::string &name, const std::string &v
     auto it = header_vec_.begin();
     while (it != header_vec_.end()) {
         bool erased = false;
-        if (is_equal(it->first, name)) {
-            if (remove_token(it->second, value, ',')) {
+        if (kev::is_equal(it->first, name)) {
+            if (kev::remove_token(it->second, value, ',')) {
                 removed = true;
                 if (it->second.empty()) {
                     it = header_vec_.erase(it);
@@ -116,7 +117,7 @@ bool HttpHeader::removeHeaderValue(const std::string &name, const std::string &v
 bool HttpHeader::hasHeader(const std::string &name) const
 {
     for (auto const &kv : header_vec_) {
-        if (is_equal(kv.first, name)) {
+        if (kev::is_equal(kv.first, name)) {
             return true;
         }
     }
@@ -126,7 +127,7 @@ bool HttpHeader::hasHeader(const std::string &name) const
 const std::string& HttpHeader::getHeader(const std::string &name) const
 {
     for (auto const &kv : header_vec_) {
-        if (is_equal(kv.first, name)) {
+        if (kev::is_equal(kv.first, name)) {
             return kv.second;
         }
     }
@@ -135,7 +136,7 @@ const std::string& HttpHeader::getHeader(const std::string &name) const
 
 bool HttpHeader::isUpgradeHeader() const
 {
-    return hasHeader(strUpgrade) && contains_token(getHeader("Connection"), strUpgrade, ',');
+    return hasHeader(strUpgrade) && kev::contains_token(getHeader("Connection"), strUpgrade, ',');
 }
 
 void HttpHeader::processHeader()
@@ -145,11 +146,11 @@ void HttpHeader::processHeader()
 
 void HttpHeader::processHeader(int status_code, const std::string &req_method)
 {
-    if (is_equal(req_method, "HEAD")) {
+    if (kev::is_equal(req_method, "HEAD")) {
         has_body_ = false;
         return;
     }
-    if (is_equal(req_method, "CONNECT") && status_code >= 200 && status_code <= 299) {
+    if (kev::is_equal(req_method, "CONNECT") && status_code >= 200 && status_code <= 299) {
         has_body_ = false;
         return;
     }

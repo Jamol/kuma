@@ -23,14 +23,13 @@
 #define __SocketBase_H__
 
 #include "kmdefs.h"
-#include "evdefs.h"
 #include "EventLoopImpl.h"
 #include "DnsResolver.h"
-#include "util/kmobject.h"
-#include "util/DestroyDetector.h"
+#include "libkev/src/util/kmobject.h"
+#include "libkev/src/util/DestroyDetector.h"
 KUMA_NS_BEGIN
 
-class SocketBase : public KMObject, public DestroyDetector
+class SocketBase : public kev::KMObject, public kev::DestroyDetector
 {
 public:
     using EventCallback = std::function<void(KMError)>;

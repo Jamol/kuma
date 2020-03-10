@@ -20,8 +20,8 @@
  */
 
 #include "HttpParserImpl.h"
-#include "util/kmtrace.h"
-#include "util/util.h"
+#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/util/util.h"
 #include "Uri.h"
 
 #include <algorithm>
@@ -154,15 +154,15 @@ bool HttpParser::Impl::error() const
 
 bool HttpParser::Impl::isUpgradeTo(const std::string& protocol) const
 {
-    if (!is_equal(getHeaderValue("Upgrade"), protocol) ||
-        !contains_token(getHeaderValue("Connection"), "Upgrade", ',')) {
+    if (!kev::is_equal(getHeaderValue("Upgrade"), protocol) ||
+        !kev::contains_token(getHeaderValue("Connection"), "Upgrade", ',')) {
         return false;
     }
     if (!isRequest() && 101 != getStatusCode()) {
         return false;
     }
-    if (isRequest() && is_equal(protocol, "h2c") &&
-        !contains_token(getHeaderValue("Connection"), "HTTP2-Settings", ',')) {
+    if (isRequest() && kev::is_equal(protocol, "h2c") &&
+        !kev::contains_token(getHeaderValue("Connection"), "HTTP2-Settings", ',')) {
         return false;
     }
     return true;
@@ -246,7 +246,7 @@ KMError HttpParser::Impl::saveData(const char* cur_pos, const char* end)
 HttpParser::Impl::ParseState HttpParser::Impl::parse(const char* data, size_t len, int *bytes_read)
 {
     if(HTTP_READ_DONE == read_state_ || HTTP_READ_ERROR == read_state_) {
-        KUMA_WARNTRACE("HttpParser::parse, invalid state="<<read_state_);
+        KM_WARNTRACE("HttpParser::parse, invalid state="<<read_state_);
         *bytes_read = 0;
         return PARSE_STATE_DONE;
     }
@@ -299,8 +299,8 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(const char*& cur_pos, c
             {// blank line, header completed
                 auto const &upgrade_to = HttpHeader::getHeader(strUpgrade);
                 if(!upgrade_to.empty()) {
-                    is_http2_ = is_equal(upgrade_to, "h2c");
-                    KUMA_INFOTRACE("HttpParser::onHeaderComplete, Upgrade="<<upgrade_to);
+                    is_http2_ = kev::is_equal(upgrade_to, "h2c");
+                    KM_INFOTRACE("HttpParser::onHeaderComplete, Upgrade="<<upgrade_to);
                 }
                 if (isRequest()) {
                     HttpHeader::processHeader();
@@ -385,7 +385,7 @@ bool HttpParser::Impl::parseStartLine(const char* line, const char* line_end)
     } else {
         return false;
     }
-    is_request_ = !is_equal(str, "HTTP", 4);
+    is_request_ = !kev::is_equal(str, "HTTP", 4);
     if(is_request_) {// request
         method_.swap(str);
         p = std::find(p_line, p_end, ' ');
@@ -461,7 +461,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(const char*& cur_pos, 
                 str.append(p_line, p_end);
                 // need not parse chunk extension
                 chunk_size_ = strtol(str.c_str(), NULL, 16);
-                //KUMA_INFOTRACE("HttpParser::parseChunk, chunk_size="<<chunk_size_);
+                //KM_INFOTRACE("HttpParser::parseChunk, chunk_size="<<chunk_size_);
                 if(0 == chunk_size_)
                 {// chunk completed
                     chunk_state_ = CHUNK_READ_TRAILER;
@@ -497,7 +497,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(const char*& cur_pos, 
             case CHUNK_READ_DATA_CR:
             {
                 if(*cur_pos != CR) {
-                    KUMA_ERRTRACE("HttpParser::parseChunk, can not find data CR");
+                    KM_ERRTRACE("HttpParser::parseChunk, can not find data CR");
                     read_state_ = HTTP_READ_ERROR;
                     return PARSE_STATE_ERROR;
                 }
@@ -508,7 +508,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(const char*& cur_pos, 
             case CHUNK_READ_DATA_LF:
             {
                 if(*cur_pos != LF) {
-                    KUMA_ERRTRACE("HttpParser::parseChunk, can not find data LF");
+                    KM_ERRTRACE("HttpParser::parseChunk, can not find data LF");
                     read_state_ = HTTP_READ_ERROR;
                     return PARSE_STATE_ERROR;
                 }
@@ -544,14 +544,14 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(const char*& cur_pos, 
 void HttpParser::Impl::onHeaderComplete()
 {
     if(has_content_length_) {
-        KUMA_INFOTRACE("HttpParser::onHeaderComplete, Content-Length="<<content_length_);
+        KM_INFOTRACE("HttpParser::onHeaderComplete, Content-Length="<<content_length_);
     }
     if(is_chunked_) {
-        KUMA_INFOTRACE("HttpParser::onHeaderComplete, Transfer-Encoding=" << getHeaderValue(strTransferEncoding));
+        KM_INFOTRACE("HttpParser::onHeaderComplete, Transfer-Encoding=" << getHeaderValue(strTransferEncoding));
     }
     auto const &contentEncoding = getHeaderValue(strContentEncoding);
     if (!contentEncoding.empty()) {
-        KUMA_INFOTRACE("HttpParser::onHeaderComplete, Content-Encoding=" << contentEncoding);
+        KM_INFOTRACE("HttpParser::onHeaderComplete, Content-Encoding=" << contentEncoding);
     }
     
     if(event_cb_) event_cb_(HttpEvent::HEADER_COMPLETE);
@@ -574,7 +574,7 @@ void HttpParser::Impl::onBodyData(KMBuffer &buf)
 
 void HttpParser::Impl::onComplete()
 {
-    KUMA_INFOTRACE("HttpParser::onComplete");
+    KM_INFOTRACE("HttpParser::onComplete");
     if(event_cb_) event_cb_(HttpEvent::COMPLETE);
 }
 
@@ -659,10 +659,10 @@ void HttpParser::Impl::addParamValue(std::string name, std::string value)
 
 void HttpParser::Impl::addHeaderValue(std::string name, std::string value)
 {
-    trim_left(name);
-    trim_right(name);
-    trim_left(value);
-    trim_right(value);
+    kev::trim_left(name, ' ');
+    kev::trim_right(name, ' ');
+    kev::trim_left(value, ' ');
+    kev::trim_right(value, ' ');
     if(!name.empty()) {
         HttpHeader::addHeader(std::move(name), std::move(value));
     }

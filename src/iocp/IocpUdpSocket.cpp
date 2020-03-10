@@ -62,8 +62,8 @@
 
 #include "EventLoopImpl.h"
 #include "IocpUdpSocket.h"
-#include "util/util.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/util.h"
+#include "libkev/src/util/kmtrace.h"
 
 using namespace kuma;
 
@@ -101,7 +101,7 @@ KMError IocpUdpSocket::bind(const std::string &bind_host, uint16_t bind_port, ui
 int IocpUdpSocket::receive(void *data, size_t length, char *ip, size_t ip_len, uint16_t &port)
 {
     if (INVALID_FD == fd_) {
-        KUMA_ERRXTRACE("receive, invalid fd");
+        KM_ERRXTRACE("receive, invalid fd");
         return -1;
     }
     if (recvPending()) {
@@ -115,7 +115,7 @@ int IocpUdpSocket::receive(void *data, size_t length, char *ip, size_t ip_len, u
         auto bytes_read = recvBuffer().read(data, length);
         auto ctx = (IocpUdpWrapper*)iocp_ctx_.get();
         km_get_sock_addr((struct sockaddr*)&ctx->ss_addr_, ctx->addr_len_, ip, (uint32_t)ip_len, &port);
-        //KUMA_INFOXTRACE("receive, bytes_read=" << bytes_read<<", len="<<length);
+        //KM_INFOXTRACE("receive, bytes_read=" << bytes_read<<", len="<<length);
         return static_cast<int>(bytes_read);
     }
     
@@ -124,7 +124,7 @@ int IocpUdpSocket::receive(void *data, size_t length, char *ip, size_t ip_len, u
         postRecvOperation(fd_);
     }
 
-    //KUMA_INFOXTRACE("receive, ret="<<ret<<", len="<<length);
+    //KM_INFOXTRACE("receive, ret="<<ret<<", len="<<length);
     return ret;
 }
 
@@ -132,7 +132,7 @@ void IocpUdpSocket::onReceive(size_t io_size)
 {
     if (io_size == 0) {
         if (fd_ != INVALID_FD) {
-            KUMA_WARNXTRACE("onReceive, io_size=0");
+            KM_WARNXTRACE("onReceive, io_size=0");
             cleanup();
             onClose(KMError::SOCK_ERROR);
         }
@@ -143,11 +143,11 @@ void IocpUdpSocket::onReceive(size_t io_size)
 
 void IocpUdpSocket::ioReady(IocpContext::Op op, size_t io_size)
 {
-    //KUMA_INFOXTRACE("ioReady, op="<<int(op)<<", io_size="<< io_size);
+    //KM_INFOXTRACE("ioReady, op="<<int(op)<<", io_size="<< io_size);
     if (op == IocpContext::Op::RECV) {
         onReceive(io_size);
     }
     else {
-        KUMA_WARNXTRACE("ioReady, invalid op: "<<int(op));
+        KM_WARNXTRACE("ioReady, invalid op: "<<int(op));
     }
 }

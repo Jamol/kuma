@@ -24,12 +24,12 @@
 
 #include "wsdefs.h"
 #include "http/HttpParserImpl.h"
-#include "util/DestroyDetector.h"
+#include "libkev/src/util/DestroyDetector.h"
 #include <vector>
 
 WS_NS_BEGIN
 
-class WSHandler : public DestroyDetector
+class WSHandler : public kev::DestroyDetector
 {
 public:
     using FrameCallback = std::function<KMError(FrameHeader, KMBuffer &)>;

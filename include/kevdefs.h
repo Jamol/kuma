@@ -19,48 +19,54 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __KUMADEFS_H__
-#define __KUMADEFS_H__
+#ifndef __KEVDEFS_H__
+#define __KEVDEFS_H__
 
 #include "kmconf.h"
-#include "kevdefs.h"
+
+#include <functional>
 
 #ifdef KUMA_OS_MAC
-# define KUMA_NS_BEGIN   namespace kuma {;
+# define KEV_NS_BEGIN   namespace kev {;
 #else
-# define KUMA_NS_BEGIN   namespace kuma {
+# define KEV_NS_BEGIN   namespace kev {
 #endif
-#define KUMA_NS_END     }
-#define KUMA_NS_USING   using namespace kuma;
+#define KEV_NS_END     }
+#define KEV_NS_USING   using namespace kev;
 
-KUMA_NS_BEGIN
+KEV_NS_BEGIN
 
 #ifdef KUMA_OS_WIN
 # ifdef KUMA_EXPORTS
-#  define KUMA_API __declspec(dllexport)
+#  define KEV_API __declspec(dllexport)
 # else
-#  define KUMA_API __declspec(dllimport)
+#  define KEV_API __declspec(dllimport)
 # endif
+# undef KEV_API
+# define KEV_API
 #else
-# define KUMA_API
+# define KEV_API
 #endif
 
-using PollType = kev::PollType;
-using IOCallback = kev::IOCallback;
-using KMEvent = kev::KMEvent;
-using SOCKET_FD = kev::SOCKET_FD;
-using TimerMode = kev::TimerMode;
 #ifdef KUMA_OS_WIN
-using iovec = kev::iovec;
+using SOCKET_FD = uintptr_t;
+const SOCKET_FD INVALID_FD = (SOCKET_FD)~0;
+#else
+using SOCKET_FD = int;
+const SOCKET_FD INVALID_FD = ((SOCKET_FD)-1);
 #endif
-const SOCKET_FD INVALID_FD      = kev::INVALID_FD;
-const uint32_t kEventRead       = kev::kEventRead;
-const uint32_t kEventWrite      = kev::kEventWrite;
-const uint32_t kEventError      = kev::kEventError;
-const uint32_t kEventNetwork    = kev::kEventNetwork;
 
-enum class KMError : int {
-    NOERR               = 0,
+using KMEvent = uint32_t;
+using IOCallback = std::function<void(KMEvent, void*, size_t)>;
+
+const uint32_t kEventRead       = 1;
+const uint32_t kEventWrite      = (1 << 1);
+const uint32_t kEventError      = (1 << 2);
+const uint32_t kEventNetwork    = (kEventRead | kEventWrite | kEventError);
+
+
+enum class Result : int {
+    OK                  = 0,
     FAILED              = -1,
     FATAL               = -2,
     REJECTED            = -3,
@@ -85,32 +91,29 @@ enum class KMError : int {
     DESTROYED           = -699
 };
 
-enum class HttpEvent : int {
-    HEADER_COMPLETE,
-    COMPLETE,
-    HTTP_ERROR
+enum class PollType {
+    NONE,
+    POLL,
+    EPOLL,
+    KQUEUE,
+    SELECT,
+    IOCP,
+    WINDOW
 };
 
-typedef enum {
-    SSL_NONE                    = 0,
-    SSL_ENABLE                  = 0x01,
-    SSL_ALLOW_EXPIRED_CERT      = 0x02,
-    SSL_ALLOW_INVALID_CERT_CN   = 0x04,
-    SSL_ALLOW_UNTRUSTED_CERT    = 0x08,
-    SSL_ALLOW_EXPIRED_ROOT      = 0x10,
-    SSL_ALLOW_ANY_ROOT          = 0x20,
-    SSL_ALLOW_REVOKED_CERT      = 0x40,
-    SSL_ALLOW_SELF_SIGNED_CERT  = 0x80,
-    SSL_VERIFY_HOST_NAME        = 0x1000
-}SslFlag;
-
-enum class SslRole {
-    CLIENT,
-    SERVER
+enum class TimerMode {
+    ONE_SHOT,
+    REPEATING
 };
 
-#define UDP_FLAG_MULTICAST  1
 
-KUMA_NS_END
+#ifdef KUMA_OS_WIN
+struct iovec {
+    unsigned long   iov_len;
+    char*           iov_base;
+};
+#endif
+
+KEV_NS_END
 
 #endif

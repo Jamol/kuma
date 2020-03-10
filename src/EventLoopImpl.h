@@ -19,215 +19,39 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef __EventLoopImpl_H__
-#define __EventLoopImpl_H__
+#ifndef __KumaEventLoopImpl_H__
+#define __KumaEventLoopImpl_H__
 
 #include "kmapi.h"
-#include "evdefs.h"
-#include "util/kmqueue.h"
-#include "TimerManager.h"
-#include "util/kmobject.h"
+#include "libkev/src/EventLoopImpl.h"
 
-#ifdef KUMA_OS_WIN
-# include <Ws2tcpip.h>
-#endif
-#include <stdint.h>
-#include <thread>
-#include <list>
-#include <atomic>
 
 KUMA_NS_BEGIN
 
-class IOPoll;
-using EventLoopToken = EventLoop::Token::Impl;
-
-class TaskSlot
+class EventLoop::Impl final : public kev::EventLoop::Impl
 {
 public:
-    enum class State
-    {
-        ACTIVE,
-        RUNNING,
-        INACTIVE,
-    };
-    TaskSlot(EventLoop::Task &&t, EventLoopToken *token)
-    : task(std::move(t)), token(token) {}
-    void operator() ()
-    {
-        if (task) {
-            task();
-        }
-    }
-    EventLoop::Task task;
-    State state = State::ACTIVE;
-    EventLoopToken* token;
+    Impl(PollType poll_type = PollType::NONE) : kev::EventLoop::Impl(poll_type) {}
+    ~Impl() = default;
 };
-using TaskQueue = DLQueue<TaskSlot>;
-using TaskNodePtr = TaskQueue::NodePtr;
+using EventLoopPtr = kev::EventLoopPtr;
+using EventLoopWeakPtr = kev::EventLoopWeakPtr;
 
-enum class LoopActivity {
-    EXIT,
-};
-using ObserverCallback = std::function<void(LoopActivity)>;
-using ObserverToken = std::weak_ptr<DLQueue<ObserverCallback>::DLNode>;
-
-/**
- * PendingObject is used to cache the IOCP context when destroying IocpSocket that 
- * has pending operations. It will be removed after all pending operatios are completed,
- * or the loop exited
- */
-class PendingObject
+class EventLoop::Token::Impl : public kev::EventLoop::Token::Impl
 {
 public:
-    virtual ~PendingObject() {}
-    virtual bool isPending() const = 0;
-    virtual void onLoopExit() = 0;
-
-public:
-    PendingObject* next_ = nullptr;
-    PendingObject* prev_ = nullptr;
+    Impl() = default;
+    ~Impl() = default;
 };
+using EventLoopToken = kev::EventLoopToken;
 
-class EventLoop::Impl final : public KMObject
+class Timer::Impl : public kev::Timer::Impl
 {
 public:
-    Impl(PollType poll_type = PollType::NONE);
-    ~Impl();
-
-public:
-    bool init();
-    KMError registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
-    KMError updateFd(SOCKET_FD fd, uint32_t events);
-    KMError unregisterFd(SOCKET_FD fd, bool close_fd);
-    TimerManagerPtr getTimerMgr() { return timer_mgr_; }
+    using TimerCallback = Timer::TimerCallback;
     
-    PollType getPollType() const;
-    bool isPollLT() const; // level trigger
-    
-    KMError appendObserver(ObserverCallback cb, EventLoopToken *token);
-    KMError removeObserver(EventLoopToken *token);
-    
-public:
-    bool inSameThread() const { return std::this_thread::get_id() == thread_id_; }
-    std::thread::id threadId() const { return thread_id_; }
-    KMError appendTask(Task task, EventLoopToken *token);
-    KMError removeTask(EventLoopToken *token);
-
-    template<typename F>
-    auto invoke(F &&f)
-    {
-        KMError err;
-        return invoke(std::forward<F>(f), err);
-    }
-
-    template<typename F, std::enable_if_t<!std::is_same<decltype(std::declval<F>()()), void>{}, int> = 0>
-    auto invoke(F &&f, KMError &err)
-    {
-        static_assert(!std::is_same<decltype(f()), void>{}, "is void");
-        if (inSameThread()) {
-            return f();
-        }
-        using ReturnType = decltype(f());
-        ReturnType retval;
-        auto task_sync = [&] { retval = f(); };
-        err = sync(std::move(task_sync));
-        return retval;
-    }
-
-    template<typename F, std::enable_if_t<std::is_same<decltype(std::declval<F>()()), void>{}, int> = 0>
-    void invoke(F &&f, KMError &err)
-    {
-        static_assert(std::is_same<decltype(f()), void>{}, "not void");
-        if (inSameThread()) {
-            return f();
-        }
-        err = sync(std::forward<F>(f));
-    }
-
-    template<typename F, std::enable_if_t<!std::is_copy_constructible<F>{}, int> = 0>
-    KMError sync(F &&f)
-    {
-        wrapper<F> wf{std::forward<F>(f)};
-        return sync(Task(std::move(wf)));
-    }
-    KMError sync(Task task);
-
-    template<typename F, std::enable_if_t<!std::is_copy_constructible<F>{}, int> = 0>
-    KMError async(F &&f, EventLoopToken *token=nullptr)
-    {
-        wrapper<F> wf{std::forward<F>(f)};
-        return async(Task(std::move(wf)), token);
-    }
-    KMError async(Task task, EventLoopToken *token=nullptr);
-
-    template<typename F, std::enable_if_t<!std::is_copy_constructible<F>{}, int> = 0>
-    KMError post(F &&f, EventLoopToken *token=nullptr)
-    {
-        wrapper<F> wf{std::forward<F>(f)};
-        return post(Task(std::move(wf)), token);
-    }
-    KMError post(Task task, EventLoopToken *token=nullptr);
-
-    void wakeup();
-    
-    void loopOnce(uint32_t max_wait_ms);
-    void loop(uint32_t max_wait_ms = -1);
-    void stop();
-    bool stopped() const { return stop_loop_; }
-
-    void appendPendingObject(PendingObject *obj);
-    void removePendingObject(PendingObject *obj);
-
-protected:
-    void processTasks();
-    
-protected:
-    using ObserverQueue = DLQueue<ObserverCallback>;
-    using LockType = std::mutex;
-    using LockGuard = std::lock_guard<LockType>;
-    
-    IOPoll*             poll_;
-    std::atomic<bool>   stop_loop_{ false };
-    std::thread::id     thread_id_;
-    
-    TaskQueue           task_queue_;
-    LockType            task_mutex_;
-    LockType            task_run_mutex_;
-    
-    ObserverQueue       obs_queue_;
-    LockType            obs_mutex_;
-    
-    TimerManagerPtr     timer_mgr_;
-
-    PendingObject*      pending_objects_ = nullptr;
-};
-using EventLoopPtr = std::shared_ptr<EventLoop::Impl>;
-using EventLoopWeakPtr = std::weak_ptr<EventLoop::Impl>;
-
-class EventLoop::Token::Impl
-{
-public:
-    Impl();
-    ~Impl();
-    
-    void eventLoop(const EventLoopPtr &loop);
-    EventLoopPtr eventLoop();
-    
-    void appendTaskNode(TaskNodePtr &node);
-    void removeTaskNode(TaskNodePtr &node);
-    
-    bool expired();
-    void reset();
-    
-protected:
-    friend class EventLoop::Impl;
-    EventLoopWeakPtr loop_;
-    
-    // task_nodes_ is protected by EventLoop task_mutex_
-    std::list<TaskNodePtr> task_nodes_;
-    
-    bool observed = false;
-    ObserverToken obs_token_;
+    Impl(kev::TimerManagerPtr mgr) : kev::Timer::Impl(std::move(mgr)) {}
+    ~Impl() = default;
 };
 
 KUMA_NS_END

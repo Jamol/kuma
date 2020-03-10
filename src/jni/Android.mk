@@ -4,6 +4,8 @@ include $(CLEAR_VARS)
 
 OPENSSL_PATH := $(MY_ROOT)/third_party/openssl
 OPENSSL_LIB_PATH := $(OPENSSL_PATH)/lib/android/$(APP_ABI)
+LIBKEV_PATH := $(MY_ROOT)/third_party/libkev
+LIBKEV_LIB_PATH := $(LIBKEV_PATH)/lib/android/$(APP_ABI)
 
 ifeq ($(NDK_DEBUG), 1)
 	NDK_APP_DST_DIR := $(MY_ROOT)/bin/android/$(APP_ABI)/debug
@@ -29,19 +31,13 @@ MY_ZLIB_SRC_FILES := \
     $(MY_ZLIB_DIR)/zutil.c
 
 LOCAL_SRC_FILES := \
-    EventLoopImpl.cpp \
     AcceptorBase.cpp \
     SocketBase.cpp \
     UdpSocketBase.cpp \
     TcpSocketImpl.cpp \
     UdpSocketImpl.cpp \
-    TimerManager.cpp \
     TcpListenerImpl.cpp \
     TcpConnection.cpp \
-    poll/EPoll.cpp \
-    poll/VPoll.cpp \
-    poll/SelectPoll.cpp \
-    poll/Notifier.cpp \
     http/Uri.cpp \
     http/HttpHeader.cpp \
     http/HttpMessage.cpp \
@@ -79,7 +75,6 @@ LOCAL_SRC_FILES := \
     ws/exts/PMCE_Base.cpp \
     ws/exts/WSExtension.cpp \
     util/util.cpp \
-    util/kmtrace.cpp \
     util/base64.cpp \
     ssl/SslHandler.cpp \
     ssl/BioHandler.cpp \
@@ -99,7 +94,7 @@ LOCAL_C_INCLUDES := \
 	$(MY_ROOT)/third_party \
 	$(OPENSSL_PATH)/include
 
-LOCAL_LDLIBS := -ldl -llog -l$(OPENSSL_LIB_PATH)/libssl.1.1.so -l$(OPENSSL_LIB_PATH)/libcrypto.1.1.so
+LOCAL_LDLIBS := -ldl -llog -l$(LIBKEV_LIB_PATH)/libkev.a -l$(OPENSSL_LIB_PATH)/libssl.1.1.so -l$(OPENSSL_LIB_PATH)/libcrypto.1.1.so
 LOCAL_CFLAGS := -w -O2 -D__ANDROID__ -DKUMA_HAS_OPENSSL
 LOCAL_CPPFLAGS := -std=c++14
 LOCAL_CPP_FEATURES := rtti exceptions

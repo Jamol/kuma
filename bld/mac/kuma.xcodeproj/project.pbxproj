@@ -7,10 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		1F2D097E23E7AE220032D123 /* skutils.h in Headers */ = {isa = PBXBuildFile; fileRef = 1F2D097D23E7AE220032D123 /* skutils.h */; };
+		1F289CBC24173F4E005DA5A6 /* util.h in Headers */ = {isa = PBXBuildFile; fileRef = 1F289CBA24173F4E005DA5A6 /* util.h */; };
+		1F289CBD24173F4E005DA5A6 /* util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1F289CBB24173F4E005DA5A6 /* util.cpp */; };
 		1FA44484238B71E200C1EC92 /* kmapi.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA4447E238B71E200C1EC92 /* kmapi.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		1FA44485238B71E200C1EC92 /* kmbuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA4447F238B71E200C1EC92 /* kmbuffer.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		1FA44486238B71E200C1EC92 /* evdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44480238B71E200C1EC92 /* evdefs.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		1FA44487238B71E200C1EC92 /* kmconf.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44481238B71E200C1EC92 /* kmconf.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		1FA44488238B71E200C1EC92 /* kmdefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44482238B71E200C1EC92 /* kmdefs.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		1FA44494238B72EA00C1EC92 /* ProxyConnectionImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA4448B238B72EA00C1EC92 /* ProxyConnectionImpl.cpp */; };
@@ -49,14 +49,6 @@
 		1FA444D2238B735100C1EC92 /* HttpRequestImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA444BB238B735100C1EC92 /* HttpRequestImpl.h */; };
 		1FA444D3238B735100C1EC92 /* HttpResponseImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA444BC238B735100C1EC92 /* HttpResponseImpl.cpp */; };
 		1FA444D4238B735100C1EC92 /* HttpCache.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA444BD238B735100C1EC92 /* HttpCache.h */; };
-		1FA444E1238B73E100C1EC92 /* VPoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA444D9238B73E100C1EC92 /* VPoll.cpp */; };
-		1FA444E2238B73E100C1EC92 /* SocketNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA444DA238B73E100C1EC92 /* SocketNotifier.h */; };
-		1FA444E3238B73E100C1EC92 /* IOPoll.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA444DB238B73E100C1EC92 /* IOPoll.h */; };
-		1FA444E4238B73E100C1EC92 /* Notifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA444DC238B73E100C1EC92 /* Notifier.h */; };
-		1FA444E5238B73E100C1EC92 /* KQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA444DD238B73E100C1EC92 /* KQueue.cpp */; };
-		1FA444E6238B73E100C1EC92 /* Notifier.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA444DE238B73E100C1EC92 /* Notifier.cpp */; };
-		1FA444E7238B73E100C1EC92 /* PipeNotifier.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA444DF238B73E100C1EC92 /* PipeNotifier.h */; };
-		1FA444E8238B73E100C1EC92 /* SelectPoll.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA444E0238B73E100C1EC92 /* SelectPoll.cpp */; };
 		1FA444F2238B742200C1EC92 /* SslHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA444EA238B742200C1EC92 /* SslHandler.h */; };
 		1FA444F3238B742200C1EC92 /* SioHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA444EB238B742200C1EC92 /* SioHandler.cpp */; };
 		1FA444F4238B742200C1EC92 /* SioHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA444EC238B742200C1EC92 /* SioHandler.h */; };
@@ -66,17 +58,7 @@
 		1FA444F8238B742300C1EC92 /* OpenSslLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA444F0238B742200C1EC92 /* OpenSslLib.cpp */; };
 		1FA444F9238B742300C1EC92 /* BioHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA444F1238B742200C1EC92 /* BioHandler.h */; };
 		1FA44508238B746300C1EC92 /* base64.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA444FB238B746300C1EC92 /* base64.h */; };
-		1FA44509238B746300C1EC92 /* util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA444FC238B746300C1EC92 /* util.cpp */; };
 		1FA4450A238B746300C1EC92 /* base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA444FD238B746300C1EC92 /* base64.cpp */; };
-		1FA4450B238B746300C1EC92 /* util.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA444FE238B746300C1EC92 /* util.h */; };
-		1FA4450C238B746300C1EC92 /* DestroyDetector.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA444FF238B746300C1EC92 /* DestroyDetector.h */; };
-		1FA4450D238B746300C1EC92 /* kmqueue.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44500238B746300C1EC92 /* kmqueue.h */; };
-		1FA4450E238B746300C1EC92 /* defer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44501238B746300C1EC92 /* defer.h */; };
-		1FA4450F238B746300C1EC92 /* SmartAssert.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44502238B746300C1EC92 /* SmartAssert.h */; };
-		1FA44510238B746300C1EC92 /* kmtrace.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA44503238B746300C1EC92 /* kmtrace.cpp */; };
-		1FA44511238B746300C1EC92 /* ccqueue.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44504238B746300C1EC92 /* ccqueue.h */; };
-		1FA44512238B746300C1EC92 /* kmtrace.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44505238B746300C1EC92 /* kmtrace.h */; };
-		1FA44513238B746300C1EC92 /* kmobject.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44506238B746300C1EC92 /* kmobject.h */; };
 		1FA44514238B746300C1EC92 /* skbuffer.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44507238B746300C1EC92 /* skbuffer.h */; };
 		1FA44522238B74C500C1EC92 /* WSConnection_v1.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44516238B74C500C1EC92 /* WSConnection_v1.h */; };
 		1FA44523238B74C500C1EC92 /* WSHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44517238B74C500C1EC92 /* WSHandler.h */; };
@@ -108,7 +90,6 @@
 		1FA44562238B770500C1EC92 /* kmapi.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA4454D238B770400C1EC92 /* kmapi.cpp */; };
 		1FA44563238B770500C1EC92 /* TcpConnection.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA4454E238B770400C1EC92 /* TcpConnection.cpp */; };
 		1FA44564238B770500C1EC92 /* UdpSocketImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA4454F238B770500C1EC92 /* UdpSocketImpl.cpp */; };
-		1FA44565238B770500C1EC92 /* TimerManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44550238B770500C1EC92 /* TimerManager.h */; };
 		1FA44566238B770500C1EC92 /* DnsResolver.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44551238B770500C1EC92 /* DnsResolver.h */; };
 		1FA44567238B770500C1EC92 /* AcceptorBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44552238B770500C1EC92 /* AcceptorBase.h */; };
 		1FA44568238B770500C1EC92 /* SocketBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA44553238B770500C1EC92 /* SocketBase.h */; };
@@ -120,9 +101,7 @@
 		1FA4456E238B770500C1EC92 /* DnsResolver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA44559238B770500C1EC92 /* DnsResolver.cpp */; };
 		1FA4456F238B770500C1EC92 /* TcpListenerImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA4455A238B770500C1EC92 /* TcpListenerImpl.cpp */; };
 		1FA44570238B770500C1EC92 /* TcpConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA4455B238B770500C1EC92 /* TcpConnection.h */; };
-		1FA44571238B770500C1EC92 /* EventLoopImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA4455C238B770500C1EC92 /* EventLoopImpl.cpp */; };
 		1FA44572238B770500C1EC92 /* TcpListenerImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA4455D238B770500C1EC92 /* TcpListenerImpl.h */; };
-		1FA44573238B770500C1EC92 /* TimerManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA4455E238B770500C1EC92 /* TimerManager.cpp */; };
 		1FA44576238B788000C1EC92 /* GSS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1FA44575238B788000C1EC92 /* GSS.framework */; };
 		1FA44579238B789100C1EC92 /* libcrypto.1.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1FA44577238B789100C1EC92 /* libcrypto.1.1.dylib */; };
 		1FA4457A238B789100C1EC92 /* libssl.1.1.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 1FA44578238B789100C1EC92 /* libssl.1.1.dylib */; };
@@ -169,12 +148,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		1F2D097D23E7AE220032D123 /* skutils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = skutils.h; sourceTree = "<group>"; };
+		1F289CBA24173F4E005DA5A6 /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
+		1F289CBB24173F4E005DA5A6 /* util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = util.cpp; sourceTree = "<group>"; };
 		1FA44471238B6FA700C1EC92 /* kuma.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = kuma.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		1FA44475238B6FA700C1EC92 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		1FA4447E238B71E200C1EC92 /* kmapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmapi.h; sourceTree = "<group>"; };
 		1FA4447F238B71E200C1EC92 /* kmbuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmbuffer.h; sourceTree = "<group>"; };
-		1FA44480238B71E200C1EC92 /* evdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = evdefs.h; sourceTree = "<group>"; };
 		1FA44481238B71E200C1EC92 /* kmconf.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmconf.h; sourceTree = "<group>"; };
 		1FA44482238B71E200C1EC92 /* kmdefs.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmdefs.h; sourceTree = "<group>"; };
 		1FA4448B238B72EA00C1EC92 /* ProxyConnectionImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProxyConnectionImpl.cpp; sourceTree = "<group>"; };
@@ -213,14 +192,6 @@
 		1FA444BB238B735100C1EC92 /* HttpRequestImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpRequestImpl.h; sourceTree = "<group>"; };
 		1FA444BC238B735100C1EC92 /* HttpResponseImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpResponseImpl.cpp; sourceTree = "<group>"; };
 		1FA444BD238B735100C1EC92 /* HttpCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpCache.h; sourceTree = "<group>"; };
-		1FA444D9238B73E100C1EC92 /* VPoll.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VPoll.cpp; sourceTree = "<group>"; };
-		1FA444DA238B73E100C1EC92 /* SocketNotifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SocketNotifier.h; sourceTree = "<group>"; };
-		1FA444DB238B73E100C1EC92 /* IOPoll.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IOPoll.h; sourceTree = "<group>"; };
-		1FA444DC238B73E100C1EC92 /* Notifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Notifier.h; sourceTree = "<group>"; };
-		1FA444DD238B73E100C1EC92 /* KQueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = KQueue.cpp; sourceTree = "<group>"; };
-		1FA444DE238B73E100C1EC92 /* Notifier.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Notifier.cpp; sourceTree = "<group>"; };
-		1FA444DF238B73E100C1EC92 /* PipeNotifier.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PipeNotifier.h; sourceTree = "<group>"; };
-		1FA444E0238B73E100C1EC92 /* SelectPoll.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SelectPoll.cpp; sourceTree = "<group>"; };
 		1FA444EA238B742200C1EC92 /* SslHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SslHandler.h; sourceTree = "<group>"; };
 		1FA444EB238B742200C1EC92 /* SioHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SioHandler.cpp; sourceTree = "<group>"; };
 		1FA444EC238B742200C1EC92 /* SioHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SioHandler.h; sourceTree = "<group>"; };
@@ -230,17 +201,7 @@
 		1FA444F0238B742200C1EC92 /* OpenSslLib.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = OpenSslLib.cpp; sourceTree = "<group>"; };
 		1FA444F1238B742200C1EC92 /* BioHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BioHandler.h; sourceTree = "<group>"; };
 		1FA444FB238B746300C1EC92 /* base64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = base64.h; sourceTree = "<group>"; };
-		1FA444FC238B746300C1EC92 /* util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = util.cpp; sourceTree = "<group>"; };
 		1FA444FD238B746300C1EC92 /* base64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = base64.cpp; sourceTree = "<group>"; };
-		1FA444FE238B746300C1EC92 /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
-		1FA444FF238B746300C1EC92 /* DestroyDetector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DestroyDetector.h; sourceTree = "<group>"; };
-		1FA44500238B746300C1EC92 /* kmqueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmqueue.h; sourceTree = "<group>"; };
-		1FA44501238B746300C1EC92 /* defer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = defer.h; sourceTree = "<group>"; };
-		1FA44502238B746300C1EC92 /* SmartAssert.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SmartAssert.h; sourceTree = "<group>"; };
-		1FA44503238B746300C1EC92 /* kmtrace.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = kmtrace.cpp; sourceTree = "<group>"; };
-		1FA44504238B746300C1EC92 /* ccqueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ccqueue.h; sourceTree = "<group>"; };
-		1FA44505238B746300C1EC92 /* kmtrace.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmtrace.h; sourceTree = "<group>"; };
-		1FA44506238B746300C1EC92 /* kmobject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmobject.h; sourceTree = "<group>"; };
 		1FA44507238B746300C1EC92 /* skbuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = skbuffer.h; sourceTree = "<group>"; };
 		1FA44516238B74C500C1EC92 /* WSConnection_v1.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WSConnection_v1.h; sourceTree = "<group>"; };
 		1FA44517238B74C500C1EC92 /* WSHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WSHandler.h; sourceTree = "<group>"; };
@@ -272,7 +233,6 @@
 		1FA4454D238B770400C1EC92 /* kmapi.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = kmapi.cpp; sourceTree = "<group>"; };
 		1FA4454E238B770400C1EC92 /* TcpConnection.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TcpConnection.cpp; sourceTree = "<group>"; };
 		1FA4454F238B770500C1EC92 /* UdpSocketImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UdpSocketImpl.cpp; sourceTree = "<group>"; };
-		1FA44550238B770500C1EC92 /* TimerManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TimerManager.h; sourceTree = "<group>"; };
 		1FA44551238B770500C1EC92 /* DnsResolver.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DnsResolver.h; sourceTree = "<group>"; };
 		1FA44552238B770500C1EC92 /* AcceptorBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AcceptorBase.h; sourceTree = "<group>"; };
 		1FA44553238B770500C1EC92 /* SocketBase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SocketBase.h; sourceTree = "<group>"; };
@@ -284,9 +244,7 @@
 		1FA44559238B770500C1EC92 /* DnsResolver.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DnsResolver.cpp; sourceTree = "<group>"; };
 		1FA4455A238B770500C1EC92 /* TcpListenerImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TcpListenerImpl.cpp; sourceTree = "<group>"; };
 		1FA4455B238B770500C1EC92 /* TcpConnection.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpConnection.h; sourceTree = "<group>"; };
-		1FA4455C238B770500C1EC92 /* EventLoopImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = EventLoopImpl.cpp; sourceTree = "<group>"; };
 		1FA4455D238B770500C1EC92 /* TcpListenerImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpListenerImpl.h; sourceTree = "<group>"; };
-		1FA4455E238B770500C1EC92 /* TimerManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TimerManager.cpp; sourceTree = "<group>"; };
 		1FA44575238B788000C1EC92 /* GSS.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GSS.framework; path = System/Library/Frameworks/GSS.framework; sourceTree = SDKROOT; };
 		1FA44577238B789100C1EC92 /* libcrypto.1.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libcrypto.1.1.dylib; path = ../../third_party/openssl/lib/mac/x86_64/libcrypto.1.1.dylib; sourceTree = "<group>"; };
 		1FA44578238B789100C1EC92 /* libssl.1.1.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libssl.1.1.dylib; path = ../../third_party/openssl/lib/mac/x86_64/libssl.1.1.dylib; sourceTree = "<group>"; };
@@ -370,7 +328,6 @@
 				1FA4449D238B72FA00C1EC92 /* compr */,
 				1FA444A6238B732900C1EC92 /* http */,
 				1FA4447D238B71C100C1EC92 /* include */,
-				1FA444D8238B73B200C1EC92 /* poll */,
 				1FA4448A238B728E00C1EC92 /* proxy */,
 				1FA444E9238B73EB00C1EC92 /* ssl */,
 				1FA444FA238B742E00C1EC92 /* util */,
@@ -380,7 +337,6 @@
 				1FA44552238B770500C1EC92 /* AcceptorBase.h */,
 				1FA44559238B770500C1EC92 /* DnsResolver.cpp */,
 				1FA44551238B770500C1EC92 /* DnsResolver.h */,
-				1FA4455C238B770500C1EC92 /* EventLoopImpl.cpp */,
 				1FA4454B238B770400C1EC92 /* EventLoopImpl.h */,
 				1FA4454D238B770400C1EC92 /* kmapi.cpp */,
 				1FA4454A238B770400C1EC92 /* SocketBase.cpp */,
@@ -391,8 +347,6 @@
 				1FA4455D238B770500C1EC92 /* TcpListenerImpl.h */,
 				1FA44558238B770500C1EC92 /* TcpSocketImpl.cpp */,
 				1FA44555238B770500C1EC92 /* TcpSocketImpl.h */,
-				1FA4455E238B770500C1EC92 /* TimerManager.cpp */,
-				1FA44550238B770500C1EC92 /* TimerManager.h */,
 				1FA4454C238B770400C1EC92 /* UdpSocketBase.cpp */,
 				1FA44556238B770500C1EC92 /* UdpSocketBase.h */,
 				1FA4454F238B770500C1EC92 /* UdpSocketImpl.cpp */,
@@ -405,7 +359,6 @@
 		1FA4447D238B71C100C1EC92 /* include */ = {
 			isa = PBXGroup;
 			children = (
-				1FA44480238B71E200C1EC92 /* evdefs.h */,
 				1FA4447E238B71E200C1EC92 /* kmapi.h */,
 				1FA4447F238B71E200C1EC92 /* kmbuffer.h */,
 				1FA44481238B71E200C1EC92 /* kmconf.h */,
@@ -474,21 +427,6 @@
 			path = http;
 			sourceTree = "<group>";
 		};
-		1FA444D8238B73B200C1EC92 /* poll */ = {
-			isa = PBXGroup;
-			children = (
-				1FA444DB238B73E100C1EC92 /* IOPoll.h */,
-				1FA444DD238B73E100C1EC92 /* KQueue.cpp */,
-				1FA444DE238B73E100C1EC92 /* Notifier.cpp */,
-				1FA444DC238B73E100C1EC92 /* Notifier.h */,
-				1FA444DF238B73E100C1EC92 /* PipeNotifier.h */,
-				1FA444E0238B73E100C1EC92 /* SelectPoll.cpp */,
-				1FA444DA238B73E100C1EC92 /* SocketNotifier.h */,
-				1FA444D9238B73E100C1EC92 /* VPoll.cpp */,
-			);
-			path = poll;
-			sourceTree = "<group>";
-		};
 		1FA444E9238B73EB00C1EC92 /* ssl */ = {
 			isa = PBXGroup;
 			children = (
@@ -509,18 +447,9 @@
 			children = (
 				1FA444FD238B746300C1EC92 /* base64.cpp */,
 				1FA444FB238B746300C1EC92 /* base64.h */,
-				1FA44504238B746300C1EC92 /* ccqueue.h */,
-				1FA44501238B746300C1EC92 /* defer.h */,
-				1FA444FF238B746300C1EC92 /* DestroyDetector.h */,
-				1FA44506238B746300C1EC92 /* kmobject.h */,
-				1FA44500238B746300C1EC92 /* kmqueue.h */,
-				1FA44503238B746300C1EC92 /* kmtrace.cpp */,
-				1FA44505238B746300C1EC92 /* kmtrace.h */,
 				1FA44507238B746300C1EC92 /* skbuffer.h */,
-				1F2D097D23E7AE220032D123 /* skutils.h */,
-				1FA44502238B746300C1EC92 /* SmartAssert.h */,
-				1FA444FC238B746300C1EC92 /* util.cpp */,
-				1FA444FE238B746300C1EC92 /* util.h */,
+				1F289CBB24173F4E005DA5A6 /* util.cpp */,
+				1F289CBA24173F4E005DA5A6 /* util.h */,
 			);
 			path = util;
 			sourceTree = "<group>";
@@ -652,19 +581,16 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				1FA44486238B71E200C1EC92 /* evdefs.h in Headers */,
 				1FA44487238B71E200C1EC92 /* kmconf.h in Headers */,
 				1FA44485238B71E200C1EC92 /* kmbuffer.h in Headers */,
 				1FA44488238B71E200C1EC92 /* kmdefs.h in Headers */,
 				1FA44484238B71E200C1EC92 /* kmapi.h in Headers */,
-				1FA444E4238B73E100C1EC92 /* Notifier.h in Headers */,
 				1FA444CA238B735100C1EC92 /* HttpParserImpl.h in Headers */,
-				1FA4450D238B746300C1EC92 /* kmqueue.h in Headers */,
 				1FA444C6238B735100C1EC92 /* Http1xResponse.h in Headers */,
+				1F289CBC24173F4E005DA5A6 /* util.h in Headers */,
 				1FA444D2238B735100C1EC92 /* HttpRequestImpl.h in Headers */,
 				1FA44586238B799A00C1EC92 /* hpack_huffman_table.h in Headers */,
 				1FA444CD238B735100C1EC92 /* H1xStream.h in Headers */,
-				1FA4450B238B746300C1EC92 /* util.h in Headers */,
 				1FA444C3238B735100C1EC92 /* httpdefs.h in Headers */,
 				1FA4458B238B799A00C1EC92 /* HPacker.h in Headers */,
 				1FA44523238B74C500C1EC92 /* WSHandler.h in Headers */,
@@ -679,17 +605,12 @@
 				1FA4452B238B74C500C1EC92 /* WSConnection_v2.h in Headers */,
 				1FA44560238B770500C1EC92 /* EventLoopImpl.h in Headers */,
 				1FA44566238B770500C1EC92 /* DnsResolver.h in Headers */,
-				1FA4450F238B746300C1EC92 /* SmartAssert.h in Headers */,
 				1FA445C9238B79EA00C1EC92 /* PMCE_Base.h in Headers */,
-				1FA44565238B770500C1EC92 /* TimerManager.h in Headers */,
 				1FA444CF238B735100C1EC92 /* Http1xRequest.h in Headers */,
 				1FA444C4238B735100C1EC92 /* HttpResponseImpl.h in Headers */,
 				1FA445AB238B79AD00C1EC92 /* h2utils.h in Headers */,
 				1FA445B8238B79AD00C1EC92 /* H2Stream.h in Headers */,
 				1FA445BC238B79AD00C1EC92 /* H2Handshake.h in Headers */,
-				1FA4450C238B746300C1EC92 /* DestroyDetector.h in Headers */,
-				1FA4450E238B746300C1EC92 /* defer.h in Headers */,
-				1FA444E2238B73E100C1EC92 /* SocketNotifier.h in Headers */,
 				1FBE8F6C23C0982400D93E30 /* kmtypes.h in Headers */,
 				1FA445AD238B79AD00C1EC92 /* H2ConnectionMgr.h in Headers */,
 				1FA444D1238B735100C1EC92 /* HttpMessage.h in Headers */,
@@ -702,14 +623,12 @@
 				1FA445AC238B79AD00C1EC92 /* PushClient.h in Headers */,
 				1FA4452A238B74C500C1EC92 /* wsdefs.h in Headers */,
 				1FA444F4238B742200C1EC92 /* SioHandler.h in Headers */,
-				1FA44512238B746300C1EC92 /* kmtrace.h in Headers */,
 				1FA444D4238B735100C1EC92 /* HttpCache.h in Headers */,
 				1FA444A5238B731100C1EC92 /* compr_zlib.h in Headers */,
 				1FA44567238B770500C1EC92 /* AcceptorBase.h in Headers */,
 				1FA44568238B770500C1EC92 /* SocketBase.h in Headers */,
 				1FA445CC238B79EA00C1EC92 /* WSExtension.h in Headers */,
 				1FA44496238B72EA00C1EC92 /* BasicAuthenticator.h in Headers */,
-				1F2D097E23E7AE220032D123 /* skutils.h in Headers */,
 				1FA44508238B746300C1EC92 /* base64.h in Headers */,
 				1FA444C2238B735100C1EC92 /* httputils.h in Headers */,
 				1FA445CE238B79EA00C1EC92 /* ExtensionHandler.h in Headers */,
@@ -720,16 +639,12 @@
 				1FA445BB238B79AD00C1EC92 /* H2Frame.h in Headers */,
 				1FA44588238B799A00C1EC92 /* HPackTable.h in Headers */,
 				1FA44589238B799A00C1EC92 /* StaticTable.h in Headers */,
-				1FA444E7238B73E100C1EC92 /* PipeNotifier.h in Headers */,
 				1FA44526238B74C500C1EC92 /* WebSocketImpl.h in Headers */,
 				1FA44548238B759500C1EC92 /* kuma-Prefix.pch in Headers */,
-				1FA44511238B746300C1EC92 /* ccqueue.h in Headers */,
 				1FA445B6238B79AD00C1EC92 /* H2ConnectionImpl.h in Headers */,
 				1FA44569238B770500C1EC92 /* UdpSocketImpl.h in Headers */,
 				1FA4449A238B72EA00C1EC92 /* proxydefs.h in Headers */,
-				1FA44513238B746300C1EC92 /* kmobject.h in Headers */,
 				1FA444F5238B742200C1EC92 /* OpenSslLib.h in Headers */,
-				1FA444E3238B73E100C1EC92 /* IOPoll.h in Headers */,
 				1FA444CB238B735100C1EC92 /* Uri.h in Headers */,
 				1FA4456B238B770500C1EC92 /* UdpSocketBase.h in Headers */,
 				1FA445CB238B79EA00C1EC92 /* PMCE_Deflate.h in Headers */,
@@ -825,31 +740,24 @@
 				1FA44529238B74C500C1EC92 /* WSHandler.cpp in Sources */,
 				1FA444A2238B731100C1EC92 /* compr_zlib.cpp in Sources */,
 				1FA44525238B74C500C1EC92 /* WebSocketImpl.cpp in Sources */,
-				1FA444E6238B73E100C1EC92 /* Notifier.cpp in Sources */,
 				1FA44524238B74C500C1EC92 /* WSConnection_v2.cpp in Sources */,
 				1FA445B4238B79AD00C1EC92 /* FlowControl.cpp in Sources */,
 				1FA444C5238B735100C1EC92 /* Uri.cpp in Sources */,
-				1FA44509238B746300C1EC92 /* util.cpp in Sources */,
-				1FA44571238B770500C1EC92 /* EventLoopImpl.cpp in Sources */,
 				1FA445CD238B79EA00C1EC92 /* PMCE_Base.cpp in Sources */,
 				1FA445AE238B79AD00C1EC92 /* H2ConnectionImpl.cpp in Sources */,
 				1FA444C1238B735100C1EC92 /* HttpHeader.cpp in Sources */,
 				1FA44546238B753800C1EC92 /* crc32.c in Sources */,
 				1FA4455F238B770500C1EC92 /* SocketBase.cpp in Sources */,
 				1FA44545238B753800C1EC92 /* deflate.c in Sources */,
-				1FA44510238B746300C1EC92 /* kmtrace.cpp in Sources */,
 				1FA444CC238B735100C1EC92 /* HttpRequestImpl.cpp in Sources */,
 				1FA4453F238B753800C1EC92 /* trees.c in Sources */,
 				1FA4452C238B74C500C1EC92 /* WSConnection.cpp in Sources */,
 				1FA4453C238B753800C1EC92 /* uncompr.c in Sources */,
 				1FA444C8238B735100C1EC92 /* Http1xRequest.cpp in Sources */,
-				1FA444E1238B73E100C1EC92 /* VPoll.cpp in Sources */,
-				1FA44573238B770500C1EC92 /* TimerManager.cpp in Sources */,
 				1FA44564238B770500C1EC92 /* UdpSocketImpl.cpp in Sources */,
 				1FA4450A238B746300C1EC92 /* base64.cpp in Sources */,
 				1FA44542238B753800C1EC92 /* compress.c in Sources */,
 				1FA445A6238B79AD00C1EC92 /* h2utils.cpp in Sources */,
-				1FA444E8238B73E100C1EC92 /* SelectPoll.cpp in Sources */,
 				1FA44527238B74C500C1EC92 /* WSConnection_v1.cpp in Sources */,
 				1FA44561238B770500C1EC92 /* UdpSocketBase.cpp in Sources */,
 				1FA445A5238B79AD00C1EC92 /* H2Stream.cpp in Sources */,
@@ -865,7 +773,6 @@
 				1FA445A7238B79AD00C1EC92 /* H2StreamProxy.cpp in Sources */,
 				1FA444BE238B735100C1EC92 /* httputils.cpp in Sources */,
 				1FA4453B238B753800C1EC92 /* inflate.c in Sources */,
-				1FA444E5238B73E100C1EC92 /* KQueue.cpp in Sources */,
 				1FA44587238B799A00C1EC92 /* HPackTable.cpp in Sources */,
 				1FA44563238B770500C1EC92 /* TcpConnection.cpp in Sources */,
 				1FA445C8238B79EA00C1EC92 /* WSExtension.cpp in Sources */,
@@ -873,6 +780,7 @@
 				1FA4453E238B753800C1EC92 /* adler32.c in Sources */,
 				1FA444D3238B735100C1EC92 /* HttpResponseImpl.cpp in Sources */,
 				1FA445BA238B79AD00C1EC92 /* H2Handshake.cpp in Sources */,
+				1F289CBD24173F4E005DA5A6 /* util.cpp in Sources */,
 				1FA4456E238B770500C1EC92 /* DnsResolver.cpp in Sources */,
 				1FA4456D238B770500C1EC92 /* TcpSocketImpl.cpp in Sources */,
 				1FA4449C238B72EA00C1EC92 /* GssapiAuthenticator.cpp in Sources */,
@@ -1020,9 +928,13 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "../../third_party/openssl/lib/mac/$(ARCHS)";
+				LIBRARY_SEARCH_PATHS = (
+					"../../third_party/openssl/lib/mac/$(ARCHS)",
+					"../../third_party/libkev/lib/mac/$(CONFIGURATION)",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OBJROOT = ../../objs/mac;
+				OTHER_LDFLAGS = "-lkev";
 				PRODUCT_BUNDLE_IDENTIFIER = org.jamol.kuma;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;
@@ -1055,9 +967,13 @@
 					"@executable_path/../Frameworks",
 					"@loader_path/Frameworks",
 				);
-				LIBRARY_SEARCH_PATHS = "../../third_party/openssl/lib/mac/$(ARCHS)";
+				LIBRARY_SEARCH_PATHS = (
+					"../../third_party/openssl/lib/mac/$(ARCHS)",
+					"../../third_party/libkev/lib/mac/$(CONFIGURATION)",
+				);
 				MACOSX_DEPLOYMENT_TARGET = 10.9;
 				OBJROOT = ../../objs/mac;
+				OTHER_LDFLAGS = "-lkev";
 				PRODUCT_BUNDLE_IDENTIFIER = org.jamol.kuma;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
 				SKIP_INSTALL = YES;

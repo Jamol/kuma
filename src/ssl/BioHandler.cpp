@@ -60,9 +60,10 @@
 #endif
 
 #include "BioHandler.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/util/util.h"
+#include "libkev/src/util/skutils.h"
 #include "util/util.h"
-#include "util/skutils.h"
 
 #include <openssl/x509v3.h>
 
@@ -135,13 +136,13 @@ int BioHandler::send(const void* data, size_t length)
     do {
         auto ret = writeAppData(ptr + bytes_total, length - bytes_total);
         if (ret < 0) {
-            KUMA_ERRXTRACE("send, failed to write app data");
+            KM_ERRXTRACE("send, failed to write app data");
             return ret;
         }
         bytes_total += ret;
         auto err = trySendSslData();
-        if (km_is_fatal_error(err)) {
-            KUMA_ERRXTRACE("send, failed to send SSL data, err=" << (int)err);
+        if (is_fatal_error(err)) {
+            KM_ERRXTRACE("send, failed to send SSL data, err=" << (int)err);
             return -1;
         }
         if (err != KMError::AGAIN) {
@@ -190,13 +191,13 @@ int BioHandler::receive(void* data, size_t length)
     uint8_t *ptr = static_cast<uint8_t*>(data);
     do {
         auto err = tryRecvSslData();
-        if (km_is_fatal_error(err)) {
-            KUMA_ERRXTRACE("receive, failed to recv SSL data, err=" << (int)err);
+        if (is_fatal_error(err)) {
+            KM_ERRXTRACE("receive, failed to recv SSL data, err=" << (int)err);
             return -1;
         }
         auto ret = readAppData(ptr + bytes_total, length - bytes_total);
         if (ret < 0) {
-            KUMA_ERRXTRACE("receive, failed to read app data");
+            KM_ERRXTRACE("receive, failed to read app data");
             return ret;
         }
         bytes_total += ret;
@@ -219,7 +220,7 @@ BioHandler::SslState BioHandler::handshake()
     if (ret == KMError::AGAIN) {
         return SslState::SSL_HANDSHAKE;
     } else if (ret == KMError::NOERR){
-        KUMA_INFOXTRACE("handshake, success");
+        KM_INFOXTRACE("handshake, success");
         return SslState::SSL_SUCCESS;
     } else {
         return SslState::SSL_ERROR;
@@ -231,7 +232,7 @@ BioHandler::SslState BioHandler::doHandshake()
     SslState state = SslState::SSL_HANDSHAKE;
     do {
         if(!ssl_) {
-            KUMA_ERRXTRACE("handshake, ssl_ is NULL");
+            KM_ERRXTRACE("handshake, ssl_ is NULL");
             state = SslState::SSL_ERROR;
             break;
         }
@@ -255,10 +256,10 @@ BioHandler::SslState BioHandler::doHandshake()
             default:
             {
                 const char* err_str = ERR_reason_error_string(ERR_get_error());
-                KUMA_ERRXTRACE("handshake, error"
+                KM_ERRXTRACE("handshake, error"
                                <<", ssl_status="<<ret
                                <<", ssl_err="<<ssl_err
-                               <<", os_err="<<SKUtils::getLastError()
+                               <<", os_err="<<kev::SKUtils::getLastError()
                                <<", err_msg="<<(err_str?err_str:""));
                 SSL_free(ssl_);
                 ssl_ = NULL;
@@ -278,7 +279,7 @@ BioHandler::SslState BioHandler::doHandshake()
 int BioHandler::writeAppData(const void* data, size_t size)
 {
     if(!ssl_) {
-        KUMA_ERRXTRACE("writeAppData, ssl is NULL");
+        KM_ERRXTRACE("writeAppData, ssl is NULL");
         return -1;
     }
     ERR_clear_error();
@@ -305,10 +306,10 @@ int BioHandler::writeAppData(const void* data, size_t size)
             default:
             {
                 const char* err_str = ERR_reason_error_string(ERR_get_error());
-                KUMA_ERRXTRACE("writeAppData, SSL_write failed"
+                KM_ERRXTRACE("writeAppData, SSL_write failed"
                                <<", ssl_status="<<ret
                                <<", ssl_err="<<ssl_err
-                               <<", errno="<<SKUtils::getLastError()
+                               <<", errno="<<kev::SKUtils::getLastError()
                                <<", err_msg="<<(err_str?err_str:""));
                 ret = -1;
                 break;
@@ -324,14 +325,14 @@ int BioHandler::writeAppData(const void* data, size_t size)
             break;
         }
     }
-    //KUMA_INFOXTRACE("writeAppData, ret: "<<ret<<", len: "<<len);
+    //KM_INFOXTRACE("writeAppData, ret: "<<ret<<", len: "<<len);
     return static_cast<int>(offset);
 }
 
 int BioHandler::readAppData(void* data, size_t size)
 {
     if(!ssl_) {
-        KUMA_ERRXTRACE("readAppData, ssl is NULL");
+        KM_ERRXTRACE("readAppData, ssl is NULL");
         return -1;
     }
     ERR_clear_error();
@@ -347,7 +348,7 @@ int BioHandler::readAppData(void* data, size_t size)
             break;
         case SSL_ERROR_ZERO_RETURN:
             ret = -1;
-            KUMA_INFOXTRACE("readAppData, SSL_ERROR_ZERO_RETURN, len="<<size);
+            KM_INFOXTRACE("readAppData, SSL_ERROR_ZERO_RETURN, len="<<size);
             break;
         case SSL_ERROR_SYSCALL:
             if(errno == EAGAIN || errno == EINTR) {
@@ -358,10 +359,10 @@ int BioHandler::readAppData(void* data, size_t size)
         default:
         {
             const char* err_str = ERR_reason_error_string(ERR_get_error());
-            KUMA_ERRXTRACE("readAppData, SSL_read failed"
+            KM_ERRXTRACE("readAppData, SSL_read failed"
                            <<", ssl_status="<<ret
                            <<", ssl_err="<<ssl_err
-                           <<", os_err="<<SKUtils::getLastError()
+                           <<", os_err="<<kev::SKUtils::getLastError()
                            <<", err_msg="<<(err_str?err_str:""));
             ret = -1;
             break;
@@ -372,7 +373,7 @@ int BioHandler::readAppData(void* data, size_t size)
         cleanup();
     }
     
-    //KUMA_INFOXTRACE("readAppData, ret: "<<ret);
+    //KM_INFOXTRACE("readAppData, ret: "<<ret);
     return ret;
 }
 
@@ -413,7 +414,7 @@ KMError BioHandler::trySendSslData()
     if (!send_buf_.empty()) {
         auto ret = sendData(send_buf_);
         if (ret < 0) {
-            KUMA_ERRXTRACE("trySendSslData, failed to send data");
+            KM_ERRXTRACE("trySendSslData, failed to send data");
             return KMError::SOCK_ERROR;
         }
         if (!send_buf_.empty()) {
@@ -434,12 +435,12 @@ KMError BioHandler::trySendSslData()
                 }
             }
             else {
-                KUMA_ERRXTRACE("trySendSslData, failed to send data 2");
+                KM_ERRXTRACE("trySendSslData, failed to send data 2");
                 return KMError::SOCK_ERROR;
             }
         }
         else if (ssl_read < 0) {
-            KUMA_ERRXTRACE("trySendSslData, failed to read SSL data, ret=" << ssl_read);
+            KM_ERRXTRACE("trySendSslData, failed to read SSL data, ret=" << ssl_read);
             return KMError::SSL_ERROR;
         }
     } while (ssl_read > 0);
@@ -452,7 +453,7 @@ KMError BioHandler::tryRecvSslData()
     if (!recv_buf_.empty()) {
         auto ret = writeSslData(recv_buf_);
         if (ret < 0) {
-            KUMA_ERRXTRACE("tryRecvSslData, failed to write SSL data");
+            KM_ERRXTRACE("tryRecvSslData, failed to write SSL data");
             return KMError::SSL_ERROR;
         }
         if (!recv_buf_.empty()) {
@@ -474,12 +475,12 @@ KMError BioHandler::tryRecvSslData()
                 }
             }
             else { // fatal error
-                KUMA_ERRXTRACE("tryRecvSslData, failed to write SSL data 2");
+                KM_ERRXTRACE("tryRecvSslData, failed to write SSL data 2");
                 return KMError::SSL_ERROR;
             }
         }
         else if (bytes_recv < 0) {
-            KUMA_ERRXTRACE("tryRecvSslData, failed to recv data");
+            KM_ERRXTRACE("tryRecvSslData, failed to recv data");
             return KMError::SOCK_ERROR;
         }
     } while (bytes_recv > 0);
@@ -489,7 +490,7 @@ KMError BioHandler::tryRecvSslData()
 
 KMError BioHandler::trySslHandshake()
 {
-    KUMA_ASSERT(getState() == SslState::SSL_NONE ||
+    KM_ASSERT(getState() == SslState::SSL_NONE ||
                 getState() == SslState::SSL_HANDSHAKE);
     bool try_recv = true;
     bool try_send = true;
@@ -497,8 +498,8 @@ KMError BioHandler::trySslHandshake()
     do {
         if (try_recv) {
             auto ret = tryRecvSslData();
-            if (km_is_fatal_error(ret)) {
-                KUMA_ERRXTRACE("trySslHandshake, failed to recv SSL data, ret=" << (int)ret);
+            if (is_fatal_error(ret)) {
+                KM_ERRXTRACE("trySslHandshake, failed to recv SSL data, ret=" << (int)ret);
                 return ret;
             }
             else if (ret != KMError::AGAIN) {
@@ -508,14 +509,14 @@ KMError BioHandler::trySslHandshake()
         
         auto ssl_state = doHandshake();
         if (SslState::SSL_ERROR == ssl_state) {
-            KUMA_ERRXTRACE("trySslHandshake, SSL handshake failed");
+            KM_ERRXTRACE("trySslHandshake, SSL handshake failed");
             return KMError::SSL_ERROR;
         }
         
         if (try_send) {
             auto ret = trySendSslData();
-            if (km_is_fatal_error(ret)) {
-                KUMA_ERRXTRACE("trySslHandshake, failed to send SSL data, ret=" << (int)ret);
+            if (is_fatal_error(ret)) {
+                KM_ERRXTRACE("trySslHandshake, failed to send SSL data, ret=" << (int)ret);
                 return ret;
             }
             else if (ret != KMError::AGAIN) {
@@ -525,7 +526,7 @@ KMError BioHandler::trySslHandshake()
                 // try handshake again since SSL data may be sent out
                 auto ssl_state = doHandshake();
                 if (SslState::SSL_ERROR == ssl_state) {
-                    KUMA_ERRXTRACE("trySslHandshake, SSL handshake failed 2");
+                    KM_ERRXTRACE("trySslHandshake, SSL handshake failed 2");
                     return KMError::SSL_ERROR;
                 }
                 else if (SslState::SSL_SUCCESS == ssl_state) {

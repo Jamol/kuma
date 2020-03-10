@@ -20,7 +20,7 @@
  */
 
 #include "H2ConnectionMgr.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
 #include "DnsResolver.h"
 
 using namespace kuma;
@@ -55,7 +55,7 @@ H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &host, uint16_t
     std::string ip;
     sockaddr_storage ss_addr = { 0 };
     auto ret = DnsResolver::get().resolve(host, port, ss_addr);
-    if (ret == KMError::NOERR && km_get_sock_addr(ss_addr, ip, nullptr) == 0) {
+    if (ret == KMError::NOERR && kev::km_get_sock_addr(ss_addr, ip, nullptr) == 0) {
         key = ip + ":" + std::to_string(port);
     } else {
         key = host + ":" + std::to_string(port);

@@ -23,9 +23,9 @@
 
 #include "EventLoopImpl.h"
 #include "IocpAcceptor.h"
-#include "util/util.h"
-#include "util/kmtrace.h"
-#include "util/skutils.h"
+#include "libkev/src/util/util.h"
+#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/util/skutils.h"
 
 #include <MSWSock.h>
 #include <Ws2tcpip.h>
@@ -71,7 +71,7 @@ bool IocpAcceptor::postAcceptOperation()
 {
     accept_fd_ = WSASocketW(ss_family_, SOCK_STREAM, IPPROTO_IP, NULL, 0, WSA_FLAG_OVERLAPPED);
     if (INVALID_FD == accept_fd_) {
-        KUMA_ERRXTRACE("postAcceptOperation, socket failed, err=" << SKUtils::getLastError());
+        KM_ERRXTRACE("postAcceptOperation, socket failed, err=" << SKUtils::getLastError());
         return false;
     }
     return IocpBase::postAcceptOperation(fd_, accept_fd_);

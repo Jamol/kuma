@@ -28,14 +28,14 @@
 #include "http/HttpMessage.h"
 #include "http/HttpParserImpl.h"
 #include "http/Uri.h"
-#include "util/kmobject.h"
-#include "util/DestroyDetector.h"
+#include "libkev/src/util/kmobject.h"
+#include "libkev/src/util/DestroyDetector.h"
 #include "proxy/ProxyConnectionImpl.h"
 
 KUMA_NS_BEGIN
 
 
-class H1xStream : public KMObject, public DestroyDetector
+class H1xStream : public kev::KMObject, public kev::DestroyDetector
 {
 public:
     using DataCallback = std::function<void(KMBuffer &)>;
@@ -98,7 +98,7 @@ public:
         } else {
             return loop->post([r = std::move(r)]{
                 r();
-            }, &loop_token_) == KMError::NOERR;
+            }, &loop_token_) == kev::Result::OK;
         }
     }
     

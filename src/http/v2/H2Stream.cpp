@@ -21,7 +21,7 @@
 
 #include "H2Stream.h"
 #include "H2ConnectionImpl.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
 
 #include <algorithm>
 
@@ -94,7 +94,7 @@ int H2Stream::sendData(const void *data, size_t len, bool end_stream)
     size_t window_size = std::min<size_t>(stream_window_size, conn_window_size);
     if (0 == window_size && (!end_stream || len != 0)) {
         write_blocked_ = true;
-        KUMA_INFOXTRACE("sendData, remote window 0, cws="<<conn_window_size<<", sws="<<stream_window_size);
+        KM_INFOXTRACE("sendData, remote window 0, cws="<<conn_window_size<<", sws="<<stream_window_size);
         if (conn_window_size == 0) {
             conn_->appendBlockedStream(stream_id_);
         }
@@ -108,7 +108,7 @@ int H2Stream::sendData(const void *data, size_t len, bool end_stream)
     }
     frame.setData(data, send_len);
     auto ret = conn_->sendH2Frame(&frame);
-    //KUMA_INFOXTRACE("sendData, len="<<len<<", send_len="<<send_len<<", ret="<<int(ret)<<", win="<<flow_ctrl_.remoteWindowSize());
+    //KM_INFOXTRACE("sendData, len="<<len<<", send_len="<<send_len<<", ret="<<int(ret)<<", win="<<flow_ctrl_.remoteWindowSize());
     if (KMError::NOERR == ret) {
         if (end_stream) {
             endStreamSent();
@@ -141,7 +141,7 @@ int H2Stream::sendData(const KMBuffer &buf, bool end_stream)
     size_t window_size = std::min<size_t>(stream_window_size, conn_window_size);
     if (0 == window_size && (!end_stream || buf_len != 0)) {
         write_blocked_ = true;
-        KUMA_INFOXTRACE("sendData, remote window 0, cws="<<conn_window_size<<", sws="<<stream_window_size);
+        KM_INFOXTRACE("sendData, remote window 0, cws="<<conn_window_size<<", sws="<<stream_window_size);
         if (conn_window_size == 0) {
             conn_->appendBlockedStream(stream_id_);
         }
@@ -161,7 +161,7 @@ int H2Stream::sendData(const KMBuffer &buf, bool end_stream)
         frame.setData(buf);
     }
     auto ret = conn_->sendH2Frame(&frame);
-    //KUMA_INFOXTRACE("sendData, len="<<len<<", send_len="<<send_len<<", ret="<<int(ret)<<", win="<<flow_ctrl_.remoteWindowSize());
+    //KM_INFOXTRACE("sendData, len="<<len<<", send_len="<<send_len<<", ret="<<int(ret)<<", win="<<flow_ctrl_.remoteWindowSize());
     if (KMError::NOERR == ret) {
         if (end_stream) {
             endStreamSent();
@@ -290,7 +290,7 @@ bool H2Stream::handleDataFrame(DataFrame *frame)
     }
     bool end_stream = frame->getFlags() & H2_FRAME_FLAG_END_STREAM;
     if (end_stream) {
-        KUMA_INFOXTRACE("handleDataFrame, END_STREAM received");
+        KM_INFOXTRACE("handleDataFrame, END_STREAM received");
         endStreamReceived();
     }
     flow_ctrl_.bytesReceived(frame->size());
@@ -323,7 +323,7 @@ bool H2Stream::handleHeadersFrame(HeadersFrame *frame)
     }
     bool end_stream = frame->getFlags() & H2_FRAME_FLAG_END_STREAM;
     if (end_stream) {
-        KUMA_INFOXTRACE("handleHeadersFrame, END_STREAM received");
+        KM_INFOXTRACE("handleHeadersFrame, END_STREAM received");
         endStreamReceived();
     }
     if (!is_tailer && headers_end_) {
@@ -347,7 +347,7 @@ bool H2Stream::handlePriorityFrame(PriorityFrame *frame)
 
 bool H2Stream::handleRSTStreamFrame(RSTStreamFrame *frame)
 {
-    //KUMA_INFOXTRACE("handleRSTStreamFrame, err="<<frame->getErrorCode()<<", state="<<getState());
+    //KM_INFOXTRACE("handleRSTStreamFrame, err="<<frame->getErrorCode()<<", state="<<getState());
     if (!verifyFrame(frame)) {
         return false;
     }
@@ -377,7 +377,7 @@ bool H2Stream::handlePushFrame(PushPromiseFrame *frame)
 
 bool H2Stream::handleWindowUpdateFrame(WindowUpdateFrame *frame)
 {
-    KUMA_INFOXTRACE("handleWindowUpdateFrame, streamId="<<frame->getStreamId()<<", delta=" << frame->getWindowSizeIncrement()<<", window="<<flow_ctrl_.remoteWindowSize());
+    KM_INFOXTRACE("handleWindowUpdateFrame, streamId="<<frame->getStreamId()<<", delta=" << frame->getWindowSizeIncrement()<<", window="<<flow_ctrl_.remoteWindowSize());
     if (!verifyFrame(frame)) {
         return false;
     }
@@ -414,7 +414,7 @@ bool H2Stream::handleContinuationFrame(ContinuationFrame *frame)
     bool is_tailer = headers_end_;
     bool end_stream = frame->getFlags() & H2_FRAME_FLAG_END_STREAM;
     if (end_stream) {
-        KUMA_INFOXTRACE("handleContinuationFrame, END_STREAM received");
+        KM_INFOXTRACE("handleContinuationFrame, END_STREAM received");
         endStreamReceived();
     }
     bool end_headers = frame->hasEndHeaders();

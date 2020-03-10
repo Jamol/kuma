@@ -24,7 +24,7 @@
 
 #include "kmdefs.h"
 #include "kmapi.h"
-#include "util/kmobject.h"
+#include "libkev/src/util/kmobject.h"
 #include <memory>
 
 #include "h2defs.h"
@@ -34,7 +34,7 @@
 KUMA_NS_BEGIN
 
 // H2Stream works on H2Connection thread
-class H2Stream : public KMObject
+class H2Stream : public kev::KMObject
 {
 public:
     using HeadersCallback = std::function<void(const HeaderVector &, bool)>;
