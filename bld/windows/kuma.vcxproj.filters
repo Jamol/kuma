@@ -25,9 +25,6 @@
     <Filter Include="Source Files\ws">
       <UniqueIdentifier>{390b57f8-8452-430e-946a-c3c9274a01bf}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\poll">
-      <UniqueIdentifier>{c7f6f436-5bb4-4ec3-bdd6-0f82dbfb58bb}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\util">
       <UniqueIdentifier>{681ba974-a1b3-475b-b186-265aa73590d8}</UniqueIdentifier>
     </Filter>
@@ -75,16 +72,10 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\src\EventLoopImpl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\kmapi.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\TcpSocketImpl.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\TimerManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\UdpSocketImpl.cpp">
@@ -111,19 +102,10 @@
     <ClCompile Include="..\..\src\ws\WebSocketImpl.cpp">
       <Filter>Source Files\ws</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\poll\VPoll.cpp">
-      <Filter>Source Files\poll</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\poll\SelectPoll.cpp">
-      <Filter>Source Files\poll</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\util\base64.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\util\util.cpp">
-      <Filter>Source Files\util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\util\kmtrace.cpp">
       <Filter>Source Files\util</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\TcpListenerImpl.cpp">
@@ -153,9 +135,6 @@
     <ClCompile Include="..\..\src\http\v2\hpack\HPackTable.cpp">
       <Filter>Source Files\http\v2\hpack</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\poll\Notifier.cpp">
-      <Filter>Source Files\poll</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\http\Http1xRequest.cpp">
       <Filter>Source Files\http</Filter>
     </ClCompile>
@@ -179,9 +158,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\DnsResolver.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\poll\IocpPoll.cpp">
-      <Filter>Source Files\poll</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\ssl\BioHandler.cpp">
       <Filter>Source Files\ssl</Filter>
@@ -314,9 +290,6 @@
     <ClInclude Include="resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\TimerManager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\UdpSocketImpl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -410,12 +383,6 @@
     <ClInclude Include="..\..\src\util\util.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\util\kmtrace.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\util\kmqueue.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\util\base64.h">
       <Filter>Header Files\util</Filter>
     </ClInclude>
@@ -427,9 +394,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\poll\Notifier.h">
       <Filter>Header Files\poll</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\util\kmobject.h">
-      <Filter>Header Files\util</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\ssl\SioHandler.h">
       <Filter>Header Files\ssl</Filter>
@@ -508,12 +472,6 @@
     </ClInclude>
     <ClInclude Include="..\..\src\proxy\ProxyConnectionImpl.h">
       <Filter>Source Files\proxy</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\util\skutils.h">
-      <Filter>Header Files\util</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\include\evdefs.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\include\kmapi.h">
       <Filter>Header Files</Filter>

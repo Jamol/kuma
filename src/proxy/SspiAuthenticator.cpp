@@ -249,7 +249,7 @@ bool SspiAuthenticator::hasAuthHeader() const
 
 bool SspiAuthenticator::parseDigestChallenge(const std::string &challenge, std::string &realm, std::string &nonce, std::string qop)
 {
-    for_each_token(challenge, ',', [&nonce, &realm, &qop](std::string &t) {
+    kev::for_each_token(challenge, ',', [&nonce, &realm, &qop](std::string &t) {
         std::string k, v;
         auto pos = t.find('=');
         if (pos == std::string::npos) {
@@ -266,13 +266,13 @@ bool SspiAuthenticator::parseDigestChallenge(const std::string &challenge, std::
         else {
             v = t.substr(pos);
         }
-        if (is_equal(k, "nonce")) {
+        if (kev::is_equal(k, "nonce")) {
             nonce = v;
         }
-        else if (is_equal(k, "realm")) {
+        else if (kev::is_equal(k, "realm")) {
             realm = v;
         }
-        else if (is_equal(k, "qop")) {
+        else if (kev::is_equal(k, "qop")) {
             qop = v;
         }
         return true;

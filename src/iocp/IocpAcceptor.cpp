@@ -42,7 +42,7 @@ IocpAcceptor::IocpAcceptor(const EventLoopPtr &loop)
 IocpAcceptor::~IocpAcceptor()
 {
     if (accept_fd_ != INVALID_FD) {
-        SKUtils::close(accept_fd_);
+        kev::SKUtils::close(accept_fd_);
         accept_fd_ = INVALID_FD;
     }
 }
@@ -71,7 +71,7 @@ bool IocpAcceptor::postAcceptOperation()
 {
     accept_fd_ = WSASocketW(ss_family_, SOCK_STREAM, IPPROTO_IP, NULL, 0, WSA_FLAG_OVERLAPPED);
     if (INVALID_FD == accept_fd_) {
-        KM_ERRXTRACE("postAcceptOperation, socket failed, err=" << SKUtils::getLastError());
+        KM_ERRXTRACE("postAcceptOperation, socket failed, err=" << kev::SKUtils::getLastError());
         return false;
     }
     return IocpBase::postAcceptOperation(fd_, accept_fd_);
@@ -83,7 +83,7 @@ void IocpAcceptor::onAccept()
     accept_fd_ = INVALID_FD;
     if (closed_) {
         if (fd != INVALID_FD) {
-            SKUtils::close(fd);
+            kev::SKUtils::close(fd);
         }
         cleanup();
         return;

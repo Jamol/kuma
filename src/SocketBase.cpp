@@ -337,7 +337,7 @@ int SocketBase::send(const iovec* iovs, int count)
     else if (ret < 0) {
         if (EAGAIN == kev::SKUtils::getLastError() ||
 #ifdef KUMA_OS_WIN
-            WSAEWOULDBLOCK == SKUtils::getLastError() || WSA_IO_PENDING
+            WSAEWOULDBLOCK == kev::SKUtils::getLastError() || WSA_IO_PENDING
 #else
             EWOULDBLOCK
 #endif

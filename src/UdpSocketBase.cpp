@@ -382,7 +382,7 @@ int UdpSocketBase::send(const iovec* iovs, int count, const std::string &host, u
     } else if(ret < 0) {
         if(EAGAIN == kev::SKUtils::getLastError() ||
 #ifdef WIN32
-           WSAEWOULDBLOCK == SKUtils::getLastError() || WSA_IO_PENDING
+           WSAEWOULDBLOCK == kev::SKUtils::getLastError() || WSA_IO_PENDING
 #else
            EWOULDBLOCK
 #endif

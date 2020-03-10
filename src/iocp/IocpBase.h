@@ -52,7 +52,7 @@ public:
             iocp_ctx_.reset();
         }
         else if (close_fd && fd != INVALID_FD) {
-            SKUtils::close(fd);
+            kev::SKUtils::close(fd);
         }
     }
 

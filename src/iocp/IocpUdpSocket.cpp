@@ -114,7 +114,7 @@ int IocpUdpSocket::receive(void *data, size_t length, char *ip, size_t ip_len, u
         }
         auto bytes_read = recvBuffer().read(data, length);
         auto ctx = (IocpUdpWrapper*)iocp_ctx_.get();
-        km_get_sock_addr((struct sockaddr*)&ctx->ss_addr_, ctx->addr_len_, ip, (uint32_t)ip_len, &port);
+        kev::km_get_sock_addr((struct sockaddr*)&ctx->ss_addr_, ctx->addr_len_, ip, (uint32_t)ip_len, &port);
         //KM_INFOXTRACE("receive, bytes_read=" << bytes_read<<", len="<<length);
         return static_cast<int>(bytes_read);
     }

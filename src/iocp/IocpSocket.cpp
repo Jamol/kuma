@@ -59,22 +59,22 @@ void IocpSocket::unregisterFd(SOCKET_FD fd, bool close_fd)
 
 KMError IocpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_ms)
 {
-    if (!connect_ex) {
+    if (!kev::connect_ex) {
         return KMError::NOT_SUPPORTED;
     }
     if (INVALID_FD == fd_) {
         fd_ = createFd(ss_addr.ss_family);
         if (INVALID_FD == fd_) {
-            KM_ERRXTRACE("connect_i, socket failed, err=" << SKUtils::getLastError());
+            KM_ERRXTRACE("connect_i, socket failed, err=" << kev::SKUtils::getLastError());
             return KMError::FAILED;
         }
         // need bind before ConnectEx
         sockaddr_storage ss_any = { 0 };
         ss_any.ss_family = ss_addr.ss_family;
-        int addr_len = km_get_addr_length(ss_any);
+        int addr_len = kev::km_get_addr_length(ss_any);
         int ret = ::bind(fd_, (struct sockaddr*)&ss_any, addr_len);
         if (ret < 0) {
-            KM_ERRXTRACE("connect_i, bind failed, err=" << SKUtils::getLastError());
+            KM_ERRXTRACE("connect_i, bind failed, err=" << kev::SKUtils::getLastError());
         }
     }
     setSocketOption();
@@ -96,7 +96,7 @@ KMError IocpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
     uint16_t local_port = 0;
     auto ret = getsockname(fd_, (struct sockaddr*)&ss_addr, &len);
     if (ret != -1) {
-        km_get_sock_addr((struct sockaddr*)&ss_addr, sizeof(ss_addr), local_ip, sizeof(local_ip), &local_port);
+        kev::km_get_sock_addr((struct sockaddr*)&ss_addr, sizeof(ss_addr), local_ip, sizeof(local_ip), &local_port);
     }
 
     KM_INFOXTRACE("connect_i, fd=" << fd_ << ", local_ip=" << local_ip
@@ -155,12 +155,12 @@ int IocpSocket::send(const iovec* iovs, int count)
         ret = -1;
     }
     else if (ret < 0) {
-        if (WSAEWOULDBLOCK == SKUtils::getLastError() || 
-            WSA_IO_PENDING == SKUtils::getLastError()) {
+        if (WSAEWOULDBLOCK == kev::SKUtils::getLastError() ||
+            WSA_IO_PENDING == kev::SKUtils::getLastError()) {
             ret = 0;
         }
         else {
-            KM_ERRXTRACE("send, fail, err=" << SKUtils::getLastError());
+            KM_ERRXTRACE("send, fail, err=" << kev::SKUtils::getLastError());
         }
     }
 

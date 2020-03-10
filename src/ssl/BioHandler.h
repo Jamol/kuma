@@ -27,15 +27,16 @@
 #include "SslHandler.h"
 #include "util/skbuffer.h"
 
-#ifndef KUMA_OS_WIN
+#ifdef KUMA_OS_WIN
+namespace kev {
+    struct iovec;
+}
+#else
 struct iovec;
 #endif
 
 KUMA_NS_BEGIN
 
-#ifdef KUMA_OS_WIN
-struct iovec;
-#endif
 
 class BioHandler : public SslHandler
 {

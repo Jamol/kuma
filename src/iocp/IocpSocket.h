@@ -23,7 +23,6 @@
 #define __IocpSocket_H__
 
 #include "kmdefs.h"
-#include "evdefs.h"
 #include "EventLoopImpl.h"
 #include "DnsResolver.h"
 #include "SocketBase.h"

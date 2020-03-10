@@ -39,7 +39,7 @@
 
 KUMA_NS_BEGIN
 
-class SspiAuthenticator : public KMObject, public ProxyAuthenticator
+class SspiAuthenticator : public kev::KMObject, public ProxyAuthenticator
 {
 public:
     SspiAuthenticator();
