@@ -25,7 +25,7 @@ INCLUDES = -I. -I../include -I$(THIRDPARTYDIR) -I$(OPENSSLDIR)
 ##############################################################################
 #
 #LIBS = $(OPENSSLDIR)/lib/linux/libssl.a $(OPENSSLDIR)/lib/linux/libcrypto.a
-LIBS = $(LIBKEVDIR)/lib/linux/libkev.a
+LIBS = $(LIBKEVDIR)/lib/linux/Release/libkev.a
 
 #
 ##############################################################################

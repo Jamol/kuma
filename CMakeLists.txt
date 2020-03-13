@@ -31,9 +31,6 @@ file(GLOB SOURCE_FILES
   ${PROJ_ROOT_DIR}/src/ws/exts/*.cpp
   ${PROJ_ROOT_DIR}/src/ssl/*.cpp
   ${PROJ_ROOT_DIR}/src/compr/*.cpp
-  ${PROJ_ROOT_DIR}/src/poll/SelectPoll.cpp
-  ${PROJ_ROOT_DIR}/src/poll/VPoll.cpp
-  ${PROJ_ROOT_DIR}/src/poll/Notifier.cpp
   ${PROJ_ROOT_DIR}/src/proxy/BasicAuthenticator.cpp
   ${PROJ_ROOT_DIR}/src/proxy/ProxyAuthenticator.cpp
   ${PROJ_ROOT_DIR}/src/proxy/ProxyConnectionImpl.cpp)
@@ -56,7 +53,6 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     include_directories(${PROJ_ROOT_DIR}/third_party/openssl/include)
     file(GLOB WINDOWS_SOURCES 
         ${PROJ_ROOT_DIR}/src/iocp/*.cpp
-        ${PROJ_ROOT_DIR}/src/poll/IocpPoll.cpp
         ${PROJ_ROOT_DIR}/src/proxy/SspiAuthenticator.cpp)
     
     set(SOURCE_FILES ${SOURCE_FILES} ${WINDOWS_SOURCES})
@@ -64,7 +60,6 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
     include_directories(${PROJ_ROOT_DIR}/third_party/openssl/include)
     set(CMAKE_MACOSX_RPATH 1)
     file(GLOB DARWIN_SOURCES 
-        ${PROJ_ROOT_DIR}/src/poll/KQueue.cpp
         ${PROJ_ROOT_DIR}/src/proxy/GssapiAuthenticator.cpp)
     
     set(SOURCE_FILES ${SOURCE_FILES} ${DARWIN_SOURCES})
@@ -73,11 +68,9 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
     endif ()
 elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     include_directories(/usr/include)
-    file(GLOB LINUX_SOURCES ${PROJ_ROOT_DIR}/src/poll/EPoll.cpp)
     set(SOURCE_FILES ${SOURCE_FILES} ${LINUX_SOURCES})
 elseif (CMAKE_SYSTEM_NAME MATCHES "Android")
     include_directories(${PROJ_ROOT_DIR}/third_party/openssl/include)
-    file(GLOB ANDROID_SOURCES ${PROJ_ROOT_DIR}/src/poll/EPoll.cpp)
     set(SOURCE_FILES ${SOURCE_FILES} ${ANDROID_SOURCES})
 endif ()
 
@@ -144,7 +137,7 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
         link_directories(${PROJ_ROOT_DIR}/third_party/openssl/lib/mac/${CMAKE_OSX_ARCHITECTURES})
     endif ()
 elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -std=c++14")
     link_directories(${PROJ_ROOT_DIR}/third_party/libkev/lib/linux/${CMAKE_BUILD_TYPE})
 elseif (CMAKE_SYSTEM_NAME MATCHES "Android")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -nostdinc++ -fvisibility-inlines-hidden")

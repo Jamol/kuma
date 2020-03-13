@@ -48,7 +48,7 @@ def linux_main(argv):
 
     #build libkev
     libkevPath = workingPath+'/../../../third_party/libkev'
-    run_and_check_error('python '+libkevPath+'/bld/linux/build_windows.py')
+    run_and_check_error('python '+libkevPath+'/bld/linux/build_linux.py')
 
     build_linux(workingPath)
 
