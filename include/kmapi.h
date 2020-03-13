@@ -23,7 +23,6 @@
 #define __KUMAAPI_H__
 
 #include "kmdefs.h"
-#include "evdefs.h"
 #include "kmtypes.h"
 #include "kmbuffer.h"
 
@@ -160,7 +159,7 @@ public:
     template<typename F, std::enable_if_t<!std::is_copy_constructible<F>{}, int> = 0>
     KMError sync(F &&f)
     {
-        wrapper<F> wf{std::forward<F>(f)};
+        kev::lambda_wrapper<F> wf{std::forward<F>(f)};
         return sync(Task(std::move(wf)));
     }
     KMError sync(Task task);
@@ -171,14 +170,15 @@ public:
      * @param task the task to be executed. it will always be executed when call success
      * @param token to be used to cancel the task. If token is null, the caller should
      *              make sure the resources referenced by task are valid when task running
+     * @param debugStr debug message of the f, e.g. file name and line where f is generated
      */
     template<typename F, std::enable_if_t<!std::is_copy_constructible<F>{}, int> = 0>
-    KMError async(F &&f, Token *token=nullptr)
+    KMError async(F &&f, Token *token=nullptr, const char *debugStr=nullptr)
     {
-        wrapper<F> wf{std::forward<F>(f)};
-        return async(Task(std::move(wf)), token);
+        kev::lambda_wrapper<F> wf{std::forward<F>(f)};
+        return async(Task(std::move(wf)), token, debugStr);
     }
-    KMError async(Task task, Token *token=nullptr);
+    KMError async(Task task, Token *token=nullptr, const char *debugStr=nullptr);
     
     /* run the task in loop thread at next time.
      *
@@ -187,12 +187,20 @@ public:
      *              make sure the resources referenced by task are valid when task running
      */
     template<typename F, std::enable_if_t<!std::is_copy_constructible<F>{}, int> = 0>
-    KMError post(F &&f, Token *token=nullptr)
+    KMError post(F &&f, Token *token=nullptr, const char *debugStr=nullptr)
     {
-        wrapper<F> wf{std::forward<F>(f)};
-        return post(Task(std::move(wf)), token);
+        kev::lambda_wrapper<F> wf{std::forward<F>(f)};
+        return post(Task(std::move(wf)), token, debugStr);
     }
-    KMError post(Task task, Token *token=nullptr);
+    KMError post(Task task, Token *token=nullptr, const char *debugStr=nullptr);
+
+    template<typename F, std::enable_if_t<!std::is_copy_constructible<F>{}, int> = 0>
+    KMError postDelayed(uint32_t delay_ms, F &&f, Token *token=nullptr, const char *debugStr=nullptr)
+    {
+        kev::lambda_wrapper<F> wf{std::forward<F>(f)};
+        return postDelayed(delay_ms, Task(std::move(wf)), token, debugStr);
+    }
+    KMError postDelayed(uint32_t delay_ms, Task task, Token *token=nullptr, const char *debugStr=nullptr);
 
     void wakeup();
     
@@ -347,7 +355,7 @@ public:
     template<typename F, std::enable_if_t<!std::is_copy_constructible<F>{}, int> = 0>
     bool schedule(uint32_t delay_ms, TimerMode mode, F &&f)
     {
-        wrapper<F> wf{std::forward<F>(f)};
+        kev::lambda_wrapper<F> wf{std::forward<F>(f)};
         return schedule(delay_ms, mode, TimerCallback(std::move(wf)));
     }
     bool schedule(uint32_t delay_ms, TimerMode mode, TimerCallback cb);
@@ -582,7 +590,7 @@ public:
     KMError attachStream(uint32_t stream_id, H2Connection *conn, HandshakeCallback cb);
     
     /**
-     * @param flags, bit 1 -- no compression flag when PMCE is negotiated
+     * @param flags  bit 1 -- no compression flag when PMCE is negotiated
      */
     int send(const void *data, size_t len, bool is_text, bool is_fin=true, uint32_t flags=0);
     int send(const KMBuffer &buf, bool is_text, bool is_fin=true, uint32_t flags=0);

@@ -20,8 +20,8 @@
 */
 
 #include "GssapiAuthenticator.h"
-#include "util/util.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/util.h"
+#include "libkev/src/util/kmtrace.h"
 #include "util/base64.h"
 
 
@@ -116,7 +116,7 @@ bool GssapiAuthenticator::init(const AuthInfo &auth_info, const RequestInfo &req
                                     &gss_spn_name_);
     if(GSS_ERROR(major_status_))
     {
-        KUMA_ERRXTRACE("init, SPN gss_import_name failed, err=" << getSecurityStatusString(major_status_));
+        KM_ERRXTRACE("init, SPN gss_import_name failed, err=" << getSecurityStatusString(major_status_));
         return false;
     }
     
@@ -146,7 +146,7 @@ bool GssapiAuthenticator::init(const AuthInfo &auth_info, const RequestInfo &req
         
         if(GSS_ERROR(major_status_))
         {
-            KUMA_ERRXTRACE("init, username gss_import_name failed, err=" << getSecurityStatusString(major_status_));
+            KM_ERRXTRACE("init, username gss_import_name failed, err=" << getSecurityStatusString(major_status_));
             return false;
         }
         
@@ -175,7 +175,7 @@ bool GssapiAuthenticator::init(const AuthInfo &auth_info, const RequestInfo &req
         
         if(GSS_ERROR(major_status_))
         {
-            KUMA_ERRXTRACE("init, gss_acquire_cred_with_password failed, err=" << getSecurityStatusString(major_status_));
+            KM_ERRXTRACE("init, gss_acquire_cred_with_password failed, err=" << getSecurityStatusString(major_status_));
             return false;
         }
     }
@@ -220,7 +220,7 @@ bool GssapiAuthenticator::nextAuthToken(const std::string& challenge)
     
     if(GSS_ERROR(major_status_))
     {
-        KUMA_ERRXTRACE("init, gss_init_sec_context failed, err=" << getSecurityStatusString(major_status_));
+        KM_ERRXTRACE("init, gss_init_sec_context failed, err=" << getSecurityStatusString(major_status_));
         return false;
     }
     

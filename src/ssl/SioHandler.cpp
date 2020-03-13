@@ -60,8 +60,8 @@
 #endif
 
 #include "SioHandler.h"
-#include "util/kmtrace.h"
-#include "util/skutils.h"
+#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/util/skutils.h"
 
 #include <openssl/x509v3.h>
 
@@ -86,7 +86,7 @@ KMError SioHandler::init(SslRole ssl_role, SOCKET_FD fd, uint32_t ssl_flags)
     
     int ret = SSL_set_fd(ssl_, static_cast<int>(fd_));
     if(0 == ret) {
-        KUMA_ERRXTRACE("init, SSL_set_fd failed, err="<<ERR_reason_error_string(ERR_get_error()));
+        KM_ERRXTRACE("init, SSL_set_fd failed, err="<<ERR_reason_error_string(ERR_get_error()));
         SSL_free(ssl_);
         ssl_ = NULL;
         return KMError::SSL_ERROR;
@@ -118,7 +118,7 @@ KMError SioHandler::detachSsl(SSL* &ssl, BIO* &nbio)
 SioHandler::SslState SioHandler::sslConnect()
 {
     if(!ssl_) {
-        KUMA_ERRXTRACE("sslConnect, ssl_ is NULL");
+        KM_ERRXTRACE("sslConnect, ssl_ is NULL");
         return SslState::SSL_ERROR;
     }
     
@@ -136,10 +136,10 @@ SioHandler::SslState SioHandler::sslConnect()
         default:
         {
             const char* err_str = ERR_reason_error_string(ERR_get_error());
-            KUMA_ERRXTRACE("sslConnect, error, fd="<<fd_
+            KM_ERRXTRACE("sslConnect, error, fd="<<fd_
                            <<", ssl_status="<<ret
                            <<", ssl_err="<<ssl_err
-                           <<", os_err="<<SKUtils::getLastError()
+                           <<", os_err="<<kev::SKUtils::getLastError()
                            <<", err_msg="<<(err_str?err_str:""));
             SSL_free(ssl_);
             ssl_ = NULL;
@@ -153,7 +153,7 @@ SioHandler::SslState SioHandler::sslConnect()
 SioHandler::SslState SioHandler::sslAccept()
 {
     if(!ssl_) {
-        KUMA_ERRXTRACE("sslAccept, ssl_ is NULL");
+        KM_ERRXTRACE("sslAccept, ssl_ is NULL");
         return SslState::SSL_ERROR;
     }
     
@@ -171,10 +171,10 @@ SioHandler::SslState SioHandler::sslAccept()
         default:
         {
             const char* err_str = ERR_reason_error_string(ERR_get_error());
-            KUMA_ERRXTRACE("sslAccept, error, fd="<<fd_
+            KM_ERRXTRACE("sslAccept, error, fd="<<fd_
                            <<", ssl_status="<<ret
                            <<", ssl_err="<<ssl_err
-                           <<", os_err="<<SKUtils::getLastError()
+                           <<", os_err="<<kev::SKUtils::getLastError()
                            <<", err_msg="<<(err_str?err_str:""));
             SSL_free(ssl_);
             ssl_ = NULL;
@@ -188,7 +188,7 @@ SioHandler::SslState SioHandler::sslAccept()
 int SioHandler::send(const void* data, size_t size)
 {
     if(!ssl_) {
-        KUMA_ERRXTRACE("send, ssl is NULL");
+        KM_ERRXTRACE("send, ssl is NULL");
         return -1;
     }
     ERR_clear_error();
@@ -215,10 +215,10 @@ int SioHandler::send(const void* data, size_t size)
             default:
             {
                 const char* err_str = ERR_reason_error_string(ERR_get_error());
-                KUMA_ERRXTRACE("send, SSL_write failed, fd="<<fd_
+                KM_ERRXTRACE("send, SSL_write failed, fd="<<fd_
                                <<", ssl_status="<<ret
                                <<", ssl_err="<<ssl_err
-                               <<", errno="<<SKUtils::getLastError()
+                               <<", errno="<<kev::SKUtils::getLastError()
                                <<", err_msg="<<(err_str?err_str:""));
                 ret = -1;
                 break;
@@ -234,7 +234,7 @@ int SioHandler::send(const void* data, size_t size)
             break;
         }
     }
-    //KUMA_INFOXTRACE("send, ret: "<<ret<<", len: "<<len);
+    //KM_INFOXTRACE("send, ret: "<<ret<<", len: "<<len);
     return int(offset);
 }
 
@@ -274,7 +274,7 @@ int SioHandler::send(const KMBuffer &buf)
 int SioHandler::receive(void* data, size_t size)
 {
     if(!ssl_) {
-        KUMA_ERRXTRACE("receive, ssl is NULL");
+        KM_ERRXTRACE("receive, ssl is NULL");
         return -1;
     }
     ERR_clear_error();
@@ -290,7 +290,7 @@ int SioHandler::receive(void* data, size_t size)
             break;
         case SSL_ERROR_ZERO_RETURN:
             ret = -1;
-            KUMA_INFOXTRACE("receive, SSL_ERROR_ZERO_RETURN, len="<<size);
+            KM_INFOXTRACE("receive, SSL_ERROR_ZERO_RETURN, len="<<size);
             break;
         case SSL_ERROR_SYSCALL:
             if(errno == EAGAIN || errno == EINTR) {
@@ -301,10 +301,10 @@ int SioHandler::receive(void* data, size_t size)
         default:
         {
             const char* err_str = ERR_reason_error_string(ERR_get_error());
-            KUMA_ERRXTRACE("receive, SSL_read failed, fd="<<fd_
+            KM_ERRXTRACE("receive, SSL_read failed, fd="<<fd_
                            <<", ssl_status="<<ret
                            <<", ssl_err="<<ssl_err
-                           <<", os_err="<<SKUtils::getLastError()
+                           <<", os_err="<<kev::SKUtils::getLastError()
                            <<", err_msg="<<(err_str?err_str:""));
             ret = -1;
             break;
@@ -315,7 +315,7 @@ int SioHandler::receive(void* data, size_t size)
         cleanup();
     }
     
-    //KUMA_INFOXTRACE("receive, ret: "<<ret);
+    //KM_INFOXTRACE("receive, ret: "<<ret);
     return ret;
 }
 
@@ -338,7 +338,7 @@ SioHandler::SslState SioHandler::handshake()
     }
     setState(state);
     if (SslState::SSL_SUCCESS == state) {
-        KUMA_INFOXTRACE("handshake, success, fd="<<fd_);
+        KM_INFOXTRACE("handshake, success, fd="<<fd_);
     }
     else if(SslState::SSL_ERROR == state) {
         cleanup();

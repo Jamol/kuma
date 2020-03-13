@@ -21,6 +21,7 @@
 
 #include "ExtensionHandler.h"
 #include "PMCE_Deflate.h"
+#include "libkev/src/util/util.h"
 
 using namespace kuma;
 using namespace kuma::ws;
@@ -47,9 +48,9 @@ KMError ExtensionHandler::handleOutgoingFrame(FrameHeader hdr, KMBuffer &payload
 KMError ExtensionHandler::negotiateExtensions(const std::string &extensions, bool is_answer)
 {
     bool pmce_done = false;
-    for_each_token(extensions, ',', [this, &pmce_done, is_answer] (std::string &str) {
+    kev::for_each_token(extensions, ',', [this, &pmce_done, is_answer] (std::string &str) {
         std::string extension_name;
-        for_each_token(str, ';', [&extension_name] (std::string &str) {
+        kev::for_each_token(str, ';', [&extension_name] (std::string &str) {
             extension_name = str;
             return false;
         });

@@ -1,8 +1,7 @@
 #include "kmapi.h"
-#include "util/util.h"
 #include "TcpServer.h"
 #include "UdpServer.h"
-#include "util/defer.h"
+#include "../../third_party/libkev/src/util/defer.h"
 #include "testutil.h"
 
 #include <stdio.h>
@@ -23,6 +22,10 @@ using namespace kuma;
 static bool g_exit = false;
 EventLoop main_loop(PollType::NONE);
 std::string www_path;
+
+int km_parse_address(const char* addr,
+                     char* proto, int proto_len,
+                     char* host, int  host_len, unsigned short* port);
 
 #ifdef KUMA_OS_WIN
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
@@ -142,3 +145,71 @@ int main(int argc, char *argv[])
     
     return 0;
 }
+
+int km_parse_address(const char* addr,
+                     char* proto, int proto_len,
+                     char* host, int  host_len, unsigned short* port)
+{
+    if(!addr || !host)
+        return -1;
+    
+    const char* tmp1 = nullptr;
+    int tmp_len = 0;
+    const char* tmp = strstr(addr, "://");
+    if(tmp) {
+        tmp_len = int(proto_len > tmp-addr?
+            tmp-addr:proto_len-1);
+        
+        if(proto) {
+            memcpy(proto, addr, tmp_len);
+            proto[tmp_len] = '\0';
+        }
+        tmp += 3;
+    } else {
+        if(proto) proto[0] = '\0';
+        tmp = addr;
+    }
+    const char* end = strchr(tmp, '/');
+    if(!end)
+        end = addr + strlen(addr);
+    
+    tmp1 = strchr(tmp, '[');
+    if(tmp1) {// ipv6 address
+        tmp = tmp1 + 1;
+        tmp1 = strchr(tmp, ']');
+        if(!tmp1)
+            return -1;
+        tmp_len = int(host_len>tmp1-tmp?
+            tmp1-tmp:host_len-1);
+        memcpy(host, tmp, tmp_len);
+        host[tmp_len] = '\0';
+        tmp = tmp1 + 1;
+        tmp1 = strchr(tmp, ':');
+        if(tmp1 && tmp1 <= end)
+            tmp = tmp1 + 1;
+        else
+            tmp = nullptr;
+    } else {// ipv4 address
+        tmp1 = strchr(tmp, ':');
+        if(tmp1 && tmp1 <= end) {
+            tmp_len = int(host_len>tmp1-tmp?
+                tmp1-tmp:host_len-1);
+            memcpy(host, tmp, tmp_len);
+            host[tmp_len] = '\0';
+            tmp = tmp1 + 1;
+        } else {
+            tmp_len = int(host_len>end-tmp?
+                end-tmp:host_len-1);
+            memcpy(host, tmp, tmp_len);
+            host[tmp_len] = '\0';
+            tmp = nullptr;
+        }
+    }
+    
+    if(port) {
+        *port = tmp ? atoi(tmp) : 0;
+    }
+    
+    return 0;
+}
+

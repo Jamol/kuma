@@ -24,9 +24,8 @@
 
 #include "kmdefs.h"
 #include "kmapi.h"
-#include "evdefs.h"
-#include "util/kmobject.h"
-#include "util/DestroyDetector.h"
+#include "libkev/src/util/kmobject.h"
+#include "libkev/src/util/DestroyDetector.h"
 #include "EventLoopImpl.h"
 #include <stdint.h>
 #ifdef KUMA_OS_WIN
@@ -37,7 +36,7 @@
 
 KUMA_NS_BEGIN
 
-class UdpSocketBase : public KMObject, public DestroyDetector
+class UdpSocketBase : public kev::KMObject, public kev::DestroyDetector
 {
 public:
     using EventCallback = UdpSocket::EventCallback;

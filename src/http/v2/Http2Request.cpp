@@ -22,8 +22,8 @@
 #include "Http2Request.h"
 #include "http/HttpCache.h"
 #include "H2StreamProxy.h"
-#include "util/kmtrace.h"
-#include "util/util.h"
+#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/util/util.h"
 
 #include <string>
 
@@ -100,7 +100,7 @@ void Http2Request::checkResponseHeaders()
     
     auto const &rsp_header = getResponseHeader();
     if (rsp_header.hasContentLength()) {
-        KUMA_INFOXTRACE("checkResponseHeaders, Content-Length=" << rsp_header.getContentLength());
+        KM_INFOXTRACE("checkResponseHeaders, Content-Length=" << rsp_header.getContentLength());
     }
 }
 

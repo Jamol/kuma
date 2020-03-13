@@ -24,7 +24,6 @@
 
 #include "kmdefs.h"
 #include "kmapi.h"
-#include "evdefs.h"
 #include "AcceptorBase.h"
 #include "IocpBase.h"
 

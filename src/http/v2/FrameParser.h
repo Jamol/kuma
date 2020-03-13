@@ -27,7 +27,7 @@
 #include <vector>
 
 #include "H2Frame.h"
-#include "util/DestroyDetector.h"
+#include "libkev/src/util/DestroyDetector.h"
 
 KUMA_NS_BEGIN
 
@@ -44,7 +44,7 @@ public:
     virtual ~FrameCallback() {}
 };
 
-class FrameParser : public DestroyDetector
+class FrameParser : public kev::DestroyDetector
 {
 public:
     FrameParser(FrameCallback *cb);

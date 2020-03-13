@@ -31,7 +31,7 @@ KUMA_NS_BEGIN
 
 class H2StreamProxy;
 
-class Http2Response : public HttpResponse::Impl, public DestroyDetector
+class Http2Response : public HttpResponse::Impl, public kev::DestroyDetector
 {
 public:
     Http2Response(const EventLoopPtr &loop, std::string ver);

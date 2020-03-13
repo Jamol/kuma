@@ -20,8 +20,8 @@
  */
 
 #include "WebSocketImpl.h"
-#include "util/kmtrace.h"
-#include "util/util.h"
+#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/util/util.h"
 #include "exts/ExtensionHandler.h"
 #include "WSConnection_v1.h"
 #include "WSConnection_v2.h"
@@ -36,7 +36,7 @@ using namespace kuma::ws;
 //////////////////////////////////////////////////////////////////////////
 WebSocket::Impl::Impl(const EventLoopPtr &loop, const std::string &http_ver)
 {
-    if (is_equal(http_ver, "HTTP/2.0")) {
+    if (kev::is_equal(http_ver, "HTTP/2.0")) {
         ws_conn_.reset(new WSConnection_V2(loop));
     } else {
         ws_conn_.reset(new WSConnection_V1(loop));
@@ -94,7 +94,7 @@ KMError WebSocket::Impl::setProxyInfo(const ProxyInfo &proxy_info)
 KMError WebSocket::Impl::connect(const std::string& ws_url)
 {
     if(getState() != State::IDLE && getState() != State::CLOSED) {
-        KUMA_ERRXTRACE("connect, invalid state, state="<<getState());
+        KM_ERRXTRACE("connect, invalid state, state="<<getState());
         return KMError::INVALID_STATE;
     }
     ws_handler_.setMode(WSMode::CLIENT);
@@ -212,7 +212,7 @@ int WebSocket::Impl::send(const KMBuffer &buf, bool is_text, bool is_fin, uint32
 
 KMError WebSocket::Impl::close()
 {
-    KUMA_INFOXTRACE("close");
+    KM_INFOXTRACE("close");
     if (getState() == State::OPEN) {
         //sendCloseFrame(1000);
     }
@@ -240,7 +240,7 @@ void WebSocket::Impl::onWsData(KMBuffer &buf)
             }
         }
     } else {
-        KUMA_WARNXTRACE("onWsData, invalid state: "<<getState());
+        KM_WARNXTRACE("onWsData, invalid state: "<<getState());
     }
 }
 
@@ -251,7 +251,7 @@ void WebSocket::Impl::onWsWrite()
 
 void WebSocket::Impl::onError(KMError err)
 {
-    KUMA_ERRXTRACE("onError, err="<<int(err));
+    KM_ERRXTRACE("onError, err="<<int(err));
     cleanup();
     setState(State::IN_ERROR);
     if(error_cb_) error_cb_(err);
@@ -259,7 +259,7 @@ void WebSocket::Impl::onError(KMError err)
 
 void WebSocket::Impl::onStateOpen()
 {
-    KUMA_INFOXTRACE("onStateOpen");
+    KM_INFOXTRACE("onStateOpen");
     setState(State::OPEN);
     if (open_cb_) open_cb_(KMError::NOERR);
 }
@@ -280,9 +280,9 @@ KMError WebSocket::Impl::onWsFrame(ws::FrameHeader hdr, KMBuffer &buf)
                 const KMBuffer &const_buf = buf;
                 const_buf.readChained(hdr, 2);
                 statusCode = (hdr[0] << 8) | hdr[1];
-                KUMA_INFOXTRACE("onWsFrame, close-frame, statusCode="<<statusCode<<", plen="<<(buf_len-2));
+                KM_INFOXTRACE("onWsFrame, close-frame, statusCode="<<statusCode<<", plen="<<(buf_len-2));
             } else {
-                KUMA_INFOXTRACE("onWsFrame, close-frame received");
+                KM_INFOXTRACE("onWsFrame, close-frame received");
             }
             sendCloseFrame(statusCode);
             cleanup();

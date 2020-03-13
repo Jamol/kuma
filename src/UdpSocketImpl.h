@@ -24,7 +24,6 @@
 
 #include "kmdefs.h"
 #include "kmapi.h"
-#include "evdefs.h"
 #include "UdpSocketBase.h"
 #include <stdint.h>
 #ifdef KUMA_OS_WIN

@@ -46,6 +46,10 @@ def linux_main(argv):
         os.makedirs(workingPath)
     os.chdir(workingPath)
 
+    #build libkev
+    libkevPath = workingPath+'/../../../third_party/libkev'
+    run_and_check_error('python '+libkevPath+'/bld/linux/build_linux.py')
+
     build_linux(workingPath)
 
 if __name__ == '__main__':

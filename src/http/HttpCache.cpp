@@ -20,7 +20,8 @@
  */
 
 #include "HttpCache.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/util/util.h"
 
 KUMA_NS_USING
 
@@ -56,7 +57,7 @@ void HttpCache::setCache(const std::string &key, int status_code, HeaderVector h
 void HttpCache::setCache(const std::string &key, int status_code, HeaderVector headers, KMBuffer &body)
 {
     auto max_age = getMaxAgeOfCache(headers);
-    KUMA_INFOTRACE("HttpCache::setCache, key="<<key<<", max_age="<<max_age<<", body="<<body.chainLength());
+    KM_INFOTRACE("HttpCache::setCache, key="<<key<<", max_age="<<max_age<<", body="<<body.chainLength());
     if (max_age <= 0) {
         return;
     }
@@ -72,21 +73,21 @@ HttpCache& HttpCache::instance()
 
 bool HttpCache::isCacheable(const std::string &method, const HeaderVector &headers)
 {
-    if (is_equal(method, "POST") || is_equal(method, "PUT")) {
+    if (kev::is_equal(method, "POST") || kev::is_equal(method, "PUT")) {
         return false;
     }
     bool cacheable = true;
     for (auto &kv : headers) {
-        if (is_equal(kv.first, strCacheControl)) {
+        if (kev::is_equal(kv.first, strCacheControl)) {
             auto &directives = kv.second;
-            for_each_token(directives, ',', [&cacheable] (std::string &d) {
-                if (is_equal(d, "no-store") || is_equal(d, "no-cache")) {
+            kev::for_each_token(directives, ',', [&cacheable] (std::string &d) {
+                if (kev::is_equal(d, "no-store") || kev::is_equal(d, "no-cache")) {
                     cacheable = false;
                     return false;
                 }
                 return true;
             });
-        } else if (is_equal(kv.first, strUpgrade)) {
+        } else if (kev::is_equal(kv.first, strUpgrade)) {
             return false;
         }
     }
@@ -97,10 +98,10 @@ int HttpCache::getMaxAgeOfCache(const HeaderVector &headers)
 {
     int max_age = 0;
     for (auto &kv : headers) {
-        if (is_equal(kv.first, strCacheControl)) {
+        if (kev::is_equal(kv.first, strCacheControl)) {
             auto &directives = kv.second;
-            for_each_token(directives, ',', [&max_age] (std::string &d) {
-                if (is_equal(d, "no-store") || is_equal(d, "no-cache")) {
+            kev::for_each_token(directives, ',', [&max_age] (std::string &d) {
+                if (kev::is_equal(d, "no-store") || kev::is_equal(d, "no-cache")) {
                     return false;
                 }
                 auto p = d.find("max-age=");

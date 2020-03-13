@@ -20,6 +20,7 @@
  */
 
 #include "httputils.h"
+#include "libkev/src/util/util.h"
 
 using namespace kuma;
 
@@ -37,7 +38,7 @@ static const std::string compressed_content_types[] = {
 bool isContentCompressed(const std::string &content_type)
 {
     for (const auto &cct : compressed_content_types) {
-        if (is_equal(content_type, cct)) {
+        if (kev::is_equal(content_type, cct)) {
             return true;
         }
     }

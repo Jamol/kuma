@@ -42,6 +42,10 @@ def windows_main(argv):
         os.mkdir(workingPath)
     os.chdir(workingPath)
 
+    #build libkev
+    libkevPath = workingPath+'/../../../third_party/libkev'
+    run_and_check_error('python '+libkevPath+'/bld/windows/build_windows.py')
+    
     build_windows(workingPath)
 
 if __name__ == '__main__':

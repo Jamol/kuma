@@ -31,7 +31,7 @@
 #include "TcpConnection.h"
 #include "http/HttpParserImpl.h"
 #include "EventLoopImpl.h"
-#include "util/DestroyDetector.h"
+#include "libkev/src/util/DestroyDetector.h"
 #include "proxy/ProxyConnectionImpl.h"
 
 #include <map>
@@ -43,7 +43,7 @@ KUMA_NS_BEGIN
 
 class H2Handshake;
 
-class H2Connection::Impl : public KMObject, public DestroyDetector, public FrameCallback
+class H2Connection::Impl : public kev::KMObject, public kev::DestroyDetector, public FrameCallback
 {
 public:
     using ConnectCallback = std::function<void(KMError)>;
@@ -84,7 +84,7 @@ public:
     uint32_t remoteWindowSize() { return flow_ctrl_.remoteWindowSize(); }
     void appendBlockedStream(uint32_t stream_id);
     
-    void onLoopActivity(LoopActivity acti);
+    void onLoopActivity(kev::LoopActivity acti);
     
     bool sync(EventLoop::Task task);
     bool async(EventLoop::Task task, EventLoopToken *token=nullptr);

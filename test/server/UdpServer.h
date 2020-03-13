@@ -2,7 +2,8 @@
 #define __UdpServer_H__
 
 #include "kmapi.h"
-#include "util/util.h"
+
+#include <string>
 
 using namespace kuma;
 

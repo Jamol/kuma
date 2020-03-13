@@ -20,7 +20,7 @@
  */
 
 #include "FrameParser.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
 
 #include <algorithm>
 
@@ -162,7 +162,7 @@ FrameParser::ParseState FrameParser::parseFrame(const FrameHeader &hdr, const ui
             break;
             
         default:
-            KUMA_WARNTRACE("FrameParser::handleFrame, invalid frame, type="<<frame->type());
+            KM_WARNTRACE("FrameParser::handleFrame, invalid frame, type="<<frame->type());
             break;
     }
     

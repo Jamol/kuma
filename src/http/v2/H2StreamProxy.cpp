@@ -21,8 +21,8 @@
 
 #include "H2StreamProxy.h"
 #include "H2ConnectionMgr.h"
-#include "util/kmtrace.h"
-#include "util/util.h"
+#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/util/util.h"
 #include "h2utils.h"
 
 #include <string>
@@ -66,7 +66,7 @@ KMError H2StreamProxy::addHeader(std::string name, std::string value)
 
 KMError H2StreamProxy::sendRequest(std::string method, std::string url, uint32_t ssl_flags)
 {
-    KUMA_INFOXTRACE("sendRequest, method=" << method << ", url=" << url << ", flags=" << ssl_flags);
+    KM_INFOXTRACE("sendRequest, method=" << method << ", url=" << url << ", flags=" << ssl_flags);
     auto loop = loop_.lock();
     if (!loop) {
         return KMError::INVALID_STATE;
@@ -84,7 +84,7 @@ KMError H2StreamProxy::sendRequest(std::string method, std::string url, uint32_t
     std::string str_port = uri_.getPort();
     uint16_t port = 80;
     ssl_flags = SSL_NONE;
-    if (is_equal("https", uri_.getScheme()) || is_equal("wss", uri_.getScheme())) {
+    if (kev::is_equal("https", uri_.getScheme()) || kev::is_equal("wss", uri_.getScheme())) {
         ssl_flags = SSL_ENABLE | ssl_flags_;
         port = 443;
     }
@@ -95,7 +95,7 @@ KMError H2StreamProxy::sendRequest(std::string method, std::string url, uint32_t
     auto &conn_mgr = H2ConnectionMgr::getRequestConnMgr(ssl_flags != SSL_NONE);
     conn_ = conn_mgr.getConnection(uri_.getHost(), port, ssl_flags, loop, proxy_info_);
     if (!conn_ || !conn_->eventLoop()) {
-        KUMA_ERRXTRACE("sendRequest, failed to get H2Connection");
+        KM_ERRXTRACE("sendRequest, failed to get H2Connection");
         return KMError::INVALID_PARAM;
     }
     auto conn_loop = conn_->eventLoop();
@@ -110,7 +110,7 @@ KMError H2StreamProxy::sendRequest(std::string method, std::string url, uint32_t
             onError_i(err);
         }
     }, &conn_token_)) {
-        KUMA_ERRXTRACE("sendRequest, failed to run on H2Connection, key="<<conn_->getConnectionKey());
+        KM_ERRXTRACE("sendRequest, failed to run on H2Connection, key="<<conn_->getConnectionKey());
         return KMError::INVALID_STATE;
     }
     return KMError::NOERR;
@@ -138,7 +138,7 @@ KMError H2StreamProxy::attachStream(uint32_t stream_id, H2Connection::Impl* conn
 
 KMError H2StreamProxy::sendResponse(int status_code)
 {
-    KUMA_INFOXTRACE("sendResponse, status_code=" << status_code);
+    KM_INFOXTRACE("sendResponse, status_code=" << status_code);
     status_code_ = status_code;
     if (is_same_loop_) {
         if (sendResponse_i() == KMError::NOERR) {
@@ -151,7 +151,7 @@ KMError H2StreamProxy::sendResponse(int status_code)
         }
     }))
     {
-        KUMA_ERRXTRACE("sendResponse, failed to run on H2Connection");
+        KM_ERRXTRACE("sendResponse, failed to run on H2Connection");
         setState(State::IN_ERROR);
         return KMError::INVALID_STATE;
     }
@@ -270,10 +270,10 @@ void H2StreamProxy::onConnect_i(KMError err)
         onError_i(err);
         return ;
     }
-    if (is_equal(method_, "CONNECT") && !protocol_.empty() &&
+    if (kev::is_equal(method_, "CONNECT") && !protocol_.empty() &&
         !conn_->isConnectProtocolEnabled())
     {
-        KUMA_ERRXTRACE("onConnect_i, connect protocol is not enabled, proto=" << protocol_);
+        KM_ERRXTRACE("onConnect_i, connect protocol is not enabled, proto=" << protocol_);
         onError_i(KMError::NOT_SUPPORTED);
         return;
     }
@@ -614,7 +614,7 @@ void H2StreamProxy::close_i()
 
 bool H2StreamProxy::processPushPromise()
 {// on conn_ thread
-    if (!is_equal(method_, "GET")) {
+    if (!kev::is_equal(method_, "GET")) {
         return false;
     }
     if (outgoing_header_.hasBody()) {

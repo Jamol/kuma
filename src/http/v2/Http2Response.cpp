@@ -21,7 +21,7 @@
 
 #include "Http2Response.h"
 #include "H2StreamProxy.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
 
 #include <string>
 
@@ -84,7 +84,7 @@ int Http2Response::sendBody(const KMBuffer &buf)
 
 KMError Http2Response::close()
 {
-    KUMA_INFOXTRACE("close");
+    KM_INFOXTRACE("close");
     stream_->close();
     setState(State::CLOSED);
     return KMError::NOERR;
@@ -96,7 +96,7 @@ void Http2Response::checkResponseHeaders()
     
     auto &rsp_header = getResponseHeader();
     if (rsp_header.hasContentLength()) {
-        KUMA_INFOXTRACE("checkResponseHeaders, Content-Length=" << rsp_header.getContentLength());
+        KM_INFOXTRACE("checkResponseHeaders, Content-Length=" << rsp_header.getContentLength());
     }
 }
 
@@ -106,7 +106,7 @@ void Http2Response::checkRequestHeaders()
     
     auto const & req_header = getRequestHeader();
     if (req_header.hasContentLength()) {
-        KUMA_INFOXTRACE("checkRequestHeaders, Content-Length=" << req_header.getContentLength());
+        KM_INFOXTRACE("checkRequestHeaders, Content-Length=" << req_header.getContentLength());
     }
 }
 

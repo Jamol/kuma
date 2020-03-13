@@ -3,13 +3,13 @@
 
 #include "kmapi.h"
 #include "TestLoop.h"
-#include "util/DestroyDetector.h"
+#include "../../third_party/libkev/src/util/DestroyDetector.h"
 
 #include <map>
 
 using namespace kuma;
 
-class ProtoDemuxer : public TestObject, public DestroyDetector
+class ProtoDemuxer : public TestObject, public kev::DestroyDetector
 {
 public:
     ProtoDemuxer(TestLoop* loop, long conn_id);

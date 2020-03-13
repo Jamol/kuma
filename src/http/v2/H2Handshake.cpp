@@ -22,7 +22,7 @@
 #include "H2Handshake.h"
 #include "H2Frame.h"
 #include "util/base64.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
 
 #include <algorithm>
 
@@ -106,7 +106,7 @@ size_t H2Handshake::parseInputData(uint8_t *buf, size_t len)
             size_t cmp_size = std::min<size_t>(cmp_preface_.size(), sz);
             sz -= cmp_size;
             if (memcmp(cmp_preface_.c_str(), buf, cmp_size) != 0) {
-                KUMA_ERRTRACE("H2Handshake::parseInputData, invalid protocol");
+                KM_ERRTRACE("H2Handshake::parseInputData, invalid protocol");
                 setState(State::CLOSED);
                 return len - sz;
             }
@@ -122,7 +122,7 @@ size_t H2Handshake::parseInputData(uint8_t *buf, size_t len)
         sz -= used;
         return len - sz;
     } else {
-        KUMA_WARNTRACE("H2Handshake::parseInputData, invalid state, len="<<sz<<", state="<<getState());
+        KM_WARNTRACE("H2Handshake::parseInputData, invalid state, len="<<sz<<", state="<<getState());
         return 0;
     }
 }
@@ -208,7 +208,7 @@ KMBuffer H2Handshake::buildPreface()
     settings.setParams(std::move(params));
     int ret = settings.encode((uint8_t*)buf.writePtr(), buf.space());
     if (ret < 0) {
-        KUMA_ERRTRACE("H2Handshake::buildPreface, failed to encode setting frame");
+        KM_ERRTRACE("H2Handshake::buildPreface, failed to encode setting frame");
         return KMBuffer();
     }
     buf.bytesWritten(ret);
@@ -217,7 +217,7 @@ KMBuffer H2Handshake::buildPreface()
     win_update.setWindowSizeIncrement(local_window_size_);
     ret = win_update.encode((uint8_t*)buf.writePtr(), buf.space());
     if (ret < 0) {
-        KUMA_ERRTRACE("H2Handshake::buildPreface, failed to window update frame");
+        KM_ERRTRACE("H2Handshake::buildPreface, failed to window update frame");
         return KMBuffer();
     }
     buf.bytesWritten(ret);
@@ -228,7 +228,7 @@ KMError H2Handshake::handleUpgradeRequest()
 {
     if(!http_parser_.isUpgradeTo("h2c")) {
         setState(State::IN_ERROR);
-        KUMA_ERRTRACE("H2Handshake::handleRequest, not HTTP2 request");
+        KM_ERRTRACE("H2Handshake::handleRequest, not HTTP2 request");
         onHandshakeError(KMError::INVALID_PROTO);
         return KMError::INVALID_PROTO;
     }
@@ -247,7 +247,7 @@ KMError H2Handshake::handleUpgradeResponse()
         return KMError::NOERR;
     } else {
         setState(State::IN_ERROR);
-        KUMA_INFOTRACE("H2Handshake::handleResponse, invalid status code: "<<http_parser_.getStatusCode());
+        KM_INFOTRACE("H2Handshake::handleResponse, invalid status code: "<<http_parser_.getStatusCode());
         onHandshakeError(KMError::INVALID_PROTO);
         return KMError::INVALID_PROTO;
     }
@@ -274,12 +274,12 @@ void H2Handshake::onHandshakeError(KMError err)
 
 void H2Handshake::onHttpData(KMBuffer &buf)
 {
-    KUMA_ERRTRACE("H2Handshake::onHttpData, len="<<buf.chainLength());
+    KM_ERRTRACE("H2Handshake::onHttpData, len="<<buf.chainLength());
 }
 
 void H2Handshake::onHttpEvent(HttpEvent ev)
 {
-    KUMA_INFOTRACE("H2Handshake::onHttpEvent, ev="<<int(ev));
+    KM_INFOTRACE("H2Handshake::onHttpEvent, ev="<<int(ev));
     switch (ev) {
         case HttpEvent::HEADER_COMPLETE:
             break;

@@ -22,7 +22,8 @@
 #include "HttpResponseImpl.h"
 #include "EventLoopImpl.h"
 #include "httputils.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/util/util.h"
 #include "compr/compr_zlib.h"
 
 #include <iterator>
@@ -62,7 +63,7 @@ KMError HttpResponse::Impl::sendResponse(int status_code, const std::string& des
             auto &rsp_header = getResponseHeader();
             rsp_header.removeHeader(strContentEncoding);
             rsp_header.removeHeaderValue(strTransferEncoding, rsp_encoding_type_);
-            KUMA_WARNXTRACE("sendResponse, failed to init compressor, type=" << rsp_encoding_type_);
+            KM_WARNXTRACE("sendResponse, failed to init compressor, type=" << rsp_encoding_type_);
         }
     }
     
@@ -80,11 +81,11 @@ void HttpResponse::Impl::checkRequestHeaders()
         encodings = req_header.getHeader("TE");
         is_content_encoding_ = !encodings.empty();
     }
-    for_each_token(encodings, ',', [this] (const std::string &str) {
-        if (is_equal(str, "gzip")) {
+    kev::for_each_token(encodings, ',', [this] (const std::string &str) {
+        if (kev::is_equal(str, "gzip")) {
             rsp_encoding_type_ = "gzip";
             return false;
-        } else if (is_equal(str, "deflate")) {
+        } else if (kev::is_equal(str, "deflate")) {
             rsp_encoding_type_ = "deflate";
             return false;
         }
@@ -94,8 +95,8 @@ void HttpResponse::Impl::checkRequestHeaders()
     req_encoding_type_ = req_header.getHeader(strContentEncoding);
     if (req_encoding_type_.empty() && !isHttp2()) {
         encodings = req_header.getHeader(strTransferEncoding);
-        for_each_token(encodings, ',', [this] (const std::string &str) {
-            if (!is_equal(str, strChunked)) {
+        kev::for_each_token(encodings, ',', [this] (const std::string &str) {
+            if (!kev::is_equal(str, strChunked)) {
                 req_encoding_type_ = str;
                 return false;
             }
@@ -103,7 +104,7 @@ void HttpResponse::Impl::checkRequestHeaders()
         });
     }
     if (!req_encoding_type_.empty()) {
-        KUMA_INFOXTRACE("checkRequestHeaders, Content-Encoding=" << req_encoding_type_);
+        KM_INFOXTRACE("checkRequestHeaders, Content-Encoding=" << req_encoding_type_);
     }
 }
 
@@ -117,7 +118,7 @@ void HttpResponse::Impl::checkResponseHeaders()
         addHeader(strContentType, content_type);
     } else {
         // extract content type
-        for_each_token(content_type, ';', [&content_type] (std::string &str) {
+        kev::for_each_token(content_type, ';', [&content_type] (std::string &str) {
             content_type = str;
             return false;
         });
@@ -127,8 +128,8 @@ void HttpResponse::Impl::checkResponseHeaders()
     if (!encoding.empty()) {
         // caller do compression by itself
         compression_enable_ = false;
-        KUMA_INFOXTRACE("checkResponseHeaders, response Content-Encoding=" << encoding);
-        if (is_equal(encoding, "identity")) {
+        KM_INFOXTRACE("checkResponseHeaders, response Content-Encoding=" << encoding);
+        if (kev::is_equal(encoding, "identity")) {
             rsp_header.removeHeader(strContentEncoding);
         }
     }
@@ -139,8 +140,8 @@ void HttpResponse::Impl::checkResponseHeaders()
     }
     
     if (compression_enable_) {
-        if ((!is_equal(rsp_encoding_type_, "gzip") &&
-             !is_equal(rsp_encoding_type_, "deflate")) ||
+        if ((!kev::is_equal(rsp_encoding_type_, "gzip") &&
+             !kev::is_equal(rsp_encoding_type_, "deflate")) ||
             isContentCompressed(content_type))
         {
             compression_enable_ = false;
@@ -150,13 +151,13 @@ void HttpResponse::Impl::checkResponseHeaders()
     if (compression_enable_ && !rsp_encoding_type_.empty()) {
         if (is_content_encoding_) {
             addHeader(strContentEncoding, rsp_encoding_type_);
-            KUMA_INFOXTRACE("checkResponseHeaders, add Content-Encoding=" << rsp_encoding_type_);
+            KM_INFOXTRACE("checkResponseHeaders, add Content-Encoding=" << rsp_encoding_type_);
             if (!rsp_header.isChunked()) {
                 addHeader(strTransferEncoding, strChunked);
             }
         } else {
             addHeader(strTransferEncoding, rsp_encoding_type_ + ", chunked");
-            KUMA_INFOXTRACE("checkResponseHeaders, add Transfer-Encoding=" << rsp_encoding_type_);
+            KM_INFOXTRACE("checkResponseHeaders, add Transfer-Encoding=" << rsp_encoding_type_);
         }
         if (rsp_header.hasContentLength()) {
             // the Content-Length is no longer correct when compression is enabled
@@ -346,18 +347,18 @@ void HttpResponse::Impl::onRequestHeaderComplete()
     checkRequestHeaders();
     
     if (!req_encoding_type_.empty()) {
-        if (is_equal(req_encoding_type_, "gzip") ||
-            is_equal(req_encoding_type_, "deflate"))
+        if (kev::is_equal(req_encoding_type_, "gzip") ||
+            kev::is_equal(req_encoding_type_, "deflate"))
         {
             auto *decompr = new ZLibDecompressor();
             decompressor_.reset(decompr);
             decompr->setFlushFlag(Z_SYNC_FLUSH);
             if (decompr->init(req_encoding_type_, 15) != KMError::NOERR) {
                 decompressor_.reset();
-                KUMA_ERRXTRACE("onRequestHeaderComplete, failed to init decompressor, type=" << req_encoding_type_);
+                KM_ERRXTRACE("onRequestHeaderComplete, failed to init decompressor, type=" << req_encoding_type_);
             }
         } else {
-            KUMA_ERRXTRACE("onRequestHeaderComplete, unsupported encoding type: " << req_encoding_type_);
+            KM_ERRXTRACE("onRequestHeaderComplete, unsupported encoding type: " << req_encoding_type_);
         }
     }
     if(header_cb_) header_cb_();
@@ -390,7 +391,7 @@ void HttpResponse::Impl::onRequestComplete()
 
 void HttpResponse::Impl::notifyComplete()
 {
-    KUMA_INFOXTRACE("notifyComplete, raw bytes sent: " << raw_bytes_sent_);
+    KM_INFOXTRACE("notifyComplete, raw bytes sent: " << raw_bytes_sent_);
     setState(State::COMPLETE);
     if(response_cb_) response_cb_();
 }

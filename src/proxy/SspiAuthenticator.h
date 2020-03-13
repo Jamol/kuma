@@ -23,7 +23,7 @@
 
 #include "kmdefs.h"
 #include "proxy/ProxyAuthenticator.h"
-#include "util/kmobject.h"
+#include "libkev/src/util/kmobject.h"
 
 #include <string>
 
@@ -39,7 +39,7 @@
 
 KUMA_NS_BEGIN
 
-class SspiAuthenticator : public KMObject, public ProxyAuthenticator
+class SspiAuthenticator : public kev::KMObject, public ProxyAuthenticator
 {
 public:
     SspiAuthenticator();

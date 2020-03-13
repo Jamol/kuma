@@ -22,7 +22,7 @@
 
 #include "WSConnection_v2.h"
 #include "http/v2/H2StreamProxy.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/kmtrace.h"
 
 using namespace kuma;
 using namespace kuma::ws;
@@ -215,7 +215,7 @@ void WSConnection_V2::handleHandshakeResponse()
     int status_code = stream_->getStatusCode();
     if (status_code != 200) {
         err = KMError::PROTO_ERROR;
-        KUMA_ERRXTRACE("handleHandshakeResponse, invalid status code: "<<status_code);
+        KM_ERRXTRACE("handleHandshakeResponse, invalid status code: "<<status_code);
     }
     
     if (err == KMError::NOERR) {
@@ -232,13 +232,13 @@ void WSConnection_V2::checkHandshake()
     extensions_.clear();
     auto const &incoming_header = getHeaders();
     for (auto const &kv : incoming_header.getHeaders()) {
-        if (is_equal(kv.first, kSecWebSocketProtocol)) {
+        if (kev::is_equal(kv.first, kSecWebSocketProtocol)) {
             if (subprotocol_.empty()) {
                 subprotocol_ = kv.second;
             } else {
                 subprotocol_ += ", " + kv.second;
             }
-        } else if (is_equal(kv.first, kSecWebSocketExtensions)) {
+        } else if (kev::is_equal(kv.first, kSecWebSocketExtensions)) {
             if (extensions_.empty()) {
                 extensions_ = kv.second;
             } else {

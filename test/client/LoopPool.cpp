@@ -1,6 +1,5 @@
 #include "LoopPool.h"
 #include "TestLoop.h"
-#include "util/util.h"
 
 #include <string>
 

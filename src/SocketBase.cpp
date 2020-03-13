@@ -20,9 +20,10 @@
 */
 
 #include "SocketBase.h"
+#include "libkev/src/util/util.h"
+#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/util/skutils.h"
 #include "util/util.h"
-#include "util/kmtrace.h"
-#include "util/skutils.h"
 
 #if defined(KUMA_OS_WIN)
 # include <Ws2tcpip.h>
@@ -101,9 +102,9 @@ SOCKET_FD SocketBase::createFd(int addr_family)
 
 KMError SocketBase::bind(const std::string &bind_host, uint16_t bind_port)
 {
-    KUMA_INFOTRACE("bind, bind_host=" << bind_host << ", bind_port=" << bind_port);
+    KM_INFOTRACE("bind, bind_host=" << bind_host << ", bind_port=" << bind_port);
     if (getState() != State::IDLE) {
-        KUMA_ERRXTRACE("bind, invalid state, state=" << getState());
+        KM_ERRXTRACE("bind, invalid state, state=" << getState());
         return KMError::INVALID_STATE;
     }
     if (fd_ != INVALID_FD) {
@@ -113,18 +114,18 @@ KMError SocketBase::bind(const std::string &bind_host, uint16_t bind_port)
     struct addrinfo hints = { 0 };
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_NUMERICHOST;//AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-    if (km_set_sock_addr(bind_host.c_str(), bind_port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
+    if (kev::km_set_sock_addr(bind_host.c_str(), bind_port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
         return KMError::INVALID_PARAM;
     }
     fd_ = createFd(ss_addr.ss_family);
     if (INVALID_FD == fd_) {
-        KUMA_ERRXTRACE("bind, socket failed, err=" << SKUtils::getLastError());
+        KM_ERRXTRACE("bind, socket failed, err=" << kev::SKUtils::getLastError());
         return KMError::FAILED;
     }
-    int addr_len = km_get_addr_length(ss_addr);
+    int addr_len = kev::km_get_addr_length(ss_addr);
     int ret = ::bind(fd_, (struct sockaddr*)&ss_addr, addr_len);
     if (ret < 0) {
-        KUMA_ERRXTRACE("bind, bind failed, err=" << SKUtils::getLastError());
+        KM_ERRXTRACE("bind, bind failed, err=" << kev::SKUtils::getLastError());
         return KMError::FAILED;
     }
     return KMError::NOERR;
@@ -132,9 +133,9 @@ KMError SocketBase::bind(const std::string &bind_host, uint16_t bind_port)
 
 KMError SocketBase::connect(const std::string &host, uint16_t port, EventCallback cb, uint32_t timeout_ms)
 {
-    KUMA_INFOXTRACE("connect, host=" << host << ", port=" << port);
+    KM_INFOXTRACE("connect, host=" << host << ", port=" << port);
     if (getState() != State::IDLE) {
-        KUMA_ERRXTRACE("connect, invalid state, state=" << getState());
+        KM_ERRXTRACE("connect, invalid state, state=" << getState());
         return KMError::INVALID_STATE;
     }
     connect_cb_ = std::move(cb);
@@ -143,7 +144,7 @@ KMError SocketBase::connect(const std::string &host, uint16_t port, EventCallbac
             onConnect(KMError::TIMEOUT);
         });
     }
-    if (!km_is_ip_address(host.c_str())) {
+    if (!kev::km_is_ip_address(host.c_str())) {
         sockaddr_storage ss_addr = { 0 };
         if (DnsResolver::get().getAddress(host, port, ss_addr) == KMError::NOERR) {
             return connect_i(ss_addr, timeout_ms);
@@ -163,9 +164,9 @@ KMError SocketBase::connect_i(const std::string &host, uint16_t port, uint32_t t
     struct addrinfo hints = { 0 };
     hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_NUMERICHOST | AI_ADDRCONFIG; // will block 10 seconds in some case if not set AI_ADDRCONFIG
-    if (km_set_sock_addr(host.c_str(), port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
-        auto err = SKUtils::getLastError();
-        KUMA_ERRXTRACE("connect_i, DNS resolving failure, host=" << host << ", err=" << err);
+    if (kev::km_set_sock_addr(host.c_str(), port, &hints, (struct sockaddr*)&ss_addr, sizeof(ss_addr)) != 0) {
+        auto err = kev::SKUtils::getLastError();
+        KM_ERRXTRACE("connect_i, DNS resolving failure, host=" << host << ", err=" << err);
         return KMError::INVALID_PARAM;
     }
     return connect_i(ss_addr, timeout_ms);
@@ -176,13 +177,13 @@ KMError SocketBase::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
     if (INVALID_FD == fd_) {
         fd_ = createFd(ss_addr.ss_family);
         if (INVALID_FD == fd_) {
-            KUMA_ERRXTRACE("connect_i, socket failed, err=" << SKUtils::getLastError());
+            KM_ERRXTRACE("connect_i, socket failed, err=" << kev::SKUtils::getLastError());
             return KMError::FAILED;
         }
     }
     setSocketOption();
 
-    int addr_len = km_get_addr_length(ss_addr);
+    int addr_len = kev::km_get_addr_length(ss_addr);
     int ret = ::connect(fd_, (struct sockaddr *)&ss_addr, addr_len);
     if (0 == ret) {
         setState(State::CONNECTING); // wait for writable event
@@ -193,11 +194,11 @@ KMError SocketBase::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
 #else
         EINPROGRESS
 #endif
-        == SKUtils::getLastError()) {
+        == kev::SKUtils::getLastError()) {
         setState(State::CONNECTING);
     }
     else {
-        KUMA_ERRXTRACE("connect_i, error, fd=" << fd_ << ", err=" << SKUtils::getLastError());
+        KM_ERRXTRACE("connect_i, error, fd=" << fd_ << ", err=" << kev::SKUtils::getLastError());
         cleanup();
         setState(State::CLOSED);
         return KMError::FAILED;
@@ -212,10 +213,10 @@ KMError SocketBase::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
     uint16_t local_port = 0;
     ret = getsockname(fd_, (struct sockaddr*)&ss_addr, &len);
     if (ret != -1) {
-        km_get_sock_addr((struct sockaddr*)&ss_addr, sizeof(ss_addr), local_ip, sizeof(local_ip), &local_port);
+        kev::km_get_sock_addr((struct sockaddr*)&ss_addr, sizeof(ss_addr), local_ip, sizeof(local_ip), &local_port);
     }
 
-    KUMA_INFOXTRACE("connect_i, fd=" << fd_ << ", local_ip=" << local_ip
+    KM_INFOXTRACE("connect_i, fd=" << fd_ << ", local_ip=" << local_ip
         << ", local_port=" << local_port << ", state=" << getState());
 
     registerFd(fd_);
@@ -225,10 +226,10 @@ KMError SocketBase::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
 KMError SocketBase::attachFd(SOCKET_FD fd)
 {
     if (getState() != State::IDLE) {
-        KUMA_ERRXTRACE("attachFd, invalid state, fd="<<fd<<", state=" << getState());
+        KM_ERRXTRACE("attachFd, invalid state, fd="<<fd<<", state=" << getState());
         return KMError::INVALID_STATE;
     }
-    KUMA_INFOXTRACE("attachFd, fd=" << fd << ", state=" << getState());
+    KM_INFOXTRACE("attachFd, fd=" << fd << ", state=" << getState());
 
     fd_ = fd;
     setSocketOption();
@@ -239,7 +240,7 @@ KMError SocketBase::attachFd(SOCKET_FD fd)
 
 KMError SocketBase::detachFd(SOCKET_FD &fd)
 {
-    KUMA_INFOXTRACE("detachFd, fd=" << fd_ << ", state=" << getState());
+    KM_INFOXTRACE("detachFd, fd=" << fd_ << ", state=" << getState());
     unregisterFd(fd_, false);
     fd = fd_;
     fd_ = INVALID_FD;
@@ -252,7 +253,7 @@ bool SocketBase::registerFd(SOCKET_FD fd)
 {
     auto loop = loop_.lock();
     if (loop && fd != INVALID_FD) {
-        if (loop->registerFd(fd, KUMA_EV_NETWORK, [this](KMEvent ev, void* ol, size_t io_size) { ioReady(ev, ol, io_size); }) == KMError::NOERR) {
+        if (loop->registerFd(fd, kEventNetwork, [this](KMEvent ev, void* ol, size_t io_size) { ioReady(ev, ol, io_size); }) == kev::Result::OK) {
             registered_ = true;
         }
     }
@@ -271,34 +272,34 @@ void SocketBase::unregisterFd(SOCKET_FD fd, bool close_fd)
     }
     // uregistered or loop stopped
     if (close_fd && fd != INVALID_FD) {
-        SKUtils::close(fd);
+        kev::SKUtils::close(fd);
     }
 }
 
 int SocketBase::send(const void* data, size_t length)
 {
     if (!isReady()) {
-        KUMA_WARNXTRACE("send, invalid state=" << getState());
+        KM_WARNXTRACE("send, invalid state=" << getState());
         return 0;
     }
 
-    auto ret = SKUtils::send(fd_, data, length, 0);
+    auto ret = kev::SKUtils::send(fd_, data, length, 0);
     if (0 == ret) {
-        KUMA_WARNXTRACE("send, peer closed, err=" << SKUtils::getLastError());
+        KM_WARNXTRACE("send, peer closed, err=" << kev::SKUtils::getLastError());
         ret = -1;
     }
     else if (ret < 0) {
-        if (SKUtils::getLastError() == EAGAIN ||
+        if (kev::SKUtils::getLastError() == EAGAIN ||
 #ifdef KUMA_OS_WIN
             WSAEWOULDBLOCK
 #else
             EWOULDBLOCK
 #endif
-            == SKUtils::getLastError()) {
+            == kev::SKUtils::getLastError()) {
             ret = 0;
         }
         else {
-            KUMA_ERRXTRACE("send, failed, err=" << SKUtils::getLastError());
+            KM_ERRXTRACE("send, failed, err=" << kev::SKUtils::getLastError());
         }
     }
 
@@ -309,14 +310,14 @@ int SocketBase::send(const void* data, size_t length)
         setState(State::CLOSED);
     }
     
-    //KUMA_INFOXTRACE("send, ret="<<ret<<", len="<<length);
+    //KM_INFOXTRACE("send, ret="<<ret<<", len="<<length);
     return static_cast<int>(ret);
 }
 
 int SocketBase::send(const iovec* iovs, int count)
 {
     if (!isReady()) {
-        KUMA_WARNXTRACE("send 2, invalid state=" << getState());
+        KM_WARNXTRACE("send 2, invalid state=" << getState());
         return 0;
     }
 
@@ -328,23 +329,23 @@ int SocketBase::send(const iovec* iovs, int count)
         return 0;
     }
 
-    auto ret = SKUtils::send(fd_, iovs, count);
+    auto ret = kev::SKUtils::send(fd_, iovs, count);
     if (0 == ret) {
-        KUMA_WARNXTRACE("send 2, peer closed");
+        KM_WARNXTRACE("send 2, peer closed");
         ret = -1;
     }
     else if (ret < 0) {
-        if (EAGAIN == SKUtils::getLastError() ||
+        if (EAGAIN == kev::SKUtils::getLastError() ||
 #ifdef KUMA_OS_WIN
-            WSAEWOULDBLOCK == SKUtils::getLastError() || WSA_IO_PENDING
+            WSAEWOULDBLOCK == kev::SKUtils::getLastError() || WSA_IO_PENDING
 #else
             EWOULDBLOCK
 #endif
-            == SKUtils::getLastError()) {
+            == kev::SKUtils::getLastError()) {
             ret = 0;
         }
         else {
-            KUMA_ERRXTRACE("send 2, fail, err=" << SKUtils::getLastError());
+            KM_ERRXTRACE("send 2, fail, err=" << kev::SKUtils::getLastError());
         }
     }
 
@@ -355,7 +356,7 @@ int SocketBase::send(const iovec* iovs, int count)
         setState(State::CLOSED);
     }
 
-    //KUMA_INFOXTRACE("send, ret="<<ret);
+    //KM_INFOXTRACE("send, ret="<<ret);
     return static_cast<int>(ret);
 }
 
@@ -386,23 +387,23 @@ int SocketBase::receive(void* data, size_t length)
         return 0;
     }
     
-    auto ret = SKUtils::recv(fd_, data, length, 0);
+    auto ret = kev::SKUtils::recv(fd_, data, length, 0);
     if (0 == ret) {
-        KUMA_WARNXTRACE("receive, peer closed, err=" << SKUtils::getLastError());
+        KM_WARNXTRACE("receive, peer closed, err=" << kev::SKUtils::getLastError());
         ret = -1;
     }
     else if (ret < 0) {
-        if (EAGAIN == SKUtils::getLastError() ||
+        if (EAGAIN == kev::SKUtils::getLastError() ||
 #ifdef WIN32
             WSAEWOULDBLOCK
 #else
             EWOULDBLOCK
 #endif
-            == SKUtils::getLastError()) {
+            == kev::SKUtils::getLastError()) {
             ret = 0;
         }
         else {
-            KUMA_ERRXTRACE("receive, failed, err=" << SKUtils::getLastError());
+            KM_ERRXTRACE("receive, failed, err=" << kev::SKUtils::getLastError());
         }
     }
 
@@ -411,13 +412,13 @@ int SocketBase::receive(void* data, size_t length)
         setState(State::CLOSED);
     }
 
-    //KUMA_INFOXTRACE("receive, ret="<<ret<<", len="<<length);
+    //KM_INFOXTRACE("receive, ret="<<ret<<", len="<<length);
     return static_cast<int>(ret);
 }
 
 KMError SocketBase::close()
 {
-    KUMA_INFOXTRACE("close, state=" << getState());
+    KM_INFOXTRACE("close, state=" << getState());
     if (getState() != State::CLOSED) {
         auto loop = loop_.lock();
         if (loop && !loop->stopped()) {
@@ -437,7 +438,7 @@ KMError SocketBase::pause()
 {
     auto loop = loop_.lock();
     if (loop && isReady()) {
-        return loop->updateFd(fd_, KUMA_EV_ERROR);
+        return toKMError(loop->updateFd(fd_, kEventError));
     }
     return KMError::INVALID_STATE;
 }
@@ -446,7 +447,7 @@ KMError SocketBase::resume()
 {
     auto loop = loop_.lock();
     if (loop && isReady()) {
-        return loop->updateFd(fd_, KUMA_EV_NETWORK);
+        return toKMError(loop->updateFd(fd_, kEventNetwork));
     }
     return KMError::INVALID_STATE;
 }
@@ -462,15 +463,15 @@ void SocketBase::setSocketOption()
 #endif
 
     // nonblock
-    set_nonblocking(fd_);
+    kev::set_nonblocking(fd_);
 
     if (0) {
         int opt_val = 1;
         setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, (char*)&opt_val, sizeof(int));
     }
 
-    if (set_tcpnodelay(fd_) != 0) {
-        KUMA_WARNXTRACE("setSocketOption, failed to set TCP_NODELAY, fd=" << fd_ << ", err=" << SKUtils::getLastError());
+    if (kev::set_tcpnodelay(fd_) != 0) {
+        KM_WARNXTRACE("setSocketOption, failed to set TCP_NODELAY, fd=" << fd_ << ", err=" << kev::SKUtils::getLastError());
     }
     
 #ifdef KUMA_OS_MAC
@@ -486,7 +487,7 @@ void SocketBase::notifySendBlocked()
 {
     auto loop = loop_.lock();
     if (loop && loop->isPollLT()) {
-        loop->updateFd(fd_, KUMA_EV_NETWORK);
+        loop->updateFd(fd_, kEventNetwork);
     }
 }
 
@@ -494,7 +495,7 @@ void SocketBase::notifySendReady()
 {
     auto loop = loop_.lock();
     if (loop && loop->isPollLT() && fd_ != INVALID_FD) {
-        loop->updateFd(fd_, KUMA_EV_READ | KUMA_EV_ERROR);
+        loop->updateFd(fd_, kEventRead | kEventError);
     }
 }
 
@@ -515,7 +516,7 @@ void SocketBase::onResolved(KMError err, const sockaddr_storage &addr)
 
 void SocketBase::onConnect(KMError err)
 {
-    KUMA_INFOXTRACE("onConnect, err=" << int(err) << ", state=" << getState());
+    KM_INFOXTRACE("onConnect, err=" << int(err) << ", state=" << getState());
     timer_.cancel();
     if (KMError::NOERR == err) {
         setState(State::OPEN);
@@ -541,7 +542,7 @@ void SocketBase::onReceive(KMError err)
 
 void SocketBase::onClose(KMError err)
 {
-    KUMA_INFOXTRACE("onClose, err=" << int(err) << ", state=" << getState());
+    KM_INFOXTRACE("onClose, err=" << int(err) << ", state=" << getState());
     cleanup();
     setState(State::CLOSED);
     if (error_cb_) error_cb_(err);
@@ -553,15 +554,15 @@ void SocketBase::ioReady(KMEvent events, void* ol, size_t io_size)
     {
     case State::CONNECTING:
     {
-        if (events & KUMA_EV_ERROR) {
-            KUMA_ERRXTRACE("ioReady, KUMA_EV_ERROR on CONNECTING, events=" << events << ", err=" << SKUtils::getLastError());
+        if (events & kEventError) {
+            KM_ERRXTRACE("ioReady, kEventError on CONNECTING, events=" << events << ", err=" << kev::SKUtils::getLastError());
             onConnect(KMError::POLL_ERROR);
         }
         else {
             DESTROY_DETECTOR_SETUP();
             onConnect(KMError::NOERR);
             DESTROY_DETECTOR_CHECK_VOID();
-            if ((events & KUMA_EV_READ)) {
+            if ((events & kEventRead)) {
                 onReceive(KMError::NOERR);
             }
         }
@@ -570,23 +571,23 @@ void SocketBase::ioReady(KMEvent events, void* ol, size_t io_size)
 
     case State::OPEN:
     {
-        if (events & KUMA_EV_READ) {// handle EPOLLIN firstly
+        if (events & kEventRead) {// handle EPOLLIN firstly
             DESTROY_DETECTOR_SETUP();
             onReceive(KMError::NOERR);
             DESTROY_DETECTOR_CHECK_VOID();
         }
-        if ((events & KUMA_EV_ERROR) && getState() == State::OPEN) {
-            KUMA_ERRXTRACE("ioReady, KUMA_EV_ERROR on OPEN, events=" << events << ", err=" << SKUtils::getLastError());
+        if ((events & kEventError) && getState() == State::OPEN) {
+            KM_ERRXTRACE("ioReady, kEventError on OPEN, events=" << events << ", err=" << kev::SKUtils::getLastError());
             onClose(KMError::POLL_ERROR);
             break;
         }
-        if ((events & KUMA_EV_WRITE) && getState() == State::OPEN) {
+        if ((events & kEventWrite) && getState() == State::OPEN) {
             onSend(KMError::NOERR);
         }
         break;
     }
     default:
-        //KUMA_WARNXTRACE("ioReady, invalid state="<<getState()<<", events="<<events);
+        //KM_WARNXTRACE("ioReady, invalid state="<<getState()<<", events="<<events);
         break;
     }
 }

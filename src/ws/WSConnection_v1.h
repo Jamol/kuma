@@ -25,12 +25,12 @@
 #include "TcpConnection.h"
 #include "http/HttpParserImpl.h"
 #include "http/H1xStream.h"
-#include "util/DestroyDetector.h"
+#include "libkev/src/util/DestroyDetector.h"
 #include "kmbuffer.h"
 
 WS_NS_BEGIN
 
-class WSConnection_V1 : public KMObject, public DestroyDetector, public WSConnection
+class WSConnection_V1 : public kev::KMObject, public kev::DestroyDetector, public WSConnection
 {
 public:
     WSConnection_V1(const EventLoopPtr &loop);

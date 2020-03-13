@@ -27,12 +27,11 @@
 #include "Uri.h"
 #include "HttpRequestImpl.h"
 #include "H1xStream.h"
-#include "util/kmobject.h"
-#include "util/DestroyDetector.h"
+#include "libkev/src/util/DestroyDetector.h"
 
 KUMA_NS_BEGIN
 
-class Http1xRequest : public DestroyDetector, public HttpRequest::Impl
+class Http1xRequest : public kev::DestroyDetector, public HttpRequest::Impl
 {
 public:
     Http1xRequest(const EventLoopPtr &loop, std::string ver);

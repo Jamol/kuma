@@ -25,7 +25,7 @@
 #include "EventLoopImpl.h"
 #include "http/v2/H2ConnectionImpl.h"
 #include "http/Uri.h"
-#include "util/DestroyDetector.h"
+#include "libkev/src/util/DestroyDetector.h"
 
 KUMA_NS_BEGIN
 class H2StreamProxy;
@@ -34,7 +34,7 @@ KUMA_NS_END
 WS_NS_BEGIN
 
 
-class WSConnection_V2 : public KMObject, public DestroyDetector, public WSConnection
+class WSConnection_V2 : public kev::KMObject, public kev::DestroyDetector, public WSConnection
 {
 public:
     WSConnection_V2(const EventLoopPtr &loop);

@@ -15,6 +15,13 @@ kuma is a multi-platform support network library developed in C++. It implements
 * All interface objects, except Timer, are not thread-safe, must run on their EventLoop thread, but close method is thread-safe
 
 
+## Get source code
+```
+git clone https://github.com/Jamol/kuma.git
+git submodule update --init
+```
+
+
 ## Build
 ```
 define macro KUMA_HAS_OPENSSL to enable openssl
@@ -47,6 +54,12 @@ $ cd src/jni
 $ ndk-build
 ```
 
+### CMake build
+```
+CMake is also supported:
+python ./bld/your_os/build_your_os.py
+```
+
 ## OpenSSL
 ```
 certificates location is by default in /path-to-your-excutable/cert.
@@ -61,7 +74,7 @@ Please refer to [test](https://github.com/Jamol/kuma/tree/master/test) for more 
 ### client
 ```
 #include "kmapi.h"
-#include "util/defer.h"
+#include "libkev/src/util/defer.h"
 
 using namespace kuma;
 
@@ -105,7 +118,7 @@ int main(int argc, char *argv[])
 ### server
 ```
 #include "kmapi.h"
-#include "util/defer.h"
+#include "libkev/src/util/defer.h"
 
 using namespace kuma;
 

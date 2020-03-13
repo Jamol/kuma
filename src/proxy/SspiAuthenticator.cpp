@@ -20,8 +20,8 @@
 */
 
 #include "SspiAuthenticator.h"
-#include "util/util.h"
-#include "util/kmtrace.h"
+#include "libkev/src/util/util.h"
+#include "libkev/src/util/kmtrace.h"
 #include "util/base64.h"
 
 
@@ -108,7 +108,7 @@ bool SspiAuthenticator::init(const AuthInfo &auth_info, const RequestInfo &req_i
         &expiry);
 
     if (!(SEC_SUCCESS(status))) {
-        KUMA_ERRXTRACE("init, AcquireCredentialsHandle failed, status=" << status);
+        KM_ERRXTRACE("init, AcquireCredentialsHandle failed, status=" << status);
         return false;
     }
 
@@ -208,14 +208,14 @@ bool SspiAuthenticator::nextAuthToken(const std::string& challenge)
         status = ::CompleteAuthToken(&ctxt_handle_, &out_sec_buf_desc);
         if (!SEC_SUCCESS(status))
         {
-            KUMA_ERRXTRACE("nextAuthToken, InitializeSecurityContext failed, status=" << status);
+            KM_ERRXTRACE("nextAuthToken, InitializeSecurityContext failed, status=" << status);
             return false;
         }
     }
 
     if (!out_sec_buf.pvBuffer)
     {
-        KUMA_ERRXTRACE("nextAuthToken, the output security buffer is null");
+        KM_ERRXTRACE("nextAuthToken, the output security buffer is null");
         return false;
     }
 
@@ -249,7 +249,7 @@ bool SspiAuthenticator::hasAuthHeader() const
 
 bool SspiAuthenticator::parseDigestChallenge(const std::string &challenge, std::string &realm, std::string &nonce, std::string qop)
 {
-    for_each_token(challenge, ',', [&nonce, &realm, &qop](std::string &t) {
+    kev::for_each_token(challenge, ',', [&nonce, &realm, &qop](std::string &t) {
         std::string k, v;
         auto pos = t.find('=');
         if (pos == std::string::npos) {
@@ -266,13 +266,13 @@ bool SspiAuthenticator::parseDigestChallenge(const std::string &challenge, std::
         else {
             v = t.substr(pos);
         }
-        if (is_equal(k, "nonce")) {
+        if (kev::is_equal(k, "nonce")) {
             nonce = v;
         }
-        else if (is_equal(k, "realm")) {
+        else if (kev::is_equal(k, "realm")) {
             realm = v;
         }
-        else if (is_equal(k, "qop")) {
+        else if (kev::is_equal(k, "qop")) {
             qop = v;
         }
         return true;

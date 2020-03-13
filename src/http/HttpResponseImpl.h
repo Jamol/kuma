@@ -27,13 +27,12 @@
 #include "HttpParserImpl.h"
 #include "TcpConnection.h"
 #include "Uri.h"
-#include "util/kmobject.h"
-#include "util/DestroyDetector.h"
+#include "libkev/src/util/kmobject.h"
 #include "compr/compr.h"
 
 KUMA_NS_BEGIN
 
-class HttpResponse::Impl : public KMObject
+class HttpResponse::Impl : public kev::KMObject
 {
 public:
     using DataCallback = HttpResponse::DataCallback;

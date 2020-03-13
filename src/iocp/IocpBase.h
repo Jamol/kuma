@@ -17,8 +17,8 @@
 #define __IocpBase_H__
 
 #include "kmdefs.h"
-#include "util/kmtrace.h"
-#include "util/skutils.h"
+#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/util/skutils.h"
 #include "EventLoopImpl.h"
 #include "Iocp.h"
 
@@ -52,7 +52,7 @@ public:
             iocp_ctx_.reset();
         }
         else if (close_fd && fd != INVALID_FD) {
-            SKUtils::close(fd);
+            kev::SKUtils::close(fd);
         }
     }
 

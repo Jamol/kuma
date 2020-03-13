@@ -22,8 +22,8 @@
 #ifdef KUMA_HAS_OPENSSL
 
 #include "OpenSslLib.h"
-#include "util/kmtrace.h"
-#include "util/util.h"
+#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/util/util.h"
 #include "SslHandler.h"
 
 #include <string>
@@ -88,7 +88,7 @@ bool OpenSslLib::doInit(const std::string &cfg_path)
 {
     certs_path_ = cfg_path;
     if(certs_path_.empty()) {
-        certs_path_ = getExecutablePath();
+        certs_path_ = kev::getExecutablePath();
     }
     certs_path_ += "/cert";
     if(certs_path_.at(certs_path_.length() - 1) != PATH_SEPARATOR) {
@@ -166,13 +166,13 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
     do {
         ssl_ctx = SSL_CTX_new(method);
         if(!ssl_ctx) {
-            KUMA_WARNTRACE("SSL_CTX_new failed, err="<<ERR_reason_error_string(ERR_get_error()));
+            KM_WARNTRACE("SSL_CTX_new failed, err="<<ERR_reason_error_string(ERR_get_error()));
             break;
         }
         
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
         if (SSL_CTX_set_ecdh_auto(ssl_ctx, 1) != 1) {
-            KUMA_WARNTRACE("SSL_CTX_set_ecdh_auto failed, err="<<ERR_reason_error_string(ERR_get_error()));
+            KM_WARNTRACE("SSL_CTX_set_ecdh_auto failed, err="<<ERR_reason_error_string(ERR_get_error()));
         }
 #endif
         
@@ -201,7 +201,7 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
             "ECDHE-ECDSA-AES128-SHA256:"
             "ECDHE-RSA-AES128-SHA256";
             if (SSL_CTX_set_cipher_list(ssl_ctx, kDefaultCipherList) != 1) {
-                KUMA_WARNTRACE("SSL_CTX_set_cipher_list failed, err="<<ERR_reason_error_string(ERR_get_error()));
+                KM_WARNTRACE("SSL_CTX_set_cipher_list failed, err="<<ERR_reason_error_string(ERR_get_error()));
             }
         }
 #endif
@@ -209,28 +209,28 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
         if(!certFile.empty() && !keyFile.empty()) {
             //if(SSL_CTX_use_certificate_file(ssl_ctx, certFile.c_str(), SSL_FILETYPE_PEM) != 1) {
             if(SSL_CTX_use_certificate_chain_file(ssl_ctx, certFile.c_str()) != 1) {
-                KUMA_WARNTRACE("SSL_CTX_use_certificate_chain_file failed, file="<<certFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
+                KM_WARNTRACE("SSL_CTX_use_certificate_chain_file failed, file="<<certFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
                 break;
             }
             SSL_CTX_set_default_passwd_cb(ssl_ctx, passwdCallback);
             SSL_CTX_set_default_passwd_cb_userdata(ssl_ctx, ssl_ctx);
             if(SSL_CTX_use_PrivateKey_file(ssl_ctx, keyFile.c_str(), SSL_FILETYPE_PEM) != 1) {
-                KUMA_WARNTRACE("SSL_CTX_use_PrivateKey_file failed, file="<<keyFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
+                KM_WARNTRACE("SSL_CTX_use_PrivateKey_file failed, file="<<keyFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
                 break;
             }
             if(SSL_CTX_check_private_key(ssl_ctx) != 1) {
-                KUMA_WARNTRACE("SSL_CTX_check_private_key failed, err="<<ERR_reason_error_string(ERR_get_error()));
+                KM_WARNTRACE("SSL_CTX_check_private_key failed, err="<<ERR_reason_error_string(ERR_get_error()));
                 break;
             }
         }
         
         if (!caFile.empty()) {
             if(SSL_CTX_load_verify_locations(ssl_ctx, caFile.c_str(), NULL) != 1) {
-                KUMA_WARNTRACE("SSL_CTX_load_verify_locations failed, file="<<caFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
+                KM_WARNTRACE("SSL_CTX_load_verify_locations failed, file="<<caFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
                 break;
             }
             if(SSL_CTX_set_default_verify_paths(ssl_ctx) != 1) {
-                KUMA_WARNTRACE("SSL_CTX_set_default_verify_paths failed, err="<<ERR_reason_error_string(ERR_get_error()));
+                KM_WARNTRACE("SSL_CTX_set_default_verify_paths failed, err="<<ERR_reason_error_string(ERR_get_error()));
                 break;
             }
             SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, verifyCallback);
@@ -329,19 +329,19 @@ int OpenSslLib::verifyCallback(int ok, X509_STORE_CTX *ctx)
         if(s != NULL) {
             auto x509_err_depth = X509_STORE_CTX_get_error_depth(ctx);
             if(ok) {
-                KUMA_INFOTRACE("verifyCallback ok, depth="<<x509_err_depth<<", subject="<<buf);
+                KM_INFOTRACE("verifyCallback ok, depth="<<x509_err_depth<<", subject="<<buf);
                 if(X509_NAME_oneline(X509_get_issuer_name(x509_current_cert), buf, sizeof(buf))) {
-                    KUMA_INFOTRACE("verifyCallback, issuer="<<buf);
+                    KM_INFOTRACE("verifyCallback, issuer="<<buf);
                 }
             } else {
-                KUMA_ERRTRACE("verifyCallback failed, depth="<<x509_err_depth
+                KM_ERRTRACE("verifyCallback failed, depth="<<x509_err_depth
                               <<", err="<<x509_err<<", subject="<<buf);
             }
         }
     }
     
     if (0 == ok) {
-        KUMA_INFOTRACE("verifyCallback, err="<<X509_verify_cert_error_string(x509_err));
+        KM_INFOTRACE("verifyCallback, err="<<X509_verify_cert_error_string(x509_err));
         switch (x509_err)
         {
                 //case X509_V_ERR_CERT_NOT_YET_VALID:
@@ -352,7 +352,7 @@ int OpenSslLib::verifyCallback(int ok, X509_STORE_CTX *ctx)
                 break;
             case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
                 if (ssl_flags & SSL_ALLOW_SELF_SIGNED_CERT) {
-                    KUMA_INFOTRACE("verifyCallback, ... ignored, err="<<x509_err);
+                    KM_INFOTRACE("verifyCallback, ... ignored, err="<<x509_err);
                     ok = 1;
                 }
                 break;
@@ -394,7 +394,7 @@ int OpenSslLib::appVerifyCallback(X509_STORE_CTX *ctx, void *arg)
         }
         if(s != NULL) {
             auto x509_err_depth = X509_STORE_CTX_get_error_depth(ctx);
-            KUMA_INFOTRACE("appVerifyCallback, depth="<<x509_err_depth<<", "<<buf);
+            KM_INFOTRACE("appVerifyCallback, depth="<<x509_err_depth<<", "<<buf);
         }
         return 1;
     }

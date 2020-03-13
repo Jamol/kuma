@@ -26,7 +26,7 @@
 #include "kmapi.h"
 #include "httpdefs.h"
 #include "Uri.h"
-#include "util/kmobject.h"
+#include "libkev/src/util/kmobject.h"
 #include "HttpParserImpl.h"
 #include "compr/compr.h"
 #include "proxy/proxydefs.h"
@@ -37,7 +37,7 @@ KUMA_NS_BEGIN
 
 const std::string kAcceptableEncodings = "gzip, deflate";
 
-class HttpRequest::Impl : public KMObject
+class HttpRequest::Impl : public kev::KMObject
 {
 public:
     using DataCallback = HttpRequest::DataCallback;

@@ -17,7 +17,6 @@
 #define __HTTPDEFS_H__
 
 #include "kmdefs.h"
-#include "util/util.h"
 #include <string>
 #include <vector>
 #include <map>
@@ -54,7 +53,11 @@ using HttpBody = std::vector<uint8_t>;
 struct CaseIgnoreLess
 {
     bool operator()(const std::string &lhs, const std::string &rhs) const {
+#ifdef KUMA_OS_WIN
+        return _stricmp(lhs.c_str(), rhs.c_str()) < 0;
+#else
         return strcasecmp(lhs.c_str(), rhs.c_str()) < 0;
+#endif
     }
 };
 typedef std::map<std::string, std::string, CaseIgnoreLess> HeaderMap;

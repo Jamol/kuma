@@ -25,7 +25,6 @@
 #ifdef KUMA_HAS_OPENSSL
 
 #include "kmdefs.h"
-#include "evdefs.h"
 #include "kmbuffer.h"
 #include "OpenSslLib.h"
 

@@ -15,7 +15,7 @@
 
 #include "compr.h"
 #include "compr_zlib.h"
-#include "util/util.h"
+#include "libkev/src/util/util.h"
 
 using namespace kuma;
 

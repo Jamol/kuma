@@ -25,15 +25,15 @@
 #include "H2ConnectionImpl.h"
 #include "http/HttpHeader.h"
 #include "http/Uri.h"
-#include "util/kmobject.h"
-#include "util/DestroyDetector.h"
-#include "util/kmqueue.h"
+#include "libkev/src/util/kmobject.h"
+#include "libkev/src/util/DestroyDetector.h"
+#include "libkev/src/util/kmqueue.h"
 #include "proxy/proxydefs.h"
 
 KUMA_NS_BEGIN
 
 
-class H2StreamProxy : public KMObject, public DestroyDetector
+class H2StreamProxy : public kev::KMObject, public kev::DestroyDetector
 {
 public:
     using DataCallback = std::function<void(KMBuffer &buf)>;
@@ -73,7 +73,7 @@ public:
         } else if (auto loop = loop_.lock()) {
             return loop->post([r = std::move(r)]{
                 r();
-            }, &loop_token_) == KMError::NOERR;
+            }, &loop_token_) == kev::Result::OK;
         } else {
             r();
             return true;
@@ -156,7 +156,7 @@ protected:
         } else if (auto loop = conn_loop_.lock()) {
             return loop->post([r = std::move(r)] {
                 r();
-            }, &conn_token_) == KMError::NOERR;
+            }, &conn_token_) == kev::Result::OK;
         } else {
             r();
             return true;
@@ -196,11 +196,11 @@ protected:
     
     // incoming
     HttpHeader incoming_header_{false, true};
-    KMQueue<KMBuffer::Ptr> recv_buf_queue_;
+    kev::KMQueue<KMBuffer::Ptr> recv_buf_queue_;
     bool header_complete_ {false};
     
     bool write_blocked_ { false };
-    KMQueue<KMBuffer::Ptr>  send_buf_queue_;
+    kev::KMQueue<KMBuffer::Ptr>  send_buf_queue_;
     
     HeaderCallback          header_cb_;
     DataCallback            data_cb_;
