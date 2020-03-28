@@ -138,7 +138,7 @@ int Http1xResponse::sendBody(const KMBuffer &buf)
 void Http1xResponse::reset()
 {
     HttpResponse::Impl::reset();
-    stream_->reset();
+    stream_->readyForReuse();
 }
 
 KMError Http1xResponse::close()

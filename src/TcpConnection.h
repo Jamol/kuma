@@ -46,6 +46,7 @@ public:
     int send(const KMBuffer &buf);
     KMError close();
     void reset();
+    void doReceive() { onReceive(KMError::NOERR); }
     
     virtual void setDataCallback(DataCallback cb) { data_cb_ = std::move(cb); }
     virtual void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }

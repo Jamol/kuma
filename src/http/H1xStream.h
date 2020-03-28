@@ -59,6 +59,7 @@ public:
     int sendData(const void* data, size_t len);
     int sendData(const KMBuffer &buf);
     void reset();
+    void readyForReuse();
     KMError close();
     
     bool isServer() const { return tcp_conn_.isServer(); }

@@ -133,6 +133,10 @@ KMError H1xStream::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser
         if (is_parser_complete) {
             onIncomingComplete();
         }
+        else {
+            // need do receive here in case the receive buffer is not empty on ET mode
+            tcp_conn_.doReceive();
+        }
     }
     return ret;
 }
@@ -353,6 +357,13 @@ void H1xStream::reset()
     wait_outgoing_complete_ = false;
     incoming_parser_.reset();
     is_stream_upgraded_ = false;
+}
+
+void H1xStream::readyForReuse()
+{
+    reset();
+    // try to receive new request
+    tcp_conn_.doReceive();
 }
 
 KMError H1xStream::close()
