@@ -27,13 +27,13 @@ def run_and_check_error(command):
         print('failed to execute: ', command)
         exit(-1)
 
-def build_one_arch(workingPath, buildtype, arch, sdkversion, xcodePath):
+def build_one_arch(workingPath, buildtype, arch, xcodePath):
     buildPath = workingPath + '/' + arch + '/' + buildtype
     if not os.path.exists(buildPath):
         os.makedirs(buildPath)
     os.chdir(buildPath)
     os.environ['DEVROOT'] = xcodePath + '/Platforms/MacOSX.platform/Developer'
-    os.environ['SDKROOT'] = os.environ['DEVROOT'] + '/SDKs/MacOSX' + sdkversion + '.sdk'
+    os.environ['SDKROOT'] = os.environ['DEVROOT'] + '/SDKs/MacOSX' + '.sdk'
     os.environ['BUILD_TOOLS'] = xcodePath
     cmakeConfig = ['-DCMAKE_BUILD_TYPE='+buildtype,
                    '-DCMAKE_OSX_SYSROOT=$SDKROOT',
@@ -44,12 +44,11 @@ def build_one_arch(workingPath, buildtype, arch, sdkversion, xcodePath):
     run_and_check_error('make')
 
 def build_mac(workingPath):
-    sdkversion = get_sdkversion()
     xcodePath = get_xcode_root()
     arch = 'x86_64'
-    build_one_arch(workingPath, 'Debug', arch, sdkversion, xcodePath)
+    build_one_arch(workingPath, 'Debug', arch, xcodePath)
     
-    build_one_arch(workingPath, 'Release', arch, sdkversion, xcodePath)
+    build_one_arch(workingPath, 'Release', arch, xcodePath)
 
 
 def mac_main(argv):

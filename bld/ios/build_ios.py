@@ -22,14 +22,14 @@ def run_and_check_error(command):
         print('failed to execute: ', command)
         exit(-1)
 
-def build_one_arch(workingPath, buildtype, arch, sdkversion, xcodePath):
+def build_one_arch(workingPath, buildtype, arch, xcodePath):
     buildPath = workingPath + '/' + arch + '/' + buildtype
     if not os.path.exists(buildPath):
         os.makedirs(buildPath)
     os.chdir(buildPath)
     platform = 'iPhoneOS' if (arch == 'armv7' or arch == 'arm64') else 'iPhoneSimulator'
     os.environ['DEVROOT'] = '/'.join([xcodePath, 'Platforms', platform + '.platform', 'Developer'])
-    os.environ['SDKROOT'] = os.environ['DEVROOT'] + '/SDKs/' + platform + sdkversion + '.sdk'
+    os.environ['SDKROOT'] = os.environ['DEVROOT'] + '/SDKs/' + platform + '.sdk'
     os.environ['BUILD_TOOLS'] = xcodePath
     cmakeConfig = ['-DCMAKE_BUILD_TYPE='+buildtype,
                    '-DCMAKE_OSX_SYSROOT=$SDKROOT',
@@ -41,7 +41,6 @@ def build_one_arch(workingPath, buildtype, arch, sdkversion, xcodePath):
     return buildPath+'/lib'
 
 def build_ios(workingPath, outdir):
-    sdkversion = get_sdkversion()
     xcodePath = get_xcode_root()
 
     os.system('rm -f '+outdir+'/Debug-iphoneos/libkuma.a*')
@@ -49,14 +48,14 @@ def build_ios(workingPath, outdir):
 
     archs = ["armv7", "arm64", "x86_64"]
     arch = "armv7"
-    build_one_arch(workingPath, 'Debug', arch, sdkversion, xcodePath)
+    build_one_arch(workingPath, 'Debug', arch, xcodePath)
     os.system('mv '+outdir+'/Debug-iphoneos/libkuma.a '+outdir+'/Debug-iphoneos/libkuma.a.'+arch)
-    build_one_arch(workingPath, 'Release', arch, sdkversion, xcodePath)
+    build_one_arch(workingPath, 'Release', arch, xcodePath)
     os.system('mv '+outdir+'/Release-iphoneos/libkuma.a '+outdir+'/Release-iphoneos/libkuma.a.'+arch)
     arch = "arm64"
-    build_one_arch(workingPath, 'Debug', arch, sdkversion, xcodePath)
+    build_one_arch(workingPath, 'Debug', arch, xcodePath)
     os.system('mv '+outdir+'/Debug-iphoneos/libkuma.a '+outdir+'/Debug-iphoneos/libkuma.a.'+arch)
-    build_one_arch(workingPath, 'Release', arch, sdkversion, xcodePath)
+    build_one_arch(workingPath, 'Release', arch, xcodePath)
     os.system('mv '+outdir+'/Release-iphoneos/libkuma.a '+outdir+'/Release-iphoneos/libkuma.a.'+arch)
     os.system('lipo -create '+outdir+'/Debug-iphoneos/libkuma.a.armv7 '+outdir+'/Debug-iphoneos/libkuma.a.arm64 -output '+outdir+'/Debug-iphoneos/libkuma.a')
     os.system('lipo -create '+outdir+'/Release-iphoneos/libkuma.a.armv7 '+outdir+'/Release-iphoneos/libkuma.a.arm64 -output '+outdir+'/Release-iphoneos/libkuma.a')
@@ -64,8 +63,8 @@ def build_ios(workingPath, outdir):
     os.system('rm -f '+outdir+'/Release-iphoneos/libkuma.a.*')
 
     arch = "x86_64"
-    build_one_arch(workingPath, 'Debug', arch, sdkversion, xcodePath)
-    build_one_arch(workingPath, 'Release', arch, sdkversion, xcodePath)
+    build_one_arch(workingPath, 'Debug', arch, xcodePath)
+    build_one_arch(workingPath, 'Release', arch, xcodePath)
 
 
 def ios_main(argv):
