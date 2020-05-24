@@ -147,7 +147,10 @@ bool DnsResolver::init()
 
 void DnsResolver::stop()
 {
-    stop_flag_ = true;
+    {
+        LockGuard g(locker_);
+        stop_flag_ = true;
+    }
     conv_.notify_all();
     
     for (auto &thr : threads_) {
@@ -169,7 +172,7 @@ void DnsResolver::dnsProc()
         SlotList slots;
         
         {
-            std::unique_lock<std::mutex> lk(locker_);
+            std::unique_lock<LockType> lk(locker_);
             conv_.wait(lk, [this] { return !requests_.empty() || stop_flag_; });
             if (stop_flag_) {
                 break;

@@ -77,3 +77,52 @@ KMError toKMError(kev::Result result)
 }
 
 KUMA_NS_END
+
+
+extern "C" int km_resolve_2_ip(const char *host_name, char *ip_buf, size_t ip_buf_len, int ipv)
+{
+    return kev::km_resolve_2_ip(host_name, ip_buf, ip_buf_len, ipv);
+}
+
+extern "C" int km_set_sock_addr(const char *addr, 
+                                unsigned short port,
+                                addrinfo *hints, 
+                                sockaddr *sk_addr,
+                                size_t sk_addr_len)
+{
+    return kev::km_set_sock_addr(addr, port, hints, sk_addr, sk_addr_len);
+}
+
+extern "C" int km_get_sock_addr(const sockaddr *sk_addr, 
+                                size_t sk_addr_len,
+                                char *addr, 
+                                size_t addr_len, 
+                                unsigned short *port)
+{
+    return kev::km_get_sock_addr(sk_addr, sk_addr_len, addr, addr_len, port);
+}
+
+extern "C" bool km_is_ipv6_address(const char *addr)
+{
+    return kev::km_is_ipv6_address(addr);
+}
+
+extern "C" bool km_is_ip_address(const char *addr)
+{
+    return kev::km_is_ip_address(addr);
+}
+
+extern "C" bool km_is_mcast_address(const char *addr)
+{
+    return kev::km_is_mcast_address(addr);
+}
+
+extern "C" int km_parse_address(const char *addr,
+                                char *proto, 
+                                size_t proto_len,
+                                char *host, 
+                                size_t  host_len, 
+                                unsigned short *port)
+{
+    return kev::km_parse_address(addr, proto, proto_len, host, host_len, port);
+}

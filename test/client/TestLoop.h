@@ -26,10 +26,6 @@ typedef enum {
     PROTO_UDP
 } Proto;
 
-int km_parse_address(const char* addr,
-                     char* proto, int proto_len,
-                     char* host, int  host_len, unsigned short* port);
-
 class TestObject
 {
 public:

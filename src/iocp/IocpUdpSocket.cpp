@@ -88,16 +88,6 @@ void IocpUdpSocket::unregisterFd(SOCKET_FD fd, bool close_fd)
     IocpBase::unregisterFd(loop_.lock(), fd, close_fd);
 }
 
-KMError IocpUdpSocket::bind(const std::string &bind_host, uint16_t bind_port, uint32_t udp_flags)
-{
-    auto ret = UdpSocketBase::bind(bind_host, bind_port, udp_flags);
-    if (ret != KMError::NOERR) {
-        return ret;
-    }
-    postRecvOperation(fd_);
-    return KMError::NOERR;
-}
-
 int IocpUdpSocket::receive(void *data, size_t length, char *ip, size_t ip_len, uint16_t &port)
 {
     if (INVALID_FD == fd_) {
@@ -126,6 +116,11 @@ int IocpUdpSocket::receive(void *data, size_t length, char *ip, size_t ip_len, u
 
     //KM_INFOXTRACE("receive, ret="<<ret<<", len="<<length);
     return ret;
+}
+
+void IocpUdpSocket::onSocketInitialized()
+{
+    postRecvOperation(fd_);
 }
 
 void IocpUdpSocket::onReceive(size_t io_size)

@@ -71,7 +71,7 @@ KMError IocpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
         // need bind before ConnectEx
         sockaddr_storage ss_any = { 0 };
         ss_any.ss_family = ss_addr.ss_family;
-        int addr_len = kev::km_get_addr_length(ss_any);
+        auto addr_len = static_cast<int>(kev::km_get_addr_length(ss_any));
         int ret = ::bind(fd_, (struct sockaddr*)&ss_any, addr_len);
         if (ret < 0) {
             KM_ERRXTRACE("connect_i, bind failed, err=" << kev::SKUtils::getLastError());

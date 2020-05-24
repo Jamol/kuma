@@ -13,13 +13,12 @@ UdpClient::UdpClient(TestLoop* loop, long conn_id)
 , index_(0)
 , max_send_count_(200000)
 {
-    
+    udp_.setReadCallback([this](KMError err) { onReceive(err); });
+    udp_.setErrorCallback([this](KMError err) { onClose(err); });
 }
 
 KMError UdpClient::bind(const std::string &bind_host, uint16_t bind_port)
 {
-    udp_.setReadCallback([this] (KMError err) { onReceive(err); });
-    udp_.setErrorCallback([this] (KMError err) { onClose(err); });
     return udp_.bind(bind_host.c_str(), bind_port);
 }
 
@@ -51,6 +50,8 @@ void UdpClient::onReceive(KMError err)
     uint16_t port = 0;
     do {
         int bytes_read = udp_.receive((uint8_t*)buf, sizeof(buf), ip, sizeof(ip), port);
+        //printf("UdpClient::onReceive, bytes_read=%d, ip=%s, port=%d\n",
+        //    bytes_read, ip, port);
         if(bytes_read > 0) {
             uint32_t index = 0;
             if(bytes_read >= 4) {

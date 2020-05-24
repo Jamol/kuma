@@ -37,18 +37,6 @@
 KEV_NS_BEGIN
 
 #ifdef KUMA_OS_WIN
-# ifdef KUMA_EXPORTS
-#  define KEV_API __declspec(dllexport)
-# else
-#  define KEV_API __declspec(dllimport)
-# endif
-# undef KEV_API
-# define KEV_API
-#else
-# define KEV_API
-#endif
-
-#ifdef KUMA_OS_WIN
 using SOCKET_FD = uintptr_t;
 const SOCKET_FD INVALID_FD = (SOCKET_FD)~0;
 #else

@@ -4,13 +4,12 @@ UdpServer::UdpServer(EventLoop* loop)
 : loop_(loop)
 , udp_(loop_)
 {
-    
+    udp_.setReadCallback([this](KMError err) { onReceive(err); });
+    udp_.setErrorCallback([this](KMError err) { onClose(err); });
 }
 
 KMError UdpServer::bind(const std::string &host, uint16_t port)
 {
-    udp_.setReadCallback([this] (KMError err) { onReceive(err); });
-    udp_.setErrorCallback([this] (KMError err) { onClose(err); });
     return udp_.bind(host.c_str(), port);
 }
 
@@ -27,6 +26,8 @@ void UdpServer::onReceive(KMError err)
     uint16_t port = 0;
     do {
         int bytes_read = udp_.receive((uint8_t*)buf, sizeof(buf), ip, sizeof(ip), port);
+        //printf("UdpServer::onReceive, bytes_read=%d, ip=%s, port=%d\n", 
+        //    bytes_read, ip, port);
         if(bytes_read < 0) {
             udp_.close();
             return ;

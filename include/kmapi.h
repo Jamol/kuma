@@ -316,6 +316,7 @@ public:
     UdpSocket& operator=(UdpSocket &&other);
     
     KMError bind(const char *bind_host, uint16_t bind_port, uint32_t udp_flags=0);
+    KMError connect(const char *host, uint16_t port);
     int send(const void *data, size_t length, const char *host, uint16_t port);
     int send(const iovec *iovs, int count, const char *host, uint16_t port);
     int send(const KMBuffer &buf, const char *host, uint16_t port);

@@ -122,7 +122,7 @@ KMError SocketBase::bind(const std::string &bind_host, uint16_t bind_port)
         KM_ERRXTRACE("bind, socket failed, err=" << kev::SKUtils::getLastError());
         return KMError::FAILED;
     }
-    int addr_len = kev::km_get_addr_length(ss_addr);
+    auto addr_len = static_cast<socklen_t>(kev::km_get_addr_length(ss_addr));
     int ret = ::bind(fd_, (struct sockaddr*)&ss_addr, addr_len);
     if (ret < 0) {
         KM_ERRXTRACE("bind, bind failed, err=" << kev::SKUtils::getLastError());
@@ -183,7 +183,7 @@ KMError SocketBase::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
     }
     setSocketOption();
 
-    int addr_len = kev::km_get_addr_length(ss_addr);
+    auto addr_len = static_cast<socklen_t>(kev::km_get_addr_length(ss_addr));
     int ret = ::connect(fd_, (struct sockaddr *)&ss_addr, addr_len);
     if (0 == ret) {
         setState(State::CONNECTING); // wait for writable event
@@ -276,7 +276,7 @@ void SocketBase::unregisterFd(SOCKET_FD fd, bool close_fd)
     }
 }
 
-int SocketBase::send(const void* data, size_t length)
+int SocketBase::send(const void *data, size_t length)
 {
     if (!isReady()) {
         KM_WARNXTRACE("send, invalid state=" << getState());
@@ -314,7 +314,7 @@ int SocketBase::send(const void* data, size_t length)
     return static_cast<int>(ret);
 }
 
-int SocketBase::send(const iovec* iovs, int count)
+int SocketBase::send(const iovec *iovs, int count)
 {
     if (!isReady()) {
         KM_WARNXTRACE("send 2, invalid state=" << getState());
@@ -381,7 +381,7 @@ int SocketBase::send(const KMBuffer &buf)
     return send(iovs, count);
 }
 
-int SocketBase::receive(void* data, size_t length)
+int SocketBase::receive(void *data, size_t length)
 {
     if (!isReady()) {
         return 0;
@@ -548,7 +548,7 @@ void SocketBase::onClose(KMError err)
     if (error_cb_) error_cb_(err);
 }
 
-void SocketBase::ioReady(KMEvent events, void* ol, size_t io_size)
+void SocketBase::ioReady(KMEvent events, void *ol, size_t io_size)
 {
     switch (getState())
     {

@@ -95,6 +95,11 @@ KMError UdpSocket::Impl::bind(const std::string &bind_host, uint16_t bind_port, 
     return socket_->bind(bind_host, bind_port, udp_flags);
 }
 
+KMError UdpSocket::Impl::connect(const std::string &host, uint16_t port)
+{
+    return socket_->connect(host, port);
+}
+
 KMError UdpSocket::Impl::mcastJoin(const std::string &mcast_addr, uint16_t mcast_port)
 {
     return socket_->mcastJoin(mcast_addr, mcast_port);
@@ -105,17 +110,17 @@ KMError UdpSocket::Impl::mcastLeave(const std::string &mcast_addr, uint16_t mcas
     return socket_->mcastLeave(mcast_addr, mcast_port);
 }
 
-int UdpSocket::Impl::send(const void* data, size_t length, const std::string &host, uint16_t port)
+int UdpSocket::Impl::send(const void *data, size_t length, const std::string &host, uint16_t port)
 {
     return socket_->send(data, length, host, port);
 }
 
-int UdpSocket::Impl::send(const iovec* iovs, int count, const std::string &host, uint16_t port)
+int UdpSocket::Impl::send(const iovec *iovs, int count, const std::string &host, uint16_t port)
 {
     return socket_->send(iovs, count, host, port);
 }
 
-int UdpSocket::Impl::send(const KMBuffer &buf, const char* host, uint16_t port)
+int UdpSocket::Impl::send(const KMBuffer &buf, const std::string &host, uint16_t port)
 {
     return socket_->send(buf, host, port);
 }

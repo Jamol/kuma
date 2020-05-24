@@ -43,10 +43,11 @@ public:
     ~Impl();
     
     KMError bind(const std::string &bind_host, uint16_t bind_port, uint32_t udp_flags);
-    int send(const void* data, size_t length, const std::string &host, uint16_t port);
-    int send(const iovec* iovs, int count, const std::string &host, uint16_t port);
-    int send(const KMBuffer &buf, const char* host, uint16_t port);
-    int receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port);
+    KMError connect(const std::string &host, uint16_t port);
+    int send(const void *data, size_t length, const std::string &host, uint16_t port);
+    int send(const iovec *iovs, int count, const std::string &host, uint16_t port);
+    int send(const KMBuffer &buf, const std::string &host, uint16_t port);
+    int receive(void *data, size_t length, char *ip, size_t ip_len, uint16_t &port);
     KMError close();
     
     KMError mcastJoin(const std::string &mcast_addr, uint16_t mcast_port);

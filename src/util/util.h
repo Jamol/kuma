@@ -74,4 +74,29 @@ KMError toKMError(kev::Result result);
 
 KUMA_NS_END
 
+
+extern "C" {
+    KUMA_API int km_resolve_2_ip(const char *host_name, char *ip_buf, size_t ip_buf_len, int ipv = 0);
+    KUMA_API int km_parse_address(const char *addr,
+                                  char *proto, 
+                                  size_t proto_len,
+                                  char *host, 
+                                  size_t host_len, 
+                                  unsigned short *port);
+    KUMA_API int km_set_sock_addr(const char *addr, 
+                                  unsigned short port,
+                                  addrinfo *hints, 
+                                  sockaddr *sk_addr,
+                                  size_t sk_addr_len);
+    KUMA_API int km_get_sock_addr(const sockaddr *sk_addr, 
+                                  size_t sk_addr_len,
+                                  char *addr, 
+                                  size_t addr_len, 
+                                  unsigned short *port);
+    KUMA_API bool km_is_ipv6_address(const char *addr);
+    KUMA_API bool km_is_ip_address(const char *addr);
+    KUMA_API bool km_is_mcast_address(const char *addr);
+}
+
+
 #endif

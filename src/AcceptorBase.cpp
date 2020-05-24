@@ -111,7 +111,7 @@ KMError AcceptorBase::listen(const std::string &host, uint16_t port)
         return KMError::FAILED;
     }
     setSocketOption();
-    int addr_len = kev::km_get_addr_length(ss_addr);
+    auto addr_len = static_cast<socklen_t>(kev::km_get_addr_length(ss_addr));
     int ret = ::bind(fd_, (struct sockaddr*)&ss_addr, addr_len);
     if(ret < 0) {
         KM_ERRXTRACE("startListen, bind failed, err="<<kev::SKUtils::getLastError());

@@ -221,7 +221,7 @@ EventLoop::Token::Impl* EventLoop::Token::pimpl()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-TcpSocket::TcpSocket(EventLoop* loop)
+TcpSocket::TcpSocket(EventLoop *loop)
 : pimpl_(new Impl(EventLoopHelper::implPtr(loop->pimpl())))
 {
 
@@ -279,7 +279,7 @@ KMError TcpSocket::setSslServerName(const char *server_name)
 #endif
 }
 
-KMError TcpSocket::bind(const char* bind_host, uint16_t bind_port)
+KMError TcpSocket::bind(const char *bind_host, uint16_t bind_port)
 {
     if (!bind_host) {
         return KMError::INVALID_PARAM;
@@ -287,7 +287,7 @@ KMError TcpSocket::bind(const char* bind_host, uint16_t bind_port)
     return pimpl_->bind(bind_host, bind_port);
 }
 
-KMError TcpSocket::connect(const char* host, uint16_t port, EventCallback cb, uint32_t timeout)
+KMError TcpSocket::connect(const char *host, uint16_t port, EventCallback cb, uint32_t timeout)
 {
     if (!host) {
         return KMError::INVALID_PARAM;
@@ -332,12 +332,12 @@ KMError TcpSocket::getAlpnSelected(char *buf, size_t len)
 #endif
 }
 
-int TcpSocket::send(const void* data, size_t length)
+int TcpSocket::send(const void *data, size_t length)
 {
     return pimpl_->send(data, length);
 }
 
-int TcpSocket::send(const iovec* iovs, int count)
+int TcpSocket::send(const iovec *iovs, int count)
 {
     return pimpl_->send(iovs, count);
 }
@@ -347,7 +347,7 @@ int TcpSocket::send(const KMBuffer &buf)
     return pimpl_->send(buf);
 }
 
-int TcpSocket::receive(void* data, size_t length)
+int TcpSocket::receive(void *data, size_t length)
 {
     return pimpl_->receive(data, length);
 }
@@ -393,7 +393,7 @@ TcpSocket::Impl* TcpSocket::pimpl()
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
-TcpListener::TcpListener(EventLoop* loop)
+TcpListener::TcpListener(EventLoop *loop)
 : pimpl_(new Impl(EventLoopHelper::implPtr(loop->pimpl())))
 {
 
@@ -424,7 +424,7 @@ TcpListener& TcpListener::operator=(TcpListener &&other)
     return *this;
 }
 
-KMError TcpListener::startListen(const char* host, uint16_t port)
+KMError TcpListener::startListen(const char *host, uint16_t port)
 {
     if (!host) {
         return KMError::INVALID_PARAM;
@@ -432,7 +432,7 @@ KMError TcpListener::startListen(const char* host, uint16_t port)
     return pimpl_->startListen(host, port);
 }
 
-KMError TcpListener::stopListen(const char* host, uint16_t port)
+KMError TcpListener::stopListen(const char *host, uint16_t port)
 {
     return pimpl_->stopListen(host ? host : "", port);
 }
@@ -489,7 +489,7 @@ UdpSocket& UdpSocket::operator=(UdpSocket &&other)
     return *this;
 }
 
-KMError UdpSocket::bind(const char* bind_host, uint16_t bind_port, uint32_t udp_flags)
+KMError UdpSocket::bind(const char *bind_host, uint16_t bind_port, uint32_t udp_flags)
 {
     if (!bind_host) {
         return KMError::INVALID_PARAM;
@@ -497,22 +497,30 @@ KMError UdpSocket::bind(const char* bind_host, uint16_t bind_port, uint32_t udp_
     return pimpl_->bind(bind_host, bind_port, udp_flags);
 }
 
-int UdpSocket::send(const void* data, size_t length, const char* host, uint16_t port)
+KMError UdpSocket::connect(const char *host, uint16_t port)
 {
-    return pimpl_->send(data, length, host, port);
+    if (!host) {
+        return KMError::INVALID_PARAM;
+    }
+    return pimpl_->connect(host, port);
 }
 
-int UdpSocket::send(const iovec* iovs, int count, const char* host, uint16_t port)
+int UdpSocket::send(const void *data, size_t length, const char *host, uint16_t port)
 {
-    return pimpl_->send(iovs, count, host, port);
+    return pimpl_->send(data, length, host ? host : "", port);
 }
 
-int UdpSocket::send(const KMBuffer &buf, const char* host, uint16_t port)
+int UdpSocket::send(const iovec *iovs, int count, const char *host, uint16_t port)
 {
-    return pimpl_->send(buf, host, port);
+    return pimpl_->send(iovs, count, host ? host : "", port);
 }
 
-int UdpSocket::receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port)
+int UdpSocket::send(const KMBuffer &buf, const char *host, uint16_t port)
+{
+    return pimpl_->send(buf, host ? host : "", port);
+}
+
+int UdpSocket::receive(void *data, size_t length, char *ip, size_t ip_len, uint16_t &port)
 {
     return pimpl_->receive(data, length, ip, ip_len, port);
 }
@@ -522,7 +530,7 @@ KMError UdpSocket::close()
     return pimpl_->close();
 }
 
-KMError UdpSocket::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
+KMError UdpSocket::mcastJoin(const char *mcast_addr, uint16_t mcast_port)
 {
     if (!mcast_addr) {
         return KMError::INVALID_PARAM;
@@ -530,7 +538,7 @@ KMError UdpSocket::mcastJoin(const char* mcast_addr, uint16_t mcast_port)
     return pimpl_->mcastJoin(mcast_addr, mcast_port);
 }
 
-KMError UdpSocket::mcastLeave(const char* mcast_addr, uint16_t mcast_port)
+KMError UdpSocket::mcastLeave(const char *mcast_addr, uint16_t mcast_port)
 {
     if (!mcast_addr) {
         return KMError::INVALID_PARAM;

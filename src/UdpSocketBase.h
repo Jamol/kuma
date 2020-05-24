@@ -45,10 +45,11 @@ public:
     virtual ~UdpSocketBase();
     
     virtual KMError bind(const std::string &bind_host, uint16_t bind_port, uint32_t udp_flags);
-    virtual int send(const void* data, size_t length, const std::string &host, uint16_t port);
-    virtual int send(const iovec* iovs, int count, const std::string &host, uint16_t port);
-    virtual int send(const KMBuffer &buf, const char* host, uint16_t port);
-    virtual int receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port);
+    virtual KMError connect(const std::string &host, uint16_t port);
+    virtual int send(const void *data, size_t length, const std::string &host, uint16_t port);
+    virtual int send(const iovec *iovs, int count, const std::string &host, uint16_t port);
+    virtual int send(const KMBuffer &buf, const std::string &host, uint16_t port);
+    virtual int receive(void *data, size_t length, char *ip, size_t ip_len, uint16_t &port);
     virtual KMError close();
     
     KMError mcastJoin(const std::string &mcast_addr, uint16_t mcast_port);
@@ -64,10 +65,13 @@ protected:
     virtual void onSend(KMError err);
     virtual void onReceive(KMError err);
     virtual void onClose(KMError err);
+    virtual void onSocketInitialized() {}
+    bool initSocket(int ss_family);
+    void printSocket() const;
     void cleanup();
     virtual bool registerFd(SOCKET_FD fd);
     virtual void unregisterFd(SOCKET_FD fd, bool close_fd);
-    virtual void ioReady(KMEvent events, void* ol, size_t io_size);
+    virtual void ioReady(KMEvent events, void *ol, size_t io_size);
 
     virtual void notifySendBlocked();
     virtual void notifySendReady();
@@ -76,6 +80,7 @@ protected:
     SOCKET_FD           fd_{ INVALID_FD };
     EventLoopWeakPtr    loop_;
     bool                registered_{ false };
+    bool                connected_{ false };
     uint32_t            flags_{ 0 };
     
     EventCallback       read_cb_;

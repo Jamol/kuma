@@ -35,10 +35,10 @@ public:
     IocpUdpSocket(const EventLoopPtr &loop);
     ~IocpUdpSocket();
     
-    KMError bind(const std::string &bind_host, uint16_t bind_port, uint32_t udp_flags) override;
     int receive(void* data, size_t length, char* ip, size_t ip_len, uint16_t& port) override;
     
 protected:
+    void onSocketInitialized();
     void onReceive(size_t io_size);
 
     bool registerFd(SOCKET_FD fd) override;

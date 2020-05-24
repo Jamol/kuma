@@ -73,10 +73,10 @@ public:
     KMError detachFd(SOCKET_FD &fd, SSL* &ssl, BIO* &nbio);
     KMError startSslHandshake(SslRole ssl_role, EventCallback cb=nullptr);
 #endif
-    int send(const void* data, size_t length);
-    int send(const iovec* iovs, int count);
+    int send(const void *data, size_t length);
+    int send(const iovec *iovs, int count);
     int send(const KMBuffer &buf);
-    int receive(void* data, size_t length);
+    int receive(void *data, size_t length);
     KMError close();
     
     KMError pause();

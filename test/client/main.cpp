@@ -25,9 +25,13 @@ std::string g_proxy_user;
 std::string g_proxy_passwd;
 size_t g_bandwidth = 0;
 EventLoop main_loop(PollType::NONE);
-int km_parse_address(const char* addr,
-                     char* proto, int proto_len,
-                     char* host, int  host_len, unsigned short* port);
+
+extern "C" int km_parse_address(const char *addr,
+    char *proto,
+    size_t proto_len,
+    char *host,
+    size_t  host_len,
+    unsigned short *port);
 
 
 #ifdef KUMA_OS_WIN

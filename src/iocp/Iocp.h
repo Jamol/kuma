@@ -155,7 +155,7 @@ public:
         if (!recv_ctx_) {
             recv_ctx_.reset(new IocpContext);
         }
-        int addr_len = kev::km_get_addr_length(ss_addr);
+        auto addr_len = static_cast<int>(kev::km_get_addr_length(ss_addr));
         recv_ctx_->prepare(IocpContext::Op::CONNECT);
         auto ret = kev::connect_ex(fd, (LPSOCKADDR)&ss_addr, addr_len, NULL, 0, NULL, &recv_ctx_->ol);
         if (!ret && kev::SKUtils::getLastError() != WSA_IO_PENDING) {
@@ -422,6 +422,7 @@ public:
         if (ret == SOCKET_ERROR) {
             if (WSA_IO_PENDING == WSAGetLastError()) {
                 recv_pending_ = true;
+                increment();
                 return 0;
             }
             return -1;
@@ -431,6 +432,7 @@ public:
             // or set FILE_SKIP_COMPLETION_PORT_ON_SUCCESS
             // SetFileCompletionNotificationModes
             recv_pending_ = true;
+            increment();
         }
         return ret;
     }

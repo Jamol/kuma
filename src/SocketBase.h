@@ -41,10 +41,10 @@ public:
     KMError connect(const std::string &host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
     virtual KMError attachFd(SOCKET_FD fd);
     virtual KMError detachFd(SOCKET_FD &fd);
-    virtual int send(const void* data, size_t length);
-    virtual int send(const iovec* iovs, int count);
+    virtual int send(const void *data, size_t length);
+    virtual int send(const iovec *iovs, int count);
     virtual int send(const KMBuffer &buf);
-    virtual int receive(void* data, size_t length);
+    virtual int receive(void *data, size_t length);
     virtual KMError pause();
     virtual KMError resume();
     virtual KMError close();
@@ -80,7 +80,7 @@ protected:
 protected:
     void onResolved(KMError err, const sockaddr_storage &addr);
 
-    virtual void ioReady(KMEvent events, void* ol, size_t io_size);
+    virtual void ioReady(KMEvent events, void *ol, size_t io_size);
     virtual void onConnect(KMError err);
     virtual void onSend(KMError err);
     virtual void onReceive(KMError err);

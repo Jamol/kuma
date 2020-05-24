@@ -410,7 +410,7 @@ bool TcpSocket::Impl::isReady() const
         ;
 }
 
-int TcpSocket::Impl::send(const void* data, size_t length)
+int TcpSocket::Impl::send(const void *data, size_t length)
 {
     if (!isReady()) {
         KM_WARNXTRACE("send, invalid state");
@@ -436,7 +436,7 @@ int TcpSocket::Impl::send(const void* data, size_t length)
     return ret;
 }
 
-int TcpSocket::Impl::send(const iovec* iovs, int count)
+int TcpSocket::Impl::send(const iovec *iovs, int count)
 {
     if (!isReady()) {
         KM_WARNXTRACE("send 2, invalid state");
@@ -499,7 +499,7 @@ int TcpSocket::Impl::send(const KMBuffer &buf)
     return ret;
 }
 
-int TcpSocket::Impl::receive(void* data, size_t length)
+int TcpSocket::Impl::receive(void *data, size_t length)
 {
     if (!isReady()) {
         return 0;
@@ -693,12 +693,12 @@ KMError TcpSocket::Impl::checkSslHandshake(KMError err)
 }
 #endif
 
-int TcpSocket::Impl::sendData(const void* data, size_t length)
+int TcpSocket::Impl::sendData(const void *data, size_t length)
 {
     return socket_->send(data, length);
 }
 
-int TcpSocket::Impl::sendData(const iovec* iovs, int count)
+int TcpSocket::Impl::sendData(const iovec *iovs, int count)
 {
     return socket_->send(iovs, count);
 }
