@@ -18,7 +18,7 @@ TARGET = server
 ##############################################################################
 #
 
-INCLUDES = -I. -I$(ROOTDIR)/../src
+INCLUDES = -I. -I$(ROOTDIR)/../src -I$(ROOTDIR)/../include
 #
 ##############################################################################
 #
@@ -29,7 +29,7 @@ LIBS = $(BINDIR)/libkuma.so
 #
 CXX=g++
 
-CXXFLAGS = -g -std=c++11 -pipe -fPIC -Wall -Wextra -pedantic
+CXXFLAGS = -g -std=c++14 -pipe -fPIC -Wall -Wextra -pedantic
 LDFLAGS = -lpthread -ldl -lssl -lcrypt
 
 SRCS =  \
