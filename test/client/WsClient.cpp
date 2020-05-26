@@ -70,7 +70,7 @@ void WsClient::onOpen(KMError err)
     sendData();
     if (getSendInterval() > 0) {
         timed_sending_ = true;
-        timer_.schedule(getSendInterval(), TimerMode::REPEATING, [this] { sendData(); });
+        timer_.schedule(getSendInterval(), Timer::Mode::REPEATING, [this] { sendData(); });
     }
 }
 

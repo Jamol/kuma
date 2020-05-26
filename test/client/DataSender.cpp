@@ -22,7 +22,7 @@ void DataSender::updateBandwidth(size_t bw_bps)
 
 void DataSender::startSendData()
 {
-    timer_.schedule((uint32_t)time_slice_, TimerMode::REPEATING, [this] { onTimer(); });
+    timer_.schedule((uint32_t)time_slice_, Timer::Mode::REPEATING, [this] { onTimer(); });
     last_send_time_ = steady_clock::now();
     sendData(token_slice_);
 }
