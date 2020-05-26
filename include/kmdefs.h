@@ -49,7 +49,6 @@ using PollType = kev::PollType;
 using IOCallback = kev::IOCallback;
 using KMEvent = kev::KMEvent;
 using SOCKET_FD = kev::SOCKET_FD;
-using TimerMode = kev::TimerMode;
 #ifdef KUMA_OS_WIN
 using iovec = kev::iovec;
 #endif

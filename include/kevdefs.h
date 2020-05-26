@@ -89,11 +89,6 @@ enum class PollType {
     WINDOW
 };
 
-enum class TimerMode {
-    ONE_SHOT,
-    REPEATING
-};
-
 
 #ifdef KUMA_OS_WIN
 struct iovec {

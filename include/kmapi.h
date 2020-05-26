@@ -215,6 +215,7 @@ public:
     void loopOnce(uint32_t max_wait_ms);
     void loop(uint32_t max_wait_ms = -1);
     void stop();
+    bool stopped() const;
     
     class Impl;
     Impl* pimpl();
@@ -341,6 +342,10 @@ class KUMA_API Timer
 {
 public:
     using TimerCallback = std::function<void(void)>;
+    enum class Mode {
+        ONE_SHOT,
+        REPEATING
+    };
     
     Timer(EventLoop *loop);
     Timer(const Timer &) = delete;
@@ -354,12 +359,12 @@ public:
      * Schedule the timer. This API is thread-safe
      */
     template<typename F, std::enable_if_t<!std::is_copy_constructible<F>{}, int> = 0>
-    bool schedule(uint32_t delay_ms, TimerMode mode, F &&f)
+    bool schedule(uint32_t delay_ms, Mode mode, F &&f)
     {
         kev::lambda_wrapper<F> wf{std::forward<F>(f)};
         return schedule(delay_ms, mode, TimerCallback(std::move(wf)));
     }
-    bool schedule(uint32_t delay_ms, TimerMode mode, TimerCallback cb);
+    bool schedule(uint32_t delay_ms, Mode mode, TimerCallback cb);
     
     /**
      * Cancel the scheduled timer. This API is thread-safe

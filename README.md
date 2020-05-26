@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
     ws.connect("wss://127.0.0.1:8443/");
     
     Timer timer(&main_loop);
-    timer.schedule(1000, TimerMode::ONE_SHOT, [] {
+    timer.schedule(1000, Timer::Mode::ONE_SHOT, [] {
         printf("onTimer\n");
     });
     

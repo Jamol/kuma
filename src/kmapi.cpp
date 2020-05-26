@@ -138,6 +138,11 @@ void EventLoop::stop()
     pimpl_->stop();
 }
 
+bool EventLoop::stopped() const
+{
+    return pimpl_->stopped();
+}
+
 EventLoop::Impl* EventLoop::pimpl()
 {
     return pimpl_;
@@ -592,9 +597,9 @@ Timer& Timer::operator=(Timer &&other)
     return *this;
 }
 
-bool Timer::schedule(uint32_t delay_ms, TimerMode mode, TimerCallback cb)
+bool Timer::schedule(uint32_t delay_ms, Mode mode, TimerCallback cb)
 {
-    return pimpl_->schedule(delay_ms, mode, std::move(cb));
+    return pimpl_->schedule(delay_ms, (kev::Timer::Mode)mode, std::move(cb));
 }
 
 void Timer::cancel()
