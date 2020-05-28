@@ -34,7 +34,8 @@ CXX=g++
 CC=gcc
 
 CXXFLAGS = -g -std=c++14 -pipe -fPIC -Wall -Wextra -pedantic -DKUMA_HAS_OPENSSL
-LDFLAGS = -shared -Wl,-Bsymbolic -lpthread -ldl $(LIBS) -lssl -lcrypto
+LDFLAGS = -shared -lpthread -ldl $(LIBS) -lssl -lcrypto
+LDFLAGS += -Wl,-Bsymbolic -Wl,-soname,libkuma.so
 
 ZLIBSRCS = \
     $(ZLIBDIR)/adler32.c \

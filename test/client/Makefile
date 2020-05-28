@@ -22,7 +22,7 @@ INCLUDES = -I. -I$(ROOTDIR)/../src -I$(ROOTDIR)/../include
 #
 ##############################################################################
 #
-LIBS = $(BINDIR)/libkuma.so
+LIBS = -L$(BINDIR) -lkuma
 
 #
 ##############################################################################
@@ -30,7 +30,7 @@ LIBS = $(BINDIR)/libkuma.so
 CXX=g++
 
 CXXFLAGS = -g -std=c++14 -pipe -fPIC -Wall -Wextra -pedantic
-LDFLAGS = -lpthread -ldl -lssl -lcrypt
+LDFLAGS = -lpthread -ldl -lssl -lcrypt -Wl,-rpath,.
 
 SRCS =  \
     LoopPool.cpp\
