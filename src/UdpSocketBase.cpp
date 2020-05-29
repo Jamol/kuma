@@ -425,7 +425,7 @@ int UdpSocketBase::send(const iovec *iovs, int count, const std::string &host, u
     
     kev::ssize_t ret = -1;
     if (connected_) {
-        ret = kev::SKUtils::send(fd_, iovs, count, 0);
+        ret = kev::SKUtils::send(fd_, iovs, count);
     } else {
         sockaddr_storage ss_addr = {0};
         if (!getSockAddr(host, port, ss_addr)) {
