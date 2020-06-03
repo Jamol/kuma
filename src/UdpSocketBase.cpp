@@ -471,7 +471,7 @@ int UdpSocketBase::send(const iovec *iovs, int count, const std::string &host, u
 
 int UdpSocketBase::send(const KMBuffer &buf, const std::string &host, uint16_t port)
 {
-    iovec iovs[128] = {0};
+    iovec iovs[128] = { {0} };
     int count = 0;
     for (auto it = buf.begin(); it != buf.end(); ++it) {
         if (it->length() > 0) {
@@ -496,10 +496,15 @@ int UdpSocketBase::receive(void *data, size_t length, char *ip, size_t ip_len, u
         KM_ERRXTRACE("receive, invalid fd");
         return -1;
     }
-    
+
     sockaddr_storage ss_addr = {0};
-    socklen_t addr_len = sizeof(ss_addr);
-    auto ret = kev::SKUtils::recvfrom(fd_, data, length, 0, (struct sockaddr*)&ss_addr, &addr_len);
+    int ret = 0;
+    if (connected_) {
+        ret = (int)kev::SKUtils::recv(fd_, data, length, 0);
+    } else {
+        socklen_t addr_len = sizeof(ss_addr);
+        ret = (int)kev::SKUtils::recvfrom(fd_, data, length, 0, (struct sockaddr*)&ss_addr, &addr_len);
+    }
     if(0 == ret) {
         KM_ERRXTRACE("recv, peer closed, err"<<kev::SKUtils::getLastError());
         ret = -1;
@@ -515,7 +520,7 @@ int UdpSocketBase::receive(void *data, size_t length, char *ip, size_t ip_len, u
         } else {
             KM_ERRXTRACE("recv, failed, err="<<kev::SKUtils::getLastError());
         }
-    } else if (ip && ip_len > 0) {
+    } else if (!connected_ && ip && ip_len > 0) {
         kev::km_get_sock_addr((struct sockaddr*)&ss_addr, sizeof(ss_addr), ip, (uint32_t)ip_len, &port);
     }
     

@@ -214,8 +214,16 @@ public:
     
     void loopOnce(uint32_t max_wait_ms);
     void loop(uint32_t max_wait_ms = -1);
+
+    /* stop the loop, no more Task can be posted to loop on stopped state
+     * reset() can be used to reset the stopped falg
+     */
     void stop();
     bool stopped() const;
+
+    /* reset the loop state, Task can be posted again to the loop after reset
+     */
+    void reset();
     
     class Impl;
     Impl* pimpl();

@@ -143,6 +143,11 @@ bool EventLoop::stopped() const
     return pimpl_->stopped();
 }
 
+void EventLoop::reset()
+{
+    pimpl_->reset();
+}
+
 EventLoop::Impl* EventLoop::pimpl()
 {
     return pimpl_;

@@ -362,7 +362,7 @@ int SocketBase::send(const iovec *iovs, int count)
 
 int SocketBase::send(const KMBuffer &buf)
 {
-    iovec iovs[128] = {0};
+    iovec iovs[128] = { {0} };
     int count = 0;
     for (auto it = buf.begin(); it != buf.end(); ++it) {
         if (it->length() > 0) {

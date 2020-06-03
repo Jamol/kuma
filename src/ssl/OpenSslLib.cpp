@@ -99,6 +99,14 @@ bool OpenSslLib::doInit(const std::string &cfg_path)
     if (OPENSSL_init_ssl(0, NULL) == 0) {
         return false;
     }
+    /*OPENSSL_init_ssl(
+        OPENSSL_INIT_LOAD_SSL_STRINGS | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL
+    );
+
+    OPENSSL_init_crypto(
+        OPENSSL_INIT_LOAD_CONFIG | OPENSSL_INIT_ADD_ALL_CIPHERS | OPENSSL_INIT_ADD_ALL_DIGESTS,
+        nullptr
+    );*/
     ERR_clear_error();
 #else
     if (CRYPTO_get_locking_callback() == NULL) {
