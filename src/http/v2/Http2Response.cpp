@@ -84,9 +84,11 @@ int Http2Response::sendBody(const KMBuffer &buf)
 
 KMError Http2Response::close()
 {
-    KM_INFOXTRACE("close");
-    stream_->close();
-    setState(State::CLOSED);
+    if (getState() != State::CLOSED) {
+        KM_INFOXTRACE("close");
+        stream_->close();
+        setState(State::CLOSED);
+    }
     return KMError::NOERR;
 }
 

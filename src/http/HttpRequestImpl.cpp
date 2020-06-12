@@ -48,7 +48,9 @@ KMError HttpRequest::Impl::sendRequest(std::string method, std::string url)
     if (getState() == State::COMPLETE) {
         reset(); // reuse case
     }
-    if (getState() != State::IDLE && getState() != State::WAIT_FOR_REUSE) {
+    if (getState() != State::IDLE && 
+        getState() != State::WAIT_FOR_REUSE &&
+        getState() != State::CLOSED) {
         return KMError::INVALID_STATE;
     }
     method_ = std::move(method);

@@ -150,9 +150,12 @@ void Http1xRequest::reset()
 
 KMError Http1xRequest::close()
 {
-    KM_INFOXTRACE("close");
-    cleanup();
-    setState(State::CLOSED);
+    if (getState() != State::CLOSED) {
+        KM_INFOXTRACE("close");
+        cleanup();
+        reset();
+        setState(State::CLOSED);
+    }
     return KMError::NOERR;
 }
 
