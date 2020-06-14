@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1F2792BE249605D900286866 /* Http2Handler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1F2792AF2495DA8000286866 /* Http2Handler.cpp */; };
+		1F2792BF249605D900286866 /* HttpHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1F2792AB2495DA8000286866 /* HttpHandler.cpp */; };
+		1F2792C0249605D900286866 /* ProtoServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1F2792A72495DA8000286866 /* ProtoServer.cpp */; };
+		1F2792C1249605D900286866 /* RunLoop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1F2792AE2495DA8000286866 /* RunLoop.cpp */; };
+		1F2792C2249605D900286866 /* RunLoopPool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1F2792B02495DA8000286866 /* RunLoopPool.cpp */; };
+		1F2792C3249605D900286866 /* TcpHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1F2792B12495DA8000286866 /* TcpHandler.cpp */; };
+		1F2792C4249605D900286866 /* WsHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1F2792AD2495DA8000286866 /* WsHandler.cpp */; };
 		1FA445D4238B7B4D00C1EC92 /* kuma.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1F91033F238A51F200A39F5C /* kuma.framework */; };
 		1FA445D7238B7B6200C1EC92 /* kuma.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1F91033F238A51F200A39F5C /* kuma.framework */; };
 		6F8095621DA0C1560098BFD7 /* testutil.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6F80955F1DA0AD9A0098BFD7 /* testutil.cpp */; };
@@ -18,16 +25,9 @@
 		6FDC9ECB1D3F38CF00097089 /* TestLoop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EC01D3F38CF00097089 /* TestLoop.cpp */; };
 		6FDC9ECC1D3F38CF00097089 /* UdpClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EC21D3F38CF00097089 /* UdpClient.cpp */; };
 		6FDC9ECD1D3F38CF00097089 /* WsClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EC41D3F38CF00097089 /* WsClient.cpp */; };
-		6FE0EE7A1D3F40D6006136B7 /* HttpTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9ED01D3F390F00097089 /* HttpTest.cpp */; };
-		6FE0EE7B1D3F40D6006136B7 /* LoopPool.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9ED21D3F390F00097089 /* LoopPool.cpp */; };
 		6FE0EE7C1D3F40D6006136B7 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9ED41D3F390F00097089 /* main.cpp */; };
 		6FE0EE7D1D3F40D6006136B7 /* ProtoDemuxer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9ED51D3F390F00097089 /* ProtoDemuxer.cpp */; };
-		6FE0EE7E1D3F40D6006136B7 /* TcpTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9ED71D3F390F00097089 /* TcpTest.cpp */; };
-		6FE0EE7F1D3F40D6006136B7 /* TcpServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9ED91D3F390F00097089 /* TcpServer.cpp */; };
-		6FE0EE801D3F40D6006136B7 /* TestLoop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EDB1D3F390F00097089 /* TestLoop.cpp */; };
 		6FE0EE811D3F40D6006136B7 /* UdpServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EDD1D3F390F00097089 /* UdpServer.cpp */; };
-		6FE0EE821D3F40D6006136B7 /* WsTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FDC9EDF1D3F390F00097089 /* WsTest.cpp */; };
-		6FE0EEB91D406951006136B7 /* H2ConnTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FE0EEB61D4067A0006136B7 /* H2ConnTest.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -76,6 +76,21 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		1F2792A62495DA8000286866 /* Http2Handler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Http2Handler.h; sourceTree = "<group>"; };
+		1F2792A72495DA8000286866 /* ProtoServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProtoServer.cpp; sourceTree = "<group>"; };
+		1F2792A82495DA8000286866 /* WsHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WsHandler.h; sourceTree = "<group>"; };
+		1F2792A92495DA8000286866 /* ProtoServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProtoServer.h; sourceTree = "<group>"; };
+		1F2792AA2495DA8000286866 /* RunLoop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RunLoop.h; sourceTree = "<group>"; };
+		1F2792AB2495DA8000286866 /* HttpHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpHandler.cpp; sourceTree = "<group>"; };
+		1F2792AC2495DA8000286866 /* RunLoopPool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RunLoopPool.h; sourceTree = "<group>"; };
+		1F2792AD2495DA8000286866 /* WsHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WsHandler.cpp; sourceTree = "<group>"; };
+		1F2792AE2495DA8000286866 /* RunLoop.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RunLoop.cpp; sourceTree = "<group>"; };
+		1F2792AF2495DA8000286866 /* Http2Handler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Http2Handler.cpp; sourceTree = "<group>"; };
+		1F2792B02495DA8000286866 /* RunLoopPool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = RunLoopPool.cpp; sourceTree = "<group>"; };
+		1F2792B12495DA8000286866 /* TcpHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TcpHandler.cpp; sourceTree = "<group>"; };
+		1F2792B22495DA8000286866 /* TcpHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpHandler.h; sourceTree = "<group>"; };
+		1F2792B32495DA8000286866 /* HttpHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpHandler.h; sourceTree = "<group>"; };
+		1F2792B42495DA8000286866 /* RateReporter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RateReporter.h; sourceTree = "<group>"; };
 		6F80955F1DA0AD9A0098BFD7 /* testutil.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = testutil.cpp; sourceTree = "<group>"; };
 		6F8095601DA0AD9A0098BFD7 /* testutil.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = testutil.h; sourceTree = "<group>"; };
 		6F8BE8A022C607B400E6EA32 /* DataSender.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DataSender.h; sourceTree = "<group>"; };
@@ -95,25 +110,11 @@
 		6FDC9EC31D3F38CF00097089 /* UdpClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UdpClient.h; sourceTree = "<group>"; };
 		6FDC9EC41D3F38CF00097089 /* WsClient.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WsClient.cpp; sourceTree = "<group>"; };
 		6FDC9EC51D3F38CF00097089 /* WsClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WsClient.h; sourceTree = "<group>"; };
-		6FDC9ED01D3F390F00097089 /* HttpTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = HttpTest.cpp; sourceTree = "<group>"; };
-		6FDC9ED11D3F390F00097089 /* HttpTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HttpTest.h; sourceTree = "<group>"; };
-		6FDC9ED21D3F390F00097089 /* LoopPool.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LoopPool.cpp; sourceTree = "<group>"; };
-		6FDC9ED31D3F390F00097089 /* LoopPool.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LoopPool.h; sourceTree = "<group>"; };
 		6FDC9ED41D3F390F00097089 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		6FDC9ED51D3F390F00097089 /* ProtoDemuxer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProtoDemuxer.cpp; sourceTree = "<group>"; };
 		6FDC9ED61D3F390F00097089 /* ProtoDemuxer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProtoDemuxer.h; sourceTree = "<group>"; };
-		6FDC9ED71D3F390F00097089 /* TcpTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TcpTest.cpp; sourceTree = "<group>"; };
-		6FDC9ED81D3F390F00097089 /* TcpTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpTest.h; sourceTree = "<group>"; };
-		6FDC9ED91D3F390F00097089 /* TcpServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TcpServer.cpp; sourceTree = "<group>"; };
-		6FDC9EDA1D3F390F00097089 /* TcpServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TcpServer.h; sourceTree = "<group>"; };
-		6FDC9EDB1D3F390F00097089 /* TestLoop.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TestLoop.cpp; sourceTree = "<group>"; };
-		6FDC9EDC1D3F390F00097089 /* TestLoop.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TestLoop.h; sourceTree = "<group>"; };
 		6FDC9EDD1D3F390F00097089 /* UdpServer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = UdpServer.cpp; sourceTree = "<group>"; };
 		6FDC9EDE1D3F390F00097089 /* UdpServer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UdpServer.h; sourceTree = "<group>"; };
-		6FDC9EDF1D3F390F00097089 /* WsTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WsTest.cpp; sourceTree = "<group>"; };
-		6FDC9EE01D3F390F00097089 /* WsTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WsTest.h; sourceTree = "<group>"; };
-		6FE0EEB61D4067A0006136B7 /* H2ConnTest.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = H2ConnTest.cpp; sourceTree = "<group>"; };
-		6FE0EEB71D4067A0006136B7 /* H2ConnTest.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = H2ConnTest.h; sourceTree = "<group>"; };
 		6FF211AF1B155298006603BB /* client */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = client; sourceTree = BUILT_PRODUCTS_DIR; };
 		6FF211BB1B1552AA006603BB /* server */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = server; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -200,27 +201,28 @@
 		6FF211BC1B1552AA006603BB /* server */ = {
 			isa = PBXGroup;
 			children = (
-				6F80955F1DA0AD9A0098BFD7 /* testutil.cpp */,
-				6F8095601DA0AD9A0098BFD7 /* testutil.h */,
-				6FE0EEB61D4067A0006136B7 /* H2ConnTest.cpp */,
-				6FE0EEB71D4067A0006136B7 /* H2ConnTest.h */,
-				6FDC9ED01D3F390F00097089 /* HttpTest.cpp */,
-				6FDC9ED11D3F390F00097089 /* HttpTest.h */,
-				6FDC9ED21D3F390F00097089 /* LoopPool.cpp */,
-				6FDC9ED31D3F390F00097089 /* LoopPool.h */,
+				1F2792AF2495DA8000286866 /* Http2Handler.cpp */,
+				1F2792A62495DA8000286866 /* Http2Handler.h */,
+				1F2792AB2495DA8000286866 /* HttpHandler.cpp */,
+				1F2792B32495DA8000286866 /* HttpHandler.h */,
 				6FDC9ED41D3F390F00097089 /* main.cpp */,
 				6FDC9ED51D3F390F00097089 /* ProtoDemuxer.cpp */,
 				6FDC9ED61D3F390F00097089 /* ProtoDemuxer.h */,
-				6FDC9ED71D3F390F00097089 /* TcpTest.cpp */,
-				6FDC9ED81D3F390F00097089 /* TcpTest.h */,
-				6FDC9ED91D3F390F00097089 /* TcpServer.cpp */,
-				6FDC9EDA1D3F390F00097089 /* TcpServer.h */,
-				6FDC9EDB1D3F390F00097089 /* TestLoop.cpp */,
-				6FDC9EDC1D3F390F00097089 /* TestLoop.h */,
+				1F2792A72495DA8000286866 /* ProtoServer.cpp */,
+				1F2792A92495DA8000286866 /* ProtoServer.h */,
+				1F2792B42495DA8000286866 /* RateReporter.h */,
+				1F2792AE2495DA8000286866 /* RunLoop.cpp */,
+				1F2792AA2495DA8000286866 /* RunLoop.h */,
+				1F2792B02495DA8000286866 /* RunLoopPool.cpp */,
+				1F2792AC2495DA8000286866 /* RunLoopPool.h */,
+				1F2792B12495DA8000286866 /* TcpHandler.cpp */,
+				1F2792B22495DA8000286866 /* TcpHandler.h */,
+				6F80955F1DA0AD9A0098BFD7 /* testutil.cpp */,
+				6F8095601DA0AD9A0098BFD7 /* testutil.h */,
 				6FDC9EDD1D3F390F00097089 /* UdpServer.cpp */,
 				6FDC9EDE1D3F390F00097089 /* UdpServer.h */,
-				6FDC9EDF1D3F390F00097089 /* WsTest.cpp */,
-				6FDC9EE01D3F390F00097089 /* WsTest.h */,
+				1F2792AD2495DA8000286866 /* WsHandler.cpp */,
+				1F2792A82495DA8000286866 /* WsHandler.h */,
 			);
 			name = server;
 			path = ../../server;
@@ -336,17 +338,17 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1F2792BE249605D900286866 /* Http2Handler.cpp in Sources */,
+				1F2792BF249605D900286866 /* HttpHandler.cpp in Sources */,
+				1F2792C0249605D900286866 /* ProtoServer.cpp in Sources */,
+				1F2792C1249605D900286866 /* RunLoop.cpp in Sources */,
+				1F2792C2249605D900286866 /* RunLoopPool.cpp in Sources */,
+				1F2792C3249605D900286866 /* TcpHandler.cpp in Sources */,
+				1F2792C4249605D900286866 /* WsHandler.cpp in Sources */,
 				6F8095621DA0C1560098BFD7 /* testutil.cpp in Sources */,
-				6FE0EEB91D406951006136B7 /* H2ConnTest.cpp in Sources */,
-				6FE0EE7A1D3F40D6006136B7 /* HttpTest.cpp in Sources */,
-				6FE0EE7B1D3F40D6006136B7 /* LoopPool.cpp in Sources */,
 				6FE0EE7C1D3F40D6006136B7 /* main.cpp in Sources */,
 				6FE0EE7D1D3F40D6006136B7 /* ProtoDemuxer.cpp in Sources */,
-				6FE0EE7E1D3F40D6006136B7 /* TcpTest.cpp in Sources */,
-				6FE0EE7F1D3F40D6006136B7 /* TcpServer.cpp in Sources */,
-				6FE0EE801D3F40D6006136B7 /* TestLoop.cpp in Sources */,
 				6FE0EE811D3F40D6006136B7 /* UdpServer.cpp in Sources */,
-				6FE0EE821D3F40D6006136B7 /* WsTest.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -520,7 +522,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SYMROOT = ../../../bin/mac;
-				USER_HEADER_SEARCH_PATHS = "../../../include ../../../src";
+				USER_HEADER_SEARCH_PATHS = "../../../include ../../../src ../../../third_party";
 			};
 			name = Debug;
 		};
@@ -564,7 +566,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				SYMROOT = ../../../bin/mac;
-				USER_HEADER_SEARCH_PATHS = "../../../include ../../../src";
+				USER_HEADER_SEARCH_PATHS = "../../../include ../../../src ../../../third_party";
 			};
 			name = Release;
 		};

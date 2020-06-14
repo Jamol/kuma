@@ -134,8 +134,8 @@ void HttpResponse::Impl::checkResponseHeaders()
         }
     }
     
-    if (rsp_header.hasContentLength() && rsp_header.getContentLength() == 0) {
-        // no body data
+    if (rsp_header.hasContentLength() && rsp_header.getContentLength() < kMinCompressSize) {
+        // no body or small body
         compression_enable_ = false;
     }
     

@@ -43,5 +43,5 @@ void UdpServer::onReceive(KMError err)
 
 void UdpServer::onClose(KMError err)
 {
-    printf("UdpServer::onClose, err=%d\n", err);
+    printf("UdpServer::onClose, err=%d\n", (int)err);
 }

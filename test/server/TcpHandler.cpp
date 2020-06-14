@@ -1,18 +1,19 @@
-#include "TcpTest.h"
-#include "TcpServer.h"
+#include "TcpHandler.h"
 
 //#define ECHO_TEST
 
-TcpTest::TcpTest(TestLoop* loop, long conn_id)
-: loop_(loop)
-, tcp_(loop->eventLoop())
-, conn_id_(conn_id)
+using namespace kmsvr;
+using namespace kuma;
+
+TcpHandler::TcpHandler(const RunLoop::Ptr &loop)
+: loop_(loop.get())
+, tcp_(loop->getEventLoop().get())
 , recv_reporter_("recv_bitrate")
 {
     
 }
 
-KMError TcpTest::attachFd(SOCKET_FD fd)
+KMError TcpHandler::attachFd(SOCKET_FD fd)
 {
     tcp_.setReadCallback([this] (KMError err) { onReceive(err); });
     tcp_.setWriteCallback([this] (KMError err) { onSend(err); });
@@ -21,18 +22,17 @@ KMError TcpTest::attachFd(SOCKET_FD fd)
     return tcp_.attachFd(fd);
 }
 
-int TcpTest::close()
+void TcpHandler::close()
 {
     tcp_.close();
-    return 0;
 }
 
-void TcpTest::onSend(KMError err)
+void TcpHandler::onSend(KMError err)
 {
     
 }
 
-void TcpTest::onReceive(KMError err)
+void TcpHandler::onReceive(KMError err)
 {
     size_t bytes_read = 0;
     char buf[4096] = {0};
@@ -41,7 +41,7 @@ void TcpTest::onReceive(KMError err)
         int ret = tcp_.receive((uint8_t*)buf, sizeof(buf));
         if(ret < 0) {
             tcp_.close();
-            loop_->removeObject(conn_id_);
+            loop_->removeObject(getObjectId());
             return ;
         } else if (0 == ret){
             break;
@@ -60,9 +60,9 @@ void TcpTest::onReceive(KMError err)
     }
 }
 
-void TcpTest::onClose(KMError err)
+void TcpHandler::onClose(KMError err)
 {
-    printf("TcpTest::onClose, err=%d\n", err);
+    printf("TcpHandler::onClose, err=%d\n", (int)err);
     tcp_.close();
-    loop_->removeObject(conn_id_);
+    loop_->removeObject(getObjectId());
 }

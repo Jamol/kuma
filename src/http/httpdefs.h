@@ -45,6 +45,8 @@ const std::string strProxyAuthenticate = "Proxy-Authenticate";
 const std::string strProxyAuthorization = "Proxy-Authorization";
 const std::string strProxyConnection = "Proxy-Connection";
 
+const size_t kMinCompressSize = 200;
+
 using KeyValuePair = std::pair<std::string, std::string>;
 using KeyValueList = std::vector<KeyValuePair>;
 using HeaderVector = KeyValueList;

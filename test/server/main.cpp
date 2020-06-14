@@ -1,7 +1,8 @@
 #include "kmapi.h"
-#include "TcpServer.h"
+#include "ProtoServer.h"
+#include "RunLoopPool.h"
 #include "UdpServer.h"
-#include "../../third_party/libkev/src/util/defer.h"
+#include "libkev/src/util/defer.h"
 #include "testutil.h"
 
 #include <stdio.h>
@@ -16,6 +17,7 @@
 #endif
 
 using namespace kuma;
+using namespace kmsvr;
 
 #define THREAD_COUNT    5
 
@@ -130,17 +132,22 @@ int main(int argc, char *argv[])
         return -1;
     }
     
+    RunLoopPool loop_pool;
+    if (!loop_pool.start(0)) {
+        return -1;
+    }
     if(strcmp(proto, "udp") == 0) {
         UdpServer udp_server(&main_loop);
         udp_server.bind(host, port);
         main_loop.loop();
         udp_server.close();
     } else {
-        TcpServer tcp_server(&main_loop, THREAD_COUNT);
-        tcp_server.startListen(proto, host, port);
+        ProtoServer tcp_server(&main_loop, &loop_pool);
+        tcp_server.start(listen_addr);
         main_loop.loop();
-        tcp_server.stopListen();
+        tcp_server.stop();
     }
+    loop_pool.stop();
     
     printf("main exit...\n");
 #ifdef KUMA_OS_WIN

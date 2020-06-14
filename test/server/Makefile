@@ -8,6 +8,7 @@
 ROOTDIR = ..
 KUMADIR = ../..
 SRCDIR = $(ROOTDIR)/server
+THIRDPARTYDIR = $(KUMADIR)/third_party
 
 BINDIR = $(KUMADIR)/bin/linux
 LIBDIR = $(ROOTDIR)/lib
@@ -18,7 +19,7 @@ TARGET = server
 ##############################################################################
 #
 
-INCLUDES = -I. -I$(ROOTDIR)/../src -I$(ROOTDIR)/../include
+INCLUDES = -I. -I$(ROOTDIR)/../src -I$(ROOTDIR)/../include -I$(THIRDPARTYDIR)
 #
 ##############################################################################
 #
@@ -33,15 +34,15 @@ CXXFLAGS = -g -std=c++14 -pipe -fPIC -Wall -Wextra -pedantic
 LDFLAGS = -lpthread -ldl -lssl -lcrypt -Wl,-rpath,.
 
 SRCS =  \
-    LoopPool.cpp\
-    TestLoop.cpp\
-    TcpServer.cpp\
+    RunLoop.cpp\
+    RunLoopPool.cpp\
+    ProtoServer.cpp\
     UdpServer.cpp\
-    TcpTest.cpp\
+    TcpHandler.cpp\
     testutil.cpp\
-    HttpTest.cpp\
-    WsTest.cpp\
-    H2ConnTest.cpp \
+    HttpHandler.cpp\
+    WsHandler.cpp\
+    Http2Handler.cpp \
     ProtoDemuxer.cpp \
     main.cpp
     

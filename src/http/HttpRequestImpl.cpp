@@ -132,8 +132,8 @@ void HttpRequest::Impl::checkRequestHeaders()
         }
     }
     
-    if (req_header.hasContentLength() && req_header.getContentLength() == 0) {
-        // no body data
+    if (req_header.hasContentLength() && req_header.getContentLength() < kMinCompressSize) {
+        // no body or small body
         compression_enable_ = false;
     }
     

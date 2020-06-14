@@ -21,10 +21,10 @@ public:
             value_received_ = true;
             last_report_time_ = now_time;
         }
-        auto report_diff = duration_cast<milliseconds>(now_time - last_report_time_).count();
+        auto report_diff = (size_t)duration_cast<milliseconds>(now_time - last_report_time_).count();
         if (report_diff > 1000) {
             auto rate = (sum_received_ - sum_reported_) * 1000 / report_diff;
-            printf("RateReporter, %s=%llu\n", rate_name_.c_str(), rate);
+            printf("RateReporter, %s=%zu\n", rate_name_.c_str(), rate);
             last_report_time_ = now_time;
             sum_reported_ = sum_received_;
         }

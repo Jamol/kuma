@@ -95,7 +95,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\..\include;..\..\..\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\include;..\..\..\src;..\..\..\third_party</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -112,7 +112,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\..\include;..\..\..\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\include;..\..\..\src;..\..\..\third_party</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -131,7 +131,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\..\include;..\..\..\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\include;..\..\..\src;..\..\..\third_party</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -152,7 +152,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>..\..\..\include;..\..\..\src</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\include;..\..\..\src;..\..\..\third_party</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -164,28 +164,30 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\server\H2ConnTest.cpp" />
-    <ClCompile Include="..\..\server\HttpTest.cpp" />
-    <ClCompile Include="..\..\server\LoopPool.cpp" />
+    <ClCompile Include="..\..\server\Http2Handler.cpp" />
+    <ClCompile Include="..\..\server\HttpHandler.cpp" />
     <ClCompile Include="..\..\server\main.cpp" />
     <ClCompile Include="..\..\server\ProtoDemuxer.cpp" />
-    <ClCompile Include="..\..\server\TcpServer.cpp" />
-    <ClCompile Include="..\..\server\TcpTest.cpp" />
-    <ClCompile Include="..\..\server\TestLoop.cpp" />
+    <ClCompile Include="..\..\server\ProtoServer.cpp" />
+    <ClCompile Include="..\..\server\RunLoop.cpp" />
+    <ClCompile Include="..\..\server\RunLoopPool.cpp" />
+    <ClCompile Include="..\..\server\TcpHandler.cpp" />
     <ClCompile Include="..\..\server\testutil.cpp" />
     <ClCompile Include="..\..\server\UdpServer.cpp" />
-    <ClCompile Include="..\..\server\WsTest.cpp" />
+    <ClCompile Include="..\..\server\WsHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\server\H2ConnTest.h" />
-    <ClInclude Include="..\..\server\HttpTest.h" />
-    <ClInclude Include="..\..\server\LoopPool.h" />
+    <ClInclude Include="..\..\server\Http2Handler.h" />
+    <ClInclude Include="..\..\server\HttpHandler.h" />
     <ClInclude Include="..\..\server\ProtoDemuxer.h" />
-    <ClInclude Include="..\..\server\TcpServer.h" />
-    <ClInclude Include="..\..\server\TcpTest.h" />
-    <ClInclude Include="..\..\server\TestLoop.h" />
+    <ClInclude Include="..\..\server\ProtoServer.h" />
+    <ClInclude Include="..\..\server\RateReporter.h" />
+    <ClInclude Include="..\..\server\RunLoop.h" />
+    <ClInclude Include="..\..\server\RunLoopPool.h" />
+    <ClInclude Include="..\..\server\TcpHandler.h" />
+    <ClInclude Include="..\..\server\testutil.h" />
     <ClInclude Include="..\..\server\UdpServer.h" />
-    <ClInclude Include="..\..\server\WsTest.h" />
+    <ClInclude Include="..\..\server\WsHandler.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

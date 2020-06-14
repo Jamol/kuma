@@ -1,38 +1,33 @@
 #include "ProtoDemuxer.h"
-#include "TestLoop.h"
+
 #include <string>
 #include <sstream>
 
 #include <string.h>
 
-#ifdef KUMA_OS_WIN
-# define snprintf       _snprintf
-# define vsnprintf      _vsnprintf
-# define strcasecmp     _stricmp
-# define strncasecmp    _strnicmp
-#endif
+using namespace kmsvr;
+using namespace kuma;
 
-char* trim_left(char* str);
-char* trim_right(char* str);
-char* trim_right(char* str, char* str_end);
-std::string& trim_left(std::string& str);
-std::string& trim_right(std::string& str);
+const uint32_t kTimeoutIntervalMS = 30000;
 
-ProtoDemuxer::ProtoDemuxer(TestLoop* loop, long conn_id)
-: loop_(loop)
-, conn_id_(conn_id)
-, tcp_(loop->eventLoop())
+
+ProtoDemuxer::ProtoDemuxer(const RunLoop::Ptr &loop)
+: loop_(loop.get())
+, tcp_(loop->getEventLoop().get())
+, timer_(loop->getEventLoop().get())
 {
     
 }
 
 ProtoDemuxer::~ProtoDemuxer()
 {
-    
+    close();
 }
 
-KMError ProtoDemuxer::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
+KMError ProtoDemuxer::attachFd(SOCKET_FD fd, uint32_t ssl_flags, ProtoCallback scb, ErrorCallback ecb)
 {
+    scb_ = std::move(scb);
+    ecb_ = std::move(ecb);
     http_parser_.setDataCallback([this] (KMBuffer &buf) { onHttpData(buf); });
     http_parser_.setEventCallback([this] (HttpEvent ev) { onHttpEvent(ev); });
     
@@ -40,14 +35,20 @@ KMError ProtoDemuxer::attachFd(SOCKET_FD fd, uint32_t ssl_flags)
     tcp_.setReadCallback([this] (KMError err) { onReceive(err); });
     tcp_.setErrorCallback([this] (KMError err) { onClose(err); });
     tcp_.setSslFlags(ssl_flags);
-    return tcp_.attachFd(fd);
+    auto ret = tcp_.attachFd(fd);
+    if (ret == KMError::NOERR) {
+        timer_.schedule(kTimeoutIntervalMS, kuma::Timer::Mode::ONE_SHOT, [this] {
+            onError(0, "timeout");
+        });
+    }
+    return ret;
 }
 
-int ProtoDemuxer::close()
+void ProtoDemuxer::close()
 {
+    timer_.cancel();
     tcp_.close();
     http_parser_.reset();
-    return 0;
 }
 
 void ProtoDemuxer::onHttpData(KMBuffer &buf)
@@ -57,16 +58,13 @@ void ProtoDemuxer::onHttpData(KMBuffer &buf)
 
 void ProtoDemuxer::onHttpEvent(HttpEvent ev)
 {
-    printf("ProtoDemuxer::onHttpEvent, ev=%u\n", ev);
     switch (ev) {
-        case HttpEvent::HEADER_COMPLETE:
-        {
+        case HttpEvent::HEADER_COMPLETE: {
             http_parser_.pause();
             break;
         }
-        case HttpEvent::HTTP_ERROR:
-        {
-            loop_->removeObject(conn_id_);
+        case HttpEvent::HTTP_ERROR: {
+            onError(0, "HTTP error");
             break;
         }
             
@@ -81,8 +79,7 @@ bool ProtoDemuxer::checkHttp2()
         char buf[64];
         auto ret = tcp_.getAlpnSelected(buf, sizeof(buf));
         if (ret == KMError::NOERR && strcmp("h2", buf) == 0) { // HTTP/2.0
-            loop_->addH2Conn(std::move(tcp_), std::move(http_parser_), nullptr);
-            loop_->removeObject(conn_id_);
+            onProto(Proto::HTTP2, nullptr);
             return true;
         }
     }
@@ -91,13 +88,13 @@ bool ProtoDemuxer::checkHttp2()
 
 void ProtoDemuxer::demuxHttp(const KMBuffer *init_buf)
 {
+    Proto proto = Proto::HTTP;
     if (http_parser_.isUpgradeTo("WebSocket")) {
-        loop_->addWebSocket(std::move(tcp_), std::move(http_parser_), init_buf);
+        proto = Proto::WebSocket;
     } else if (http_parser_.isUpgradeTo("h2c")) {
-        loop_->addH2Conn(std::move(tcp_), std::move(http_parser_), init_buf);
-    } else {
-        loop_->addHttp(std::move(tcp_), std::move(http_parser_), init_buf);
+        proto = Proto::HTTP2;
     }
+    onProto(proto, init_buf);
 }
 
 void ProtoDemuxer::onSend(KMError err)
@@ -116,7 +113,7 @@ void ProtoDemuxer::onReceive(KMError err)
         int bytes_read = tcp_.receive((uint8_t*)buf, sizeof(buf));
         if(bytes_read < 0) {
             tcp_.close();
-            loop_->removeObject(conn_id_);
+            onError(bytes_read, "receive error");
             return ;
         } else if (0 == bytes_read){
             break;
@@ -128,7 +125,6 @@ void ProtoDemuxer::onReceive(KMError err)
             auto init_len = bytes_read - bytes_used;
             KMBuffer kmb(buf + bytes_used, init_len, init_len);
             demuxHttp(&kmb);
-            loop_->removeObject(conn_id_);
             break;
         }
     } while(true);
@@ -136,45 +132,25 @@ void ProtoDemuxer::onReceive(KMError err)
 
 void ProtoDemuxer::onClose(KMError err)
 {
-    printf("ProtoDemuxer::onClose, err=%d\n", err);
-    loop_->removeObject(conn_id_);
+    printf("ProtoDemuxer::onClose, err=%d\n", (int)err);
+    onError((int)err, "socket error");
 }
 
-char* trim_left(char* str)
+void ProtoDemuxer::onProto(Proto proto, const KMBuffer *init_buf)
 {
-    while (*str && isspace(*str++)) {
-        ;
+    timer_.cancel();
+    if (scb_) {
+        scb_(proto, std::move(tcp_), std::move(http_parser_), init_buf);
     }
-    
-    return str;
+    loop_->removeObject(getObjectId());
 }
 
-char* trim_right(char* str)
+void ProtoDemuxer::onError(int errcode, const std::string &errmsg)
 {
-    return trim_right(str, str + strlen(str));
-}
-
-char* trim_right(char* str, char* str_end)
-{
-    while (--str_end >= str && isspace(*str_end)) {
-        ;
+    timer_.cancel();
+    tcp_.close();
+    if (ecb_) {
+        ecb_(errcode, errmsg);
     }
-    *(++str_end) = 0;
-    
-    return str;
-}
-
-std::string& trim_left(std::string& str)
-{
-    str.erase(0, str.find_first_not_of(' '));
-    return str;
-}
-
-std::string& trim_right(std::string& str)
-{
-    auto pos = str.find_last_not_of(' ');
-    if(pos != std::string::npos) {
-        str.erase(pos + 1);
-    }
-    return str;
+    loop_->removeObject(getObjectId());
 }
