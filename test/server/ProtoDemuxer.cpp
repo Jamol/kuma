@@ -147,6 +147,7 @@ void ProtoDemuxer::onProto(Proto proto, const KMBuffer *init_buf)
 
 void ProtoDemuxer::onError(int errcode, const std::string &errmsg)
 {
+    printf("ProtoDemuxer::onError, err=%d, msg=%s\n", errcode, errmsg.c_str());
     timer_.cancel();
     tcp_.close();
     if (ecb_) {

@@ -31,27 +31,22 @@ KUMA_NS_BEGIN
 class EventLoop::Impl final : public kev::EventLoop::Impl
 {
 public:
-    Impl(PollType poll_type = PollType::NONE) : kev::EventLoop::Impl(poll_type) {}
-    ~Impl() = default;
+    using kev::EventLoop::Impl::Impl;
 };
 using EventLoopPtr = kev::EventLoopPtr;
 using EventLoopWeakPtr = kev::EventLoopWeakPtr;
 
-class EventLoop::Token::Impl : public kev::EventLoop::Token::Impl
+class EventLoop::Token::Impl final : public kev::EventLoop::Token::Impl
 {
 public:
-    Impl() = default;
-    ~Impl() = default;
+    using kev::EventLoop::Token::Impl::Impl;
 };
 using EventLoopToken = kev::EventLoopToken;
 
-class Timer::Impl : public kev::Timer::Impl
+class Timer::Impl final : public kev::Timer::Impl
 {
 public:
-    using TimerCallback = Timer::TimerCallback;
-    
-    Impl(kev::TimerManagerPtr mgr) : kev::Timer::Impl(std::move(mgr)) {}
-    ~Impl() = default;
+    using kev::Timer::Impl::Impl;
 };
 
 KUMA_NS_END
