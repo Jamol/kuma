@@ -2,7 +2,6 @@
 // wrapper for move-only lambda
 // https://stackoverflow.com/questions/25330716/move-only-version-of-stdfunction
 //
-
 #ifndef __KEVTYPES_H__
 #define __KEVTYPES_H__
 

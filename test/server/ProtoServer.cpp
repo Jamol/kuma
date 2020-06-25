@@ -11,7 +11,7 @@ using namespace kuma;
 
 
 extern "C" int km_parse_address(const char *addr,
-                                char* proto,
+                                char *proto,
                                 int proto_len,
                                 char *host,
                                 int  host_len,
