@@ -1,10 +1,10 @@
-#ifndef __KEV_ImplHelper_h__
-#define __KEV_ImplHelper_h__
+#ifndef __ImplHelper_h__
+#define __ImplHelper_h__
 
 #include <string>
 #include <type_traits>
 
-namespace kev {
+KUMA_NS_BEGIN
 
 template <typename Impl>
 struct ImplHelper {
@@ -85,6 +85,6 @@ private:
     ~ImplHelper() = default;
 };
 
-} // namespace kev
+KUMA_NS_END
 
-#endif // __KEV_ImplHelper_h__
+#endif // __ImplHelper_h__

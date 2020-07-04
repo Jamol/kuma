@@ -48,9 +48,6 @@ KEV_NS_USING
 
 KUMA_NS_BEGIN
 
-template <typename Impl>
-using ImplHelper = kev::ImplHelper<Impl>;
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // class EventLoop
 using EventLoopHelper = ImplHelper<EventLoop::Impl>;
@@ -238,9 +235,9 @@ TcpSocket::TcpSocket(EventLoop *loop)
 }
 
 TcpSocket::TcpSocket(TcpSocket &&other)
-: pimpl_(other.pimpl_)
+: pimpl_(std::exchange(other.pimpl_, nullptr))
 {
-    other.pimpl_ = nullptr;
+    
 }
 
 TcpSocket::~TcpSocket()
@@ -255,8 +252,7 @@ TcpSocket& TcpSocket::operator=(TcpSocket &&other)
             pimpl_->close();
             delete pimpl_;
         }
-        pimpl_ = other.pimpl_;
-        other.pimpl_ = nullptr;
+        pimpl_ = std::exchange(other.pimpl_, nullptr);
     }
     
     return *this;
@@ -410,9 +406,9 @@ TcpListener::TcpListener(EventLoop *loop)
 }
 
 TcpListener::TcpListener(TcpListener &&other)
-: pimpl_(other.pimpl_)
+: pimpl_(std::exchange(other.pimpl_, nullptr))
 {
-    other.pimpl_ = nullptr;
+    
 }
 
 TcpListener::~TcpListener()
@@ -427,8 +423,7 @@ TcpListener& TcpListener::operator=(TcpListener &&other)
             pimpl_->close();
             delete pimpl_;
         }
-        pimpl_ = other.pimpl_;
-        other.pimpl_ = nullptr;
+        pimpl_ = std::exchange(other.pimpl_, nullptr);
     }
     
     return *this;
@@ -475,9 +470,9 @@ UdpSocket::UdpSocket(EventLoop* loop)
 }
 
 UdpSocket::UdpSocket(UdpSocket &&other)
-: pimpl_(other.pimpl_)
+: pimpl_(std::exchange(other.pimpl_, nullptr))
 {
-    other.pimpl_ = nullptr;
+    
 }
 
 UdpSocket::~UdpSocket()
@@ -492,8 +487,7 @@ UdpSocket& UdpSocket::operator=(UdpSocket &&other)
             pimpl_->close();
             delete pimpl_;
         }
-        pimpl_ = other.pimpl_;
-        other.pimpl_ = nullptr;
+        pimpl_ = std::exchange(other.pimpl_, nullptr);
     }
     
     return *this;
@@ -625,9 +619,9 @@ HttpParser::HttpParser()
 }
 
 HttpParser::HttpParser(HttpParser &&other)
-: pimpl_(other.pimpl_)
+: pimpl_(std::exchange(other.pimpl_, nullptr))
 {
-    other.pimpl_ = nullptr;
+    
 }
 
 HttpParser::~HttpParser()
@@ -641,8 +635,7 @@ HttpParser& HttpParser::operator=(HttpParser &&other)
         if (pimpl_) {
             delete pimpl_;
         }
-        pimpl_ = other.pimpl_;
-        other.pimpl_ = nullptr;
+        pimpl_ = std::exchange(other.pimpl_, nullptr);
     }
     
     return *this;
@@ -790,9 +783,9 @@ HttpRequest::HttpRequest(EventLoop* loop, const char* ver)
 }
 
 HttpRequest::HttpRequest(HttpRequest &&other)
-: pimpl_(other.pimpl_)
+: pimpl_(std::exchange(other.pimpl_, nullptr))
 {
-    other.pimpl_ = nullptr;
+    
 }
 
 HttpRequest::~HttpRequest()
@@ -807,8 +800,7 @@ HttpRequest& HttpRequest::operator=(HttpRequest &&other)
             pimpl_->close();
             delete pimpl_;
         }
-        pimpl_ = other.pimpl_;
-        other.pimpl_ = nullptr;
+        pimpl_ = std::exchange(other.pimpl_, nullptr);
     }
     
     return *this;
@@ -937,9 +929,9 @@ HttpResponse::HttpResponse(EventLoop* loop, const char* ver)
 }
 
 HttpResponse::HttpResponse(HttpResponse &&other)
-: pimpl_(other.pimpl_)
+: pimpl_(std::exchange(other.pimpl_, nullptr))
 {
-    other.pimpl_ = nullptr;
+    
 }
 
 HttpResponse::~HttpResponse()
@@ -954,8 +946,7 @@ HttpResponse& HttpResponse::operator=(HttpResponse &&other)
             pimpl_->close();
             delete pimpl_;
         }
-        pimpl_ = other.pimpl_;
-        other.pimpl_ = nullptr;
+        pimpl_ = std::exchange(other.pimpl_, nullptr);
     }
     
     return *this;
@@ -1103,9 +1094,9 @@ WebSocket::WebSocket(EventLoop* loop, const char *http_ver)
 }
 
 WebSocket::WebSocket(WebSocket &&other)
-: pimpl_(other.pimpl_)
+: pimpl_(std::exchange(other.pimpl_, nullptr))
 {
-    other.pimpl_ = nullptr;
+    
 }
 
 WebSocket::~WebSocket()
@@ -1120,8 +1111,7 @@ WebSocket& WebSocket::operator=(WebSocket &&other)
             pimpl_->close();
             delete pimpl_;
         }
-        pimpl_ = other.pimpl_;
-        other.pimpl_ = nullptr;
+        pimpl_ = std::exchange(other.pimpl_, nullptr);
     }
     
     return *this;
@@ -1276,9 +1266,9 @@ ProxyConnection::ProxyConnection(EventLoop* loop)
 }
 
 ProxyConnection::ProxyConnection(ProxyConnection &&other)
-: pimpl_(other.pimpl_)
+: pimpl_(std::exchange(other.pimpl_, nullptr))
 {
-    other.pimpl_ = nullptr;
+    
 }
 
 ProxyConnection::~ProxyConnection()
@@ -1293,8 +1283,7 @@ ProxyConnection& ProxyConnection::operator=(ProxyConnection &&other)
             pimpl_->close();
             delete pimpl_;
         }
-        pimpl_ = other.pimpl_;
-        other.pimpl_ = nullptr;
+        pimpl_ = std::exchange(other.pimpl_, nullptr);
     }
     
     return *this;
@@ -1399,9 +1388,9 @@ H2Connection::H2Connection(EventLoop* loop)
 }
 
 H2Connection::H2Connection(H2Connection &&other)
-: pimpl_(other.pimpl_)
+: pimpl_(std::exchange(other.pimpl_, nullptr))
 {
-    other.pimpl_ = nullptr;
+    
 }
 
 H2Connection::~H2Connection()
@@ -1416,8 +1405,7 @@ H2Connection& H2Connection::operator=(H2Connection &&other)
             pimpl_->close();
             delete pimpl_;
         }
-        pimpl_ = other.pimpl_;
-        other.pimpl_ = nullptr;
+        pimpl_ = std::exchange(other.pimpl_, nullptr);
     }
     
     return *this;
