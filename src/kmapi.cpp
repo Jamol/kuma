@@ -1475,7 +1475,23 @@ void fini()
 
 void setLogCallback(LogCallback cb)
 {
-    setTraceFunc(cb);
+    if (cb) {
+        kev::setTraceFunc([cb{std::move(cb)}] (int level, std::string &&msg) {
+            cb(level, msg.c_str(), msg.size());
+        });
+    } else {
+        kev::setTraceFunc(nullptr);
+    }
+}
+
+void setLogLevel(int level)
+{
+    kev::setTraceLevel(level);
+}
+
+int getLogLevel()
+{
+    return kev::getTraceLevel();
 }
 
 KUMA_NS_END

@@ -710,6 +710,8 @@ KUMA_API void fini();
 // msg is null-terminated and msg_len doesn't include '\0'
 using LogCallback = void(*)(int level, const char* msg, size_t msg_len);
 KUMA_API void setLogCallback(LogCallback cb);
+KUMA_API void setLogLevel(int level);
+KUMA_API int getLogLevel();
 
 KUMA_NS_END
 
