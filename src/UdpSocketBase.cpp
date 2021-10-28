@@ -26,7 +26,7 @@
 # include <windows.h>
 # include <time.h>
 #elif defined(KUMA_OS_LINUX)
-# include <string.h>
+# include <cstring>
 # include <pthread.h>
 # include <unistd.h>
 # include <fcntl.h>

@@ -86,11 +86,11 @@ protected:
     EventCallback       read_cb_;
     EventCallback       error_cb_;
     
-    sockaddr_storage    bind_addr_;
-    sockaddr_storage    mcast_addr_;
-    uint16_t            mcast_port_;
-    struct ip_mreq      mcast_req_v4_;
-    struct ipv6_mreq    mcast_req_v6_;
+    sockaddr_storage    bind_addr_{};
+    sockaddr_storage    mcast_addr_{};
+    uint16_t            mcast_port_{ 0 };
+    struct ip_mreq      mcast_req_v4_{};
+    struct ipv6_mreq    mcast_req_v6_{};
 };
 
 KUMA_NS_END

@@ -157,11 +157,11 @@ WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
             case DecodeState::HDREX:
             {
                 if (126 == ctx_.hdr.plen) {
-                    uint32_t expect_len = 2;
-                    if (len-pos+ctx_.pos >= expect_len) {
-                        for (; ctx_.pos<expect_len; ++pos, ++ctx_.pos) {
-                            ctx_.hdr.xpl.xpl16 |= data[pos] << ((expect_len-ctx_.pos-1) << 3);
-                        }
+                    size_t expect_len = 2;
+                    for (; pos<len && ctx_.pos<expect_len; ++pos, ++ctx_.pos) {
+                        ctx_.hdr.xpl.xpl16 |= data[pos] << ((expect_len-ctx_.pos-1) << 3);
+                    }
+                    if (ctx_.pos >= expect_len) {
                         ctx_.pos = 0;
                         if(ctx_.hdr.xpl.xpl16 < 126)
                         {// invalid ex payload length
@@ -171,16 +171,14 @@ WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                         ctx_.hdr.length = ctx_.hdr.xpl.xpl16;
                         ctx_.state = DecodeState::MASKEY;
                     } else {
-                        ctx_.hdr.xpl.xpl16 |= data[pos++]<<8;
-                        ++ctx_.pos;
                         return WSError::NEED_MORE_DATA;
                     }
                 } else if (127 == ctx_.hdr.plen) {
-                    uint32_t expect_len = 8;
-                    if(len-pos+ctx_.pos >= expect_len) {
-                        for (; ctx_.pos<expect_len; ++pos, ++ctx_.pos) {
-                            ctx_.hdr.xpl.xpl64 |= data[pos] << ((expect_len-ctx_.pos-1) << 3);
-                        }
+                    size_t expect_len = 8;
+                    for (; pos<len && ctx_.pos<expect_len; ++pos, ++ctx_.pos) {
+                        ctx_.hdr.xpl.xpl64 |= data[pos] << ((expect_len-ctx_.pos-1) << 3);
+                    }
+                    if(ctx_.pos >= expect_len) {
                         ctx_.pos = 0;
                         if((ctx_.hdr.xpl.xpl64>>63) != 0)
                         {// invalid ex payload length
@@ -195,9 +193,6 @@ WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                         }
                         ctx_.state = DecodeState::MASKEY;
                     } else {
-                        for (; pos<len; ++pos, ++ctx_.pos) {
-                            ctx_.hdr.xpl.xpl64 |= data[pos] << ((expect_len-ctx_.pos-1) << 3);
-                        }
                         return WSError::NEED_MORE_DATA;
                     }
                 } else {
@@ -215,18 +210,18 @@ WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                         ctx_.state = DecodeState::IN_ERROR;
                         return WSError::PROTOCOL_ERROR;
                     }
-                    uint32_t expect_len = 4;
-                    if (len-pos+ctx_.pos >= expect_len)
-                    {
-                        memcpy(ctx_.hdr.maskey+ctx_.pos, data+pos, expect_len-ctx_.pos);
-                        pos += expect_len-ctx_.pos;
-                        ctx_.pos = 0;
-                    } else {
-                        memcpy(ctx_.hdr.maskey+ctx_.pos, data+pos, len-pos);
-                        ctx_.pos += uint8_t(len-pos);
-                        pos = len;
+                    size_t expect_len = 4;
+                    auto copy_len = expect_len - ctx_.pos;
+                    if (copy_len > len - pos) {
+                        copy_len = len - pos;
+                    }
+                    memcpy(ctx_.hdr.maskey+ctx_.pos, data+pos, copy_len);
+                    pos += copy_len;
+                    ctx_.pos += copy_len;
+                    if (ctx_.pos < expect_len) {
                         return WSError::NEED_MORE_DATA;
                     }
+                    ctx_.pos = 0;
                 } else if (WSMode::SERVER == mode_ && ctx_.hdr.length > 0) {
                     // client MUST mask all frames
                     ctx_.state = DecodeState::IN_ERROR;
