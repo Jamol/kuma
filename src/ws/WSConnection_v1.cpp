@@ -95,23 +95,17 @@ KMError WSConnection_V1::connect_i(const std::string& ws_url)
     if (!uri.parse(ws_url)) {
         return KMError::INVALID_PARAM;
     }
+    auto pos = ws_url.find("://");
+    if(pos == std::string::npos) {
+        return KMError::INVALID_PARAM;
+    }
     std::string http_url;
     if(kev::is_equal("wss", uri.getScheme())) {
-        http_url = "https://";
+        http_url = "https";
     } else {
-        http_url = "http://";
+        http_url = "http";
     }
-    http_url += uri.getHost();
-    auto const &str_port = uri.getPort();
-    if (!str_port.empty()) {
-        http_url += ":" + str_port;
-    }
-    http_url += uri.getPath();
-    auto const &str_query = uri.getQuery();
-    if(!str_query.empty()){
-        http_url += "?";
-        http_url += str_query;
-    }
+    http_url.append(ws_url.begin()+pos, ws_url.end());
     
     addHeader(strUpgrade, "websocket");
     addHeader("Connection", "Upgrade");

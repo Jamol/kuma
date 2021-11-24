@@ -46,7 +46,7 @@ public:
     const std::string& getFragment() const { return fragment_; }
     
 private:
-    bool parse_host_port(const std::string& hostport, std::string& host, std::string& port);
+    bool parse_host_port(const std::string& url, std::string::size_type &pos, std::string& host, std::string& port);
 
 private:
     std::string         scheme_;
