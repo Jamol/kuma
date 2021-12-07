@@ -1,3 +1,6 @@
 [submodule "third_party/libkev"]
 	path = third_party/libkev
 	url = https://github.com/Jamol/libkev.git
+[submodule "third_party/HPacker"]
+	path = third_party/HPacker
+	url = https://github.com/Jamol/HPacker.git

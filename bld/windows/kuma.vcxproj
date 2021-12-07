@@ -196,8 +196,6 @@
     <ClCompile Include="..\..\src\http\v2\H2Stream.cpp" />
     <ClCompile Include="..\..\src\http\v2\H2StreamProxy.cpp" />
     <ClCompile Include="..\..\src\http\v2\h2utils.cpp" />
-    <ClCompile Include="..\..\src\http\v2\hpack\HPacker.cpp" />
-    <ClCompile Include="..\..\src\http\v2\hpack\HPackTable.cpp" />
     <ClCompile Include="..\..\src\http\v2\Http2Request.cpp" />
     <ClCompile Include="..\..\src\http\v2\Http2Response.cpp" />
     <ClCompile Include="..\..\src\http\v2\PushClient.cpp" />
@@ -230,6 +228,8 @@
     <ClCompile Include="..\..\src\ws\WSConnection_v1.cpp" />
     <ClCompile Include="..\..\src\ws\WSConnection_v2.cpp" />
     <ClCompile Include="..\..\src\ws\WSHandler.cpp" />
+    <ClCompile Include="..\..\third_party\HPacker\src\HPacker.cpp" />
+    <ClCompile Include="..\..\third_party\HPacker\src\HPackTable.cpp" />
     <ClCompile Include="..\..\third_party\zlib\adler32.c" />
     <ClCompile Include="..\..\third_party\zlib\compress.c" />
     <ClCompile Include="..\..\third_party\zlib\crc32.c" />

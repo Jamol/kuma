@@ -10,6 +10,7 @@ THIRDPARTYDIR = $(ROOTDIR)/third_party
 OPENSSLDIR = /usr/include
 ZLIBDIR = $(THIRDPARTYDIR)/zlib
 LIBKEVDIR = $(THIRDPARTYDIR)/libkev
+HPACKDIR = $(THIRDPARTYDIR)/HPacker
 
 BINDIR = $(ROOTDIR)/bin/linux
 LIBDIR = $(ROOTDIR)/lib
@@ -50,6 +51,10 @@ ZLIBSRCS = \
     $(ZLIBDIR)/uncompr.c \
     $(ZLIBDIR)/zutil.c
 
+HPACKSRCS = \
+    $(HPACKDIR)/src/HPackTable.cpp \
+    $(HPACKDIR)/src/HPacker.cpp
+
 SRCS =  \
     AcceptorBase.cpp \
     SocketBase.cpp \
@@ -81,8 +86,6 @@ SRCS =  \
     http/v2/H2ConnectionMgr.cpp \
     http/v2/h2utils.cpp \
     http/v2/PushClient.cpp \
-    http/v2/hpack/HPackTable.cpp \
-    http/v2/hpack/HPacker.cpp \
     compr/compr.cpp \
     compr/compr_zlib.cpp \
     ws/WSHandler.cpp \
@@ -106,7 +109,7 @@ SRCS =  \
     DnsResolver.cpp \
     kmapi.cpp
 
-SRCS += $(ZLIBSRCS)
+SRCS += $(ZLIBSRCS) $(HPACKSRCS)
 
 OBJS = $(patsubst %.c,$(OBJDIR)/%.o,$(patsubst %.cpp,$(OBJDIR)/%.o,$(patsubst %.cxx,$(OBJDIR)/%.o,$(SRCS))))
 #OBJS = $(SRCS:%.cpp=$(OBJDIR)/%.o)

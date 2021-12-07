@@ -24,7 +24,7 @@
 
 #include "kmdefs.h"
 #include "FrameParser.h"
-#include "hpack/HPacker.h"
+#include "HPacker/src/HPacker.h"
 #include "H2Stream.h"
 #include "PushClient.h"
 #include "TcpSocketImpl.h"
