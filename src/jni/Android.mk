@@ -6,6 +6,7 @@ OPENSSL_PATH := $(MY_ROOT)/third_party/openssl
 OPENSSL_LIB_PATH := $(OPENSSL_PATH)/lib/android/$(APP_ABI)
 LIBKEV_PATH := $(MY_ROOT)/third_party/libkev
 LIBKEV_LIB_PATH := $(LIBKEV_PATH)/lib/android/$(APP_ABI)
+HPACK_PATH := $(MY_ROOT)/third_party/HPacker
 
 ifeq ($(NDK_DEBUG), 1)
 	NDK_APP_DST_DIR := $(MY_ROOT)/bin/android/$(APP_ABI)/debug
@@ -61,8 +62,8 @@ LOCAL_SRC_FILES := \
     http/v2/H2ConnectionMgr.cpp \
     http/v2/h2utils.cpp \
     http/v2/PushClient.cpp \
-    http/v2/hpack/HPackTable.cpp \
-    http/v2/hpack/HPacker.cpp \
+    ${HPACK_PATH}/src/HPackTable.cpp \
+    ${HPACK_PATH}/src/HPacker.cpp \
     compr/compr.cpp \
     compr/compr_zlib.cpp \
     ws/WSHandler.cpp \

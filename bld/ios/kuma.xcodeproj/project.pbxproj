@@ -378,7 +378,8 @@
 				6F84E9871D5B032D00AF8E3B /* HPackTable.h */,
 				6F84E9881D5B032D00AF8E3B /* StaticTable.h */,
 			);
-			path = hpack;
+			name = hpack;
+			path = ../../../third_party/HPacker/src;
 			sourceTree = "<group>";
 		};
 		6F8BE43422951AC000E6EA32 /* proxy */ = {

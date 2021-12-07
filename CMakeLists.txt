@@ -26,7 +26,6 @@ file(GLOB SOURCE_FILES
   ${PROJ_ROOT_DIR}/src/util/*.cpp
   ${PROJ_ROOT_DIR}/src/http/*.cpp
   ${PROJ_ROOT_DIR}/src/http/v2/*.cpp
-  ${PROJ_ROOT_DIR}/src/http/v2/hpack/*.cpp
   ${PROJ_ROOT_DIR}/src/ws/*.cpp
   ${PROJ_ROOT_DIR}/src/ws/exts/*.cpp
   ${PROJ_ROOT_DIR}/src/ssl/*.cpp
@@ -48,6 +47,10 @@ file(GLOB ZLIB_FILES
     ${PROJ_ROOT_DIR}/third_party/zlib/uncompr.c 
     ${PROJ_ROOT_DIR}/third_party/zlib/zutil.c)
 set(SOURCE_FILES ${SOURCE_FILES} ${ZLIB_FILES})
+
+file(GLOB HPACK_FILES 
+    ${PROJ_ROOT_DIR}/third_party/HPacker/src/*.cpp)
+set(SOURCE_FILES ${SOURCE_FILES} ${HPACK_FILES})
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     include_directories(${PROJ_ROOT_DIR}/third_party/openssl/include)

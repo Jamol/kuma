@@ -556,7 +556,8 @@
 				1FA44582238B799A00C1EC92 /* HPackTable.h */,
 				1FA44583238B799A00C1EC92 /* StaticTable.h */,
 			);
-			path = hpack;
+			name = hpack;
+			path = ../../../third_party/HPacker/src;
 			sourceTree = "<group>";
 		};
 		1FA445BE238B79D800C1EC92 /* exts */ = {
