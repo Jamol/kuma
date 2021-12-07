@@ -129,12 +129,6 @@
     <ClCompile Include="..\..\src\TcpConnection.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\http\v2\hpack\HPacker.cpp">
-      <Filter>Source Files\http\v2\hpack</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\http\v2\hpack\HPackTable.cpp">
-      <Filter>Source Files\http\v2\hpack</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\http\Http1xRequest.cpp">
       <Filter>Source Files\http</Filter>
     </ClCompile>
@@ -278,6 +272,12 @@
     </ClCompile>
     <ClCompile Include="..\..\src\proxy\ProxyConnectionImpl.cpp">
       <Filter>Source Files\proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\third_party\HPacker\src\HPacker.cpp">
+      <Filter>Source Files\http\v2\hpack</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\third_party\HPacker\src\HPackTable.cpp">
+      <Filter>Source Files\http\v2\hpack</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

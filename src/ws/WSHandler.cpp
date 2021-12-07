@@ -217,7 +217,7 @@ WSError WSHandler::decodeFrame(uint8_t* data, size_t len)
                     }
                     memcpy(ctx_.hdr.maskey+ctx_.pos, data+pos, copy_len);
                     pos += copy_len;
-                    ctx_.pos += copy_len;
+                    ctx_.pos += static_cast<uint8_t>(copy_len);
                     if (ctx_.pos < expect_len) {
                         return WSError::NEED_MORE_DATA;
                     }
