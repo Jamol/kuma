@@ -55,6 +55,7 @@ bool Uri::parse(const std::string& url)
         return false;
     }
     if (pos == std::string::npos || pos >= url.size()) { // only host and port
+        path_ = "/";
         return true;
     }
     if (url[pos] == '/') { // path
@@ -68,6 +69,8 @@ bool Uri::parse(const std::string& url)
         if (pos >= url.size()) {
             return true;
         }
+    } else {
+        path_ = "/";
     }
     if (url[pos] == '?') { // query
         auto bpos = ++pos;

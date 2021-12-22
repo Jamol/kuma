@@ -10,6 +10,7 @@ class WsHandler : public LoopObject
 {
 public:
     WsHandler(const RunLoop::Ptr &loop, const std::string &ver);
+    ~WsHandler();
 
     kuma::KMError attachFd(kuma::SOCKET_FD fd, uint32_t ssl_flags, const kuma::KMBuffer *init_buf);
     kuma::KMError attachSocket(kuma::TcpSocket&& tcp, kuma::HttpParser&& parser, const kuma::KMBuffer *init_buf);

@@ -11,6 +11,7 @@ class HttpHandler : public LoopObject
 {
 public:
     HttpHandler(const RunLoop::Ptr &loop, const std::string &ver);
+    ~HttpHandler();
 
     kuma::KMError attachFd(kuma::SOCKET_FD fd, uint32_t ssl_flags, const kuma::KMBuffer *init_buf);
     kuma::KMError attachSocket(kuma::TcpSocket&& tcp, kuma::HttpParser&& parser, const kuma::KMBuffer *init_buf);

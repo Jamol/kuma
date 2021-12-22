@@ -16,6 +16,11 @@ WsHandler::WsHandler(const RunLoop::Ptr &loop, const std::string &ver)
     });
 }
 
+WsHandler::~WsHandler()
+{
+    close();
+}
+
 KMError WsHandler::attachFd(SOCKET_FD fd, uint32_t ssl_flags, const KMBuffer *init_buf)
 {
     ws_.setSslFlags(ssl_flags);

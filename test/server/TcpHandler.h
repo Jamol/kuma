@@ -10,6 +10,7 @@ class TcpHandler : public LoopObject
 {
 public:
     TcpHandler(const RunLoop::Ptr &loop);
+    ~TcpHandler();
     
     kuma::KMError attachFd(kuma::SOCKET_FD fd);
     void close();

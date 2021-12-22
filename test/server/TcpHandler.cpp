@@ -13,6 +13,11 @@ TcpHandler::TcpHandler(const RunLoop::Ptr &loop)
     
 }
 
+TcpHandler::~TcpHandler()
+{
+    close();
+}
+
 KMError TcpHandler::attachFd(SOCKET_FD fd)
 {
     tcp_.setReadCallback([this] (KMError err) { onReceive(err); });
