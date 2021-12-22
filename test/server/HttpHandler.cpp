@@ -17,6 +17,11 @@ HttpHandler::HttpHandler(const RunLoop::Ptr &loop, const std::string &ver)
     
 }
 
+HttpHandler::~HttpHandler()
+{
+    close();
+}
+
 void HttpHandler::setupCallbacks()
 {
     http_.setWriteCallback([this] (KMError err) { onSend(err); });

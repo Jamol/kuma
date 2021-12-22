@@ -21,7 +21,7 @@ Http2Handler::Http2Handler(const RunLoop::Ptr &loop, RunLoopPool *pool)
 
 Http2Handler::~Http2Handler()
 {
-    
+    close();
 }
 
 KMError Http2Handler::attachSocket(TcpSocket&& tcp, HttpParser&& parser, const KMBuffer *init_buf)

@@ -24,8 +24,6 @@
 
 #include "kmdefs.h"
 #include <string>
-#include <map>
-#include <vector>
 
 KUMA_NS_BEGIN
 

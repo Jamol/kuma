@@ -89,7 +89,9 @@ int main(int argc, char *argv[])
         return -1;
     }
     
+    // WebSocket example
     WebSocket ws(&main_loop, "HTTP/1.1");
+    // setup callbacks
     ws.setOpenCallback([] (KMError err) {
         printf("ws.onOpen, err=%d\n", err);
     });
@@ -105,6 +107,32 @@ int main(int argc, char *argv[])
     ws.setSubprotocol("jws");
     ws.setOrigin("www.jamol.cn");
     ws.connect("wss://127.0.0.1:8443/");
+
+    // HTTP client example
+    HttpRequest http(&main_loop);
+    // setup callbacks
+    http.setDataCallback([] (KMBuffer &buf) {
+        printf("http.onData, len=%lu\n", buf.chainLength());
+    });
+    http.setWriteCallback([] (KMError err) {
+        printf("http.onWrite, write available\n");
+    });
+    http.setErrorCallback([] (KMError err) {
+        printf("http.onError, err=%d\n", err);
+    });
+    http.setHeaderCompleteCallback([&] {
+        printf("http.onHeader, status=%d\n", http.getStatusCode());
+        http.forEachHeader([] (const std::string &name, const std::string &value) {
+            printf("http.onHeader, name=%s, value=%s\n",
+                name.c_str(), value.c_str());
+            return true;
+        });
+    });
+    http.setResponseCompleteCallback([&] {
+        printf("http.onResponseComplete\n");
+    });
+    // send HTTP request
+    http.sendRequest("GET", "http://www.baidu.com");
     
     Timer timer(&main_loop);
     timer.schedule(1000, Timer::Mode::ONE_SHOT, [] {

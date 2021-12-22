@@ -29,7 +29,7 @@ ProtoServer::ProtoServer(EventLoop *loop, RunLoopPool *pool)
 
 ProtoServer::~ProtoServer()
 {
-    
+    stop();
 }
 
 bool ProtoServer::start(const std::string &listen_addr)

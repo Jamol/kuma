@@ -35,7 +35,6 @@ public:
     void onHttpEvent(kuma::HttpEvent ev);
     
 private:
-    void cleanup();
     bool checkHttp2();
     void demuxHttp(const kuma::KMBuffer *init_buf);
 
