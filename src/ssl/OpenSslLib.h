@@ -95,6 +95,7 @@ protected:
 #endif
     
     static int                  ssl_index_;
+    static bool                 use_system_ca_store_;
 };
 
 KUMA_NS_END

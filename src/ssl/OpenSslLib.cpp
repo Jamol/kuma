@@ -55,6 +55,7 @@ std::mutex* OpenSslLib::ssl_locks_ = nullptr;
 #endif
 
 int OpenSslLib::ssl_index_ = -1;
+bool OpenSslLib::use_system_ca_store_ = true;
 
 namespace {
     const AlpnProtos alpnProtos {
@@ -68,6 +69,9 @@ namespace {
         return m;
     }
 }
+
+static bool loadTrustedSystemCertificates(X509_STORE* x509_store);
+
 
 bool OpenSslLib::init(const std::string &cfg_path)
 {
@@ -124,9 +128,8 @@ bool OpenSslLib::doInit(const std::string &cfg_path)
     }
     //OpenSSL_add_all_algorithms();
     SSL_load_error_strings();
-#endif
-    
     ERR_load_BIO_strings();
+#endif
     
     // PRNG
     RAND_poll();
@@ -231,21 +234,29 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
                 break;
             }
         }
-        
+
+        bool ca_ok = false;
         if (!caFile.empty()) {
-            if(SSL_CTX_load_verify_locations(ssl_ctx, caFile.c_str(), NULL) != 1) {
-                KM_WARNTRACE("SSL_CTX_load_verify_locations failed, file="<<caFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
-                break;
+            if (SSL_CTX_load_verify_locations(ssl_ctx, caFile.c_str(), NULL)) {
+                ca_ok = true;
             }
-            if(SSL_CTX_set_default_verify_paths(ssl_ctx) != 1) {
-                KM_WARNTRACE("SSL_CTX_set_default_verify_paths failed, err="<<ERR_reason_error_string(ERR_get_error()));
-                break;
+            else {
+                KM_WARNTRACE("SSL_CTX_load_verify_locations failed, file=" << caFile << ", err=" << ERR_reason_error_string(ERR_get_error()));
             }
-            SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, verifyCallback);
-            //SSL_CTX_set_verify_depth(ssl_ctx, 4);
-            //app_verify_arg arg1;
-            //SSL_CTX_set_cert_verify_callback(ssl_ctx, appVerifyCallback, &arg1);
         }
+        if (!ca_ok && use_system_ca_store_) {
+            auto *cert_store = SSL_CTX_get_cert_store(ssl_ctx);
+            ca_ok = loadTrustedSystemCertificates(cert_store);
+        }
+        if (!ca_ok && !SSL_CTX_set_default_verify_paths(ssl_ctx)) {
+            KM_WARNTRACE("SSL_CTX_set_default_verify_paths failed, err=" << ERR_reason_error_string(ERR_get_error()));
+            break;
+        }
+        
+        SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, verifyCallback);
+        //SSL_CTX_set_verify_depth(ssl_ctx, 4);
+        //app_verify_arg arg1;
+        //SSL_CTX_set_cert_verify_callback(ssl_ctx, appVerifyCallback, &arg1);
         if (!clientMode) {
 #if OPENSSL_VERSION_NUMBER >= 0x1000200fL && !defined(OPENSSL_NO_TLSEXT)
             SSL_CTX_set_alpn_select_cb(ssl_ctx, alpnCallback, (void*)&alpnProtos);
@@ -329,16 +340,16 @@ int OpenSslLib::verifyCallback(int ok, X509_STORE_CTX *ctx)
         auto handler = reinterpret_cast<SslHandler*>(ssl_data);
         ssl_flags = handler->getSslFlags();
     }
-    auto x509_current_cert = X509_STORE_CTX_get_current_cert(ctx);
     auto x509_err = X509_STORE_CTX_get_error(ctx);
-    if(x509_current_cert) {
-        char *s, buf[1024];
-        s = X509_NAME_oneline(X509_get_subject_name(x509_current_cert), buf, sizeof(buf));
+    auto x509_cert = X509_STORE_CTX_get_current_cert(ctx);
+    if(x509_cert) {
+        char *s, buf[512];
+        s = X509_NAME_oneline(X509_get_subject_name(x509_cert), buf, sizeof(buf));
         if(s != NULL) {
             auto x509_err_depth = X509_STORE_CTX_get_error_depth(ctx);
             if(ok) {
                 KM_INFOTRACE("verifyCallback ok, depth="<<x509_err_depth<<", subject="<<buf);
-                if(X509_NAME_oneline(X509_get_issuer_name(x509_current_cert), buf, sizeof(buf))) {
+                if(X509_NAME_oneline(X509_get_issuer_name(x509_cert), buf, sizeof(buf))) {
                     KM_INFOTRACE("verifyCallback, issuer="<<buf);
                 }
             } else {
@@ -505,5 +516,45 @@ int OpenSslLib::passwdCallback(char *buf, int size, int rwflag, void *userdata)
 {
     return 0;
 }
+
+#if defined(KUMA_OS_WIN)
+#include <Wincrypt.h>
+#pragma comment (lib, "crypt32.lib")
+
+static bool loadTrustedSystemCertificates(X509_STORE *x509_store)
+{
+    auto hStore = CertOpenSystemStore(NULL, L"ROOT");
+    if (!hStore) {
+        return false;
+    }
+
+    PCCERT_CONTEXT pContext = NULL;
+    while (pContext = CertEnumCertificatesInStore(hStore, pContext)) {
+        const auto *cert_bytes = (const uint8_t *)(pContext->pbCertEncoded);
+        if (!cert_bytes) {
+            continue;
+        }
+        auto *x509_cert = d2i_X509(NULL, &cert_bytes, pContext->cbCertEncoded);
+        if (x509_cert) {
+            X509_STORE_add_cert(x509_store, x509_cert);
+            X509_free(x509_cert);
+        }
+    }
+
+    if (pContext) {
+        CertFreeCertificateContext(pContext);
+    }
+    CertCloseStore(hStore, 0);
+    return true;
+}
+
+#else // defined(KUMA_OS_WIN)
+
+static bool loadTrustedSystemCertificates(X509_STORE* x509_store)
+{
+    return false;
+}
+
+#endif // defined(KUMA_OS_WIN)
 
 #endif // KUMA_HAS_OPENSSL

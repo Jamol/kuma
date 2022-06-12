@@ -3,7 +3,6 @@
 from __future__ import print_function
 import sys
 import os
-import shutil
 
 def get_sdkversion():
     output = os.popen('xcrun -sdk iphoneos --show-sdk-version')
@@ -46,17 +45,13 @@ def build_ios(workingPath, outdir):
     os.system('rm -f '+outdir+'/Debug-iphoneos/libkuma.a*')
     os.system('rm -f '+outdir+'/Release-iphoneos/libkuma.a*')
 
-    archs = ["armv7", "arm64", "x86_64"]
-    arch = "armv7"
-    build_one_arch(workingPath, 'Debug', arch, xcodePath)
-    os.system('mv '+outdir+'/Debug-iphoneos/libkuma.a '+outdir+'/Debug-iphoneos/libkuma.a.'+arch)
-    build_one_arch(workingPath, 'Release', arch, xcodePath)
-    os.system('mv '+outdir+'/Release-iphoneos/libkuma.a '+outdir+'/Release-iphoneos/libkuma.a.'+arch)
-    arch = "arm64"
-    build_one_arch(workingPath, 'Debug', arch, xcodePath)
-    os.system('mv '+outdir+'/Debug-iphoneos/libkuma.a '+outdir+'/Debug-iphoneos/libkuma.a.'+arch)
-    build_one_arch(workingPath, 'Release', arch, xcodePath)
-    os.system('mv '+outdir+'/Release-iphoneos/libkuma.a '+outdir+'/Release-iphoneos/libkuma.a.'+arch)
+    archs = ["armv7", "arm64"]
+    for arch in archs:
+        build_one_arch(workingPath, 'Debug', arch, xcodePath)
+        build_one_arch(workingPath, 'Release', arch, xcodePath)
+        os.system('mv '+outdir+'/Debug-iphoneos/libkuma.a '+outdir+'/Debug-iphoneos/libkuma.a.'+arch)
+        os.system('mv '+outdir+'/Release-iphoneos/libkuma.a '+outdir+'/Release-iphoneos/libkuma.a.'+arch)
+    
     os.system('lipo -create '+outdir+'/Debug-iphoneos/libkuma.a.armv7 '+outdir+'/Debug-iphoneos/libkuma.a.arm64 -output '+outdir+'/Debug-iphoneos/libkuma.a')
     os.system('lipo -create '+outdir+'/Release-iphoneos/libkuma.a.armv7 '+outdir+'/Release-iphoneos/libkuma.a.arm64 -output '+outdir+'/Release-iphoneos/libkuma.a')
     os.system('rm -f '+outdir+'/Debug-iphoneos/libkuma.a.*')

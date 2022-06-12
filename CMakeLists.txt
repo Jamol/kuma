@@ -20,6 +20,7 @@ endif()
 include_directories(${PROJ_ROOT_DIR}/include)
 include_directories(${PROJ_ROOT_DIR}/src)
 include_directories(${PROJ_ROOT_DIR}/third_party)
+include_directories(${PROJ_ROOT_DIR}/third_party/openssl/include)
 
 file(GLOB SOURCE_FILES
   ${PROJ_ROOT_DIR}/src/*.cpp
