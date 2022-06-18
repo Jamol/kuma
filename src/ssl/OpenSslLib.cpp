@@ -25,6 +25,7 @@
 #include "libkev/src/util/kmtrace.h"
 #include "libkev/src/util/util.h"
 #include "SslHandler.h"
+#include "ssl_utils.h"
 
 #include <string>
 #include <thread>
@@ -55,7 +56,6 @@ std::mutex* OpenSslLib::ssl_locks_ = nullptr;
 #endif
 
 int OpenSslLib::ssl_index_ = -1;
-bool OpenSslLib::use_system_ca_store_ = true;
 
 namespace {
     const AlpnProtos alpnProtos {
@@ -69,9 +69,6 @@ namespace {
         return m;
     }
 }
-
-static bool loadTrustedSystemCertificates(X509_STORE* x509_store);
-
 
 bool OpenSslLib::init(const std::string &cfg_path)
 {
@@ -170,7 +167,7 @@ void OpenSslLib::doFini()
 #endif
 }
 
-SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::string &caFile, const std::string &certFile, const std::string &keyFile, bool clientMode)
+SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const SslCtxConfig &config)
 {
     SSL_CTX *ssl_ctx = nullptr;
     bool ctx_ok = false;
@@ -199,7 +196,7 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
 #endif
         
 #if 1
-        if (clientMode) {
+        if (!config.is_server_mode) {
             const char* kDefaultCipherList =
             "ECDHE-ECDSA-AES256-GCM-SHA384:"
             "ECDHE-RSA-AES256-GCM-SHA384:"
@@ -217,16 +214,18 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
         }
 #endif
         
-        if(!certFile.empty() && !keyFile.empty()) {
+        if(!config.cert_file.empty() && !config.key_file.empty()) {
             //if(SSL_CTX_use_certificate_file(ssl_ctx, certFile.c_str(), SSL_FILETYPE_PEM) != 1) {
-            if(SSL_CTX_use_certificate_chain_file(ssl_ctx, certFile.c_str()) != 1) {
-                KM_WARNTRACE("SSL_CTX_use_certificate_chain_file failed, file="<<certFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
+            if(SSL_CTX_use_certificate_chain_file(ssl_ctx, config.cert_file.c_str()) != 1) {
+                KM_WARNTRACE("SSL_CTX_use_certificate_chain_file failed, file="<<config.cert_file
+                             <<", err="<<ERR_reason_error_string(ERR_get_error()));
                 break;
             }
             SSL_CTX_set_default_passwd_cb(ssl_ctx, passwdCallback);
             SSL_CTX_set_default_passwd_cb_userdata(ssl_ctx, ssl_ctx);
-            if(SSL_CTX_use_PrivateKey_file(ssl_ctx, keyFile.c_str(), SSL_FILETYPE_PEM) != 1) {
-                KM_WARNTRACE("SSL_CTX_use_PrivateKey_file failed, file="<<keyFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
+            if(SSL_CTX_use_PrivateKey_file(ssl_ctx, config.key_file.c_str(), SSL_FILETYPE_PEM) != 1) {
+                KM_WARNTRACE("SSL_CTX_use_PrivateKey_file failed, file="<<config.key_file
+                             <<", err="<<ERR_reason_error_string(ERR_get_error()));
                 break;
             }
             if(SSL_CTX_check_private_key(ssl_ctx) != 1) {
@@ -236,28 +235,56 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
         }
 
         bool ca_ok = false;
-        if (!caFile.empty()) {
-            if (SSL_CTX_load_verify_locations(ssl_ctx, caFile.c_str(), NULL)) {
-                ca_ok = true;
-            }
-            else {
-                KM_WARNTRACE("SSL_CTX_load_verify_locations failed, file=" << caFile << ", err=" << ERR_reason_error_string(ERR_get_error()));
-            }
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+        if(!config.ca_file.empty() && SSL_CTX_load_verify_file(ssl_ctx, config.ca_file.c_str())) {
+            ca_ok = true;
+        } else {
+            KM_WARNTRACE("SSL_CTX_load_verify_file failed, file=" << config.ca_file
+                         << ", err=" << ERR_reason_error_string(ERR_get_error()));
         }
-        if (!ca_ok && use_system_ca_store_) {
-            auto *cert_store = SSL_CTX_get_cert_store(ssl_ctx);
-            ca_ok = loadTrustedSystemCertificates(cert_store);
+        if(!config.ca_path.empty() && SSL_CTX_load_verify_dir(ssl_ctx, config.ca_path.c_str())) {
+            ca_ok = true;
+        } else {
+            KM_WARNTRACE("SSL_CTX_load_verify_dir failed, path=" << config.ca_path
+                         << ", err=" << ERR_reason_error_string(ERR_get_error()));
+        }
+#else
+        if ((!config.ca_file.empty() || !config.ca_path.empty()) &&
+            SSL_CTX_load_verify_locations(ssl_ctx, config.ca_file.c_str(), config.ca_path.c_str())) {
+            ca_ok = true;
+        }
+        else {
+            KM_WARNTRACE("SSL_CTX_load_verify_locations failed, file=" << config.ca_file
+                         << ", err=" << ERR_reason_error_string(ERR_get_error()));
+        }
+#endif
+        if (config.load_native_ca_store) {
+            auto *x509_store = SSL_CTX_get_cert_store(ssl_ctx);
+            ca_ok = loadTrustedSystemCertificates(x509_store) || ca_ok;
         }
         if (!ca_ok && !SSL_CTX_set_default_verify_paths(ssl_ctx)) {
             KM_WARNTRACE("SSL_CTX_set_default_verify_paths failed, err=" << ERR_reason_error_string(ERR_get_error()));
             break;
         }
         
-        SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, verifyCallback);
+        if (!config.crl_file.empty()) {
+            auto *x509_store = SSL_CTX_get_cert_store(ssl_ctx);
+            auto *x509_lookup = X509_STORE_add_lookup(x509_store, X509_LOOKUP_file());
+            if (x509_lookup && X509_load_crl_file(x509_lookup,
+                                                  config.crl_file.c_str(),
+                                                  X509_FILETYPE_PEM)) {
+                X509_STORE_set_flags(x509_store, X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
+            } else {
+                KM_WARNTRACE("X509_load_crl_file failed, file=" << config.crl_file
+                             << ", err=" << ERR_reason_error_string(ERR_get_error()));
+            }
+        }
+        
+        SSL_CTX_set_verify(ssl_ctx, config.verify_mode, verifyCallback);
         //SSL_CTX_set_verify_depth(ssl_ctx, 4);
         //app_verify_arg arg1;
         //SSL_CTX_set_cert_verify_callback(ssl_ctx, appVerifyCallback, &arg1);
-        if (!clientMode) {
+        if (config.is_server_mode) {
 #if OPENSSL_VERSION_NUMBER >= 0x1000200fL && !defined(OPENSSL_NO_TLSEXT)
             SSL_CTX_set_alpn_select_cb(ssl_ctx, alpnCallback, (void*)&alpnProtos);
 #endif
@@ -281,10 +308,9 @@ SSL_CTX* OpenSslLib::defaultClientContext()
 {
     if (!ssl_ctx_client_) {
         std::call_once(once_flag_client_, []{
-            std::string certFile;// = certs_path + "cleint.pem";
-            std::string keyFile;// = certs_path + "client.key";
-            std::string caFile = certs_path_ + "ca.pem";
-            ssl_ctx_client_ = createSSLContext(SSLv23_client_method(), caFile, certFile, keyFile, true);
+            SslCtxConfig config;
+            config.ca_file = certs_path_ + "ca.pem";
+            ssl_ctx_client_ = createSSLContext(SSLv23_client_method(), config);
         });
     }
     return ssl_ctx_client_;
@@ -294,10 +320,14 @@ SSL_CTX* OpenSslLib::defaultServerContext()
 {
     if (!ssl_ctx_server_) {
         std::call_once(once_flag_server_, []{
-            std::string certFile = certs_path_ + "server.pem";
-            std::string keyFile = certs_path_ + "server.key";
-            std::string caFile;
-            ssl_ctx_server_ = createSSLContext(SSLv23_server_method(), caFile, certFile, keyFile, false);
+            SslCtxConfig config{
+                SSL_VERIFY_NONE,
+                true,
+                false,
+                certs_path_ + "server.pem",
+                certs_path_ + "server.key"
+            };
+            ssl_ctx_server_ = createSSLContext(SSLv23_server_method(), config);
         });
     }
     return ssl_ctx_server_;
@@ -516,45 +546,5 @@ int OpenSslLib::passwdCallback(char *buf, int size, int rwflag, void *userdata)
 {
     return 0;
 }
-
-#if defined(KUMA_OS_WIN)
-#include <Wincrypt.h>
-#pragma comment (lib, "crypt32.lib")
-
-static bool loadTrustedSystemCertificates(X509_STORE *x509_store)
-{
-    auto hStore = CertOpenSystemStore(NULL, L"ROOT");
-    if (!hStore) {
-        return false;
-    }
-
-    PCCERT_CONTEXT pContext = NULL;
-    while (pContext = CertEnumCertificatesInStore(hStore, pContext)) {
-        const auto *cert_bytes = (const uint8_t *)(pContext->pbCertEncoded);
-        if (!cert_bytes) {
-            continue;
-        }
-        auto *x509_cert = d2i_X509(NULL, &cert_bytes, pContext->cbCertEncoded);
-        if (x509_cert) {
-            X509_STORE_add_cert(x509_store, x509_cert);
-            X509_free(x509_cert);
-        }
-    }
-
-    if (pContext) {
-        CertFreeCertificateContext(pContext);
-    }
-    CertCloseStore(hStore, 0);
-    return true;
-}
-
-#else // defined(KUMA_OS_WIN)
-
-static bool loadTrustedSystemCertificates(X509_STORE* x509_store)
-{
-    return false;
-}
-
-#endif // defined(KUMA_OS_WIN)
 
 #endif // KUMA_HAS_OPENSSL

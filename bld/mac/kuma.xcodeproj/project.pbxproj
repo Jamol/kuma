@@ -145,7 +145,28 @@
 		1FA445CD238B79EA00C1EC92 /* PMCE_Base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1FA445C5238B79EA00C1EC92 /* PMCE_Base.cpp */; };
 		1FA445CE238B79EA00C1EC92 /* ExtensionHandler.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FA445C6238B79EA00C1EC92 /* ExtensionHandler.h */; };
 		1FBE8F6C23C0982400D93E30 /* kmtypes.h in Headers */ = {isa = PBXBuildFile; fileRef = 1FBE8F6B23C0982400D93E30 /* kmtypes.h */; };
+		AF37A99E285DBC43008583D2 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF37A99D285DBC43008583D2 /* CoreFoundation.framework */; };
+		AF37A9A0285DBC4C008583D2 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF37A99F285DBC4C008583D2 /* Security.framework */; };
+		AF37A9A3285DC8B9008583D2 /* ssl_utils_darwin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF37A9A1285DC8B9008583D2 /* ssl_utils_darwin.cpp */; };
+		AF37A9A6285DCB2A008583D2 /* ssl_utils.h in Headers */ = {isa = PBXBuildFile; fileRef = AF37A9A5285DCB2A008583D2 /* ssl_utils.h */; };
+		AF6A1E27280AC40D00E36317 /* libcrypto.1.1.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 1FA44577238B789100C1EC92 /* libcrypto.1.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		AF6A1E29280AC40F00E36317 /* libssl.1.1.dylib in Embed Libraries */ = {isa = PBXBuildFile; fileRef = 1FA44578238B789100C1EC92 /* libssl.1.1.dylib */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		AF6A1E28280AC40D00E36317 /* Embed Libraries */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				AF6A1E27280AC40D00E36317 /* libcrypto.1.1.dylib in Embed Libraries */,
+				AF6A1E29280AC40F00E36317 /* libssl.1.1.dylib in Embed Libraries */,
+			);
+			name = "Embed Libraries";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		1F289CBA24173F4E005DA5A6 /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
@@ -288,6 +309,10 @@
 		1FA445C5238B79EA00C1EC92 /* PMCE_Base.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PMCE_Base.cpp; sourceTree = "<group>"; };
 		1FA445C6238B79EA00C1EC92 /* ExtensionHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExtensionHandler.h; sourceTree = "<group>"; };
 		1FBE8F6B23C0982400D93E30 /* kmtypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = kmtypes.h; sourceTree = "<group>"; };
+		AF37A99D285DBC43008583D2 /* CoreFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreFoundation.framework; path = System/Library/Frameworks/CoreFoundation.framework; sourceTree = SDKROOT; };
+		AF37A99F285DBC4C008583D2 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		AF37A9A1285DC8B9008583D2 /* ssl_utils_darwin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ssl_utils_darwin.cpp; sourceTree = "<group>"; };
+		AF37A9A5285DCB2A008583D2 /* ssl_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ssl_utils.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -295,6 +320,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AF37A99E285DBC43008583D2 /* CoreFoundation.framework in Frameworks */,
+				AF37A9A0285DBC4C008583D2 /* Security.framework in Frameworks */,
 				1FA44579238B789100C1EC92 /* libcrypto.1.1.dylib in Frameworks */,
 				1FA4457A238B789100C1EC92 /* libssl.1.1.dylib in Frameworks */,
 				1FA44576238B788000C1EC92 /* GSS.framework in Frameworks */,
@@ -434,6 +461,8 @@
 				1FA444F1238B742200C1EC92 /* BioHandler.h */,
 				1FA444F0238B742200C1EC92 /* OpenSslLib.cpp */,
 				1FA444ED238B742200C1EC92 /* OpenSslLib.h */,
+				AF37A9A5285DCB2A008583D2 /* ssl_utils.h */,
+				AF37A9A1285DC8B9008583D2 /* ssl_utils_darwin.cpp */,
 				1FA444EB238B742200C1EC92 /* SioHandler.cpp */,
 				1FA444EC238B742200C1EC92 /* SioHandler.h */,
 				1FA444EE238B742200C1EC92 /* SslHandler.cpp */,
@@ -506,6 +535,8 @@
 		1FA44574238B788000C1EC92 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				AF37A99F285DBC4C008583D2 /* Security.framework */,
+				AF37A99D285DBC43008583D2 /* CoreFoundation.framework */,
 				1FA44577238B789100C1EC92 /* libcrypto.1.1.dylib */,
 				1FA44578238B789100C1EC92 /* libssl.1.1.dylib */,
 				1FA44575238B788000C1EC92 /* GSS.framework */,
@@ -601,6 +632,7 @@
 				1FA445B0238B79AD00C1EC92 /* FrameParser.h in Headers */,
 				1FA44570238B770500C1EC92 /* TcpConnection.h in Headers */,
 				1FA44499238B72EA00C1EC92 /* GssapiAuthenticator.h in Headers */,
+				AF37A9A6285DCB2A008583D2 /* ssl_utils.h in Headers */,
 				1FA44572238B770500C1EC92 /* TcpListenerImpl.h in Headers */,
 				1FA4449B238B72EA00C1EC92 /* ProxyConnectionImpl.h in Headers */,
 				1FA4452B238B74C500C1EC92 /* WSConnection_v2.h in Headers */,
@@ -665,6 +697,7 @@
 				1FA4446D238B6FA700C1EC92 /* Sources */,
 				1FA4446E238B6FA700C1EC92 /* Frameworks */,
 				1FA4446F238B6FA700C1EC92 /* Resources */,
+				AF6A1E28280AC40D00E36317 /* Embed Libraries */,
 			);
 			buildRules = (
 			);
@@ -765,6 +798,7 @@
 				1FA44494238B72EA00C1EC92 /* ProxyConnectionImpl.cpp in Sources */,
 				1FA4456C238B770500C1EC92 /* AcceptorBase.cpp in Sources */,
 				1FA44540238B753800C1EC92 /* infback.c in Sources */,
+				AF37A9A3285DC8B9008583D2 /* ssl_utils_darwin.cpp in Sources */,
 				1FA445A9238B79AD00C1EC92 /* FrameParser.cpp in Sources */,
 				1FA444C0238B735100C1EC92 /* Http1xResponse.cpp in Sources */,
 				1FA4458A238B799A00C1EC92 /* HPacker.cpp in Sources */,

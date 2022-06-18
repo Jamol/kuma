@@ -39,6 +39,18 @@ KUMA_NS_BEGIN
 
 using AlpnProtos = std::vector<uint8_t>;
 
+struct SslCtxConfig
+{
+    int verify_mode{SSL_VERIFY_PEER};
+    bool is_server_mode{false};
+    bool load_native_ca_store{true};
+    std::string cert_file;
+    std::string key_file;
+    std::string ca_file;
+    std::string ca_path;
+    std::string crl_file;
+};
+
 class OpenSslLib
 {
 public:
@@ -77,7 +89,7 @@ public:
 private:
     static bool doInit(const std::string &path);
     static void doFini();
-    static SSL_CTX* createSSLContext(const SSL_METHOD *method, const std::string &ca, const std::string &cert, const std::string &key, bool clientMode);
+    static SSL_CTX* createSSLContext(const SSL_METHOD *method, const SslCtxConfig &config);
     
 protected:
     using SSL_CTX_ptr = std::unique_ptr<SSL_CTX, decltype(&::SSL_CTX_free)>;
@@ -95,7 +107,6 @@ protected:
 #endif
     
     static int                  ssl_index_;
-    static bool                 use_system_ca_store_;
 };
 
 KUMA_NS_END
