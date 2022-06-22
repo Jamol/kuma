@@ -43,8 +43,11 @@ struct CRYPTO_dynlock_value {
 #endif
 
 bool OpenSslLib::initialized_ = false;
-std::string OpenSslLib::certs_path_;
 std::uint32_t OpenSslLib::init_ref_ { 0 };
+
+std::string OpenSslLib::certs_path_;
+bool OpenSslLib::load_system_ca_store_{true};
+int OpenSslLib::server_verify_mode_{SSL_VERIFY_NONE};
 
 SSL_CTX* OpenSslLib::ssl_ctx_client_ = nullptr;
 std::once_flag OpenSslLib::once_flag_client_;
@@ -70,14 +73,14 @@ namespace {
     }
 }
 
-bool OpenSslLib::init(const std::string &cfg_path)
+bool OpenSslLib::init(const InitConfig &config)
 {
     std::lock_guard<std::mutex> g(getOpenSslMutex());
     if (initialized_) {
         ++init_ref_;
         return true;
     }
-    if (doInit(cfg_path)) {
+    if (doInit(config)) {
         initialized_ = true;
         ++init_ref_;
         return true;
@@ -85,16 +88,24 @@ bool OpenSslLib::init(const std::string &cfg_path)
     return false;
 }
 
-bool OpenSslLib::doInit(const std::string &cfg_path)
+void OpenSslLib::fini()
 {
-    certs_path_ = cfg_path;
-    if(certs_path_.empty()) {
-        certs_path_ = kev::getExecutablePath();
+    std::lock_guard<std::mutex> g(getOpenSslMutex());
+    if (--init_ref_ == 0) {
+        doFini();
+        initialized_ = false;
     }
+}
+
+bool OpenSslLib::doInit(const InitConfig &config)
+{
+    certs_path_ = config.cert_path && config.cert_path[0] != '\0' ?
+                  config.cert_path : kev::getExecutablePath();
     certs_path_ += "/cert";
-    if(certs_path_.at(certs_path_.length() - 1) != PATH_SEPARATOR) {
-        certs_path_ += PATH_SEPARATOR;
-    }
+    load_system_ca_store_ = config.load_system_ca_store;
+    server_verify_mode_ = config.verify_client ?
+                          SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT :
+                          SSL_VERIFY_NONE;
     
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
     if (OPENSSL_init_ssl(0, NULL) == 0) {
@@ -136,15 +147,6 @@ bool OpenSslLib::doInit(const std::string &cfg_path)
     }
     ssl_index_ = SSL_get_ex_new_index(0, (void*)"SSL data index", NULL, NULL, NULL);
     return true;
-}
-
-void OpenSslLib::fini()
-{
-    std::lock_guard<std::mutex> g(getOpenSslMutex());
-    if (--init_ref_ == 0) {
-        doFini();
-        initialized_ = false;
-    }
 }
 
 void OpenSslLib::doFini()
@@ -258,7 +260,7 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const SslCtxConf
                          << ", err=" << ERR_reason_error_string(ERR_get_error()));
         }
 #endif
-        if (config.load_native_ca_store) {
+        if (config.load_system_ca_store) {
             auto *x509_store = SSL_CTX_get_cert_store(ssl_ctx);
             ca_ok = loadTrustedSystemCertificates(x509_store) || ca_ok;
         }
@@ -309,7 +311,9 @@ SSL_CTX* OpenSslLib::defaultClientContext()
     if (!ssl_ctx_client_) {
         std::call_once(once_flag_client_, []{
             SslCtxConfig config;
-            config.ca_file = certs_path_ + "ca.pem";
+            config.load_system_ca_store = load_system_ca_store_;
+            config.ca_file = certs_path_ + "/ca.pem";
+            config.crl_file = certs_path_ + "/crl.pem";
             ssl_ctx_client_ = createSSLContext(SSLv23_client_method(), config);
         });
     }
@@ -321,12 +325,17 @@ SSL_CTX* OpenSslLib::defaultServerContext()
     if (!ssl_ctx_server_) {
         std::call_once(once_flag_server_, []{
             SslCtxConfig config{
-                SSL_VERIFY_NONE,
+                server_verify_mode_,
                 true,
                 false,
-                certs_path_ + "server.pem",
-                certs_path_ + "server.key"
+                certs_path_ + "/server.pem",
+                certs_path_ + "/server.key"
             };
+            if (server_verify_mode_ & SSL_VERIFY_PEER) {
+                config.ca_file = certs_path_ + "/ca.pem";
+                config.crl_file = certs_path_ + "/crl.pem";
+                config.load_system_ca_store = load_system_ca_store_;
+            }
             ssl_ctx_server_ = createSSLContext(SSLv23_server_method(), config);
         });
     }

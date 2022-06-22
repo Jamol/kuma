@@ -103,6 +103,7 @@ SRCS =  \
     ssl/BioHandler.cpp \
     ssl/SioHandler.cpp \
     ssl/OpenSslLib.cpp \
+    ssl/ssl_utils_linux.cpp \
     proxy/ProxyAuthenticator.cpp \
     proxy/BasicAuthenticator.cpp \
     proxy/ProxyConnectionImpl.cpp \

@@ -23,6 +23,7 @@
 
 #include "ssl_utils.h"
 
+#include <Windows.h>
 #include <Wincrypt.h>
 
 KUMA_NS_BEGIN
