@@ -25,6 +25,7 @@
 #include "libkev/src/util/kmtrace.h"
 #include "libkev/src/util/util.h"
 #include "SslHandler.h"
+#include "ssl_utils.h"
 
 #include <string>
 #include <thread>
@@ -42,8 +43,11 @@ struct CRYPTO_dynlock_value {
 #endif
 
 bool OpenSslLib::initialized_ = false;
-std::string OpenSslLib::certs_path_;
 std::uint32_t OpenSslLib::init_ref_ { 0 };
+
+std::string OpenSslLib::certs_path_;
+bool OpenSslLib::load_system_ca_store_{true};
+int OpenSslLib::server_verify_mode_{SSL_VERIFY_NONE};
 
 SSL_CTX* OpenSslLib::ssl_ctx_client_ = nullptr;
 std::once_flag OpenSslLib::once_flag_client_;
@@ -69,14 +73,14 @@ namespace {
     }
 }
 
-bool OpenSslLib::init(const std::string &cfg_path)
+bool OpenSslLib::init(const InitConfig &config)
 {
     std::lock_guard<std::mutex> g(getOpenSslMutex());
     if (initialized_) {
         ++init_ref_;
         return true;
     }
-    if (doInit(cfg_path)) {
+    if (doInit(config)) {
         initialized_ = true;
         ++init_ref_;
         return true;
@@ -84,16 +88,24 @@ bool OpenSslLib::init(const std::string &cfg_path)
     return false;
 }
 
-bool OpenSslLib::doInit(const std::string &cfg_path)
+void OpenSslLib::fini()
 {
-    certs_path_ = cfg_path;
-    if(certs_path_.empty()) {
-        certs_path_ = kev::getExecutablePath();
+    std::lock_guard<std::mutex> g(getOpenSslMutex());
+    if (--init_ref_ == 0) {
+        doFini();
+        initialized_ = false;
     }
+}
+
+bool OpenSslLib::doInit(const InitConfig &config)
+{
+    certs_path_ = config.cert_path && config.cert_path[0] != '\0' ?
+                  config.cert_path : kev::getExecutablePath();
     certs_path_ += "/cert";
-    if(certs_path_.at(certs_path_.length() - 1) != PATH_SEPARATOR) {
-        certs_path_ += PATH_SEPARATOR;
-    }
+    load_system_ca_store_ = config.load_system_ca_store;
+    server_verify_mode_ = config.verify_client ?
+                          SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT :
+                          SSL_VERIFY_NONE;
     
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
     if (OPENSSL_init_ssl(0, NULL) == 0) {
@@ -124,9 +136,8 @@ bool OpenSslLib::doInit(const std::string &cfg_path)
     }
     //OpenSSL_add_all_algorithms();
     SSL_load_error_strings();
-#endif
-    
     ERR_load_BIO_strings();
+#endif
     
     // PRNG
     RAND_poll();
@@ -136,15 +147,6 @@ bool OpenSslLib::doInit(const std::string &cfg_path)
     }
     ssl_index_ = SSL_get_ex_new_index(0, (void*)"SSL data index", NULL, NULL, NULL);
     return true;
-}
-
-void OpenSslLib::fini()
-{
-    std::lock_guard<std::mutex> g(getOpenSslMutex());
-    if (--init_ref_ == 0) {
-        doFini();
-        initialized_ = false;
-    }
 }
 
 void OpenSslLib::doFini()
@@ -167,7 +169,7 @@ void OpenSslLib::doFini()
 #endif
 }
 
-SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::string &caFile, const std::string &certFile, const std::string &keyFile, bool clientMode)
+SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const SslCtxConfig &config)
 {
     SSL_CTX *ssl_ctx = nullptr;
     bool ctx_ok = false;
@@ -196,7 +198,7 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
 #endif
         
 #if 1
-        if (clientMode) {
+        if (!config.is_server_mode) {
             const char* kDefaultCipherList =
             "ECDHE-ECDSA-AES256-GCM-SHA384:"
             "ECDHE-RSA-AES256-GCM-SHA384:"
@@ -214,16 +216,18 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
         }
 #endif
         
-        if(!certFile.empty() && !keyFile.empty()) {
+        if(!config.cert_file.empty() && !config.key_file.empty()) {
             //if(SSL_CTX_use_certificate_file(ssl_ctx, certFile.c_str(), SSL_FILETYPE_PEM) != 1) {
-            if(SSL_CTX_use_certificate_chain_file(ssl_ctx, certFile.c_str()) != 1) {
-                KM_WARNTRACE("SSL_CTX_use_certificate_chain_file failed, file="<<certFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
+            if(SSL_CTX_use_certificate_chain_file(ssl_ctx, config.cert_file.c_str()) != 1) {
+                KM_WARNTRACE("SSL_CTX_use_certificate_chain_file failed, file="<<config.cert_file
+                             <<", err="<<ERR_reason_error_string(ERR_get_error()));
                 break;
             }
             SSL_CTX_set_default_passwd_cb(ssl_ctx, passwdCallback);
             SSL_CTX_set_default_passwd_cb_userdata(ssl_ctx, ssl_ctx);
-            if(SSL_CTX_use_PrivateKey_file(ssl_ctx, keyFile.c_str(), SSL_FILETYPE_PEM) != 1) {
-                KM_WARNTRACE("SSL_CTX_use_PrivateKey_file failed, file="<<keyFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
+            if(SSL_CTX_use_PrivateKey_file(ssl_ctx, config.key_file.c_str(), SSL_FILETYPE_PEM) != 1) {
+                KM_WARNTRACE("SSL_CTX_use_PrivateKey_file failed, file="<<config.key_file
+                             <<", err="<<ERR_reason_error_string(ERR_get_error()));
                 break;
             }
             if(SSL_CTX_check_private_key(ssl_ctx) != 1) {
@@ -231,22 +235,58 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const std::strin
                 break;
             }
         }
-        
-        if (!caFile.empty()) {
-            if(SSL_CTX_load_verify_locations(ssl_ctx, caFile.c_str(), NULL) != 1) {
-                KM_WARNTRACE("SSL_CTX_load_verify_locations failed, file="<<caFile<<", err="<<ERR_reason_error_string(ERR_get_error()));
-                break;
-            }
-            if(SSL_CTX_set_default_verify_paths(ssl_ctx) != 1) {
-                KM_WARNTRACE("SSL_CTX_set_default_verify_paths failed, err="<<ERR_reason_error_string(ERR_get_error()));
-                break;
-            }
-            SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, verifyCallback);
-            //SSL_CTX_set_verify_depth(ssl_ctx, 4);
-            //app_verify_arg arg1;
-            //SSL_CTX_set_cert_verify_callback(ssl_ctx, appVerifyCallback, &arg1);
+
+        bool ca_ok = false;
+#if defined(OPENSSL_VERSION_MAJOR) && (OPENSSL_VERSION_MAJOR >= 3)
+        if(!config.ca_file.empty() && SSL_CTX_load_verify_file(ssl_ctx, config.ca_file.c_str())) {
+            ca_ok = true;
+        } else {
+            KM_WARNTRACE("SSL_CTX_load_verify_file failed, file=" << config.ca_file
+                         << ", err=" << ERR_reason_error_string(ERR_get_error()));
         }
-        if (!clientMode) {
+        if(!config.ca_path.empty() && SSL_CTX_load_verify_dir(ssl_ctx, config.ca_path.c_str())) {
+            ca_ok = true;
+        } else {
+            KM_WARNTRACE("SSL_CTX_load_verify_dir failed, path=" << config.ca_path
+                         << ", err=" << ERR_reason_error_string(ERR_get_error()));
+        }
+#else
+        if ((!config.ca_file.empty() || !config.ca_path.empty()) &&
+            SSL_CTX_load_verify_locations(ssl_ctx, config.ca_file.c_str(), config.ca_path.c_str())) {
+            ca_ok = true;
+        }
+        else {
+            KM_WARNTRACE("SSL_CTX_load_verify_locations failed, file=" << config.ca_file
+                         << ", err=" << ERR_reason_error_string(ERR_get_error()));
+        }
+#endif
+        if (config.load_system_ca_store) {
+            auto *x509_store = SSL_CTX_get_cert_store(ssl_ctx);
+            ca_ok = loadTrustedSystemCertificates(x509_store) || ca_ok;
+        }
+        if (!ca_ok && !SSL_CTX_set_default_verify_paths(ssl_ctx)) {
+            KM_WARNTRACE("SSL_CTX_set_default_verify_paths failed, err=" << ERR_reason_error_string(ERR_get_error()));
+            break;
+        }
+        
+        if (!config.crl_file.empty()) {
+            auto *x509_store = SSL_CTX_get_cert_store(ssl_ctx);
+            auto *x509_lookup = X509_STORE_add_lookup(x509_store, X509_LOOKUP_file());
+            if (x509_lookup && X509_load_crl_file(x509_lookup,
+                                                  config.crl_file.c_str(),
+                                                  X509_FILETYPE_PEM)) {
+                X509_STORE_set_flags(x509_store, X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL);
+            } else {
+                KM_WARNTRACE("X509_load_crl_file failed, file=" << config.crl_file
+                             << ", err=" << ERR_reason_error_string(ERR_get_error()));
+            }
+        }
+        
+        SSL_CTX_set_verify(ssl_ctx, config.verify_mode, verifyCallback);
+        //SSL_CTX_set_verify_depth(ssl_ctx, 4);
+        //app_verify_arg arg1;
+        //SSL_CTX_set_cert_verify_callback(ssl_ctx, appVerifyCallback, &arg1);
+        if (config.is_server_mode) {
 #if OPENSSL_VERSION_NUMBER >= 0x1000200fL && !defined(OPENSSL_NO_TLSEXT)
             SSL_CTX_set_alpn_select_cb(ssl_ctx, alpnCallback, (void*)&alpnProtos);
 #endif
@@ -270,10 +310,11 @@ SSL_CTX* OpenSslLib::defaultClientContext()
 {
     if (!ssl_ctx_client_) {
         std::call_once(once_flag_client_, []{
-            std::string certFile;// = certs_path + "cleint.pem";
-            std::string keyFile;// = certs_path + "client.key";
-            std::string caFile = certs_path_ + "ca.pem";
-            ssl_ctx_client_ = createSSLContext(SSLv23_client_method(), caFile, certFile, keyFile, true);
+            SslCtxConfig config;
+            config.load_system_ca_store = load_system_ca_store_;
+            config.ca_file = certs_path_ + "/ca.pem";
+            config.crl_file = certs_path_ + "/crl.pem";
+            ssl_ctx_client_ = createSSLContext(SSLv23_client_method(), config);
         });
     }
     return ssl_ctx_client_;
@@ -283,10 +324,19 @@ SSL_CTX* OpenSslLib::defaultServerContext()
 {
     if (!ssl_ctx_server_) {
         std::call_once(once_flag_server_, []{
-            std::string certFile = certs_path_ + "server.pem";
-            std::string keyFile = certs_path_ + "server.key";
-            std::string caFile;
-            ssl_ctx_server_ = createSSLContext(SSLv23_server_method(), caFile, certFile, keyFile, false);
+            SslCtxConfig config{
+                server_verify_mode_,
+                true,
+                false,
+                certs_path_ + "/server.pem",
+                certs_path_ + "/server.key"
+            };
+            if (server_verify_mode_ & SSL_VERIFY_PEER) {
+                config.ca_file = certs_path_ + "/ca.pem";
+                config.crl_file = certs_path_ + "/crl.pem";
+                config.load_system_ca_store = load_system_ca_store_;
+            }
+            ssl_ctx_server_ = createSSLContext(SSLv23_server_method(), config);
         });
     }
     return ssl_ctx_server_;
@@ -329,16 +379,16 @@ int OpenSslLib::verifyCallback(int ok, X509_STORE_CTX *ctx)
         auto handler = reinterpret_cast<SslHandler*>(ssl_data);
         ssl_flags = handler->getSslFlags();
     }
-    auto x509_current_cert = X509_STORE_CTX_get_current_cert(ctx);
     auto x509_err = X509_STORE_CTX_get_error(ctx);
-    if(x509_current_cert) {
-        char *s, buf[1024];
-        s = X509_NAME_oneline(X509_get_subject_name(x509_current_cert), buf, sizeof(buf));
+    auto x509_cert = X509_STORE_CTX_get_current_cert(ctx);
+    if(x509_cert) {
+        char *s, buf[512];
+        s = X509_NAME_oneline(X509_get_subject_name(x509_cert), buf, sizeof(buf));
         if(s != NULL) {
             auto x509_err_depth = X509_STORE_CTX_get_error_depth(ctx);
             if(ok) {
                 KM_INFOTRACE("verifyCallback ok, depth="<<x509_err_depth<<", subject="<<buf);
-                if(X509_NAME_oneline(X509_get_issuer_name(x509_current_cert), buf, sizeof(buf))) {
+                if(X509_NAME_oneline(X509_get_issuer_name(x509_cert), buf, sizeof(buf))) {
                     KM_INFOTRACE("verifyCallback, issuer="<<buf);
                 }
             } else {

@@ -24,9 +24,10 @@
 
 #ifdef KUMA_HAS_OPENSSL
 
-#include "kmdefs.h"
+#include "kmapi.h"
 
 #include <mutex>
+#include <string>
 #include <vector>
 #include <memory>
 
@@ -39,10 +40,22 @@ KUMA_NS_BEGIN
 
 using AlpnProtos = std::vector<uint8_t>;
 
+struct SslCtxConfig
+{
+    int verify_mode{SSL_VERIFY_PEER};
+    bool is_server_mode{false};
+    bool load_system_ca_store{true};
+    std::string cert_file;
+    std::string key_file;
+    std::string ca_file;
+    std::string ca_path;
+    std::string crl_file;
+};
+
 class OpenSslLib
 {
 public:
-    static bool init(const std::string &path);
+    static bool init(const InitConfig &config);
     static void fini();
     
     static int verifyCallback(int ok, X509_STORE_CTX *ctx);
@@ -75,15 +88,19 @@ public:
     static void* getSSLData(SSL* ssl);
     
 private:
-    static bool doInit(const std::string &path);
+    static bool doInit(const InitConfig &config);
     static void doFini();
-    static SSL_CTX* createSSLContext(const SSL_METHOD *method, const std::string &ca, const std::string &cert, const std::string &key, bool clientMode);
+    static SSL_CTX* createSSLContext(const SSL_METHOD *method, const SslCtxConfig &config);
     
 protected:
     using SSL_CTX_ptr = std::unique_ptr<SSL_CTX, decltype(&::SSL_CTX_free)>;
     static bool                 initialized_;
     static std::uint32_t        init_ref_;
+    
+    // ssl config
     static std::string          certs_path_;
+    static bool                 load_system_ca_store_;
+    static int                  server_verify_mode_;
     
     static SSL_CTX*             ssl_ctx_client_; // default client SSL context
     static std::once_flag       once_flag_client_;

@@ -16,6 +16,7 @@ x86/
 build/
 [Bb]in/
 [Oo]bj/
+[Oo]bjs/
 
 # Roslyn cache directories
 *.ide/
@@ -198,9 +199,13 @@ xcuserdata
 xcshareddata
 obj
 
+# python
+*.pyc
+__pycache__/
 
 # VSCode
 .vscode/
 
-out
-lib
+out/
+lib/
+libs/

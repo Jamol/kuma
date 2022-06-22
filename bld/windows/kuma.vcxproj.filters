@@ -279,6 +279,9 @@
     <ClCompile Include="..\..\third_party\HPacker\src\HPackTable.cpp">
       <Filter>Source Files\http\v2\hpack</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\ssl\ssl_utils_windows.cpp">
+      <Filter>Source Files\ssl</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\EventLoopImpl.h">
@@ -487,6 +490,9 @@
     </ClInclude>
     <ClInclude Include="..\..\include\kmtypes.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ssl\ssl_utils.h">
+      <Filter>Header Files\ssl</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

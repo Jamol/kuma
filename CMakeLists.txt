@@ -20,6 +20,7 @@ endif()
 include_directories(${PROJ_ROOT_DIR}/include)
 include_directories(${PROJ_ROOT_DIR}/src)
 include_directories(${PROJ_ROOT_DIR}/third_party)
+include_directories(${PROJ_ROOT_DIR}/third_party/openssl/include)
 
 file(GLOB SOURCE_FILES
   ${PROJ_ROOT_DIR}/src/*.cpp
@@ -28,11 +29,13 @@ file(GLOB SOURCE_FILES
   ${PROJ_ROOT_DIR}/src/http/v2/*.cpp
   ${PROJ_ROOT_DIR}/src/ws/*.cpp
   ${PROJ_ROOT_DIR}/src/ws/exts/*.cpp
-  ${PROJ_ROOT_DIR}/src/ssl/*.cpp
   ${PROJ_ROOT_DIR}/src/compr/*.cpp
   ${PROJ_ROOT_DIR}/src/proxy/BasicAuthenticator.cpp
   ${PROJ_ROOT_DIR}/src/proxy/ProxyAuthenticator.cpp
   ${PROJ_ROOT_DIR}/src/proxy/ProxyConnectionImpl.cpp)
+
+file(GLOB SSL_FILES
+  ${PROJ_ROOT_DIR}/src/ssl/*.cpp)
 
 file(GLOB ZLIB_FILES 
     ${PROJ_ROOT_DIR}/third_party/zlib/adler32.c 
@@ -58,23 +61,33 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
         ${PROJ_ROOT_DIR}/src/iocp/*.cpp
         ${PROJ_ROOT_DIR}/src/proxy/SspiAuthenticator.cpp)
     
-    set(SOURCE_FILES ${SOURCE_FILES} ${WINDOWS_SOURCES})
+    list(FILTER SSL_FILES EXCLUDE REGEX ".*_darwin\\.cpp$")
+    list(FILTER SSL_FILES EXCLUDE REGEX ".*_linux\\.cpp$")
+
+    set(SOURCE_FILES ${SOURCE_FILES} ${WINDOWS_SOURCES} ${SSL_FILES})
 elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
     include_directories(${PROJ_ROOT_DIR}/third_party/openssl/include)
     set(CMAKE_MACOSX_RPATH 1)
     file(GLOB DARWIN_SOURCES 
         ${PROJ_ROOT_DIR}/src/proxy/GssapiAuthenticator.cpp)
     
-    set(SOURCE_FILES ${SOURCE_FILES} ${DARWIN_SOURCES})
+    list(FILTER SSL_FILES EXCLUDE REGEX ".*_windows\\.cpp$")
+    list(FILTER SSL_FILES EXCLUDE REGEX ".*_linux\\.cpp$")
+
+    set(SOURCE_FILES ${SOURCE_FILES} ${DARWIN_SOURCES} ${SSL_FILES})
     if (CMAKE_TARGET_SYSTEM STREQUAL "ios")
     elseif (CMAKE_TARGET_SYSTEM STREQUAL "mac")
     endif ()
 elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     include_directories(/usr/include)
-    set(SOURCE_FILES ${SOURCE_FILES} ${LINUX_SOURCES})
+    list(FILTER SSL_FILES EXCLUDE REGEX ".*_darwin\\.cpp$")
+    list(FILTER SSL_FILES EXCLUDE REGEX ".*_windows\\.cpp$")
+    set(SOURCE_FILES ${SOURCE_FILES} ${LINUX_SOURCES} ${SSL_FILES})
 elseif (CMAKE_SYSTEM_NAME MATCHES "Android")
     include_directories(${PROJ_ROOT_DIR}/third_party/openssl/include)
-    set(SOURCE_FILES ${SOURCE_FILES} ${ANDROID_SOURCES})
+    list(FILTER SSL_FILES EXCLUDE REGEX ".*_darwin\\.cpp$")
+    list(FILTER SSL_FILES EXCLUDE REGEX ".*_windows\\.cpp$")
+    set(SOURCE_FILES ${SOURCE_FILES} ${ANDROID_SOURCES} ${SSL_FILES})
 endif ()
 
 add_definitions(-DKUMA_HAS_OPENSSL)
@@ -204,6 +217,8 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
     elseif (CMAKE_TARGET_SYSTEM STREQUAL "mac")
         set(LIBRARY_OUTPUT_PATH "${PROJ_ROOT_DIR}/bin/mac/${CMAKE_BUILD_TYPE}")
         target_link_libraries(kuma kev crypto.1.1 ssl.1.1 "-framework GSS")
+        target_link_libraries(kuma "-framework CoreFoundation")
+        target_link_libraries(kuma "-framework Security")
     endif ()
 elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(LIBRARY_OUTPUT_PATH "${PROJ_ROOT_DIR}/bin/linux/${CMAKE_BUILD_TYPE}")

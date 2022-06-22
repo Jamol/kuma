@@ -3,9 +3,6 @@
 from __future__ import print_function
 import sys
 import os
-import shutil
-import subprocess
-
 
 def run_and_check_error(command):
     if os.system(command) != 0:
@@ -25,6 +22,7 @@ def build_one_arch(arch, workingPath):
                    '-DCMAKE_ANDROID_STL_TYPE=c++_static',
                    '-DCMAKE_ANDROID_NDK=${ANDROID_NDK_HOME}',
                    '-DCMAKE_BUILD_TYPE=Release', #Debug support?
+                   '-DCMAKE_CXX_STANDARD=14',
                    '-DCMAKE_ANDROID_NDK_TOOLCHAIN_VERSION=clang']
     run_and_check_error('cmake ../../../.. ' + ' '.join(cmakeConfig))
     run_and_check_error('make')

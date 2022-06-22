@@ -710,8 +710,13 @@ private:
     Impl* pimpl_;
 };
 
-
-KUMA_API void init(const char *path = nullptr);
+struct InitConfig
+{
+    const char* cert_path{nullptr};
+    bool load_system_ca_store{true};
+    bool verify_client{false}; // server will verify client cert
+};
+KUMA_API void init(const InitConfig *config = nullptr);
 KUMA_API void fini();
 
 // msg is null-terminated and msg_len doesn't include '\0'

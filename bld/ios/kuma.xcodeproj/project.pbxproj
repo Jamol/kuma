@@ -73,6 +73,7 @@
 		6FECED1E1C2139CA00310F52 /* util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECED1A1C2139CA00310F52 /* util.cpp */; };
 		6FECED231C2139D600310F52 /* WebSocketImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECED1F1C2139D600310F52 /* WebSocketImpl.cpp */; };
 		6FECED241C2139D600310F52 /* WSHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECED211C2139D600310F52 /* WSHandler.cpp */; };
+		AF37A9AB285E24C3008583D2 /* ssl_utils_darwin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF37A9A9285E24C3008583D2 /* ssl_utils_darwin.cpp */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -233,6 +234,8 @@
 		6FECED201C2139D600310F52 /* WebSocketImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebSocketImpl.h; sourceTree = "<group>"; };
 		6FECED211C2139D600310F52 /* WSHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WSHandler.cpp; sourceTree = "<group>"; };
 		6FECED221C2139D600310F52 /* WSHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WSHandler.h; sourceTree = "<group>"; };
+		AF37A9A9285E24C3008583D2 /* ssl_utils_darwin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ssl_utils_darwin.cpp; sourceTree = "<group>"; };
+		AF37A9AA285E24C3008583D2 /* ssl_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ssl_utils.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -513,10 +516,12 @@
 			children = (
 				6F2733191EC75579006E221E /* BioHandler.cpp */,
 				6F27331A1EC75579006E221E /* BioHandler.h */,
-				6F27331B1EC75579006E221E /* SioHandler.cpp */,
-				6F27331C1EC75579006E221E /* SioHandler.h */,
 				6FECED0F1C2139B100310F52 /* OpenSslLib.cpp */,
 				6FECED101C2139B100310F52 /* OpenSslLib.h */,
+				6F27331B1EC75579006E221E /* SioHandler.cpp */,
+				6F27331C1EC75579006E221E /* SioHandler.h */,
+				AF37A9A9285E24C3008583D2 /* ssl_utils_darwin.cpp */,
+				AF37A9AA285E24C3008583D2 /* ssl_utils.h */,
 				6F2733261EC88875006E221E /* SslHandler.cpp */,
 				6FECED121C2139B100310F52 /* SslHandler.h */,
 			);
@@ -670,6 +675,7 @@
 				6FD7D0B42244DE460005DDFF /* WSConnection.cpp in Sources */,
 				6FECED241C2139D600310F52 /* WSHandler.cpp in Sources */,
 				6F7FC6831F4D82400038360B /* HttpCache.cpp in Sources */,
+				AF37A9AB285E24C3008583D2 /* ssl_utils_darwin.cpp in Sources */,
 				6F8906F922630D06004D0DE9 /* H1xStream.cpp in Sources */,
 				6F7034662249FEB700556EBE /* H2Handshake.cpp in Sources */,
 				6FECED1E1C2139CA00310F52 /* util.cpp in Sources */,
@@ -784,6 +790,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "kuma-Prefix.pch";
 				HEADER_SEARCH_PATHS = ../../third_party/openssl/include;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				OBJROOT = ../../objs/ios;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -800,6 +807,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "kuma-Prefix.pch";
 				HEADER_SEARCH_PATHS = ../../third_party/openssl/include;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				OBJROOT = ../../objs/ios;
 				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_NAME = "$(TARGET_NAME)";

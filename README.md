@@ -26,6 +26,10 @@ git submodule update --init
 ```
 define macro KUMA_HAS_OPENSSL to enable openssl
 ```
+build dependency libkev firstly
+```
+python ./third_party/libkev/bld/your_os/build_your_os.py
+```
 
 ### iOS
 ```

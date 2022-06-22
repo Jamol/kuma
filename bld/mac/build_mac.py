@@ -3,8 +3,6 @@
 from __future__ import print_function
 import sys
 import os
-import shutil
-import subprocess
 
 def get_sdkversion():
     output = os.popen('xcrun -sdk macosx --show-sdk-version')
@@ -35,17 +33,18 @@ def build_one_arch(workingPath, buildtype, arch, xcodePath):
     os.environ['DEVROOT'] = xcodePath + '/Platforms/MacOSX.platform/Developer'
     os.environ['SDKROOT'] = os.environ['DEVROOT'] + '/SDKs/MacOSX' + '.sdk'
     os.environ['BUILD_TOOLS'] = xcodePath
+    buildArchs = 'x86_64;arm64' if (arch == 'all') else arch
     cmakeConfig = ['-DCMAKE_BUILD_TYPE='+buildtype,
                    '-DCMAKE_OSX_SYSROOT=$SDKROOT',
                    '-DCMAKE_SYSROOT=$SDKROOT',
-                   '-DCMAKE_OSX_ARCHITECTURES='+arch,
+                   '-DCMAKE_OSX_ARCHITECTURES=\"' + buildArchs +'\"',
                    '-DCMAKE_TARGET_SYSTEM=mac']
     run_and_check_error('cmake ../../../../.. ' + ' '.join(cmakeConfig))
     run_and_check_error('make')
 
 def build_mac(workingPath):
     xcodePath = get_xcode_root()
-    arch = 'x86_64'
+    arch = 'all'
     build_one_arch(workingPath, 'Debug', arch, xcodePath)
     
     build_one_arch(workingPath, 'Release', arch, xcodePath)
