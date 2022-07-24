@@ -21,8 +21,8 @@
 
 
 #include "WSConnection_v1.h"
-#include "libkev/src/util/kmtrace.h"
-#include "util/base64.h"
+#include "libkev/src/utils/kmtrace.h"
+#include "utils/base64.h"
 #include "exts/ExtensionHandler.h"
 
 using namespace kuma;

@@ -22,8 +22,8 @@
 #include "HttpResponseImpl.h"
 #include "EventLoopImpl.h"
 #include "httputils.h"
-#include "libkev/src/util/kmtrace.h"
-#include "libkev/src/util/util.h"
+#include "libkev/src/utils/kmtrace.h"
+#include "libkev/src/utils/utils.h"
 #include "compr/compr_zlib.h"
 
 #include <iterator>

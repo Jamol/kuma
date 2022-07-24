@@ -25,7 +25,7 @@
 #include "EventLoopImpl.h"
 #include "http/v2/H2ConnectionImpl.h"
 #include "http/Uri.h"
-#include "libkev/src/util/DestroyDetector.h"
+#include "libkev/src/utils/DestroyDetector.h"
 
 KUMA_NS_BEGIN
 class H2StreamProxy;

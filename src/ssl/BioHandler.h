@@ -25,7 +25,7 @@
 #ifdef KUMA_HAS_OPENSSL
 
 #include "SslHandler.h"
-#include "util/skbuffer.h"
+#include "utils/skbuffer.h"
 
 #ifdef KUMA_OS_WIN
 namespace kev {

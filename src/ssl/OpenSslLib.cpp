@@ -22,8 +22,8 @@
 #ifdef KUMA_HAS_OPENSSL
 
 #include "OpenSslLib.h"
-#include "libkev/src/util/kmtrace.h"
-#include "libkev/src/util/util.h"
+#include "libkev/src/utils/kmtrace.h"
+#include "libkev/src/utils/utils.h"
 #include "SslHandler.h"
 #include "ssl_utils.h"
 

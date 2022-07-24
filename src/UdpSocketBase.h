@@ -24,8 +24,8 @@
 
 #include "kmdefs.h"
 #include "kmapi.h"
-#include "libkev/src/util/kmobject.h"
-#include "libkev/src/util/DestroyDetector.h"
+#include "libkev/src/utils/kmobject.h"
+#include "libkev/src/utils/DestroyDetector.h"
 #include "EventLoopImpl.h"
 #include <stdint.h>
 #ifdef KUMA_OS_WIN

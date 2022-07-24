@@ -78,7 +78,7 @@ Please refer to [test](https://github.com/Jamol/kuma/tree/master/test) for more 
 ### client
 ```
 #include "kmapi.h"
-#include "libkev/src/util/defer.h"
+#include "libkev/src/utils/defer.h"
 
 using namespace kuma;
 
@@ -150,7 +150,7 @@ int main(int argc, char *argv[])
 ### server
 ```
 #include "kmapi.h"
-#include "libkev/src/util/defer.h"
+#include "libkev/src/utils/defer.h"
 
 using namespace kuma;
 

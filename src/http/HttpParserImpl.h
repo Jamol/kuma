@@ -25,8 +25,8 @@
 #include "kmdefs.h"
 #include "kmapi.h"
 #include "httpdefs.h"
-#include "libkev/src/util/util.h"
-#include "libkev/src/util/DestroyDetector.h"
+#include "libkev/src/utils/utils.h"
+#include "libkev/src/utils/DestroyDetector.h"
 #include "HttpHeader.h"
 
 #include <string>

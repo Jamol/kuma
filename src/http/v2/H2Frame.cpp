@@ -20,7 +20,7 @@
  */
 
 #include "H2Frame.h"
-#include "util/util.h"
+#include "utils/utils.h"
 
 using namespace kuma;
 

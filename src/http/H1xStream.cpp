@@ -20,7 +20,7 @@
  */
 
 #include "H1xStream.h"
-#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/utils/kmtrace.h"
 
 
 using namespace kuma;

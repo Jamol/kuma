@@ -26,7 +26,7 @@
 #include "httpdefs.h"
 #include "TcpConnection.h"
 #include "Uri.h"
-#include "libkev/src/util/DestroyDetector.h"
+#include "libkev/src/utils/DestroyDetector.h"
 #include "HttpResponseImpl.h"
 #include "H1xStream.h"
 #include "EventLoopImpl.h"

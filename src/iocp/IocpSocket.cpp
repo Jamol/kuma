@@ -20,8 +20,8 @@
 */
 
 #include "IocpSocket.h"
-#include "libkev/src/util/kmtrace.h"
-#include "libkev/src/util/skutils.h"
+#include "libkev/src/utils/kmtrace.h"
+#include "libkev/src/utils/skutils.h"
 
 #include <MSWSock.h>
 #include <Ws2tcpip.h>

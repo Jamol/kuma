@@ -24,7 +24,7 @@
 
 #include "wsdefs.h"
 #include "http/HttpParserImpl.h"
-#include "libkev/src/util/DestroyDetector.h"
+#include "libkev/src/utils/DestroyDetector.h"
 #include <vector>
 
 WS_NS_BEGIN

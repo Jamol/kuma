@@ -23,7 +23,7 @@
 
 #include "kmdefs.h"
 #include "ProxyAuthenticator.h"
-#include "libkev/src/util/kmobject.h"
+#include "libkev/src/utils/kmobject.h"
 
 #include <string>
 

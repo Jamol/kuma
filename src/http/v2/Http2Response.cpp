@@ -21,7 +21,7 @@
 
 #include "Http2Response.h"
 #include "H2StreamProxy.h"
-#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/utils/kmtrace.h"
 
 #include <string>
 

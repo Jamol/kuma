@@ -62,9 +62,9 @@
 
 #include "EventLoopImpl.h"
 #include "UdpSocketBase.h"
-#include "libkev/src/util/util.h"
-#include "libkev/src/util/kmtrace.h"
-#include "libkev/src/util/skutils.h"
+#include "libkev/src/utils/utils.h"
+#include "libkev/src/utils/kmtrace.h"
+#include "libkev/src/utils/skutils.h"
 #include "DnsResolver.h"
 
 #ifdef KUMA_OS_MAC

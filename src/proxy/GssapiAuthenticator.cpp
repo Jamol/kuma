@@ -20,9 +20,9 @@
 */
 
 #include "GssapiAuthenticator.h"
-#include "libkev/src/util/util.h"
-#include "libkev/src/util/kmtrace.h"
-#include "util/base64.h"
+#include "libkev/src/utils/utils.h"
+#include "libkev/src/utils/kmtrace.h"
+#include "utils/base64.h"
 
 
 using namespace kuma;

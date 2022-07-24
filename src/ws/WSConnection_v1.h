@@ -25,7 +25,7 @@
 #include "TcpConnection.h"
 #include "http/HttpParserImpl.h"
 #include "http/H1xStream.h"
-#include "libkev/src/util/DestroyDetector.h"
+#include "libkev/src/utils/DestroyDetector.h"
 #include "kmbuffer.h"
 
 WS_NS_BEGIN

@@ -20,7 +20,7 @@
  */
 
 #include "WSExtension.h"
-#include "libkev/src/util/util.h"
+#include "libkev/src/utils/utils.h"
 
 using namespace kuma;
 using namespace kuma::ws;

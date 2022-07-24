@@ -25,9 +25,6 @@
     <Filter Include="Source Files\ws">
       <UniqueIdentifier>{390b57f8-8452-430e-946a-c3c9274a01bf}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\util">
-      <UniqueIdentifier>{681ba974-a1b3-475b-b186-265aa73590d8}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Source Files\http\v2">
       <UniqueIdentifier>{39508951-0bf2-4dc5-b8f8-2615ea6b505c}</UniqueIdentifier>
     </Filter>
@@ -70,6 +67,9 @@
     <Filter Include="Source Files\proxy">
       <UniqueIdentifier>{e7c39218-61b1-4f94-ac78-40d5b64f7a47}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\utils">
+      <UniqueIdentifier>{681ba974-a1b3-475b-b186-265aa73590d8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\kmapi.cpp">
@@ -101,12 +101,6 @@
     </ClCompile>
     <ClCompile Include="..\..\src\ws\WebSocketImpl.cpp">
       <Filter>Source Files\ws</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\util\base64.cpp">
-      <Filter>Source Files\util</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\util\util.cpp">
-      <Filter>Source Files\util</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\TcpListenerImpl.cpp">
       <Filter>Source Files</Filter>
@@ -281,6 +275,12 @@
     </ClCompile>
     <ClCompile Include="..\..\src\ssl\ssl_utils_windows.cpp">
       <Filter>Source Files\ssl</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\utils\base64.cpp">
+      <Filter>Source Files\utils</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\utils\utils.cpp">
+      <Filter>Source Files\utils</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

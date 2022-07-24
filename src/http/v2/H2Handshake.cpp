@@ -21,8 +21,8 @@
 
 #include "H2Handshake.h"
 #include "H2Frame.h"
-#include "util/base64.h"
-#include "libkev/src/util/kmtrace.h"
+#include "utils/base64.h"
+#include "libkev/src/utils/kmtrace.h"
 
 #include <algorithm>
 

@@ -20,10 +20,10 @@
 */
 
 #include "SocketBase.h"
-#include "libkev/src/util/util.h"
-#include "libkev/src/util/kmtrace.h"
-#include "libkev/src/util/skutils.h"
-#include "util/util.h"
+#include "libkev/src/utils/utils.h"
+#include "libkev/src/utils/kmtrace.h"
+#include "libkev/src/utils/skutils.h"
+#include "utils/utils.h"
 
 #if defined(KUMA_OS_WIN)
 # include <Ws2tcpip.h>

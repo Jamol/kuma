@@ -25,8 +25,8 @@
 #include "kmdefs.h"
 #include "EventLoopImpl.h"
 #include "DnsResolver.h"
-#include "libkev/src/util/kmobject.h"
-#include "libkev/src/util/DestroyDetector.h"
+#include "libkev/src/utils/kmobject.h"
+#include "libkev/src/utils/DestroyDetector.h"
 KUMA_NS_BEGIN
 
 class SocketBase : public kev::KMObject, public kev::DestroyDetector

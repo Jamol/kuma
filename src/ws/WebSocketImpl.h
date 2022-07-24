@@ -28,7 +28,7 @@
 #include "WSConnection.h"
 #include "EventLoopImpl.h"
 #include "http/Uri.h"
-#include "libkev/src/util/DestroyDetector.h"
+#include "libkev/src/utils/DestroyDetector.h"
 
 #include <random>
 

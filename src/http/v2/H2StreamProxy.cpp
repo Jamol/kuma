@@ -21,8 +21,8 @@
 
 #include "H2StreamProxy.h"
 #include "H2ConnectionMgr.h"
-#include "libkev/src/util/kmtrace.h"
-#include "libkev/src/util/util.h"
+#include "libkev/src/utils/kmtrace.h"
+#include "libkev/src/utils/utils.h"
 #include "h2utils.h"
 
 #include <string>

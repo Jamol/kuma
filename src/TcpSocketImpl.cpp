@@ -65,15 +65,15 @@
 
 #include "EventLoopImpl.h"
 #include "TcpSocketImpl.h"
-#include "libkev/src/util/util.h"
-#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/utils/utils.h"
+#include "libkev/src/utils/kmtrace.h"
 #include "SocketBase.h"
 #ifdef KUMA_OS_WIN
 # include "iocp/IocpSocket.h"
 #endif
 #include "ssl/BioHandler.h"
 #include "ssl/SioHandler.h"
-#include "util/util.h"
+#include "utils/utils.h"
 
 using namespace kuma;
 

@@ -20,7 +20,7 @@
  */
 
 #include "H2ConnectionImpl.h"
-#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/utils/kmtrace.h"
 #include "H2ConnectionMgr.h"
 #include "H2Handshake.h"
 #include "PushClient.h"

@@ -97,8 +97,8 @@ SRCS =  \
     ws/exts/PMCE_Deflate.cpp \
     ws/exts/PMCE_Base.cpp \
     ws/exts/WSExtension.cpp \
-    util/util.cpp \
-    util/base64.cpp \
+    utils/utils.cpp \
+    utils/base64.cpp \
     ssl/SslHandler.cpp \
     ssl/BioHandler.cpp \
     ssl/SioHandler.cpp \

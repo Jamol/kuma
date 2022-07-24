@@ -22,7 +22,7 @@
 #ifdef KUMA_HAS_OPENSSL
 
 #include "SslHandler.h"
-#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/utils/kmtrace.h"
 
 #include <openssl/x509v3.h>
 

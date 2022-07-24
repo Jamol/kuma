@@ -62,8 +62,8 @@
 
 #include "EventLoopImpl.h"
 #include "IocpUdpSocket.h"
-#include "libkev/src/util/util.h"
-#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/utils/utils.h"
+#include "libkev/src/utils/kmtrace.h"
 
 using namespace kuma;
 

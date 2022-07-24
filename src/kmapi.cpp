@@ -33,9 +33,9 @@
 #include "http/v2/Http2Request.h"
 #include "http/v2/Http2Response.h"
 #include "proxy/ProxyConnectionImpl.h"
-#include "libkev/src/util/kmtrace.h"
-#include "util/ImplHelper.h"
-#include "util/util.h"
+#include "libkev/src/utils/kmtrace.h"
+#include "utils/ImplHelper.h"
+#include "utils/utils.h"
 
 #ifdef KUMA_HAS_OPENSSL
 #include "ssl/OpenSslLib.h"

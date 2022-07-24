@@ -22,7 +22,7 @@
 
 #include "WSConnection_v2.h"
 #include "http/v2/H2StreamProxy.h"
-#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/utils/kmtrace.h"
 
 using namespace kuma;
 using namespace kuma::ws;

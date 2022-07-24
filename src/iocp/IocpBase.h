@@ -17,8 +17,8 @@
 #define __IocpBase_H__
 
 #include "kmdefs.h"
-#include "libkev/src/util/kmtrace.h"
-#include "libkev/src/util/skutils.h"
+#include "libkev/src/utils/kmtrace.h"
+#include "libkev/src/utils/skutils.h"
 #include "EventLoopImpl.h"
 #include "Iocp.h"
 

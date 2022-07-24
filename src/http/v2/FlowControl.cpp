@@ -20,7 +20,7 @@
  */
 
 #include "FlowControl.h"
-#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/utils/kmtrace.h"
 
 using namespace kuma;
 

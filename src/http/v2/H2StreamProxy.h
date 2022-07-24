@@ -25,9 +25,9 @@
 #include "H2ConnectionImpl.h"
 #include "http/HttpHeader.h"
 #include "http/Uri.h"
-#include "libkev/src/util/kmobject.h"
-#include "libkev/src/util/DestroyDetector.h"
-#include "libkev/src/util/kmqueue.h"
+#include "libkev/src/utils/kmobject.h"
+#include "libkev/src/utils/DestroyDetector.h"
+#include "libkev/src/utils/kmqueue.h"
 #include "proxy/proxydefs.h"
 
 KUMA_NS_BEGIN

@@ -21,7 +21,7 @@
 
 #include "H2Stream.h"
 #include "H2ConnectionImpl.h"
-#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/utils/kmtrace.h"
 
 #include <algorithm>
 

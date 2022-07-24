@@ -2,7 +2,7 @@
 
 #include "kmapi.h"
 #include "RunLoop.h"
-#include "libkev/src/util/DestroyDetector.h"
+#include "libkev/src/utils/DestroyDetector.h"
 
 #include <functional>
 

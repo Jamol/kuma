@@ -17,10 +17,10 @@
 #define __IOCP_H__
 
 #include "kmdefs.h"
-#include "libkev/src/util/util.h"
-#include "libkev/src/util/kmtrace.h"
-#include "util/skbuffer.h"
-#include "libkev/src/util/skutils.h"
+#include "libkev/src/utils/utils.h"
+#include "libkev/src/utils/kmtrace.h"
+#include "utils/skbuffer.h"
+#include "libkev/src/utils/skutils.h"
 #include "EventLoopImpl.h"
 
 #include <MSWSock.h>

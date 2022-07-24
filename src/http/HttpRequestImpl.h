@@ -26,7 +26,7 @@
 #include "kmapi.h"
 #include "httpdefs.h"
 #include "Uri.h"
-#include "libkev/src/util/kmobject.h"
+#include "libkev/src/utils/kmobject.h"
 #include "HttpParserImpl.h"
 #include "compr/compr.h"
 #include "proxy/proxydefs.h"

@@ -1,6 +1,6 @@
 #include "kmapi.h"
 #include "LoopPool.h"
-#include "../../third_party/libkev/src/util/defer.h"
+#include "../../third_party/libkev/src/utils/defer.h"
 
 #include <stdio.h>
 #include <stdlib.h>

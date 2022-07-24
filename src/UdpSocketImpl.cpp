@@ -62,8 +62,8 @@
 
 #include "EventLoopImpl.h"
 #include "UdpSocketImpl.h"
-#include "libkev/src/util/util.h"
-#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/utils/utils.h"
+#include "libkev/src/utils/kmtrace.h"
 #ifdef KUMA_OS_WIN
 # include "iocp/IocpUdpSocket.h"
 #endif

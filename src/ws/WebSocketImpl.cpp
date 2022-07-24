@@ -20,8 +20,8 @@
  */
 
 #include "WebSocketImpl.h"
-#include "libkev/src/util/kmtrace.h"
-#include "libkev/src/util/util.h"
+#include "libkev/src/utils/kmtrace.h"
+#include "libkev/src/utils/utils.h"
 #include "exts/ExtensionHandler.h"
 #include "WSConnection_v1.h"
 #include "WSConnection_v2.h"

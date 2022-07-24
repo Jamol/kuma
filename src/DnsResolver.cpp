@@ -20,8 +20,8 @@
  */
 
 #include "DnsResolver.h"
-#include "libkev/src/util/util.h"
-#include "libkev/src/util/kmtrace.h"
+#include "libkev/src/utils/utils.h"
+#include "libkev/src/utils/kmtrace.h"
 
 #if defined(KUMA_OS_WIN)
 # include <Ws2tcpip.h>

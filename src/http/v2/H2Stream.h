@@ -24,7 +24,7 @@
 
 #include "kmdefs.h"
 #include "kmapi.h"
-#include "libkev/src/util/kmobject.h"
+#include "libkev/src/utils/kmobject.h"
 #include <memory>
 
 #include "h2defs.h"

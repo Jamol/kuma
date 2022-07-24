@@ -218,8 +218,8 @@
     <ClCompile Include="..\..\src\TcpSocketImpl.cpp" />
     <ClCompile Include="..\..\src\UdpSocketBase.cpp" />
     <ClCompile Include="..\..\src\UdpSocketImpl.cpp" />
-    <ClCompile Include="..\..\src\util\base64.cpp" />
-    <ClCompile Include="..\..\src\util\util.cpp" />
+    <ClCompile Include="..\..\src\utils\base64.cpp" />
+    <ClCompile Include="..\..\src\utils\utils.cpp" />
     <ClCompile Include="..\..\src\ws\exts\ExtensionHandler.cpp" />
     <ClCompile Include="..\..\src\ws\exts\PMCE_Base.cpp" />
     <ClCompile Include="..\..\src\ws\exts\PMCE_Deflate.cpp" />

@@ -28,8 +28,8 @@
 #include "http/HttpMessage.h"
 #include "http/HttpParserImpl.h"
 #include "http/Uri.h"
-#include "libkev/src/util/kmobject.h"
-#include "libkev/src/util/DestroyDetector.h"
+#include "libkev/src/utils/kmobject.h"
+#include "libkev/src/utils/DestroyDetector.h"
 #include "proxy/ProxyConnectionImpl.h"
 
 KUMA_NS_BEGIN

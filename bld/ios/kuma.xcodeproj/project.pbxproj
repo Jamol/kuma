@@ -70,7 +70,7 @@
 		6FECED041C2138E700310F52 /* Uri.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECECFF1C2138E700310F52 /* Uri.cpp */; };
 		6FECED131C2139B100310F52 /* OpenSslLib.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECED0F1C2139B100310F52 /* OpenSslLib.cpp */; };
 		6FECED1C1C2139CA00310F52 /* base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECED151C2139CA00310F52 /* base64.cpp */; };
-		6FECED1E1C2139CA00310F52 /* util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECED1A1C2139CA00310F52 /* util.cpp */; };
+		6FECED1E1C2139CA00310F52 /* utils.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECED1A1C2139CA00310F52 /* utils.cpp */; };
 		6FECED231C2139D600310F52 /* WebSocketImpl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECED1F1C2139D600310F52 /* WebSocketImpl.cpp */; };
 		6FECED241C2139D600310F52 /* WSHandler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6FECED211C2139D600310F52 /* WSHandler.cpp */; };
 		AF37A9AB285E24C3008583D2 /* ssl_utils_darwin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = AF37A9A9285E24C3008583D2 /* ssl_utils_darwin.cpp */; };
@@ -228,14 +228,15 @@
 		6FECED121C2139B100310F52 /* SslHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SslHandler.h; sourceTree = "<group>"; };
 		6FECED151C2139CA00310F52 /* base64.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = base64.cpp; sourceTree = "<group>"; };
 		6FECED161C2139CA00310F52 /* base64.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = base64.h; sourceTree = "<group>"; };
-		6FECED1A1C2139CA00310F52 /* util.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = util.cpp; sourceTree = "<group>"; };
-		6FECED1B1C2139CA00310F52 /* util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = util.h; sourceTree = "<group>"; };
+		6FECED1A1C2139CA00310F52 /* utils.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = utils.cpp; sourceTree = "<group>"; };
+		6FECED1B1C2139CA00310F52 /* utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = utils.h; sourceTree = "<group>"; };
 		6FECED1F1C2139D600310F52 /* WebSocketImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WebSocketImpl.cpp; sourceTree = "<group>"; };
 		6FECED201C2139D600310F52 /* WebSocketImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebSocketImpl.h; sourceTree = "<group>"; };
 		6FECED211C2139D600310F52 /* WSHandler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WSHandler.cpp; sourceTree = "<group>"; };
 		6FECED221C2139D600310F52 /* WSHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WSHandler.h; sourceTree = "<group>"; };
 		AF37A9A9285E24C3008583D2 /* ssl_utils_darwin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ssl_utils_darwin.cpp; sourceTree = "<group>"; };
 		AF37A9AA285E24C3008583D2 /* ssl_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ssl_utils.h; sourceTree = "<group>"; };
+		AF37A9CA288D29A3008583D2 /* skbuffer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = skbuffer.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -313,7 +314,7 @@
 				6FD7C54C221965830005DDFF /* compr */,
 				6FECECF81C21383900310F52 /* http */,
 				6FECED071C21395C00310F52 /* ssl */,
-				6FECED061C21394700310F52 /* util */,
+				6FECED061C21394700310F52 /* utils */,
 				6FECED051C21392600310F52 /* ws */,
 				6FD7C46022129B300005DDFF /* zlib */,
 				6F7D5FF11B33ED97000FF2F8 /* kuma-Prefix.pch */,
@@ -499,16 +500,17 @@
 			path = ../../src/ws;
 			sourceTree = "<group>";
 		};
-		6FECED061C21394700310F52 /* util */ = {
+		6FECED061C21394700310F52 /* utils */ = {
 			isa = PBXGroup;
 			children = (
 				6FECED151C2139CA00310F52 /* base64.cpp */,
 				6FECED161C2139CA00310F52 /* base64.h */,
-				6FECED1A1C2139CA00310F52 /* util.cpp */,
-				6FECED1B1C2139CA00310F52 /* util.h */,
+				AF37A9CA288D29A3008583D2 /* skbuffer.h */,
+				6FECED1A1C2139CA00310F52 /* utils.cpp */,
+				6FECED1B1C2139CA00310F52 /* utils.h */,
 			);
-			name = util;
-			path = ../../src/util;
+			name = utils;
+			path = ../../src/utils;
 			sourceTree = "<group>";
 		};
 		6FECED071C21395C00310F52 /* ssl */ = {
@@ -678,7 +680,7 @@
 				AF37A9AB285E24C3008583D2 /* ssl_utils_darwin.cpp in Sources */,
 				6F8906F922630D06004D0DE9 /* H1xStream.cpp in Sources */,
 				6F7034662249FEB700556EBE /* H2Handshake.cpp in Sources */,
-				6FECED1E1C2139CA00310F52 /* util.cpp in Sources */,
+				6FECED1E1C2139CA00310F52 /* utils.cpp in Sources */,
 				6F84E9801D5B031300AF8E3B /* Http2Request.cpp in Sources */,
 				6FECED011C2138E700310F52 /* HttpParserImpl.cpp in Sources */,
 				6F27331E1EC75579006E221E /* SioHandler.cpp in Sources */,

@@ -27,7 +27,7 @@
 #include "Uri.h"
 #include "HttpRequestImpl.h"
 #include "H1xStream.h"
-#include "libkev/src/util/DestroyDetector.h"
+#include "libkev/src/utils/DestroyDetector.h"
 
 KUMA_NS_BEGIN
 

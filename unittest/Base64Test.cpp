@@ -1,7 +1,7 @@
 
 #include <gtest/gtest.h>
-#include "util/base64.h"
-#include "util/defer.h"
+#include "utils/base64.h"
+#include "utils/defer.h"
 
 #include <memory>
 #include <array>

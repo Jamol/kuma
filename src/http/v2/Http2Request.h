@@ -26,7 +26,7 @@
 #include "H2ConnectionImpl.h"
 #include "http/HttpRequestImpl.h"
 #include "http/HttpHeader.h"
-#include "libkev/src/util/DestroyDetector.h"
+#include "libkev/src/utils/DestroyDetector.h"
 
 KUMA_NS_BEGIN
 
