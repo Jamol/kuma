@@ -61,7 +61,7 @@ $ ndk-build
 ### CMake build
 ```
 CMake is also supported:
-python ./bld/your_os/build_your_os.py
+python ./bld/your_os/build_your_os.py --msvc vs2017/vs2019/vs2022
 ```
 
 ## OpenSSL

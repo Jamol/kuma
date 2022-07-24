@@ -656,9 +656,15 @@ private:
     KMBuffer* next_{ this };
     
 public:
-    class Iterator : public std::iterator<std::forward_iterator_tag, KMBuffer>
+    class Iterator
     {
     public:
+        using iterator_category = std::forward_iterator_tag;
+        using value_type = KMBuffer;
+        using difference_type = std::ptrdiff_t;
+        using pointer = KMBuffer*;
+        using reference = KMBuffer&;
+
         Iterator(const KMBuffer* pos, const KMBuffer* end)
         : pos_(pos), end_(end)
         {

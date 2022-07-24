@@ -26,7 +26,7 @@
 #include "kevdefs.h"
 
 #ifdef KUMA_OS_MAC
-# define KUMA_NS_BEGIN   namespace kuma {;
+# define KUMA_NS_BEGIN   namespace kuma {
 #else
 # define KUMA_NS_BEGIN   namespace kuma {
 #endif
