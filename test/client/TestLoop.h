@@ -46,7 +46,7 @@ class LoopPool;
 class TestLoop : public ObjectManager
 {
 public:
-    TestLoop(LoopPool* server, PollType poll_type = PollType::NONE);
+    TestLoop(LoopPool* server, PollType poll_type = PollType::DEFAULT);
 
     bool init();
     void stop();

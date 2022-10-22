@@ -22,7 +22,7 @@ using namespace kmsvr;
 #define THREAD_COUNT    5
 
 static bool g_exit = false;
-EventLoop main_loop(PollType::NONE);
+EventLoop main_loop(PollType::DEFAULT);
 std::string www_path;
 
 extern "C" int km_parse_address(const char *addr,

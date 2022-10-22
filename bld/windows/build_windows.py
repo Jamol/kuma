@@ -14,9 +14,9 @@ def run_and_check_error(command):
 
 def get_generator(msvc, arch):
     opt = ' -A x64 ' if arch == 'x64' else ' -A Win32 '
-    if msvc == 'vs2022':
+    if msvc == 'vs2022' or msvc == '2022':
         return ' "Visual Studio 17 2022" ' + opt
-    if msvc == 'vs2019':
+    if msvc == 'vs2019' or msvc == '2019':
         return ' "Visual Studio 16 2019" ' + opt
     return ' "Visual Studio 15 2017" ' + opt
 

@@ -24,7 +24,7 @@ std::string g_proxy_url;
 std::string g_proxy_user;
 std::string g_proxy_passwd;
 size_t g_bandwidth = 0;
-EventLoop main_loop(PollType::NONE);
+EventLoop main_loop(PollType::DEFAULT);
 
 extern "C" int km_parse_address(const char *addr,
     char *proto,

@@ -26,11 +26,7 @@
 
 #include <functional>
 
-#ifdef KUMA_OS_MAC
-# define KEV_NS_BEGIN   namespace kev {
-#else
-# define KEV_NS_BEGIN   namespace kev {
-#endif
+#define KEV_NS_BEGIN   namespace kev {
 #define KEV_NS_END     }
 #define KEV_NS_USING   using namespace kev;
 
@@ -80,13 +76,13 @@ enum class Result : int {
 };
 
 enum class PollType {
-    NONE,
+    DEFAULT,
+    NONEIO, // none IO event loop
+    SELECT,
     POLL,
     EPOLL,
     KQUEUE,
-    SELECT,
     IOCP,
-    WINDOW
 };
 
 
