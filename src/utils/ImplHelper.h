@@ -1,7 +1,27 @@
+/* Copyright (c) 2014-2023, Fengping Bao <jamol@live.com>
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
 #ifndef __ImplHelper_h__
 #define __ImplHelper_h__
 
-#include <string>
 #include <type_traits>
 
 KUMA_NS_BEGIN
@@ -12,34 +32,23 @@ struct ImplHelper {
     Impl impl;
     ImplPtr ptr;
 
-    // accept void arg
     template <typename... Args>
     ImplHelper(Args&... args)
         : impl(args...)
     {
         ptr.reset(&impl, [](Impl* p) {
-            auto h = reinterpret_cast<ImplHelper*>(p);
-            delete h;
+            auto *ih = reinterpret_cast<ImplHelper*>(p);
+            delete ih;
         });
     }
 
-    template <typename T1, typename... Args>
-    ImplHelper(T1 &t1, Args&... args)
-        : impl(t1, args...)
+    template <typename... Args>
+    ImplHelper(Args&&... args)
+        : impl(std::forward<Args>(args)...)
     {
         ptr.reset(&impl, [](Impl* p) {
-            auto h = reinterpret_cast<ImplHelper*>(p);
-            delete h;
-        });
-    }
-
-    template <typename T1, typename... Args>
-    ImplHelper(T1 &&t1, Args&&... args)
-        : impl(std::forward<T1>(t1), std::forward<Args...>(args)...)
-    {
-        ptr.reset(&impl, [](Impl* p) {
-            auto h = reinterpret_cast<ImplHelper*>(p);
-            delete h;
+            auto *ih = reinterpret_cast<ImplHelper*>(p);
+            delete ih;
         });
     }
     
@@ -49,18 +58,11 @@ struct ImplHelper {
         auto *ih = new ImplHelper(args...);
         return &ih->impl;
     }
-
-    template <typename T1, typename... Args>
-    static Impl* create(T1 &t1, Args&... args)
-    {
-        auto *ih = new ImplHelper(t1, args...);
-        return &ih->impl;
-    }
     
-    template <typename T1, typename... Args>
-    static Impl* create(T1 &&t1, Args&&... args)
+    template <typename... Args>
+    static Impl* create(Args&&... args)
     {
-        auto *ih = new ImplHelper(std::forward<T1>(t1), std::forward<Args...>(args)...);
+        auto *ih = new ImplHelper(std::forward<Args>(args)...);
         return &ih->impl;
     }
     
@@ -75,8 +77,8 @@ struct ImplHelper {
     static ImplPtr implPtr(Impl *pimpl)
     {
         if (pimpl) {
-            auto h = reinterpret_cast<ImplHelper*>(pimpl);
-            return h->ptr;
+            auto *ih = reinterpret_cast<ImplHelper*>(pimpl);
+            return ih->ptr;
         }
         return ImplPtr();
     }

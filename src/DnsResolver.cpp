@@ -89,7 +89,9 @@ DnsResolver::DnsResolver()
 
 DnsResolver::~DnsResolver()
 {
-    
+    if (!stop_flag_) {
+        stop();
+    }
 }
 
 DnsResolver& DnsResolver::get()

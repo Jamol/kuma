@@ -281,7 +281,7 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const SslCtxConf
                              << ", err=" << ERR_reason_error_string(ERR_get_error()));
             }
         }
-        
+        //SSL_CTX_set_timeout(ssl_ctx, 5000);
         SSL_CTX_set_verify(ssl_ctx, config.verify_mode, verifyCallback);
         //SSL_CTX_set_verify_depth(ssl_ctx, 4);
         //app_verify_arg arg1;

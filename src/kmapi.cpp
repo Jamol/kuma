@@ -52,7 +52,7 @@ KUMA_NS_BEGIN
 // class EventLoop
 using EventLoopHelper = ImplHelper<EventLoop::Impl>;
 EventLoop::EventLoop(PollType poll_type)
-: pimpl_(EventLoopHelper::create(std::move(poll_type)))
+: pimpl_(EventLoopHelper::create(poll_type))
 {
     
 }

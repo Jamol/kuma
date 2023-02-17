@@ -4,6 +4,7 @@
 #include "RunLoop.h"
 #include "libkev/src/utils/DestroyDetector.h"
 
+#include <string>
 #include <functional>
 
 

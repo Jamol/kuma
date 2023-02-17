@@ -3,6 +3,7 @@
 #include "kmapi.h"
 #include "RunLoop.h"
 
+#include <string>
 
 namespace kmsvr {
 
