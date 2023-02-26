@@ -111,9 +111,10 @@ public:
         if (!loop || fd == INVALID_FD) {
             return false;
         }
-        if (loop->registerFd(fd, kEventNetwork, [this](KMEvent ev, void* ol, size_t io_size) {
+        auto cb = [this](SOCKET_FD, KMEvent ev, void* ol, size_t io_size) {
             ioReady(ev, ol, io_size);
-        }) == kev::Result::OK)
+        };
+        if (loop->registerFd(fd, kEventNetwork, std::move(cb)) == kev::Result::OK)
         {
             return true;
         }

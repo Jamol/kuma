@@ -41,7 +41,7 @@ const SOCKET_FD INVALID_FD = ((SOCKET_FD)-1);
 #endif
 
 using KMEvent = uint32_t;
-using IOCallback = std::function<void(KMEvent, void*, size_t)>;
+using IOCallback = std::function<void(SOCKET_FD, KMEvent, void*, size_t)>;
 
 const uint32_t kEventRead       = 1;
 const uint32_t kEventWrite      = (1 << 1);

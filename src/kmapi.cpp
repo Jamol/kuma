@@ -155,9 +155,9 @@ bool EventLoop::inSameThread() const
     return pimpl_->inSameThread();
 }
 
-KMError EventLoop::sync(Task task)
+KMError EventLoop::sync(Task task, Token* token, const char* debugStr)
 {
-    return toKMError(pimpl_->sync(std::move(task)));
+    return toKMError(pimpl_->sync(std::move(task), token?token->pimpl():nullptr, debugStr));
 }
 
 KMError EventLoop::async(Task task, Token *token, const char *debugStr)

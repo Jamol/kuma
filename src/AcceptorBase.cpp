@@ -132,7 +132,10 @@ bool AcceptorBase::registerFd(SOCKET_FD fd)
 {
     auto loop = loop_.lock();
     if (loop && fd != INVALID_FD) {
-        if (loop->registerFd(fd, kEventNetwork, [this](KMEvent ev, void *ol, size_t sz) { ioReady(ev, ol, sz); }) == kev::Result::OK) {
+        auto cb = [this](SOCKET_FD, KMEvent ev, void* ol, size_t sz) {
+            ioReady(ev, ol, sz);
+        };
+        if (loop->registerFd(fd, kEventNetwork, std::move(cb)) == kev::Result::OK) {
             registered_ = true;
         }
     }
