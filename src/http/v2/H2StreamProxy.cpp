@@ -195,10 +195,10 @@ size_t H2StreamProxy::buildRequestHeaders(HeaderVector &headers)
     headers_size += H2HeaderScheme.size() + uri_.getScheme().size();
     std::string path = uri_.getPath();
     if(!uri_.getQuery().empty()) {
-        path = "?" + uri_.getQuery();
+        path += "?" + uri_.getQuery();
     }
     if(!uri_.getFragment().empty()) {
-        path = "#" + uri_.getFragment();
+        path += "#" + uri_.getFragment();
     }
     headers.emplace_back(H2HeaderPath, path);
     headers_size += H2HeaderPath.size() + path.size();
