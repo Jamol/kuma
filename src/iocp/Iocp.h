@@ -114,8 +114,7 @@ public:
         auto cb = [this](SOCKET_FD, KMEvent ev, void* ol, size_t io_size) {
             ioReady(ev, ol, io_size);
         };
-        if (loop->registerFd(fd, kEventNetwork, std::move(cb)) == kev::Result::OK)
-        {
+        if (loop->registerFd(fd, kEventNetwork, std::move(cb)) == kev::Result::OK) {
             return true;
         }
         return false;

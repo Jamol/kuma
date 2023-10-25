@@ -149,15 +149,15 @@ KMError H1xStream::sendResponse(int status_code, const std::string &desc, const 
 
 std::string H1xStream::buildRequest()
 {
-    std::stringstream ss;
-    ss << uri_.getPath();
-    if(!uri_.getQuery().empty()) {
-        ss << "?" << uri_.getQuery();
+    std::string url = uri_.getPath();
+    if (!uri_.getQuery().empty()) {
+        url += "?";
+        url += uri_.getQuery();
     }
-    if(!uri_.getFragment().empty()) {
-        ss << "#" << uri_.getFragment();
+    if (!uri_.getFragment().empty()) {
+        url += "#";
+        url += uri_.getFragment();
     }
-    auto url(ss.str());
     auto req = outgoing_message_.buildHeader(method_, url, version_);
     return req;
 }

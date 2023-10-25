@@ -135,8 +135,9 @@ bool AcceptorBase::registerFd(SOCKET_FD fd)
         auto cb = [this](SOCKET_FD, KMEvent ev, void* ol, size_t sz) {
             ioReady(ev, ol, sz);
         };
-        if (loop->registerFd(fd, kEventNetwork, std::move(cb)) == kev::Result::OK) {
-            registered_ = true;
+        registered_ = true;
+        if (loop->registerFd(fd, kEventNetwork, std::move(cb)) != kev::Result::OK) {
+            registered_ = false;
         }
     }
     return registered_;

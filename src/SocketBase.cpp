@@ -256,8 +256,9 @@ bool SocketBase::registerFd(SOCKET_FD fd)
         auto cb = [this](SOCKET_FD, KMEvent ev, void* ol, size_t io_size) {
             ioReady(ev, ol, io_size);
         };
-        if (loop->registerFd(fd, kEventNetwork, std::move(cb)) == kev::Result::OK) {
-            registered_ = true;
+        registered_ = true;
+        if (loop->registerFd(fd, kEventNetwork, std::move(cb)) != kev::Result::OK) {
+            registered_ = false;
         }
     }
     return registered_;

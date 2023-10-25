@@ -233,6 +233,9 @@ void TcpConnection::onReceive(KMError err)
             if (data_cb_(buf, ret) != KMError::NOERR) {
                 break;
             }
+            if (ret < sizeof(buf)) {
+                break; // read I/O space is exhausted
+            }
         } else if (0 == ret) {
             break;
         } else { // ret < 0

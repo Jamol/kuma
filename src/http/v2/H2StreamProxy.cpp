@@ -81,15 +81,14 @@ KMError H2StreamProxy::sendRequest(std::string method, std::string url, uint32_t
     
     setState(State::CONNECTING);
     
-    std::string str_port = uri_.getPort();
     uint16_t port = 80;
     ssl_flags = SSL_NONE;
     if (kev::is_equal("https", uri_.getScheme()) || kev::is_equal("wss", uri_.getScheme())) {
         ssl_flags = SSL_ENABLE | ssl_flags_;
         port = 443;
     }
-    if(!str_port.empty()) {
-        port = std::stoi(str_port);
+    if(!uri_.getPort().empty()) {
+        port = std::stoi(uri_.getPort());
     }
     
     auto &conn_mgr = H2ConnectionMgr::getRequestConnMgr(ssl_flags != SSL_NONE);
@@ -195,10 +194,12 @@ size_t H2StreamProxy::buildRequestHeaders(HeaderVector &headers)
     headers_size += H2HeaderScheme.size() + uri_.getScheme().size();
     std::string path = uri_.getPath();
     if(!uri_.getQuery().empty()) {
-        path += "?" + uri_.getQuery();
+        path += "?";
+        path += uri_.getQuery();
     }
     if(!uri_.getFragment().empty()) {
-        path += "#" + uri_.getFragment();
+        path += "#";
+        path += uri_.getFragment();
     }
     headers.emplace_back(H2HeaderPath, path);
     headers_size += H2HeaderPath.size() + path.size();

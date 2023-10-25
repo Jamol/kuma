@@ -51,15 +51,7 @@ H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &key)
 
 H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &host, uint16_t port, uint32_t ssl_flags, const EventLoopPtr &loop, const ProxyInfo &proxy_info)
 {
-    std::string key;
-    std::string ip;
-    sockaddr_storage ss_addr = { 0 };
-    auto ret = DnsResolver::get().resolve(host, port, ss_addr);
-    if (ret == KMError::NOERR && kev::km_get_sock_addr(ss_addr, ip, nullptr) == 0) {
-        key = ip + ":" + std::to_string(port);
-    } else {
-        key = host + ":" + std::to_string(port);
-    }
+    std::string key = host + ":" + std::to_string(port);
     std::lock_guard<std::mutex> g(conn_mutex_);
     auto it = conn_map_.find(key);
     if (it != conn_map_.end()) {
@@ -70,7 +62,7 @@ H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &host, uint16_t
     conn->setSslFlags(ssl_flags);
     conn->setProxyInfo(proxy_info);
     if (conn->connect(host, port) != KMError::NOERR) {
-        return H2ConnectionPtr();
+        return {};
     }
     conn_map_[key] = conn;
     return conn;
