@@ -35,7 +35,12 @@ public:
     using ErrorCallback = TcpListener::ErrorCallback;
     
     AcceptorBase(const EventLoopPtr &loop);
+    AcceptorBase(const AcceptorBase&) = delete;
+    AcceptorBase(const AcceptorBase&&) = delete;
     virtual ~AcceptorBase();
+
+    AcceptorBase& operator= (const AcceptorBase&) = delete;
+    AcceptorBase& operator= (AcceptorBase&&) = delete;
     
     virtual KMError listen(const std::string &host, uint16_t port);
     virtual KMError close();

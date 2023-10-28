@@ -35,7 +35,12 @@ public:
     using EventCallback = std::function<void(KMError)>;
 
     SocketBase(const EventLoopPtr &loop);
+    SocketBase(const SocketBase&) = delete;
+    SocketBase(SocketBase&& other) = delete;
     virtual ~SocketBase();
+
+    SocketBase& operator= (const SocketBase&) = delete;
+    SocketBase& operator= (SocketBase&& other) = delete;
 
     KMError bind(const std::string &bind_host, uint16_t bind_port);
     KMError connect(const std::string &host, uint16_t port, EventCallback cb, uint32_t timeout_ms = 0);
@@ -53,6 +58,11 @@ public:
     SOCKET_FD getFd() const { return fd_; }
     EventLoopPtr eventLoop() const { return loop_.lock(); }
     bool isReady() const { return getState() == State::OPEN; }
+    bool isConnecting() const
+    {
+        return getState() == State::RESOLVING ||
+               getState() == State::CONNECTING;
+    }
 
     void setReadCallback(EventCallback cb) { read_cb_ = std::move(cb); }
     void setWriteCallback(EventCallback cb) { write_cb_ = std::move(cb); }
@@ -98,7 +108,7 @@ protected:
     EventCallback       write_cb_;
     EventCallback       error_cb_;
 
-    Timer::Impl         timer_;
+    std::unique_ptr<Timer::Impl> timer_;
 };
 
 KUMA_NS_END

@@ -26,6 +26,7 @@
 
 #include "EventLoopImpl.h"
 #include "TcpListenerImpl.h"
+#include "AcceptorBase.h"
 #include "libkev/src/utils/utils.h"
 #include "libkev/src/utils/kmtrace.h"
 #ifdef KUMA_OS_WIN

@@ -24,9 +24,9 @@
 
 #include "kmdefs.h"
 #include "kmapi.h"
-#include "AcceptorBase.h"
 
 KUMA_NS_BEGIN
+class AcceptorBase;
 
 class TcpListener::Impl
 {

@@ -67,7 +67,7 @@
 using namespace kuma;
 
 SocketBase::SocketBase(const EventLoopPtr &loop)
-    : loop_(loop), timer_(loop?loop->getTimerMgr():nullptr)
+    : loop_(loop)
 {
     KM_SetObjKey("SocketBase");
 }
@@ -81,7 +81,7 @@ SocketBase::~SocketBase()
 
 void SocketBase::cleanup()
 {
-    timer_.cancel();
+    timer_.reset();
     if (!dns_token_.expired()) {
         DnsResolver::get().cancel("", dns_token_);
         dns_token_.reset();
@@ -140,9 +140,13 @@ KMError SocketBase::connect(const std::string &host, uint16_t port, EventCallbac
     }
     connect_cb_ = std::move(cb);
     if (timeout_ms > 0 && timeout_ms != uint32_t(-1)) {
-        timer_.schedule(timeout_ms, kev::Timer::Mode::ONE_SHOT, [this]() {
-            onConnect(KMError::TIMEOUT);
-        });
+        auto loop = loop_.lock();
+        if (loop) {
+            timer_ = std::make_unique<Timer::Impl>(loop->getTimerMgr());
+            timer_->schedule(timeout_ms, kev::Timer::Mode::ONE_SHOT, [this] {
+                onConnect(KMError::TIMEOUT);
+            });
+        }
     }
     if (!kev::km_is_ip_address(host.c_str())) {
         sockaddr_storage ss_addr = { 0 };
@@ -521,7 +525,7 @@ void SocketBase::onResolved(KMError err, const sockaddr_storage &addr)
 void SocketBase::onConnect(KMError err)
 {
     KM_INFOXTRACE("onConnect, err=" << int(err) << ", state=" << getState());
-    timer_.cancel();
+    timer_.reset();
     if (KMError::NOERR == err) {
         setState(State::OPEN);
     }

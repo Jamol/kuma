@@ -96,6 +96,9 @@ TcpSocket::Impl::~Impl()
 TcpSocket::Impl& TcpSocket::Impl::operator= (Impl &&other)
 {
     if (this != &other) {
+        if (other.socket_ && other.socket_->isConnecting()) {
+            KM_ERRXTRACE("try to move a socket that is in connecting state, fd=" << other.getFd());
+        }
         cleanup();
         loop_ = std::move(other.loop_);
         ssl_flags_ = other.ssl_flags_;
@@ -164,7 +167,7 @@ KMError TcpSocket::Impl::setSslFlags(uint32_t ssl_flags)
 
 SOCKET_FD TcpSocket::Impl::getFd() const
 {
-    return socket_->getFd();
+    return socket_ ? socket_->getFd() : INVALID_FD;
 }
 
 EventLoopPtr TcpSocket::Impl::eventLoop() const
@@ -614,28 +617,28 @@ void TcpSocket::Impl::onClose(KMError err)
 bool TcpSocket::Impl::createSocket()
 {
     auto loop = eventLoop();
-    if (loop) {
-#ifdef KUMA_OS_WIN
-        if (loop->getPollType() == PollType::IOCP) {
-            socket_.reset(new IocpSocket(loop));
-        }
-        else
-#endif
-        {
-            socket_.reset(new SocketBase(loop));
-        }
-        socket_->setReadCallback([this](KMError err) {
-            onReceive(err);
-        });
-        socket_->setWriteCallback([this](KMError err) {
-            onSend(err);
-        });
-        socket_->setErrorCallback([this](KMError err) {
-            onClose(err);
-        });
-        return true;
+    if (!loop) {
+        return false;
     }
-    return false;
+#ifdef KUMA_OS_WIN
+    if (loop->getPollType() == PollType::IOCP) {
+        socket_.reset(new IocpSocket(loop));
+    }
+    else
+#endif
+    {
+        socket_.reset(new SocketBase(loop));
+    }
+    socket_->setReadCallback([this](KMError err) {
+        onReceive(err);
+    });
+    socket_->setWriteCallback([this](KMError err) {
+        onSend(err);
+    });
+    socket_->setErrorCallback([this](KMError err) {
+        onClose(err);
+    });
+    return true;
 }
 
 #ifdef KUMA_HAS_OPENSSL
