@@ -233,9 +233,11 @@ void TcpConnection::onReceive(KMError err)
             if (data_cb_(buf, ret) != KMError::NOERR) {
                 break;
             }
+#if 1// defined(KUMA_OS_LINUX)
             if (ret < sizeof(buf)) {
                 break; // read I/O space is exhausted
             }
+#endif
         } else if (0 == ret) {
             break;
         } else { // ret < 0

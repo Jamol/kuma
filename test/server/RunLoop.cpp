@@ -25,7 +25,10 @@ bool RunLoop::start()
 
 void RunLoop::stop()
 {
-    loop_->stop();
+    loop_->async([this] {
+        objMap_.clear();
+        loop_->stop();
+    });
     try {
         if (thread_.joinable()) {
             thread_.join();
@@ -33,7 +36,6 @@ void RunLoop::stop()
     } catch (std::exception &) {
         
     }
-    objMap_.clear();
 }
 
 void RunLoop::addObject(uint64_t objId, LoopObject::Ptr obj)

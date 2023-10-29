@@ -35,8 +35,8 @@ namespace kev {
 
 KUMA_NS_BEGIN
 
-const size_t TCPRecvPacketSize = 4 * 1024;
-const size_t UDPRecvPacketSize = 64 * 1024;
+const size_t kTCPRecvPacketSize = 4 * 1024;
+const size_t kUDPRecvPacketSize = 64 * 1024;
 
 struct IocpContext
 {
@@ -231,7 +231,7 @@ public:
             KM_WARNTRACE("postRecvOperation, fd=" << fd << ", buf=" << recv_ctx_->buf.size());
         }
         DWORD flags = 0, bytes_recv = 0;
-        recv_ctx_->buf.expand(TCPRecvPacketSize);
+        recv_ctx_->buf.expand(kTCPRecvPacketSize);
         recv_ctx_->prepare(IocpContext::Op::RECV);
         auto ret = WSARecv(fd, &recv_ctx_->wbuf, 1, &bytes_recv, &flags, &recv_ctx_->ol, NULL);
         if (ret == SOCKET_ERROR) {
@@ -416,7 +416,7 @@ public:
 
         DWORD flags = 0;
         addr_len_ = sizeof(ss_addr_);
-        recv_ctx_->buf.expand(UDPRecvPacketSize);
+        recv_ctx_->buf.expand(kUDPRecvPacketSize);
         recv_ctx_->prepare(IocpContext::Op::RECV);
         auto ret = WSARecvFrom(fd, &recv_ctx_->wbuf, 1, nullptr, &flags, (sockaddr*)&ss_addr_, &addr_len_, &recv_ctx_->ol, NULL);
         if (ret == SOCKET_ERROR) {

@@ -195,12 +195,17 @@ int BioHandler::receive(void* data, size_t length)
             KM_ERRXTRACE("receive, failed to recv SSL data, err=" << (int)err);
             return -1;
         }
-        auto ret = readAppData(ptr + bytes_total, length - bytes_total);
-        if (ret < 0) {
-            KM_ERRXTRACE("receive, failed to read app data");
-            return ret;
-        }
-        bytes_total += ret;
+        do {
+            auto ret = readAppData(ptr + bytes_total, length - bytes_total);
+            if (ret == 0) {
+                break; // want ssl read
+            }
+            else if (ret < 0) {
+                KM_ERRXTRACE("receive, failed to read app data");
+                return ret;
+            }
+            bytes_total += ret;
+        } while (bytes_total < length);
         if (err != KMError::AGAIN) {
             break;
         }
@@ -457,7 +462,7 @@ KMError BioHandler::tryRecvSslData()
             return KMError::SSL_ERROR;
         }
         if (!recv_buf_.empty()) {
-            return KMError::NOERR;
+            return KMError::AGAIN; // want ssl read?
         }
     }
     
@@ -465,6 +470,7 @@ KMError BioHandler::tryRecvSslData()
     int bytes_total = 0;
     recv_buf_.expand(20 * 1024);
     do {
+        auto buf_space = recv_buf_.space();
         bytes_recv = recvData(recv_buf_);
         if (bytes_recv > 0) {
             auto ssl_written = writeSslData(recv_buf_);
@@ -477,6 +483,9 @@ KMError BioHandler::tryRecvSslData()
             else { // fatal error
                 KM_ERRXTRACE("tryRecvSslData, failed to write SSL data 2");
                 return KMError::SSL_ERROR;
+            }
+            if (bytes_recv < static_cast<int>(buf_space)) {
+                break;
             }
         }
         else if (bytes_recv < 0) {
