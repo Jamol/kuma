@@ -68,7 +68,7 @@ protected:
     EventLoopWeakPtr    loop_;
     bool                registered_{ false };
     uint32_t            flags_{ 0 };
-    bool                closed_{ false };
+    bool                closed_{ true };
 #ifdef KUMA_OS_WIN
     ADDRESS_FAMILY
 #else

@@ -102,7 +102,9 @@ bool UdpSocketBase::initSocket(int ss_family)
         return false;
     }
     setSocketOption();
-    registerFd(fd_);
+    if (!registerFd(fd_)) {
+        return false;
+    }
     return true;
 }
 
@@ -182,7 +184,10 @@ KMError UdpSocketBase::bind(const std::string &bind_host, uint16_t bind_port, ui
         return KMError::FAILED;
     }
     printSocket();
-    registerFd(fd_);
+    if (registerFd(fd_)) {
+        KM_ERRXTRACE("bind, failed to register fd");
+        return KMError::FAILED;
+    }
     onSocketInitialized();
     return KMError::NOERR;
 }
@@ -215,7 +220,11 @@ KMError UdpSocketBase::connect(const std::string &host, uint16_t port)
     printSocket();
     setSocketOption();
     if (!registered) {
-        registerFd(fd_);
+        if (!registerFd(fd_)) {
+            KM_ERRXTRACE("bind, failed to register fd");
+            cleanup();
+            return KMError::FAILED;
+        }
         onSocketInitialized();
     }
     return KMError::NOERR;
