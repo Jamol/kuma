@@ -103,7 +103,7 @@ SOCKET_FD SocketBase::createFd(int addr_family)
 KMError SocketBase::bind(const std::string &bind_host, uint16_t bind_port)
 {
     KM_INFOTRACE("bind, bind_host=" << bind_host << ", bind_port=" << bind_port);
-    if (getState() != State::IDLE || getState() != State::CLOSED) {
+    if (getState() != State::IDLE && getState() != State::CLOSED) {
         KM_ERRXTRACE("bind, invalid state, state=" << getState());
         return KMError::INVALID_STATE;
     }
@@ -134,7 +134,7 @@ KMError SocketBase::bind(const std::string &bind_host, uint16_t bind_port)
 KMError SocketBase::connect(const std::string &host, uint16_t port, EventCallback cb, uint32_t timeout_ms)
 {
     KM_INFOXTRACE("connect, host=" << host << ", port=" << port);
-    if (getState() != State::IDLE || getState() != State::CLOSED) {
+    if (getState() != State::IDLE && getState() != State::CLOSED) {
         KM_ERRXTRACE("connect, invalid state, state=" << getState());
         return KMError::INVALID_STATE;
     }
@@ -234,7 +234,7 @@ KMError SocketBase::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
 
 KMError SocketBase::attachFd(SOCKET_FD fd)
 {
-    if (getState() != State::IDLE || getState() != State::CLOSED) {
+    if (getState() != State::IDLE && getState() != State::CLOSED) {
         KM_ERRXTRACE("attachFd, invalid state, fd="<<fd<<", state=" << getState());
         return KMError::INVALID_STATE;
     }
