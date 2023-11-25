@@ -201,22 +201,22 @@ public:
     }
     
     template<typename DataDeleter> // DataDeleter = void(void*, size_t)
-    KMBuffer(void *data, size_t capacity, size_t size, size_t offset, DataDeleter &dd)
+    KMBuffer(void *data, size_t capacity, size_t size, size_t offset, DataDeleter &&dd)
     {
-        reset(data, capacity, size, offset, dd);
+        reset(data, capacity, size, offset, std::forward<DataDeleter>(dd));
     }
     
     /**
      * data is not owned by this KMBuffer, caller should make sure data is valid
      * before this KMBuffer destroyed
      */
-    KMBuffer(void *data, size_t capacity, size_t size=0, StorageType type = StorageType::AUTO)
+    KMBuffer(void *data, size_t capacity, size_t size=0, StorageType type=StorageType::AUTO)
     : storage_type_(type)
     {
         reset(data, capacity, size);
     }
     
-    KMBuffer(const void *data, size_t capacity, size_t size=0, StorageType type = StorageType::AUTO)
+    KMBuffer(const void *data, size_t capacity, size_t size=0, StorageType type=StorageType::AUTO)
     : KMBuffer(const_cast<void*>(data), capacity, size, type)
     {
     }
@@ -538,18 +538,20 @@ public:
     }
 
     template<typename DataDeleter> // DataDeleter = void(void*, size_t)
-    void reset(void *data, size_t capacity, size_t size, size_t offset, DataDeleter &dd)
+    void reset(void *data, size_t capacity, size_t size, size_t offset, DataDeleter &&dd)
     {
+        using DataDeleterType = std::decay_t<DataDeleter>;
         shared_data_.reset();
         std::allocator<char> a;
         auto deleter = [a](void *ptr, size_t size) mutable {
             a.deallocate((char*)ptr, size);
         };
-        using _MySharedData = _SharedData<decltype(deleter), DataDeleter>;
+        using _MySharedData = _SharedData<decltype(deleter), DataDeleterType>;
         size_t shared_size = sizeof(_MySharedData);
         size_t alloc_size = shared_size;
         auto buf = a.allocate(alloc_size);
-        auto *sd = new (buf) _MySharedData(data, capacity, alloc_size, deleter, dd);
+        auto *sd = new (buf) _MySharedData(data, capacity, alloc_size, deleter,
+                                           std::forward<DataDeleterType>(dd));
         shared_data_ = sd;
 
         begin_ptr_ = static_cast<char*>(data);

@@ -107,24 +107,32 @@ KMError AcceptorBase::listen(const std::string &host, uint16_t port)
     ss_family_ = ss_addr.ss_family;
     fd_ = ::socket(ss_addr.ss_family, SOCK_STREAM, 0);
     if(INVALID_FD == fd_) {
-        KM_ERRXTRACE("startListen, socket failed, err="<<kev::SKUtils::getLastError());
+        KM_ERRXTRACE("startListen, failed to create socket, err="<<kev::SKUtils::getLastError());
         return KMError::FAILED;
     }
     setSocketOption();
     auto addr_len = static_cast<socklen_t>(kev::km_get_addr_length(ss_addr));
     int ret = ::bind(fd_, (struct sockaddr*)&ss_addr, addr_len);
     if(ret < 0) {
-        KM_ERRXTRACE("startListen, bind failed, err="<<kev::SKUtils::getLastError());
+        KM_ERRXTRACE("startListen, failed to bind socket, err="<<kev::SKUtils::getLastError());
+        kev::SKUtils::close(fd_);
+        fd_ = INVALID_FD;
         return KMError::FAILED;
     }
     if(::listen(fd_, 128) != 0) {
+        KM_ERRXTRACE("startListen, failed to listen, err="<<kev::SKUtils::getLastError());
         kev::SKUtils::close(fd_);
         fd_ = INVALID_FD;
-        KM_ERRXTRACE("startListen, socket listen fail, err="<<kev::SKUtils::getLastError());
         return KMError::FAILED;
     }
     closed_ = false;
-    registerFd(fd_);
+    if (!registerFd(fd_)) {
+        KM_ERRXTRACE("startListen, failed to register fd");
+        kev::SKUtils::close(fd_);
+        fd_ = INVALID_FD;
+        closed_ = true;
+        return KMError::FAILED;
+    }
     return KMError::NOERR;
 }
 

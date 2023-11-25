@@ -78,7 +78,12 @@ KMError IocpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
         }
     }
     setSocketOption();
-    registerFd(fd_);
+    if (!registerFd(fd_)) {
+        KM_ERRXTRACE("connect_i, failed to register fd, fd=" << fd_);
+        cleanup();
+        setState(State::CLOSED);
+        return KMError::FAILED;
+    }
 
     if (!postConnectOperation(fd_, ss_addr)) {
         cleanup();
