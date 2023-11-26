@@ -27,7 +27,7 @@ public:
         http_.setWriteCallback([this] (KMError err) { onSend(err); });
         http_.setDataCallback([this] (KMBuffer &buf) { onData(buf); });
         http_.setResponseCompleteCallback([this] { onResponseComplete(); });
-        http_.setErrorCallback([this] (KMError err) { onClose(err); });
+        http_.setErrorCallback([this] (KMError err) { onError(err); });
 
         event_token_ = event_loop_->createToken();
     }
@@ -110,7 +110,7 @@ private:
                 send_blocked_ = true;
                 break;
             } else {
-                onClose(KMError::FAILED);
+                onError(KMError::FAILED);
                 break;
             }
         }
@@ -149,11 +149,11 @@ private:
         CALL_JAVA_METHOD_VOID(jcb_.obj(), onResponseComplete, "()V");
     }
 
-    void onClose(KMError err)
+    void onError(KMError err)
     {
         http_.close();
 
-        CALL_JAVA_METHOD_VOID(jcb_.obj(), onClose, "(I)V", (int)err);
+        CALL_JAVA_METHOD_VOID(jcb_.obj(), onError, "(I)V", (int)err);
     }
 
 protected:

@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
             }
             ws.open("ws://baidu.com")
 
-            http = HttpRequest.create("HTTP/1.1")
+            http = HttpRequest.create("HTTP/2.0")
             http.setListener {
                 onHeaderComplete {
                     println("http.onHeaderComplete")
@@ -58,7 +58,7 @@ class MainActivity : AppCompatActivity() {
                     println("http.onError, err=$err")
                 }
             }
-            http.sendRequest("GET", "http://baidu.com")
+            http.sendRequest("GET", "https://www.cloudflare.com")
         }
     }
 
