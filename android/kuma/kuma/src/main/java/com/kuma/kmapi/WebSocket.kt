@@ -21,6 +21,6 @@ interface WebSocket {
         fun onSend(listener: (err: Int) -> Unit)
         fun onString(listener: (str: String, fin: Boolean) -> Unit)
         fun onArray(listener: (arr: ByteArray, fin: Boolean) -> Unit)
-        fun onClose(listener: (err: Int) -> Unit)
+        fun onError(listener: (err: Int) -> Unit)
     }
 }

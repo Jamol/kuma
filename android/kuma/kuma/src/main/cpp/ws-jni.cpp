@@ -27,7 +27,7 @@ public:
             onData(buf, is_text, fin);
         });
         ws_.setWriteCallback([this] (KMError err) { onSend(err); });
-        ws_.setErrorCallback([this] (KMError err) { onClose(err); });
+        ws_.setErrorCallback([this] (KMError err) { onError(err); });
 
         event_token_ = event_loop_->createToken();
     }
@@ -108,7 +108,7 @@ private:
                 send_blocked_ = true;
                 break;
             } else {
-                onClose(KMError::FAILED);
+                onError(KMError::FAILED);
                 break;
             }
         }
@@ -148,11 +148,11 @@ private:
         }
     }
 
-    void onClose(KMError err)
+    void onError(KMError err)
     {
         ws_.close();
 
-        CALL_JAVA_METHOD_VOID(jcb_.obj(), onClose, "(I)V", (int)err);
+        CALL_JAVA_METHOD_VOID(jcb_.obj(), onError, "(I)V", (int)err);
     }
 
 protected:

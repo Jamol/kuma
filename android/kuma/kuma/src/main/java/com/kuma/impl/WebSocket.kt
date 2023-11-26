@@ -3,7 +3,7 @@ package com.kuma.impl
 import com.kuma.kmapi.WebSocket
 import java.nio.ByteBuffer
 
-class WebSocket(val version: String) : com.kuma.kmapi.WebSocket{
+class WebSocket(val version: String) : com.kuma.kmapi.WebSocket {
     private var handle: Long = 0
     private var listener: ListenerKt? = null
     override fun setSslFlags(flags: Int) {
@@ -48,7 +48,6 @@ class WebSocket(val version: String) : com.kuma.kmapi.WebSocket{
     }
 
     fun onOpen(err: Int) {
-        println("WebSocket.onOpen, err: $err")
         listener?.onOpen(err)
     }
 
@@ -64,18 +63,17 @@ class WebSocket(val version: String) : com.kuma.kmapi.WebSocket{
         listener?.onData(str, fin)
     }
 
-    fun onClose(err: Int) {
-        println("WebSocket.onClose, err=$err")
-        listener?.onClose(err)
+    fun onError(err: Int) {
+        listener?.onError(err)
     }
 
 
     inner class ListenerKt : WebSocket.Listener {
-        var openListener: ((Int) -> Unit)? = null
-        var sendListener: ((Int) -> Unit)? = null
-        var strDataListener: ((str: String, fin: Boolean) -> Unit)? = null
-        var arrDataListener: ((arr: ByteArray, fin: Boolean) -> Unit)? = null
-        var closeListener: ((Int) -> Unit)? = null
+        private var openListener: ((Int) -> Unit)? = null
+        private var sendListener: ((Int) -> Unit)? = null
+        private var strDataListener: ((str: String, fin: Boolean) -> Unit)? = null
+        private var arrDataListener: ((arr: ByteArray, fin: Boolean) -> Unit)? = null
+        private var errorListener: ((Int) -> Unit)? = null
         fun onOpen(err: Int) {
             openListener?.invoke(err)
         }
@@ -88,8 +86,8 @@ class WebSocket(val version: String) : com.kuma.kmapi.WebSocket{
         fun onData(arr: ByteArray, fin: Boolean) {
             arrDataListener?.invoke(arr, fin)
         }
-        fun onClose(err: Int) {
-            closeListener?.invoke(err)
+        fun onError(err: Int) {
+            errorListener?.invoke(err)
         }
 
         override fun onOpen(listener: (err: Int) -> Unit) {
@@ -108,8 +106,8 @@ class WebSocket(val version: String) : com.kuma.kmapi.WebSocket{
             arrDataListener = listener
         }
 
-        override fun onClose(listener: (err: Int) -> Unit) {
-            closeListener = listener
+        override fun onError(listener: (err: Int) -> Unit) {
+            errorListener = listener
         }
     }
 

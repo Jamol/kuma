@@ -9,6 +9,7 @@ import androidx.navigation.ui.navigateUp
 import androidx.navigation.ui.setupActionBarWithNavController
 import android.view.Menu
 import android.view.MenuItem
+import com.kuma.kmapi.HttpRequest
 import com.kuma.kmapi.WebSocket
 import com.kuma.kmtest.databinding.ActivityMainBinding
 
@@ -17,6 +18,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var appBarConfiguration: AppBarConfiguration
     private lateinit var binding: ActivityMainBinding
     private lateinit var ws: WebSocket
+    private lateinit var http: HttpRequest
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,12 +40,25 @@ class MainActivity : AppCompatActivity() {
                 onOpen { err ->
                     println("ws.onOpen, err=$err")
                 }
-                onClose { err->
-                    println("ws.onClose, err=$err")
-                    ws.close()
+                onError { err->
+                    println("ws.onError, err=$err")
                 }
             }
             ws.open("ws://baidu.com")
+
+            http = HttpRequest.create("HTTP/1.1")
+            http.setListener {
+                onHeaderComplete {
+                    println("http.onHeaderComplete")
+                }
+                onResponseComplete {
+                    println("http.onResponseComplete")
+                }
+                onError { err->
+                    println("http.onError, err=$err")
+                }
+            }
+            http.sendRequest("GET", "http://baidu.com")
         }
     }
 

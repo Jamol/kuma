@@ -12,6 +12,9 @@ interface HttpRequest {
     fun reset()
     fun close()
     fun setListener(listener: HttpRequest.Listener.() -> Unit)
+    companion object {
+        fun create(ver: String) = com.kuma.impl.HttpRequest(ver)
+    }
 
     interface Listener {
         fun onHeaderComplete(listener: () -> Unit)
