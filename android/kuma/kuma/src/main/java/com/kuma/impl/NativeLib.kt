@@ -2,9 +2,19 @@ package com.kuma.impl
 
 class NativeLib {
     companion object {
-        // Used to load the 'kuma' library on application startup.
-        init {
-            System.loadLibrary("kuma")
+        private var isLoaded = false
+        fun load(): Boolean {
+            if (isLoaded) {
+                return true
+            }
+            try {
+                System.loadLibrary("kuma")
+                isLoaded = true
+            } catch (e: UnsatisfiedLinkError) {
+                isLoaded = false
+                println(e)
+            }
+            return isLoaded
         }
     }
 }

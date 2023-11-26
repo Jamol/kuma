@@ -1,23 +1,40 @@
 #pragma once
 
+#include <sstream>
 #include <jni.h>
 #include "jvm.h"
-#include "libkev/src/utils/kmtrace.h"
 
 #define KUMA_JNI_NS_BEGIN namespace kuma { namespace jni {
 #define KUMA_JNI_NS_END }}
 #define KUMA_JNI_NS_USING using namespace kuma::jni;
 
+#include <android/log.h>
+#define KUMA_TAG  "[kuma-jni]"
+
+#define KLOGX(l, t, x) \
+    do { \
+        std::ostringstream __ss_not_easy_conflict_42__; \
+        __ss_not_easy_conflict_42__ << x; \
+        __android_log_print(l, t, "%s", __ss_not_easy_conflict_42__.str().c_str()); \
+    } while(0)
+
+#define KLOGI(s) KLOGX(ANDROID_LOG_INFO, KUMA_TAG, s)
+#define KLOGW(s) KLOGX(ANDROID_LOG_WARN, KUMA_TAG, s)
+#define KLOGE(s) KLOGX(ANDROID_LOG_ERROR, KUMA_TAG, s)
+#define KLOGV(s) KLOGX(ANDROID_LOG_VERBOSE, KUMA_TAG, s)
+#define KLOGD(s) KLOGX(ANDROID_LOG_DEBUG, KUMA_TAG, s)
+
+
 #define JNI_CHECK_ENV(env, msg) \
     if (env->ExceptionCheck()) { \
-        KM_ERRTRACE("[jni] Check failed: " << msg);\
+        KLOGE("[jni] Check failed: " << msg);\
         env->ExceptionDescribe(); \
         env->ExceptionClear(); \
     }
 
 #define JNI_CHECK_ENV_RETURN(env, ret, msg) \
     if (env->ExceptionCheck()) { \
-        KM_ERRTRACE("[jni] Check failed: " << msg);\
+        KLOGE("[jni] Check failed: " << msg);\
         env->ExceptionDescribe(); \
         env->ExceptionClear(); \
         return ret; \
@@ -141,7 +158,7 @@ static bool m(JNIEnv *env, jobject jobj, bool &ret) \
             v->CallVoidMethod(o, jm_##m, ##__VA_ARGS__); \
             JNI_CHECK_ENV(v, "CallVoidMethod " #m " " s) \
         } else {\
-            KM_ERRTRACE("[jni] Failed to call " << (#m) << ", jmethodID is null"); \
+            KLOGE("[jni] Failed to call " << (#m) << ", jmethodID is null"); \
         } \
     } while(0)
 
@@ -158,7 +175,7 @@ static bool m(JNIEnv *env, jobject jobj, bool &ret) \
             v->CallVoidMethod(o, jm_##m, ##__VA_ARGS__); \
             JNI_CHECK_ENV_RETURN(v, e, "CallVoidMethod " #m " " s) \
         } else {\
-            KM_ERRTRACE("[jni] Failed to call " << (#m) << ", jmethodID is null"); \
+            KLOGE("[jni] Failed to call " << (#m) << ", jmethodID is null"); \
             return e; \
         } \
     } while(0)
@@ -177,7 +194,7 @@ static bool m(JNIEnv *env, jobject jobj, bool &ret) \
             JNI_CHECK_ENV_RETURN(v, e, "CallIntMethod " #m " " s); \
             r = (int)ret_cc; \
         } else {\
-            KM_ERRTRACE("[jni] Failed to call " << (#m) << ", jmethodID is null"); \
+            KLOGE("[jni] Failed to call " << (#m) << ", jmethodID is null"); \
             return e; \
         } \
     } while(0)
@@ -196,7 +213,7 @@ static bool m(JNIEnv *env, jobject jobj, bool &ret) \
             JNI_CHECK_ENV_RETURN(v, e, "CallBooleanMethod " #m " " s); \
             r = (bool)ret_cc; \
         } else {\
-            KM_ERRTRACE("[jni] Failed to call " << (#m) << ", jmethodID is null"); \
+            KLOGE("[jni] Failed to call " << (#m) << ", jmethodID is null"); \
             return e; \
         } \
     } while(0)
@@ -215,7 +232,7 @@ static bool m(JNIEnv *env, jobject jobj, bool &ret) \
             JNI_CHECK_ENV_RETURN(v, e, "CallFloatMethod " #m " " s); \
             r = (float)ret_cc; \
         } else {\
-            KM_ERRTRACE("[jni] Failed to call " << (#m) << ", jmethodID is null"); \
+            KLOGE("[jni] Failed to call " << (#m) << ", jmethodID is null"); \
             return e; \
         } \
     } while(0)
@@ -244,7 +261,7 @@ static bool m(JNIEnv *env, jobject jobj, bool &ret) \
             r = v->CallObjectMethod(o, jm_##m, ##__VA_ARGS__); \
             JNI_CHECK_ENV_RETURN(v, e, "CallVoidMethod " #m " " s) \
         } else {\
-            KM_ERRTRACE("[jni] Failed to call " << (#m) << ", jmethodID is null"); \
+            KLOGE("[jni] Failed to call " << (#m) << ", jmethodID is null"); \
             return e; \
         } \
     } while(0)

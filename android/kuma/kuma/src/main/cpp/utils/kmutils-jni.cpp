@@ -93,7 +93,7 @@ ScopedJavaLocalRef<jstring> as_jstring(JNIEnv* env, const std::string &str)
 {
     auto jstr = env->NewStringUTF(str.c_str());
     if (env->ExceptionCheck()) {
-        KM_ERRTRACE("[jni] as_jstring exception, str=" << str);
+        KLOGE("[jni] as_jstring exception, str=" << str);
         env->ExceptionDescribe();
         env->ExceptionClear();
         return {env, env->NewStringUTF("")};
@@ -108,15 +108,15 @@ ScopedJavaLocalRef<jstring> as_jstring_utf16(JNIEnv* env, const std::string &str
     try {
         u16str = convertor.from_bytes(str);
     } catch (std::exception &e) {
-        KM_ERRTRACE("as_jstring_utf16, exception, str=" << str << ", e=" << e.what());
+        KLOGE("as_jstring_utf16, exception, str=" << str << ", e=" << e.what());
         return as_jstring(env, "");
     } catch (...) {
-        KM_ERRTRACE("as_jstring_utf16, unknown exception, str=" << str);
+        KLOGE("as_jstring_utf16, unknown exception, str=" << str);
         return as_jstring(env, "");
     }
     auto jstr = env->NewString((const jchar*)u16str.c_str(), u16str.size());
     if (env->ExceptionCheck()) {
-        KM_ERRTRACE("[jni] as_jstring_utf16 exception, str=" << str);
+        KLOGE("[jni] as_jstring_utf16 exception, str=" << str);
         env->ExceptionDescribe();
         env->ExceptionClear();
         return as_jstring(env, "");
@@ -217,17 +217,17 @@ ScopedJavaLocalRef<jstring> as_jstring_utf16(JNIEnv* env, const KMBuffer &kmbuf)
         }
     } catch (std::exception &e) {
         std::string str(first, last);
-        KM_ERRTRACE("as_jstring_utf16, exception, str=" << str << ", e=" << e.what());
+        KLOGE("as_jstring_utf16, exception, str=" << str << ", e=" << e.what());
         return as_jstring(env, "");
     } catch (...) {
         std::string str(first, last);
-        KM_ERRTRACE("as_jstring_utf16, unknown exception, str=" << str);
+        KLOGE("as_jstring_utf16, unknown exception, str=" << str);
         return as_jstring(env, "");
     }
     auto jstr = env->NewString((const jchar*)u16str.c_str(), (jsize)u16str.size());
     if (env->ExceptionCheck()) {
         std::string str(first, last);
-        KM_ERRTRACE("[jni] as_jstring_utf16 exception, str=" << str);
+        KLOGE("[jni] as_jstring_utf16 exception, str=" << str);
         env->ExceptionDescribe();
         env->ExceptionClear();
         return as_jstring(env, "");
