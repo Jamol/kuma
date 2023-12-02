@@ -12,6 +12,7 @@ def get_default_options(systemName):
         'release':              True,
         'msvc':                 'vs2017',
         'memcheck':             False,
+        'strip':                False, # for andorid
     }
     if systemName == 'windows':
         opt['archs'] = ['x86', 'x64']
@@ -44,6 +45,8 @@ def get_option(argv, systemName):
                       help='specify the version of microsoft visual studio')
     parser.add_option('--memcheck', dest='memcheck', action='store_true', default=False,
                       help='enable memory check')
+    parser.add_option('--strip', dest='strip', action='store_true', default=False,
+                      help='strip symbols for andoird build')
 
     (options, args) = parser.parse_args(args=argv[1:])
 
@@ -62,6 +65,7 @@ def get_option(argv, systemName):
     if options.msvc != '':
         userOption['msvc'] = options.msvc
     userOption['memcheck'] = options.memcheck
+    userOption['strip'] = options.strip
     
     print('User Options: ', userOption)
     return userOption

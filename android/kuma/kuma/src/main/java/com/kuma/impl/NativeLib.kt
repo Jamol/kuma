@@ -20,11 +20,12 @@ class NativeLib {
                 println(e)
             }
             if (isLoaded) {
-                loadSystemTrustStore()
+                val caCerts = getSystemTrustCACerts()
+                nativeLibInit(caCerts)
             }
             return isLoaded
         }
-        private fun loadSystemTrustStore() {
+        private fun getSystemTrustCACerts(): String {
             val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm())
             tmf.init(null as KeyStore?)
             var trustManager: X509TrustManager? = null
@@ -46,7 +47,7 @@ class NativeLib {
                     caCerts += pem
                 }
             }
-            nativeLibInit(caCerts)
+            return caCerts
         }
         private external fun nativeLibInit(caCerts: String)
     }

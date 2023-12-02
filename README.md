@@ -53,9 +53,24 @@ $ make
 ```
 
 ### Android
+[deprecated]
 ```
 $ cd src/jni
 $ ndk-build
+```
+kuma .aar:
+```
+open android/kuam in Android Studio
+or
+python bld/android/build_android_aar.py
+```
+kuma .so:
+```
+python bld/android/build_android_so.py
+```
+demo:
+```
+open test/android/kmtest in Android Studio
 ```
 
 ### CMake build
