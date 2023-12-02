@@ -713,6 +713,7 @@ private:
 struct InitConfig
 {
     const char* cert_path{nullptr};
+    const char* ca_certs{nullptr}; // ca certs in pem format
     bool load_system_ca_store{true};
     bool verify_client{false}; // server will verify client cert
 };

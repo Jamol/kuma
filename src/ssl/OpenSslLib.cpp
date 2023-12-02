@@ -24,6 +24,7 @@
 #include "OpenSslLib.h"
 #include "libkev/src/utils/kmtrace.h"
 #include "libkev/src/utils/utils.h"
+#include "libkev/src/utils/defer.h"
 #include "SslHandler.h"
 #include "ssl_utils.h"
 
@@ -46,6 +47,7 @@ bool OpenSslLib::initialized_ = false;
 std::uint32_t OpenSslLib::init_ref_ { 0 };
 
 std::string OpenSslLib::certs_path_;
+std::string OpenSslLib::ca_certs_;
 bool OpenSslLib::load_system_ca_store_{true};
 int OpenSslLib::server_verify_mode_{SSL_VERIFY_NONE};
 
@@ -72,6 +74,8 @@ namespace {
         return m;
     }
 }
+
+static bool loadTrustedCACerts(X509_STORE *x509_store, const std::string &ca_certs);
 
 bool OpenSslLib::init(const InitConfig &config)
 {
@@ -102,6 +106,9 @@ bool OpenSslLib::doInit(const InitConfig &config)
     certs_path_ = config.cert_path && config.cert_path[0] != '\0' ?
                   config.cert_path : kev::getExecutablePath();
     certs_path_ += "/cert";
+    if (config.ca_certs) {
+        ca_certs_ = config.ca_certs;
+    }
     load_system_ca_store_ = config.load_system_ca_store;
     server_verify_mode_ = config.verify_client ?
                           SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT :
@@ -260,6 +267,10 @@ SSL_CTX* OpenSslLib::createSSLContext(const SSL_METHOD *method, const SslCtxConf
                          << ", err=" << ERR_reason_error_string(ERR_get_error()));
         }
 #endif
+        if (!config.ca_certs.empty()) {
+            auto *x509_store = SSL_CTX_get_cert_store(ssl_ctx);
+            ca_ok = loadTrustedCACerts(x509_store, config.ca_certs) || ca_ok;
+        }
         if (config.load_system_ca_store) {
             auto *x509_store = SSL_CTX_get_cert_store(ssl_ctx);
             ca_ok = loadTrustedSystemCertificates(x509_store) || ca_ok;
@@ -313,6 +324,7 @@ SSL_CTX* OpenSslLib::defaultClientContext()
             SslCtxConfig config;
             config.load_system_ca_store = load_system_ca_store_;
             config.ca_file = certs_path_ + "/ca.pem";
+            config.ca_certs = ca_certs_;
             config.crl_file = certs_path_ + "/crl.pem";
             ssl_ctx_client_ = createSSLContext(SSLv23_client_method(), config);
         });
@@ -333,6 +345,7 @@ SSL_CTX* OpenSslLib::defaultServerContext()
             };
             if (server_verify_mode_ & SSL_VERIFY_PEER) {
                 config.ca_file = certs_path_ + "/ca.pem";
+                config.ca_certs = ca_certs_;
                 config.crl_file = certs_path_ + "/crl.pem";
                 config.load_system_ca_store = load_system_ca_store_;
             }
@@ -554,6 +567,34 @@ int OpenSslLib::serverNameCallback(SSL *ssl, int *ad, void *arg)
 int OpenSslLib::passwdCallback(char *buf, int size, int rwflag, void *userdata)
 {
     return 0;
+}
+
+static bool loadTrustedCACerts(X509_STORE *x509_store, const std::string &certs)
+{
+    BIO *bio = BIO_new_mem_buf(certs.data(), (int)certs.size());
+    if(!bio) {
+        return false;
+    }
+    DEFER(BIO_free(bio));
+
+    STACK_OF(X509_INFO) *sk_info =
+            PEM_X509_INFO_read_bio(bio, nullptr, nullptr, nullptr);
+
+    if (!sk_info) {
+        return false;
+    }
+
+    for (int i = 0; i < sk_X509_INFO_num(sk_info); i++) {
+        X509_INFO* info = sk_X509_INFO_value(sk_info, i);
+        if (info->x509) {
+            X509_STORE_add_cert(x509_store, info->x509);
+        }
+        if (info->crl) {
+            X509_STORE_add_crl(x509_store, info->crl);
+        }
+    }
+    sk_X509_INFO_pop_free(sk_info, X509_INFO_free);
+    return true;
 }
 
 #endif // KUMA_HAS_OPENSSL

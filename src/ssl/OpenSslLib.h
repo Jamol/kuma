@@ -49,6 +49,7 @@ struct SslCtxConfig
     std::string key_file;
     std::string ca_file;
     std::string ca_path;
+    std::string ca_certs;
     std::string crl_file;
 };
 
@@ -99,6 +100,7 @@ protected:
     
     // ssl config
     static std::string          certs_path_;
+    static std::string          ca_certs_;
     static bool                 load_system_ca_store_;
     static int                  server_verify_mode_;
     
