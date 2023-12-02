@@ -4,7 +4,10 @@
 
 #include "kmapi.h"
 #include "utils/km-jni.h"
+#include "utils/kmutils-jni.h"
 #include "libkev/src/utils/kmtrace.h"
+
+KUMA_JNI_NS_USING
 
 void jni_init();
 void jni_fini();
@@ -85,4 +88,15 @@ void jni_fini()
     catch (...) {
 
     }
+}
+
+extern "C"
+JNIEXPORT void JNICALL
+Java_com_kuma_impl_NativeLib_00024Companion_nativeLibInit(JNIEnv *env, jobject thiz, jstring jstr) {
+    auto ca_certs = as_std_string(env, jstr);
+    kuma::InitConfig config;
+    if (!ca_certs.empty()) {
+        config.ca_certs = ca_certs.c_str();
+    }
+    kuma::init(&config);
 }

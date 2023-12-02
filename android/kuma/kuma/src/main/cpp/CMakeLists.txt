@@ -12,7 +12,7 @@ cmake_minimum_required(VERSION 3.22.1)
 project("kuma")
 set(PROJ_ROOT_DIR ${PROJECT_SOURCE_DIR}/../../../../../..)
 
-set(OPENSSL_PATH $(PROJ_ROOT_DIR)/third_party/openssl)
+set(OPENSSL_PATH ${PROJ_ROOT_DIR}/third_party/openssl)
 set(OPENSSL_LIB_PATH ${OPENSSL_PATH}/lib/android/${ANDROID_ABI})
 set(LIBKEV_PATH ${PROJ_ROOT_DIR}/third_party/libkev)
 set(LIBKEV_LIB_PATH ${LIBKEV_PATH}/lib/android/${ANDROID_ABI})
@@ -73,10 +73,12 @@ include_directories(${PROJECT_SOURCE_DIR})
 include_directories(${PROJ_ROOT_DIR}/include)
 include_directories(${PROJ_ROOT_DIR}/src)
 include_directories(${PROJ_ROOT_DIR}/third_party)
+include_directories(${OPENSSL_PATH}/include)
 
-add_definitions(-DANDROID -D__ANDROID__)
+add_definitions(-DANDROID -D__ANDROID__ -DKUMA_HAS_OPENSSL)
 
-link_directories(${PROJ_ROOT_DIR}/third_party/libkev/lib/android/${ANDROID_ABI})
+link_directories(${LIBKEV_LIB_PATH})
+link_directories(${OPENSSL_LIB_PATH})
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
 # You can define multiple libraries, and CMake builds them for you.
@@ -101,4 +103,6 @@ target_link_libraries(${CMAKE_PROJECT_NAME}
         # List libraries link to the target library
         android
         log
-        kev)
+        kev
+        ssl.1.1
+        crypto.1.1)
