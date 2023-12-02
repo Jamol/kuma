@@ -184,7 +184,7 @@ KMError UdpSocketBase::bind(const std::string &bind_host, uint16_t bind_port, ui
         return KMError::FAILED;
     }
     printSocket();
-    if (registerFd(fd_)) {
+    if (!registerFd(fd_)) {
         KM_ERRXTRACE("bind, failed to register fd");
         return KMError::FAILED;
     }
