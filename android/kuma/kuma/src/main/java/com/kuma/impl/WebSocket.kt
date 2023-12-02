@@ -7,22 +7,22 @@ class WebSocket(val version: String) : com.kuma.kmapi.WebSocket {
     private var handle: Long = 0
     private var listener: ListenerKt? = null
     override fun setSslFlags(flags: Int) {
+        initNativeHandle()
         nativeSetSslFlags(handle, flags)
     }
 
     override fun setOrigin(origin: String) {
+        initNativeHandle()
         nativeSetOrigin(handle, origin)
     }
 
     override fun addHeader(key: String, value: String) {
+        initNativeHandle()
         nativeAddHeader(handle, key, value)
     }
 
     override fun open(url: String): Boolean {
-        if (handle.compareTo(0) != 0) {
-            close()
-        }
-        handle = nativeCreate(version)
+        initNativeHandle()
         return nativeOpen(handle, url)
     }
 
@@ -45,6 +45,12 @@ class WebSocket(val version: String) : com.kuma.kmapi.WebSocket {
 
     override fun setListener(listener: WebSocket.Listener.() -> Unit) {
         this.listener = ListenerKt().apply(listener)
+    }
+
+    private fun initNativeHandle() {
+        if (handle.compareTo(0) == 0) {
+            handle = nativeCreate(version)
+        }
     }
 
     fun onOpen(err: Int) {

@@ -7,23 +7,17 @@ class HttpRequest(val version: String) : com.kuma.kmapi.HttpRequest {
     private var handle: Long = 0
     private var listener: ListenerKt? = null
     override fun setSslFlags(flags: Int) {
-        if (handle.compareTo(0) == 0) {
-            handle = nativeCreate(version)
-        }
+        initNativeHandle()
         nativeSetSslFlags(handle, flags)
     }
 
     override fun addHeader(key: String, value: String) {
-        if (handle.compareTo(0) == 0) {
-            handle = nativeCreate(version)
-        }
+        initNativeHandle()
         nativeAddHeader(handle, key, value)
     }
 
     override fun sendRequest(method: String, url: String): Int {
-        if (handle.compareTo(0) == 0) {
-            handle = nativeCreate(version)
-        }
+        initNativeHandle()
         return nativeSendRequest(handle, method, url)
     }
 
@@ -46,6 +40,12 @@ class HttpRequest(val version: String) : com.kuma.kmapi.HttpRequest {
     override fun close() {
         nativeCloseAndDestroy(handle)
         handle = 0
+    }
+
+    private fun initNativeHandle() {
+        if (handle.compareTo(0) == 0) {
+            handle = nativeCreate(version)
+        }
     }
 
     override fun setListener(listener: HttpRequest.Listener.() -> Unit) {

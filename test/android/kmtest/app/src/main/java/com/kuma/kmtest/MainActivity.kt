@@ -10,6 +10,8 @@ import androidx.navigation.ui.setupActionBarWithNavController
 import android.view.Menu
 import android.view.MenuItem
 import com.kuma.kmapi.HttpRequest
+import com.kuma.kmapi.TcpSocket
+import com.kuma.kmapi.UdpSocket
 import com.kuma.kmapi.WebSocket
 import com.kuma.kmtest.databinding.ActivityMainBinding
 
@@ -19,6 +21,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var ws: WebSocket
     private lateinit var http: HttpRequest
+    private lateinit var tcp: TcpSocket
+    private lateinit var udp: UdpSocket
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,7 +48,8 @@ class MainActivity : AppCompatActivity() {
                     println("ws.onError, err=$err")
                 }
             }
-            ws.open("ws://baidu.com")
+            val wsUrl = "wss://demo.piesocket.com/v3/channel_123?api_key=VCXCEuvhGcBDP7XhiJJUDvR1e1D3eiVjgZ9VRiaV&notify_self"
+            ws.open(wsUrl)
 
             http = HttpRequest.create("HTTP/2.0")
             http.setListener {
@@ -59,6 +64,31 @@ class MainActivity : AppCompatActivity() {
                 }
             }
             http.sendRequest("GET", "https://www.cloudflare.com")
+
+            tcp = TcpSocket.create()
+            tcp.setListener {
+                onConnect { err ->
+                    println("tcp.onConnect, err=$err")
+                }
+                onData { data ->
+                    println("tcp.onData, len=" + data.size)
+                }
+                onError { err->
+                    println("tcp.onError, err=$err")
+                }
+            }
+            tcp.connect("www.baidu.com", 80)
+
+            udp = UdpSocket.create()
+            udp.setListener {
+                onData { data, host, port ->
+                    println("udp.onData, len=" + data.size + ", dest=" + host + ":" + port)
+                }
+                onError { err->
+                    println("udp.onError, err=$err")
+                }
+            }
+            udp.bind("::1", 8080)
         }
     }
 
