@@ -51,7 +51,7 @@ KMError TcpConnection::connect(const std::string &host, uint16_t port, EventCall
     host_ = host;
     port_ = port;
     
-    return tcp_.connect(host.c_str(), port, std::move(cb));
+    return tcp_.connect(host, port, std::move(cb));
 }
 
 void TcpConnection::saveInitData(const KMBuffer *init_buf)
@@ -132,7 +132,7 @@ int TcpConnection::send(const iovec *iovs, int count)
                 appendSendBuffer(buf);
                 ret = 0;
             } else {
-                ret -= iovs[i].iov_len;
+                ret -= (int)iovs[i].iov_len;
             }
         }
         return int(total_len);
@@ -226,7 +226,7 @@ void TcpConnection::onReceive(KMError err)
         }
         initData_.clear();
     }
-    uint8_t buf[128*1024];
+    uint8_t buf[64*1024];
     do {
         int ret = tcp_.receive(buf, sizeof(buf));
         if (ret > 0) {

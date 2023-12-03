@@ -199,7 +199,7 @@ KMError H2Connection::Impl::sendH2Frame(H2Frame *frame)
     }
     
     if (frame->type() == H2FrameType::HEADERS) {
-        HeadersFrame *headers = dynamic_cast<HeadersFrame*>(frame);
+        auto *headers = dynamic_cast<HeadersFrame*>(frame);
         return sendHeadersFrame(headers);
     } else if (frame->type() == H2FrameType::DATA) {
         if (flow_ctrl_.remoteWindowSize() < frame->getPayloadLength()) {

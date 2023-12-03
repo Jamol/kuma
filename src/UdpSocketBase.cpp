@@ -112,11 +112,7 @@ void UdpSocketBase::printSocket() const
 {
     if (INVALID_FD != fd_) {
         sockaddr_storage ss_addr = {0};
-#if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
         socklen_t len = sizeof(ss_addr);
-#else
-        int len = sizeof(ss_addr);
-#endif
         char local_ip[128] = {0};
         uint16_t local_port = 0;
         if(getsockname(fd_, (struct sockaddr*)&ss_addr, &len) != -1) {
@@ -161,14 +157,14 @@ KMError UdpSocketBase::bind(const std::string &bind_host, uint16_t bind_port, ui
     setSocketOption();
 
     if(AF_INET == bind_addr_.ss_family) {
-        struct sockaddr_in *sa = (struct sockaddr_in*)&bind_addr_;
+        auto *sa = (struct sockaddr_in*)&bind_addr_;
 #if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
         if(udp_flags & UDP_FLAG_MULTICAST) {
             sa->sin_addr.s_addr = htonl(INADDR_ANY);
         }
 #endif
     } else if(AF_INET6 == bind_addr_.ss_family) {
-        struct sockaddr_in6 *sa = (struct sockaddr_in6*)&bind_addr_;
+        auto *sa = (struct sockaddr_in6*)&bind_addr_;
 #if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
         if(udp_flags & UDP_FLAG_MULTICAST) {
             sa->sin6_addr = in6addr_any;
@@ -305,7 +301,7 @@ KMError UdpSocketBase::mcastJoin(const std::string &mcast_addr, uint16_t mcast_p
     }
     
     if(AF_INET == mcast_addr_.ss_family) {
-        sockaddr_in *pa = (sockaddr_in *)&bind_addr_;
+        auto *pa = (sockaddr_in *)&bind_addr_;
         if(setsockopt(fd_,IPPROTO_IP, IP_MULTICAST_IF,(char *)&pa->sin_addr, sizeof(pa->sin_addr)) < 0) {
             KM_ERRXTRACE("mcastJoin, failed to set IP_MULTICAST_IF, err"<<kev::SKUtils::getLastError());
         }
@@ -324,7 +320,7 @@ KMError UdpSocketBase::mcastJoin(const std::string &mcast_addr, uint16_t mcast_p
             return KMError::SOCK_ERROR;
         }
     } else if(AF_INET6 == mcast_addr_.ss_family) {
-        sockaddr_in6 *pa = (sockaddr_in6 *)&bind_addr_;
+        auto *pa = (sockaddr_in6 *)&bind_addr_;
         if(setsockopt(fd_,IPPROTO_IP, IPV6_MULTICAST_IF,(char *)&pa->sin6_scope_id, sizeof(pa->sin6_scope_id)) < 0) {
             KM_ERRXTRACE("mcastJoin, failed to set IPV6_MULTICAST_IF, err"<<kev::SKUtils::getLastError());
         }
@@ -596,11 +592,11 @@ void UdpSocketBase::notifySendReady()
 
 void UdpSocketBase::ioReady(KMEvent events, void *ol, size_t io_size)
 {
-    DESTROY_DETECTOR_SETUP();
+    DESTROY_DETECTOR_SETUP()
     if (events & kEventRead) {// handle EPOLLIN firstly
         onReceive(KMError::NOERR);
     }
-    DESTROY_DETECTOR_CHECK_VOID();
+    DESTROY_DETECTOR_CHECK_VOID()
     if ((events & kEventError) && fd_ != INVALID_FD) {
         KM_ERRXTRACE("ioReady, EPOLLERR or EPOLLHUP, events=" << events
             << ", err=" << kev::SKUtils::getLastError());

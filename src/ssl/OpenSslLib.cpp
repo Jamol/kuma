@@ -115,7 +115,7 @@ bool OpenSslLib::doInit(const InitConfig &config)
                           SSL_VERIFY_NONE;
     
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
-    if (OPENSSL_init_ssl(0, NULL) == 0) {
+    if (OPENSSL_init_ssl(0, nullptr) == 0) {
         return false;
     }
     /*OPENSSL_init_ssl(
@@ -152,7 +152,7 @@ bool OpenSslLib::doInit(const InitConfig &config)
         unsigned short rand_ret = rand() % 65536;
         RAND_seed(&rand_ret, sizeof(rand_ret));
     }
-    ssl_index_ = SSL_get_ex_new_index(0, (void*)"SSL data index", NULL, NULL, NULL);
+    ssl_index_ = SSL_get_ex_new_index(0, (void*)"SSL data index", nullptr, nullptr, nullptr);
     return true;
 }
 
@@ -381,7 +381,7 @@ struct app_verify_arg
 
 int OpenSslLib::verifyCallback(int ok, X509_STORE_CTX *ctx)
 {
-    if(NULL == ctx) {
+    if(nullptr == ctx) {
         return -1;
     }
     SSL* ssl = static_cast<SSL*>(X509_STORE_CTX_get_ex_data(ctx, SSL_get_ex_data_X509_STORE_CTX_idx()));
@@ -397,7 +397,7 @@ int OpenSslLib::verifyCallback(int ok, X509_STORE_CTX *ctx)
     if(x509_cert) {
         char *s, buf[512];
         s = X509_NAME_oneline(X509_get_subject_name(x509_cert), buf, sizeof(buf));
-        if(s != NULL) {
+        if(s != nullptr) {
             auto x509_err_depth = X509_STORE_CTX_get_error_depth(ctx);
             if(ok) {
                 KM_INFOTRACE("verifyCallback ok, depth="<<x509_err_depth<<", subject="<<buf);
@@ -455,15 +455,15 @@ int OpenSslLib::appVerifyCallback(X509_STORE_CTX *ctx, void *arg)
     }
     
     int ok = 1;
-    struct app_verify_arg *cb_arg = (struct app_verify_arg *)arg;
+    auto *cb_arg = (struct app_verify_arg *)arg;
     
     if (cb_arg->app_verify) {
-        char *s = NULL, buf[256];
+        char *s = nullptr, buf[256];
         auto x509_cert = X509_STORE_CTX_get0_cert(ctx);
         if(x509_cert) {
             s = X509_NAME_oneline(X509_get_subject_name(x509_cert), buf, 256);
         }
-        if(s != NULL) {
+        if(s != nullptr) {
             auto x509_err_depth = X509_STORE_CTX_get_error_depth(ctx);
             KM_INFOTRACE("appVerifyCallback, depth="<<x509_err_depth<<", "<<buf);
         }
@@ -554,7 +554,7 @@ int OpenSslLib::serverNameCallback(SSL *ssl, int *ad, void *arg)
     
     const char *serverName = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
     if (serverName) {
-        SSL_CTX *ssl_ctx_old = reinterpret_cast<SSL_CTX*>(arg);
+        auto *ssl_ctx_old = reinterpret_cast<SSL_CTX*>(arg);
         SSL_CTX *ssl_ctx_new = getSSLContext(serverName);
         if (ssl_ctx_new != ssl_ctx_old) {
             SSL_set_SSL_CTX(ssl, ssl_ctx_new);

@@ -74,7 +74,7 @@ SioHandler::SioHandler()
 
 SioHandler::~SioHandler()
 {
-    cleanup();
+    SioHandler::cleanup();
 }
 
 KMError SioHandler::init(SslRole ssl_role, SOCKET_FD fd, uint32_t ssl_flags)
@@ -88,7 +88,7 @@ KMError SioHandler::init(SslRole ssl_role, SOCKET_FD fd, uint32_t ssl_flags)
     if(0 == ret) {
         KM_ERRXTRACE("init, SSL_set_fd failed, err="<<ERR_reason_error_string(ERR_get_error()));
         SSL_free(ssl_);
-        ssl_ = NULL;
+        ssl_ = nullptr;
         return KMError::SSL_ERROR;
     }
     return KMError::NOERR;
@@ -142,7 +142,7 @@ SioHandler::SslState SioHandler::sslConnect()
                            <<", os_err="<<kev::SKUtils::getLastError()
                            <<", err_msg="<<(err_str?err_str:""));
             SSL_free(ssl_);
-            ssl_ = NULL;
+            ssl_ = nullptr;
             return SslState::SSL_ERROR;
         }
     }
@@ -177,7 +177,7 @@ SioHandler::SslState SioHandler::sslAccept()
                            <<", os_err="<<kev::SKUtils::getLastError()
                            <<", err_msg="<<(err_str?err_str:""));
             SSL_free(ssl_);
-            ssl_ = NULL;
+            ssl_ = nullptr;
             return SslState::SSL_ERROR;
         }
     }
@@ -252,7 +252,7 @@ int SioHandler::send(const iovec* iovs, int count)
             }
         }
     }
-    return bytes_sent;
+    return (int)bytes_sent;
 }
 
 int SioHandler::send(const KMBuffer &buf)
@@ -278,45 +278,52 @@ int SioHandler::receive(void* data, size_t size)
         return -1;
     }
     ERR_clear_error();
-    int ret = SSL_read(ssl_, data, (int)size);
-    int ssl_err = SSL_get_error(ssl_, ret);
-    switch (ssl_err)
-    {
-        case SSL_ERROR_NONE:
-            break;
-        case SSL_ERROR_WANT_READ:
-        case SSL_ERROR_WANT_WRITE:
-            ret = 0;
-            break;
-        case SSL_ERROR_ZERO_RETURN:
-            ret = -1;
-            KM_INFOXTRACE("receive, SSL_ERROR_ZERO_RETURN, len="<<size);
-            break;
-        case SSL_ERROR_SYSCALL:
-            if(errno == EAGAIN || errno == EINTR) {
+    size_t bytes_recv = 0;
+    int ret = 0;
+    do {
+        ret = SSL_read(ssl_, static_cast<uint8_t *>(data) + bytes_recv, int(size - bytes_recv));
+        int ssl_err = SSL_get_error(ssl_, ret);
+        switch (ssl_err) {
+            case SSL_ERROR_NONE:
+                break;
+            case SSL_ERROR_WANT_READ:
+            case SSL_ERROR_WANT_WRITE:
                 ret = 0;
                 break;
+            case SSL_ERROR_ZERO_RETURN:
+                ret = -1;
+                KM_INFOXTRACE("receive, SSL_ERROR_ZERO_RETURN, len=" << size);
+                break;
+            case SSL_ERROR_SYSCALL:
+                if (errno == EAGAIN || errno == EINTR) {
+                    ret = 0;
+                    break;
+                }
+                // fallthru to log error
+            default: {
+                const char *err_str = ERR_reason_error_string(ERR_get_error());
+                KM_ERRXTRACE("receive, SSL_read failed, fd=" << fd_
+                                                             << ", ssl_status=" << ret
+                                                             << ", ssl_err=" << ssl_err
+                                                             << ", os_err="
+                                                             << kev::SKUtils::getLastError()
+                                                             << ", err_msg="
+                                                             << (err_str ? err_str : ""));
+                ret = -1;
+                break;
             }
-            // fallthru to log error
-        default:
-        {
-            const char* err_str = ERR_reason_error_string(ERR_get_error());
-            KM_ERRXTRACE("receive, SSL_read failed, fd="<<fd_
-                           <<", ssl_status="<<ret
-                           <<", ssl_err="<<ssl_err
-                           <<", os_err="<<kev::SKUtils::getLastError()
-                           <<", err_msg="<<(err_str?err_str:""));
-            ret = -1;
+        }
+
+        if (ret < 0) {
+            cleanup();
+            return ret; // may lead in loss of already read data
+        } else if (ret == 0) {
             break;
         }
-    }
+        bytes_recv += ret;
+    } while(size > bytes_recv);
 
-    if(ret < 0) {
-        cleanup();
-    }
-    
-    //KM_INFOXTRACE("receive, ret: "<<ret);
-    return ret;
+    return (int)bytes_recv;
 }
 
 KMError SioHandler::close()

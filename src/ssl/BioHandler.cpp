@@ -76,7 +76,7 @@ BioHandler::BioHandler()
 
 BioHandler::~BioHandler()
 {
-    cleanup();
+    BioHandler::cleanup();
 }
 
 void BioHandler::cleanup()
@@ -132,7 +132,7 @@ KMError BioHandler::detachSsl(SSL* &ssl, BIO* &nbio)
 int BioHandler::send(const void* data, size_t length)
 {
     size_t bytes_total = 0;
-    const uint8_t *ptr = static_cast<const uint8_t*>(data);
+    const auto *ptr = static_cast<const uint8_t*>(data);
     do {
         auto ret = writeAppData(ptr + bytes_total, length - bytes_total);
         if (ret < 0) {
@@ -187,8 +187,8 @@ int BioHandler::send(const KMBuffer &buf)
 
 int BioHandler::receive(void* data, size_t length)
 {
-    size_t bytes_total = 0;
-    uint8_t *ptr = static_cast<uint8_t*>(data);
+    size_t bytes_recv = 0;
+    auto *ptr = static_cast<uint8_t*>(data);
     do {
         auto err = tryRecvSslData();
         if (is_fatal_error(err)) {
@@ -196,7 +196,7 @@ int BioHandler::receive(void* data, size_t length)
             return -1;
         }
         do {
-            auto ret = readAppData(ptr + bytes_total, length - bytes_total);
+            auto ret = readAppData(ptr + bytes_recv, length - bytes_recv);
             if (ret == 0) {
                 break; // want ssl read
             }
@@ -204,13 +204,13 @@ int BioHandler::receive(void* data, size_t length)
                 KM_ERRXTRACE("receive, failed to read app data");
                 return ret;
             }
-            bytes_total += ret;
-        } while (bytes_total < length);
+            bytes_recv += ret;
+        } while (bytes_recv < length);
         if (err != KMError::AGAIN) {
             break;
         }
-    } while (bytes_total < length);
-    return static_cast<int>(bytes_total);
+    } while (bytes_recv < length);
+    return static_cast<int>(bytes_recv);
 }
 
 KMError BioHandler::close()
@@ -267,7 +267,7 @@ BioHandler::SslState BioHandler::doHandshake()
                                <<", os_err="<<kev::SKUtils::getLastError()
                                <<", err_msg="<<(err_str?err_str:""));
                 SSL_free(ssl_);
-                ssl_ = NULL;
+                ssl_ = nullptr;
                 state = SslState::SSL_ERROR;
                 break;
             }
@@ -533,7 +533,7 @@ KMError BioHandler::trySslHandshake()
             }
             else {
                 // try handshake again since SSL data may be sent out
-                auto ssl_state = doHandshake();
+                ssl_state = doHandshake();
                 if (SslState::SSL_ERROR == ssl_state) {
                     KM_ERRXTRACE("trySslHandshake, SSL handshake failed 2");
                     return KMError::SSL_ERROR;

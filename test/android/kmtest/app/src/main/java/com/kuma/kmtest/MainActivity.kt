@@ -23,6 +23,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var http: HttpRequest
     private lateinit var tcp: TcpSocket
     private lateinit var udp: UdpSocket
+    private var httpBytesReceived = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,6 +44,10 @@ class MainActivity : AppCompatActivity() {
             ws.setListener {
                 onOpen { err ->
                     println("ws.onOpen, err=$err")
+                    ws.send("Hello WebSocket!")
+                }
+                onString { str, fin ->
+                    println("ws.onString, str=$str, fin=$fin")
                 }
                 onError { err->
                     println("ws.onError, err=$err")
@@ -56,8 +61,11 @@ class MainActivity : AppCompatActivity() {
                 onHeaderComplete {
                     println("http.onHeaderComplete")
                 }
+                onData { data ->
+                    httpBytesReceived += data.size
+                }
                 onResponseComplete {
-                    println("http.onResponseComplete")
+                    println("http.onResponseComplete, bytesReceived=$httpBytesReceived")
                 }
                 onError { err->
                     println("http.onError, err=$err")

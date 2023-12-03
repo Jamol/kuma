@@ -63,6 +63,8 @@
 #include <stdarg.h>
 #include <errno.h>
 
+#include <memory>
+
 #include "EventLoopImpl.h"
 #include "TcpSocketImpl.h"
 #include "libkev/src/utils/utils.h"
@@ -627,7 +629,7 @@ bool TcpSocket::Impl::createSocket()
     else
 #endif
     {
-        socket_.reset(new SocketBase(loop));
+        socket_ = std::make_unique<SocketBase>(loop);
     }
     socket_->setReadCallback([this](KMError err) {
         onReceive(err);

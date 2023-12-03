@@ -203,36 +203,36 @@ void AcceptorBase::onAccept()
 {
     SOCKET_FD fd = INVALID_FD;
     auto loop = loop_.lock();
+    sockaddr_storage ss_addr = { 0 };
     while(!closed_ && !loop->stopped()) {
-        fd = ::accept(fd_, NULL, NULL);
+        socklen_t ss_len = sizeof(ss_addr);
+        fd = ::accept(fd_, (sockaddr*)&ss_addr, &ss_len);
         if(INVALID_FD == fd) {
             if (EINTR == errno) {
                 continue;
             }
             return ;
         }
-        onAccept(fd);
+        onAccept(fd, ss_addr);
     }
 }
 
 void AcceptorBase::onAccept(SOCKET_FD fd)
 {
-    char peer_ip[128] = { 0 };
-    uint16_t peer_port = 0;
-
     sockaddr_storage ss_addr = { 0 };
-#if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
     socklen_t ss_len = sizeof(ss_addr);
-#else
-    int ss_len = sizeof(ss_addr);
-#endif
     int ret = getpeername(fd, (struct sockaddr*)&ss_addr, &ss_len);
-    if (ret == 0) {
-        kev::km_get_sock_addr((struct sockaddr*)&ss_addr, sizeof(ss_addr), peer_ip, sizeof(peer_ip), &peer_port);
-    }
-    else {
+    if (ret != 0) {
         KM_WARNXTRACE("onAccept, getpeername failed, err=" << kev::SKUtils::getLastError());
     }
+    onAccept(fd, ss_addr);
+}
+
+void AcceptorBase::onAccept(SOCKET_FD fd, sockaddr_storage &peer_addr)
+{
+    char peer_ip[128] = { 0 };
+    uint16_t peer_port = 0;
+    kev::km_get_sock_addr((struct sockaddr*)&peer_addr, sizeof(peer_addr), peer_ip, sizeof(peer_ip), &peer_port);
 
     KM_INFOXTRACE("onAccept, fd=" << fd << ", peer_ip=" << peer_ip << ", peer_port=" << peer_port);
     if (!accept_cb_ || !accept_cb_(fd, peer_ip, peer_port)) {

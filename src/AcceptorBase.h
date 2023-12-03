@@ -59,6 +59,7 @@ protected:
     void setSocketOption();
     virtual void onAccept();
     void onAccept(SOCKET_FD fd);
+    void onAccept(SOCKET_FD fd, sockaddr_storage &peer_addr);
     void onClose(KMError err);
     void cleanup();
     virtual void ioReady(KMEvent events, void* ol, size_t io_size);

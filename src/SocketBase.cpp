@@ -208,11 +208,7 @@ KMError SocketBase::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
         return KMError::FAILED;
     }
 
-#if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
     socklen_t len = sizeof(ss_addr);
-#else
-    int len = sizeof(ss_addr);
-#endif
     char local_ip[128] = { 0 };
     uint16_t local_port = 0;
     ret = getsockname(fd_, (struct sockaddr*)&ss_addr, &len);
@@ -577,9 +573,9 @@ void SocketBase::ioReady(KMEvent events, void *ol, size_t io_size)
             onConnect(KMError::POLL_ERROR);
         }
         else {
-            DESTROY_DETECTOR_SETUP();
+            DESTROY_DETECTOR_SETUP()
             onConnect(KMError::NOERR);
-            DESTROY_DETECTOR_CHECK_VOID();
+            DESTROY_DETECTOR_CHECK_VOID()
             if ((events & kEventRead)) {
                 onReceive(KMError::NOERR);
             }
@@ -590,9 +586,9 @@ void SocketBase::ioReady(KMEvent events, void *ol, size_t io_size)
     case State::OPEN:
     {
         if (events & kEventRead) {// handle EPOLLIN firstly
-            DESTROY_DETECTOR_SETUP();
+            DESTROY_DETECTOR_SETUP()
             onReceive(KMError::NOERR);
-            DESTROY_DETECTOR_CHECK_VOID();
+            DESTROY_DETECTOR_CHECK_VOID()
         }
         if ((events & kEventError) && getState() == State::OPEN) {
             KM_ERRXTRACE("ioReady, kEventError on OPEN, events=" << events << ", err=" << kev::SKUtils::getLastError());

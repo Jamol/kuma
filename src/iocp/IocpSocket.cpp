@@ -92,11 +92,7 @@ KMError IocpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
     }
     setState(State::CONNECTING);
 
-#if defined(KUMA_OS_LINUX) || defined(KUMA_OS_MAC)
     socklen_t len = sizeof(ss_addr);
-#else
-    int len = sizeof(ss_addr);
-#endif
     char local_ip[128] = { 0 };
     uint16_t local_port = 0;
     auto ret = getsockname(fd_, (struct sockaddr*)&ss_addr, &len);

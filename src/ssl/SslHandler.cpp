@@ -33,7 +33,7 @@ void SslHandler::cleanup()
     if(ssl_) {
         SSL_shutdown(ssl_);
         SSL_free(ssl_);
-        ssl_ = NULL;
+        ssl_ = nullptr;
     }
     setState(SslState::SSL_NONE);
 }
@@ -50,13 +50,13 @@ KMError SslHandler::init(SslRole ssl_role, SOCKET_FD fd, uint32_t ssl_flags)
     
     obj_key_ += "_" + std::to_string(fd_);
     
-    SSL_CTX* ctx = NULL;
+    SSL_CTX* ctx = nullptr;
     if(is_server_) {
         ctx = OpenSslLib::defaultServerContext();
     } else {
         ctx = OpenSslLib::defaultClientContext();
     }
-    if(NULL == ctx) {
+    if(nullptr == ctx) {
         KM_ERRXTRACE("init, CTX is NULL");
         return KMError::SSL_ERROR;
     }
