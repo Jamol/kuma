@@ -177,7 +177,7 @@ public:
         AUTO,   // KMBuffer is auto storage, don't call delete when destroy
         OTHER
     };
-    KMBuffer(StorageType type = StorageType::OTHER) : storage_type_(type) {}
+    KMBuffer(StorageType type=StorageType::AUTO) : storage_type_(type) {}
 
     KMBuffer(const KMBuffer &other)
     {
@@ -477,7 +477,7 @@ public:
                 size_t copy_len = offset+len <= kmb_len ? len : kmb_len - offset;
                 KMBuffer *dd = nullptr;
                 if(!shared_data_) {
-                    dd = new KMBuffer();
+                    dd = new KMBuffer(StorageType::OTHER);
                     std::allocator<char> a;
                     dd->allocBuffer(copy_len, a);
                     dd->write(static_cast<char*>(kmb->readPtr()) + offset, copy_len);
@@ -598,7 +598,7 @@ public:
 private:
     KMBuffer* cloneSelf() const
     {
-        KMBuffer* kmb = new KMBuffer();
+        KMBuffer* kmb = new KMBuffer(StorageType::OTHER);
         cloneSelf(*kmb);
         return kmb;
     }

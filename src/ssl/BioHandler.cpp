@@ -543,7 +543,6 @@ KMError BioHandler::trySslHandshake()
                 }
             }
         }
-        
     } while (try_recv && try_send);
     
     return KMError::AGAIN;

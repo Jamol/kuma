@@ -209,7 +209,7 @@ KMBuffer H2Handshake::buildPreface()
     int ret = settings.encode((uint8_t*)buf.writePtr(), buf.space());
     if (ret < 0) {
         KM_ERRTRACE("H2Handshake::buildPreface, failed to encode setting frame");
-        return KMBuffer();
+        return {};
     }
     buf.bytesWritten(ret);
     WindowUpdateFrame win_update;
@@ -218,7 +218,7 @@ KMBuffer H2Handshake::buildPreface()
     ret = win_update.encode((uint8_t*)buf.writePtr(), buf.space());
     if (ret < 0) {
         KM_ERRTRACE("H2Handshake::buildPreface, failed to window update frame");
-        return KMBuffer();
+        return {};
     }
     buf.bytesWritten(ret);
     return buf;

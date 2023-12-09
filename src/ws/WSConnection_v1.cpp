@@ -150,25 +150,24 @@ KMError WSConnection_V1::attachSocket(TcpSocket::Impl&& tcp,
 
 int WSConnection_V1::send(const iovec* iovs, int count)
 {
-    if (count > 8) {
-        return -1;
+    if (count <= 0) {
+        return 0;
     }
-    KMBuffer bufs[8] {
-        {KMBuffer::StorageType::AUTO},
-        {KMBuffer::StorageType::AUTO},
-        {KMBuffer::StorageType::AUTO},
-        {KMBuffer::StorageType::AUTO},
-        {KMBuffer::StorageType::AUTO},
-        {KMBuffer::StorageType::AUTO},
-        {KMBuffer::StorageType::AUTO},
-        {KMBuffer::StorageType::AUTO}
-    };
-    for (int i = 0; i < count; ++i) {
-        bufs[i].reset(iovs[i].iov_base, iovs[i].iov_len, iovs[i].iov_len);
-        if (i != 0) bufs[0].append(&bufs[i]);
+    KMBuffer bufs[8];
+    KMBuffer *send_bufs = bufs;
+    if (count > ARRAY_SIZE(bufs)) {
+        send_bufs = new KMBuffer[count];
     }
-    auto ret = stream_->sendData(bufs[0]);
-    bufs[0].reset();
+    send_bufs[0].reset(iovs[0].iov_base, iovs[0].iov_len, iovs[0].iov_len);
+    for (int i = 1; i < count; ++i) {
+        send_bufs[i].reset(iovs[i].iov_base, iovs[i].iov_len, iovs[i].iov_len);
+        send_bufs[0].append(&send_bufs[i]);
+    }
+    auto ret = stream_->sendData(send_bufs[0]);
+    send_bufs[0].reset();
+    if (send_bufs != bufs) {
+        delete[] send_bufs;
+    }
     return ret;
 }
 

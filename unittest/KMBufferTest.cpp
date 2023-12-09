@@ -53,7 +53,7 @@ TEST(KMBufferTest, Test_Chained_Buffer)
     memset(str1, 'A', sizeof(str1));
     memset(str2, 'B', sizeof(str2));
     
-    auto *buf1 = new KMBuffer(str1, sizeof(str1));
+    auto *buf1 = new KMBuffer(str1, sizeof(str1), KMBuffer::StorageType::OTHER);
     size_t buf1_size = 500;
     buf1->bytesWritten(buf1_size);
     EXPECT_FALSE(buf1->isChained());
@@ -121,7 +121,7 @@ TEST(KMBufferTest, Verify_Sub_Buffer)
     memset(str1, 'A', sizeof(str1));
     memset(str2, 'B', sizeof(str2));
     
-    auto *buf1 = new KMBuffer(str1, sizeof(str1));
+    auto *buf1 = new KMBuffer(str1, sizeof(str1), KMBuffer::StorageType::OTHER);
     size_t buf1_size = 500;
     buf1->bytesWritten(buf1_size);
     EXPECT_FALSE(buf1->isChained());
