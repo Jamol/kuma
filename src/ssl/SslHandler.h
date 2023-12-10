@@ -55,7 +55,7 @@ public:
     virtual int send(const void* data, size_t size) = 0;
     virtual int send(const iovec* iovs, int count) = 0;
     virtual int send(const KMBuffer &buf) = 0;
-    virtual int receive(void* data, size_t size) = 0;
+    virtual int receive(void* data, size_t size, KMError *last_error) = 0;
     virtual KMError close() = 0;
     
     virtual KMError sendBufferedData() { return KMError::NOERR; }

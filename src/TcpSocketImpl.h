@@ -51,11 +51,11 @@ public:
     
     Impl(const EventLoopPtr &loop);
     Impl(const Impl &other) = delete;
-    Impl(Impl &&other);
+    Impl(Impl &&other) noexcept;
     ~Impl();
     
     Impl& operator= (const Impl &other) = delete;
-    Impl& operator= (Impl &&other);
+    Impl& operator= (Impl &&other) noexcept;
     
     KMError setSslFlags(uint32_t ssl_flags);
     uint32_t getSslFlags() const { return ssl_flags_; }
@@ -77,6 +77,7 @@ public:
     int send(const iovec *iovs, int count);
     int send(const KMBuffer &buf);
     int receive(void *data, size_t length);
+    int receive(void *data, size_t length, KMError *last_error);
     KMError close();
     
     KMError pause();
@@ -105,12 +106,22 @@ private:
     int sendData(const iovec *iovs, int count);
     int sendData(const KMBuffer &buf);
     int recvData(void *data, size_t length);
+
+    template<typename F>
+    void runInLoop(F &&f)
+    {
+        auto loop = loop_.lock();
+        if (loop) {
+            loop->post(std::forward<F>(f), &token_);
+        }
+    }
     
 private:
     void cleanup();
     
 private:
     EventLoopWeakPtr    loop_;
+    EventLoopToken      token_;
     uint32_t            ssl_flags_{ SSL_NONE };
     
     std::unique_ptr<SocketBase> socket_;

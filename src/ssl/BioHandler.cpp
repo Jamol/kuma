@@ -185,16 +185,15 @@ int BioHandler::send(const KMBuffer &buf)
     return bytes_sent;
 }
 
-int BioHandler::receive(void* data, size_t length)
+int BioHandler::receive(void* data, size_t length, KMError *last_error)
 {
+    if (last_error) {
+        *last_error = KMError::NOERR;
+    }
     size_t bytes_recv = 0;
     auto *ptr = static_cast<uint8_t*>(data);
     do {
         auto err = tryRecvSslData();
-        if (is_fatal_error(err)) {
-            KM_ERRXTRACE("receive, failed to recv SSL data, err=" << (int)err);
-            return -1;
-        }
         do {
             auto ret = readAppData(ptr + bytes_recv, length - bytes_recv);
             if (ret == 0) {
@@ -202,10 +201,20 @@ int BioHandler::receive(void* data, size_t length)
             }
             else if (ret < 0) {
                 KM_ERRXTRACE("receive, failed to read app data");
-                return ret;
+                if (last_error) {
+                    *last_error = KMError::SSL_ERROR;
+                }
+                return bytes_recv > 0 ? (int)bytes_recv : ret;
             }
             bytes_recv += ret;
         } while (bytes_recv < length);
+        if (is_fatal_error(err)) {
+            KM_ERRXTRACE("receive, failed to recv SSL data, err=" << (int)err);
+            if (last_error) {
+                *last_error = err;
+            }
+            return bytes_recv > 0 ? (int)bytes_recv : -1;
+        }
         if (err != KMError::AGAIN) {
             break;
         }
@@ -494,7 +503,7 @@ KMError BioHandler::tryRecvSslData()
         }
     } while (bytes_recv > 0);
     
-    return KMError::NOERR; // recv bocked
+    return KMError::NOERR; // recv blocked
 }
 
 KMError BioHandler::trySslHandshake()

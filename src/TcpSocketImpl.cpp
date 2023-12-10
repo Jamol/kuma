@@ -85,17 +85,18 @@ TcpSocket::Impl::Impl(const EventLoopPtr &loop)
     KM_SetObjKey("TcpSocket");
 }
 
-TcpSocket::Impl::Impl(Impl &&other)
+TcpSocket::Impl::Impl(Impl &&other) noexcept
 {
     *this = std::move(other);
 }
 
 TcpSocket::Impl::~Impl()
 {
+    token_.reset();
     cleanup();
 }
 
-TcpSocket::Impl& TcpSocket::Impl::operator= (Impl &&other)
+TcpSocket::Impl& TcpSocket::Impl::operator= (Impl &&other) noexcept
 {
     if (this != &other) {
         if (other.socket_ && other.socket_->isConnecting()) {
@@ -513,15 +514,63 @@ int TcpSocket::Impl::receive(void *data, size_t length)
     int ret = 0;
 #ifdef KUMA_HAS_OPENSSL
     if (sslEnabled()) {
-        ret = ssl_handler_->receive(data, length);
+        KMError last_error = KMError::NOERR;
+        ret = ssl_handler_->receive(data, length, &last_error);
+        if (last_error != KMError::NOERR) {
+            cleanup();
+            if (ret > 0 && error_cb_) {
+                runInLoop([=]{
+                    if (error_cb_) error_cb_(last_error);
+                });
+            }
+        }
     }
     else
 #endif
     {
         ret = recvData(data, length);
+        if (ret < 0) {
+            cleanup();
+        }
     }
-    if (ret < 0) {
-        cleanup();
+    return ret;
+}
+
+int TcpSocket::Impl::receive(void *data, size_t length, KMError *last_error)
+{
+    if (last_error) {
+        *last_error = KMError::NOERR;
+    }
+    if (!isReady()) {
+        return 0;
+    }
+
+    int ret = 0;
+#ifdef KUMA_HAS_OPENSSL
+    if (sslEnabled()) {
+        KMError error;
+        ret = ssl_handler_->receive(data, length, &error);
+        if (error != KMError::NOERR) {
+            cleanup();
+            if (last_error) {
+                *last_error = error;
+            } else if (ret > 0 && error_cb_) {
+                runInLoop([=]{
+                    if (error_cb_) error_cb_(error);
+                });
+            }
+        }
+    }
+    else
+#endif
+    {
+        ret = recvData(data, length);
+        if (ret < 0) {
+            cleanup();
+            if (last_error) {
+                *last_error = KMError::SOCK_ERROR;
+            }
+        }
     }
     return ret;
 }
@@ -529,6 +578,7 @@ int TcpSocket::Impl::receive(void *data, size_t length)
 KMError TcpSocket::Impl::close()
 {
     KM_INFOXTRACE("close");
+    token_.reset();
     auto loop = eventLoop();
     if (loop && !loop->stopped()) {
         loop->sync([this] {

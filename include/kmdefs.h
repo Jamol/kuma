@@ -75,11 +75,12 @@ enum class KMError : int {
     POLL_ERROR          = -13,
     PROTO_ERROR         = -14,
     SSL_ERROR           = -15,
-    BUFFER_TOO_SMALL    = -16,
-    BUFFER_TOO_LONG     = -17,
-    NOT_SUPPORTED       = -18,
-    NOT_IMPLEMENTED     = -19,
-    NOT_AUTHORIZED      = -20,
+    PEER_CLOSED         = -16,
+    BUFFER_TOO_SMALL    = -17,
+    BUFFER_TOO_LONG     = -18,
+    NOT_SUPPORTED       = -19,
+    NOT_IMPLEMENTED     = -20,
+    NOT_AUTHORIZED      = -21,
     
     DESTROYED           = -699
 };

@@ -271,11 +271,17 @@ int SioHandler::send(const KMBuffer &buf)
     return bytes_sent;
 }
 
-int SioHandler::receive(void* data, size_t size)
+int SioHandler::receive(void* data, size_t size, KMError *last_error)
 {
     if(!ssl_) {
         KM_ERRXTRACE("receive, ssl is NULL");
+        if (last_error) {
+            *last_error = KMError::FAILED;
+        }
         return -1;
+    }
+    if (last_error) {
+        *last_error = KMError::NOERR;
     }
     ERR_clear_error();
     size_t bytes_recv = 0;
@@ -293,11 +299,17 @@ int SioHandler::receive(void* data, size_t size)
             case SSL_ERROR_ZERO_RETURN:
                 ret = -1;
                 KM_INFOXTRACE("receive, SSL_ERROR_ZERO_RETURN, len=" << size);
+                if (last_error) {
+                    *last_error = KMError::PEER_CLOSED;
+                }
                 break;
             case SSL_ERROR_SYSCALL:
-                if (errno == EAGAIN || errno == EINTR) {
+                if (errno == EAGAIN) {
                     ret = 0;
                     break;
+                }
+                if (errno == EINTR) {
+                    continue;
                 }
                 // fallthru to log error
             default: {
@@ -310,13 +322,16 @@ int SioHandler::receive(void* data, size_t size)
                                                              << ", err_msg="
                                                              << (err_str ? err_str : ""));
                 ret = -1;
+                if (last_error) {
+                    *last_error = KMError::SSL_ERROR;
+                }
                 break;
             }
         }
 
         if (ret < 0) {
             cleanup();
-            return ret; // may lead in loss of already read data
+            return bytes_recv > 0 ? (int)bytes_recv : ret;
         } else if (ret == 0) {
             break;
         }

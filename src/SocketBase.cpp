@@ -380,7 +380,7 @@ int SocketBase::send(const KMBuffer &buf)
     int count = 0;
     for (auto it = buf.begin(); it != buf.end(); ++it) {
         if (it->length() > 0) {
-            if (count < 128) {
+            if (count < ARRAY_SIZE(iovs)) {
                 iovs[count].iov_base = static_cast<char*>(it->readPtr());
                 iovs[count++].iov_len = static_cast<decltype(iovs[0].iov_len)>(it->length());
             } else {

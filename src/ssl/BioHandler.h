@@ -57,7 +57,7 @@ public:
     int send(const void* data, size_t size) override;
     int send(const iovec* iovs, int count) override;
     int send(const KMBuffer &buf) override;
-    int receive(void* data, size_t size) override;
+    int receive(void* data, size_t size, KMError *last_error) override;
     KMError close() override;
     
     KMError sendBufferedData() override;
