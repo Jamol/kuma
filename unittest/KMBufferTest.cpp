@@ -41,7 +41,8 @@ TEST(KMBufferTest, Invalid_Offset)
     size_t buf_size = 2300;
     size_t buf_off = 2000;
     auto *str = new char(str_size);
-    auto *buf = new KMBuffer(str, str_size, buf_size, buf_off, deleter);
+    auto *buf = new KMBuffer(str, str_size, buf_size, buf_off, deleter,
+                             KMBuffer::StorageType::OTHER);
     EXPECT_EQ(1000, buf->size());
     delete buf;
 }
@@ -73,14 +74,16 @@ TEST(KMBufferTest, Test_Chained_Buffer)
     size_t buf3_size = 2300;
     size_t buf3_off = 300;
     auto *str3 = new char[str3_size];
-    auto *buf3 = new KMBuffer(str3, str3_size, buf3_size, buf3_off, deleter);
+    auto *buf3 = new KMBuffer(str3, str3_size, buf3_size, buf3_off, deleter,
+                              KMBuffer::StorageType::OTHER);
     
     auto deleter4 = [](void *buf, size_t) {};
     size_t str4_size = 3000;
     size_t buf4_size = 1300;
     size_t buf4_off = 0;
     auto *str4 = new char[str4_size];
-    auto *buf4 = new KMBuffer(str4, str4_size, buf4_size, buf4_off, deleter4);
+    auto *buf4 = new KMBuffer(str4, str4_size, buf4_size, buf4_off, deleter4,
+                              KMBuffer::StorageType::OTHER);
     
     buf1->append(&buf2);
     buf1->append(buf3);
@@ -142,7 +145,8 @@ TEST(KMBufferTest, Verify_Sub_Buffer)
     size_t buf3_off = 300;
     auto *str3 = new char[str3_size];
     memset(str3, 'C', str3_size);
-    auto *buf3 = new KMBuffer(str3, str3_size, buf3_size, buf3_off, deleter);
+    auto *buf3 = new KMBuffer(str3, str3_size, buf3_size, buf3_off, deleter,
+                              KMBuffer::StorageType::OTHER);
     
     buf2.append(buf1);
     buf2.append(buf3);

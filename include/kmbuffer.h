@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2017, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2014-2024, Fengping Bao <jamol@live.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -190,18 +190,22 @@ public:
     }
     
     template<typename Allocator>
-    KMBuffer(size_t size, Allocator &a)
+    KMBuffer(size_t size, Allocator &a, StorageType type=StorageType::AUTO)
+    : storage_type_(type)
     {
         allocBuffer(size, a);
     }
     
-    KMBuffer(size_t size)
+    KMBuffer(size_t size, StorageType type=StorageType::AUTO)
+    : storage_type_(type)
     {
         allocBuffer(size);
     }
     
     template<typename DataDeleter> // DataDeleter = void(void*, size_t)
-    KMBuffer(void *data, size_t capacity, size_t size, size_t offset, DataDeleter &&dd)
+    KMBuffer(void *data, size_t capacity, size_t size, size_t offset, DataDeleter &&dd,
+             StorageType type=StorageType::AUTO)
+    : storage_type_(type)
     {
         reset(data, capacity, size, offset, std::forward<DataDeleter>(dd));
     }
