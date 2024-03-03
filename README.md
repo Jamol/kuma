@@ -3,7 +3,7 @@ kuma is a multi-platform support network library developed in C++. It implements
 
 ## Features
 
-* Support epoll, poll/WSAPoll, IOCP, kqueue and select
+* Support epoll, poll/WSAPoll, IOCP, kqueue, io_uring and select
 * Portable/cross platform(linux, windows, macOS, iOS and Android)
 * Support OpenSSL 1.0 and 1.1
 * IPv6 support
