@@ -108,9 +108,11 @@ KMError IocpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
 
 KMError IocpSocket::attachFd(SOCKET_FD fd)
 {
-    SocketBase::attachFd(fd);
-    postRecvOperation(fd_);
-    return KMError::NOERR;
+    auto ret = SocketBase::attachFd(fd);
+    if (ret == KMError::NOERR) {
+        postRecvOperation(fd_);
+    }
+    return ret;
 }
 
 KMError IocpSocket::detachFd(SOCKET_FD &fd)
@@ -204,7 +206,7 @@ int IocpSocket::receive(void* data, size_t length)
         bytes_recv += bytes_read;
     }
     if (bytes_recv == length || !readable_) {
-        if (!readable_) {
+        if (!readable_ && recvBuffer().empty()) {
             postRecvOperation(fd_);
         }
         return static_cast<int>(bytes_recv);

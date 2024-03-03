@@ -39,7 +39,10 @@ public:
 
     bool registerFd(const EventLoopPtr &loop, SOCKET_FD fd)
     {
-        registered_ = iocp_ctx_->registerFd(loop, fd);
+        registered_ = true;
+        if (!iocp_ctx_->registerFd(loop, fd)) {
+            registered_ = false;
+        }
         return registered_;
     }
 

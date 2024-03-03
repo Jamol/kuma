@@ -76,6 +76,9 @@ using namespace kuma;
 
 static bool getSockAddr(const std::string &host, uint16_t port, sockaddr_storage &ss_addr);
 
+KUMA_NS_BEGIN
+extern int to_iovecs(const KMBuffer &buf, iovec* iovs, int sz, iovec** new_iovs);
+KUMA_NS_END
 
 UdpSocketBase::UdpSocketBase(const EventLoopPtr &loop)
 : loop_(loop)
@@ -480,23 +483,17 @@ int UdpSocketBase::send(const iovec *iovs, int count, const std::string &host, u
 
 int UdpSocketBase::send(const KMBuffer &buf, const std::string &host, uint16_t port)
 {
-    iovec iovs[128] = { {0} };
-    int count = 0;
-    for (auto it = buf.begin(); it != buf.end(); ++it) {
-        if (it->length() > 0) {
-            if (count < 128) {
-                iovs[count].iov_base = static_cast<char*>(it->readPtr());
-                iovs[count++].iov_len = static_cast<decltype(iovs[0].iov_len)>(it->length());
-            } else {
-                return 0; // buffer too long
-            }
-        }
-    }
-
+    iovec iovs[5] = { {0} };
+    iovec* p_iovs = iovs;
+    int count = to_iovecs(buf, iovs, ARRAY_SIZE(iovs), &p_iovs);
     if (count <= 0) {
         return 0;
     }
-    return send(iovs, count, host, port);
+    auto ret = send(iovs, count, host, port);
+    if (p_iovs != iovs) {
+        delete[] p_iovs;
+    }
+    return ret;
 }
 
 int UdpSocketBase::receive(void *data, size_t length, char *ip, size_t ip_len, uint16_t &port)
