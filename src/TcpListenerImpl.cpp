@@ -30,7 +30,11 @@
 #include "libkev/src/utils/utils.h"
 #include "libkev/src/utils/kmtrace.h"
 #ifdef KUMA_OS_WIN
-# include "iocp/IocpAcceptor.h"
+//# include "iocp/IocpAcceptor.h"
+# include "ioop/OpAcceptor.h"
+#endif
+#if defined(KUMA_OS_LINUX) && !defined(KUMA_OS_ANDROID)
+# include "ioop/OpAcceptor.h"
 #endif
 
 using namespace kuma;
@@ -39,7 +43,13 @@ TcpListener::Impl::Impl(const EventLoopPtr &loop)
 {
 #ifdef KUMA_OS_WIN
     if (loop->getPollType() == PollType::IOCP) {
-        acceptor_.reset(new IocpAcceptor(loop));
+        //acceptor_.reset(new IocpAcceptor(loop));
+        acceptor_.reset(new OpAcceptor(loop));
+    }
+    else
+#elif defined(KUMA_OS_LINUX) && !defined(KUMA_OS_ANDROID)
+    if (loop->getPollType() == PollType::IOURING) {
+        acceptor_.reset(new OpAcceptor(loop));
     }
     else
 #endif

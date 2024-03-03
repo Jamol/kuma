@@ -99,7 +99,7 @@ bool UdpSocketBase::initSocket(int ss_family)
         return true;
     }
 
-    fd_ = socket(ss_family, SOCK_DGRAM, 0);
+    fd_ = createFd(ss_family);
     if (INVALID_FD == fd_) {
         KM_ERRXTRACE("initSocket, socket error, err=" << kev::SKUtils::getLastError());
         return false;
@@ -136,6 +136,11 @@ void UdpSocketBase::cleanup()
     }
 }
 
+SOCKET_FD UdpSocketBase::createFd(int addr_family)
+{
+    return ::socket(addr_family, SOCK_DGRAM, 0);
+}
+
 KMError UdpSocketBase::bind(const std::string &bind_host, uint16_t bind_port, uint32_t udp_flags)
 {
     KM_INFOXTRACE("bind, bind_host="<<bind_host<<", bind_port="<<bind_port);
@@ -152,7 +157,7 @@ KMError UdpSocketBase::bind(const std::string &bind_host, uint16_t bind_port, ui
         KM_ERRXTRACE("bind, km_set_sock_addr failed");
         return KMError::INVALID_PARAM;
     }
-    fd_ = socket(bind_addr_.ss_family, SOCK_DGRAM, 0);
+    fd_ = createFd(bind_addr_.ss_family);
     if(INVALID_FD == fd_) {
         KM_ERRXTRACE("bind, socket error, err="<<kev::SKUtils::getLastError());
         return KMError::FAILED;
@@ -201,7 +206,7 @@ KMError UdpSocketBase::connect(const std::string &host, uint16_t port)
     }
     bool registered = INVALID_FD != fd_;
     if (INVALID_FD == fd_) {
-        fd_ = socket(ss_addr.ss_family, SOCK_DGRAM, 0);
+        fd_ = createFd(ss_addr.ss_family);
         if (INVALID_FD == fd_) {
             KM_ERRXTRACE("connect, socket error, err=" << kev::SKUtils::getLastError());
             return KMError::SOCK_ERROR;
@@ -296,7 +301,7 @@ KMError UdpSocketBase::mcastJoin(const std::string &mcast_addr, uint16_t mcast_p
         return KMError::INVALID_PARAM;
     }
     if(INVALID_FD == fd_) {
-        fd_ = socket(mcast_addr_.ss_family, SOCK_DGRAM, 0);
+        fd_ = createFd(mcast_addr_.ss_family);
         if(INVALID_FD == fd_) {
             KM_ERRXTRACE("mcastJoin, socket error, err="<<kev::SKUtils::getLastError());
             return KMError::SOCK_ERROR;

@@ -70,6 +70,9 @@
     <Filter Include="Source Files\utils">
       <UniqueIdentifier>{681ba974-a1b3-475b-b186-265aa73590d8}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ioop">
+      <UniqueIdentifier>{d1938d0e-9e59-4d2e-94bb-17fc4b30ca17}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\kmapi.cpp">
@@ -282,6 +285,18 @@
     <ClCompile Include="..\..\src\utils\utils.cpp">
       <Filter>Source Files\utils</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\ioop\OpAcceptor.cpp">
+      <Filter>Source Files\ioop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ioop\OpContext.cpp">
+      <Filter>Source Files\ioop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ioop\OpSocket.cpp">
+      <Filter>Source Files\ioop</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\ioop\OpUdpSocket.cpp">
+      <Filter>Source Files\ioop</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\EventLoopImpl.h">
@@ -493,6 +508,18 @@
     </ClInclude>
     <ClInclude Include="..\..\src\ssl\ssl_utils.h">
       <Filter>Header Files\ssl</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ioop\OpAcceptor.h">
+      <Filter>Source Files\ioop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ioop\OpContext.h">
+      <Filter>Source Files\ioop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ioop\OpSocket.h">
+      <Filter>Source Files\ioop</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\ioop\OpUdpSocket.h">
+      <Filter>Source Files\ioop</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -69,6 +69,7 @@ protected:
     bool initSocket(int ss_family);
     void printSocket() const;
     void cleanup();
+    virtual SOCKET_FD createFd(int addr_family);
     virtual bool registerFd(SOCKET_FD fd);
     virtual void unregisterFd(SOCKET_FD fd, bool close_fd);
     virtual void ioReady(KMEvent events, void *ol, size_t io_size);

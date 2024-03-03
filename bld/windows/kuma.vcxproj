@@ -202,6 +202,10 @@
     <ClCompile Include="..\..\src\iocp\IocpAcceptor.cpp" />
     <ClCompile Include="..\..\src\iocp\IocpSocket.cpp" />
     <ClCompile Include="..\..\src\iocp\IocpUdpSocket.cpp" />
+    <ClCompile Include="..\..\src\ioop\OpAcceptor.cpp" />
+    <ClCompile Include="..\..\src\ioop\OpContext.cpp" />
+    <ClCompile Include="..\..\src\ioop\OpSocket.cpp" />
+    <ClCompile Include="..\..\src\ioop\OpUdpSocket.cpp" />
     <ClCompile Include="..\..\src\kmapi.cpp" />
     <ClCompile Include="..\..\src\proxy\BasicAuthenticator.cpp" />
     <ClCompile Include="..\..\src\proxy\ProxyAuthenticator.cpp" />
@@ -287,6 +291,10 @@
     <ClInclude Include="..\..\src\iocp\IocpBase.h" />
     <ClInclude Include="..\..\src\iocp\IocpSocket.h" />
     <ClInclude Include="..\..\src\iocp\IocpUdpSocket.h" />
+    <ClInclude Include="..\..\src\ioop\OpAcceptor.h" />
+    <ClInclude Include="..\..\src\ioop\OpContext.h" />
+    <ClInclude Include="..\..\src\ioop\OpSocket.h" />
+    <ClInclude Include="..\..\src\ioop\OpUdpSocket.h" />
     <ClInclude Include="..\..\src\poll\IOPoll.h" />
     <ClInclude Include="..\..\src\poll\Notifier.h" />
     <ClInclude Include="..\..\src\proxy\BasicAuthenticator.h" />
