@@ -66,6 +66,10 @@
 
 using namespace kuma;
 
+KUMA_NS_BEGIN
+extern int to_iovecs(const KMBuffer &buf, iovec* iovs, int sz, iovec** new_iovs);
+KUMA_NS_END
+
 SocketBase::SocketBase(const EventLoopPtr &loop)
     : loop_(loop)
 {
@@ -376,23 +380,17 @@ int SocketBase::send(const iovec *iovs, int count)
 
 int SocketBase::send(const KMBuffer &buf)
 {
-    iovec iovs[128] = { {0} };
-    int count = 0;
-    for (auto it = buf.begin(); it != buf.end(); ++it) {
-        if (it->length() > 0) {
-            if (count < ARRAY_SIZE(iovs)) {
-                iovs[count].iov_base = static_cast<char*>(it->readPtr());
-                iovs[count++].iov_len = static_cast<decltype(iovs[0].iov_len)>(it->length());
-            } else {
-                break; // send partial data
-            }
-        }
-    }
-    
+    iovec iovs[5] = { {0} };
+    iovec* p_iovs = iovs;
+    int count = to_iovecs(buf, iovs, ARRAY_SIZE(iovs), &p_iovs);
     if (count <= 0) {
         return 0;
     }
-    return send(iovs, count);
+    auto ret = send(p_iovs, count);
+    if (p_iovs != iovs) {
+        delete[] p_iovs;
+    }
+    return ret;
 }
 
 int SocketBase::receive(void *data, size_t length)
@@ -605,3 +603,33 @@ void SocketBase::ioReady(KMEvent events, void *ol, size_t io_size)
         break;
     }
 }
+
+KUMA_NS_BEGIN
+
+int to_iovecs(const KMBuffer &buf, iovec* iovs, int sz, iovec** new_iovs)
+{
+    iovec* p_iovs = iovs;
+    int count = 0;
+    for (auto it = buf.begin(); it != buf.end(); ++it) {
+        if (it->length() == 0) {
+            continue;
+        }
+        if (count >= sz) {
+            int total = count;
+            for (auto it1 = it; it1 != buf.end(); ++it1) {
+                ++total;
+            }
+            p_iovs = new iovec[total];
+            memcpy(p_iovs, iovs, sizeof(iovs[0])*count);
+            sz = total;
+            *new_iovs = p_iovs;
+        }
+        p_iovs[count].iov_base = static_cast<char*>(it->readPtr());
+        p_iovs[count].iov_len = static_cast<decltype(iovs[0].iov_len)>(it->length());
+        ++count;
+    }
+
+    return count;
+}
+
+KUMA_NS_END
