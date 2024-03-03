@@ -24,6 +24,8 @@
 
 #include "kmconf.h"
 
+#include <stdint.h>
+#include <stddef.h>
 #include <functional>
 
 #define KEV_NS_BEGIN   namespace kev {
@@ -61,17 +63,18 @@ enum class Result : int {
     INVALID_STATE       = -8,
     INVALID_PARAM       = -9,
     INVALID_PROTO       = -10,
-    ALREADY_EXIST       = -11,
-    NOT_EXIST           = -12,
-    SOCK_ERROR          = -13,
-    POLL_ERROR          = -14,
-    PROTO_ERROR         = -15,
-    SSL_ERROR           = -16,
-    BUFFER_TOO_SMALL    = -17,
-    BUFFER_TOO_LONG     = -18,
-    NOT_SUPPORTED       = -19,
-    NOT_IMPLEMENTED     = -20,
-    NOT_AUTHORIZED      = -21,
+    INVALID_OPERATION   = -11,
+    ALREADY_EXIST       = -12,
+    NOT_EXIST           = -13,
+    SOCK_ERROR          = -14,
+    POLL_ERROR          = -15,
+    PROTO_ERROR         = -16,
+    SSL_ERROR           = -17,
+    BUFFER_TOO_SMALL    = -18,
+    BUFFER_TOO_LONG     = -19,
+    NOT_SUPPORTED       = -20,
+    NOT_IMPLEMENTED     = -21,
+    NOT_AUTHORIZED      = -22,
     
     DESTROYED           = -699
 };
@@ -83,6 +86,8 @@ enum class PollType {
     EPOLL,
     KQUEUE,
     IOCP,
+    IOURING,
+    RUNLOOP,
     STLCV, // none IO event loop
 };
 

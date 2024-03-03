@@ -71,7 +71,11 @@
 #include "libkev/src/utils/kmtrace.h"
 #include "SocketBase.h"
 #ifdef KUMA_OS_WIN
-# include "iocp/IocpSocket.h"
+//# include "iocp/IocpSocket.h"
+# include "ioop/OpSocket.h"
+#endif
+#if defined(KUMA_OS_LINUX) && !defined(KUMA_OS_ANDROID)
+# include "ioop/OpSocket.h"
 #endif
 #include "ssl/BioHandler.h"
 #include "ssl/SioHandler.h"
@@ -674,7 +678,13 @@ bool TcpSocket::Impl::createSocket()
     }
 #ifdef KUMA_OS_WIN
     if (loop->getPollType() == PollType::IOCP) {
-        socket_.reset(new IocpSocket(loop));
+        //socket_.reset(new IocpSocket(loop));
+        socket_.reset(new OpSocket(loop));
+    }
+    else
+#elif defined(KUMA_OS_LINUX) && !defined(KUMA_OS_ANDROID)
+    if (loop->getPollType() == PollType::IOURING) {
+        socket_.reset(new OpSocket(loop));
     }
     else
 #endif

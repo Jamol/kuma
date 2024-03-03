@@ -59,6 +59,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     include_directories(${PROJ_ROOT_DIR}/third_party/openssl/include)
     file(GLOB WINDOWS_SOURCES 
         ${PROJ_ROOT_DIR}/src/iocp/*.cpp
+        ${PROJ_ROOT_DIR}/src/ioop/*.cpp
         ${PROJ_ROOT_DIR}/src/proxy/SspiAuthenticator.cpp)
     
     list(FILTER SSL_FILES EXCLUDE REGEX ".*_darwin\\.cpp$")
@@ -80,6 +81,8 @@ elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
     endif ()
 elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
     include_directories(/usr/include)
+    file(GLOB LINUX_SOURCES 
+        ${PROJ_ROOT_DIR}/src/ioop/*.cpp)
     list(FILTER SSL_FILES EXCLUDE REGEX ".*_darwin\\.cpp$")
     list(FILTER SSL_FILES EXCLUDE REGEX ".*_windows\\.cpp$")
     set(SOURCE_FILES ${SOURCE_FILES} ${LINUX_SOURCES} ${SSL_FILES})

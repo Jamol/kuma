@@ -78,6 +78,11 @@ IocpUdpSocket::~IocpUdpSocket()
     cleanup();
 }
 
+SOCKET_FD IocpUdpSocket::createFd(int addr_family)
+{
+    return WSASocketW(addr_family, SOCK_DGRAM, IPPROTO_IP, NULL, 0, WSA_FLAG_OVERLAPPED);
+}
+
 bool IocpUdpSocket::registerFd(SOCKET_FD fd)
 {
     return IocpBase::registerFd(loop_.lock(), fd);

@@ -107,6 +107,10 @@ SRCS =  \
     proxy/ProxyAuthenticator.cpp \
     proxy/BasicAuthenticator.cpp \
     proxy/ProxyConnectionImpl.cpp \
+    ioop/OpAcceptor.cpp \
+    ioop/OpContext.cpp \
+    ioop/OpSocket.cpp \
+    ioop/OpUdpSocket.cpp \
     DnsResolver.cpp \
     kmapi.cpp
 

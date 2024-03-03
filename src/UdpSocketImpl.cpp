@@ -65,7 +65,11 @@
 #include "libkev/src/utils/utils.h"
 #include "libkev/src/utils/kmtrace.h"
 #ifdef KUMA_OS_WIN
-# include "iocp/IocpUdpSocket.h"
+//# include "iocp/IocpUdpSocket.h"
+# include "ioop/OpUdpSocket.h"
+#endif
+#if defined(KUMA_OS_LINUX) && !defined(KUMA_OS_ANDROID)
+# include "ioop/OpUdpSocket.h"
 #endif
 
 using namespace kuma;
@@ -74,7 +78,13 @@ UdpSocket::Impl::Impl(const EventLoopPtr &loop)
 {
 #ifdef KUMA_OS_WIN
     if (loop->getPollType() == PollType::IOCP) {
-        socket_.reset(new IocpUdpSocket(loop));
+        //socket_.reset(new IocpUdpSocket(loop));
+        socket_.reset(new OpUdpSocket(loop));
+    }
+    else
+#elif defined(KUMA_OS_LINUX) && !defined(KUMA_OS_ANDROID)
+    if (loop->getPollType() == PollType::IOURING) {
+        socket_.reset(new OpUdpSocket(loop));
     }
     else
 #endif
