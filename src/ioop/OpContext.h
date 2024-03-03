@@ -108,6 +108,9 @@ struct ConnAcctOp : public OpBase
 {
     sockaddr_storage addr;
     sockaddr_storage addr2;
+#if !defined(KUMA_OS_WIN)
+    socklen_t addrlen;
+#endif
 
     void prepare(OpCode oc, OpContext* ctx)
     {
@@ -335,7 +338,12 @@ public:
         kev::Op op1;
         op1.oc = op->oc;
         op1.addr = (sockaddr*)&op->addr;
+#if defined(KUMA_OS_WIN)
         op1.addrlen = sizeof(sockaddr_storage);
+#else
+        op->addrlen = sizeof(sockaddr_storage);
+        op1.addr2 = &op->addrlen;
+#endif
         op1.flags = 0;
         op1.data = &op->data;
         increment();
