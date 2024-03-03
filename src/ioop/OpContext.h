@@ -765,10 +765,10 @@ protected:
             removePendingOp(op);
             if (op->oc != OpCode::CANCEL) {
                 appendFreeOp(op);
+                if (decrement()) return;
             } else {
                 delete op;
             }
-            if (decrement()) return;
         }
     }
 
