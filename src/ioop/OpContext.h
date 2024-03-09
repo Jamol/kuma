@@ -368,7 +368,6 @@ public:
         op->prepare(OpCode::WRITEV, this);
         op->pending = true;
         appendPendingOp(op);
-        KM_ERRTRACE("postSendOp, fd=" << fd << ", len=" << buf.chainLength());
 
         kev::Op op1;
         op1.oc = op->oc;
