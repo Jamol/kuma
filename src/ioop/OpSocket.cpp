@@ -102,16 +102,7 @@ KMError OpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_ms
     }
     setState(State::CONNECTING);
 
-    socklen_t len = sizeof(ss_addr);
-    char local_ip[128] = { 0 };
-    uint16_t local_port = 0;
-    auto ret = getsockname(fd_, (struct sockaddr*)&ss_addr, &len);
-    if (ret != -1) {
-        kev::km_get_sock_addr((struct sockaddr*)&ss_addr, sizeof(ss_addr), local_ip, sizeof(local_ip), &local_port);
-    }
-
-    KM_INFOXTRACE("connect_i, fd=" << fd_ << ", local_ip=" << local_ip
-        << ", local_port=" << local_port << ", state=" << getState());
+    KM_INFOXTRACE("connect_i, fd=" << fd_ << ", state=" << getState());
 
     return KMError::NOERR;
 }
@@ -276,6 +267,19 @@ void OpSocket::onConnect(int res)
     setsockopt(fd_, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, NULL, 0);
 #endif
     postRecvOp();
+
+    sockaddr_storage ss_local;
+    socklen_t len = sizeof(ss_local);
+    char local_ip[128] = { 0 };
+    uint16_t local_port = 0;
+    auto ret = getsockname(fd_, (struct sockaddr*)&ss_local, &len);
+    if (ret != -1) {
+        kev::km_get_sock_addr((struct sockaddr*)&ss_local, sizeof(ss_local), local_ip, sizeof(local_ip), &local_port);
+    }
+
+    KM_INFOXTRACE("onConnect, fd=" << fd_ << ", local_ip=" << local_ip
+        << ", local_port=" << local_port << ", state=" << getState() << ", res=" << res);
+    
     SocketBase::onConnect(KMError::NOERR);
 }
 

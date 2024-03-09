@@ -368,6 +368,7 @@ public:
         op->prepare(OpCode::WRITEV, this);
         op->pending = true;
         appendPendingOp(op);
+        KM_ERRTRACE("postSendOp, fd=" << fd << ", len=" << buf.chainLength());
 
         kev::Op op1;
         op1.oc = op->oc;
@@ -378,6 +379,7 @@ public:
         increment();
         auto ret = toKMError(loop->submitOp(fd, op1));
         if (ret != KMError::NOERR) {
+            KM_ERRTRACE("postSendOp, fd=" << fd << ", ret=" << int(ret));
             removePendingOp(op);
             appendFreeOp(op);
             decrement();
@@ -404,6 +406,7 @@ public:
         increment();
         auto ret = toKMError(loop->submitOp(fd, op1));
         if (ret != KMError::NOERR) {
+            KM_ERRTRACE("postRecvOp, fd=" << fd << ", ret=" << int(ret));
             removePendingOp(op);
             appendFreeOp(op);
             decrement();
@@ -477,6 +480,7 @@ public:
 
     void onOpComplete(OpBase* base, int res)
     {
+        //KM_INFOTRACE("onOpComplete, oc=" << int(base->oc) << ", res=" << res);
         if (!base->pending) {
             return;
         }
