@@ -272,8 +272,7 @@ void OpSocket::onConnect(int res)
     socklen_t len = sizeof(ss_local);
     char local_ip[128] = { 0 };
     uint16_t local_port = 0;
-    auto ret = getsockname(fd_, (struct sockaddr*)&ss_local, &len);
-    if (ret != -1) {
+    if (getsockname(fd_, (struct sockaddr*)&ss_local, &len) != -1) {
         kev::km_get_sock_addr((struct sockaddr*)&ss_local, sizeof(ss_local), local_ip, sizeof(local_ip), &local_port);
     }
 
