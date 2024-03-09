@@ -86,7 +86,7 @@ enum class PollType {
     EPOLL,
     KQUEUE,
     IOCP,
-    IOURING,
+    IORING,
     RUNLOOP,
     STLCV, // none IO event loop
 };

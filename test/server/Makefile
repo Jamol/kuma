@@ -10,9 +10,8 @@ KUMADIR = ../..
 SRCDIR = $(ROOTDIR)/server
 THIRDPARTYDIR = $(KUMADIR)/third_party
 
-BINDIR = $(KUMADIR)/bin/linux
-LIBDIR = $(ROOTDIR)/lib
-OBJDIR = $(ROOTDIR)/objs/server/linux
+BINDIR = $(KUMADIR)/bin/linux/x86_64/Debug
+OBJDIR = $(ROOTDIR)/objs/server/linux/x86_64/Debug
 TARGET = server
 
 #
@@ -31,7 +30,7 @@ LIBS = -L$(BINDIR) -lkuma
 CXX=g++
 
 CXXFLAGS = -g -std=c++14 -pipe -fPIC -Wall -Wextra -pedantic
-LDFLAGS = -lpthread -ldl -lssl -lcrypt -Wl,-rpath,.
+LDFLAGS = -lpthread -ldl -Wl,-rpath,.
 
 SRCS =  \
     RunLoop.cpp\

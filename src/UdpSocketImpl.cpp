@@ -68,7 +68,7 @@
 //# include "iocp/IocpUdpSocket.h"
 # include "ioop/OpUdpSocket.h"
 #endif
-#if defined(KUMA_OS_LINUX) && !defined(KUMA_OS_ANDROID)
+#if defined(KUMA_HAS_IOURING)
 # include "ioop/OpUdpSocket.h"
 #endif
 
@@ -82,8 +82,8 @@ UdpSocket::Impl::Impl(const EventLoopPtr &loop)
         socket_.reset(new OpUdpSocket(loop));
     }
     else
-#elif defined(KUMA_OS_LINUX) && !defined(KUMA_OS_ANDROID)
-    if (loop->getPollType() == PollType::IOURING) {
+#elif defined(KUMA_HAS_IOURING)
+    if (loop->getPollType() == PollType::IORING) {
         socket_.reset(new OpUdpSocket(loop));
     }
     else

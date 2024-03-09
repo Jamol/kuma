@@ -33,7 +33,7 @@
 //# include "iocp/IocpAcceptor.h"
 # include "ioop/OpAcceptor.h"
 #endif
-#if defined(KUMA_OS_LINUX) && !defined(KUMA_OS_ANDROID)
+#if defined(KUMA_HAS_IOURING)
 # include "ioop/OpAcceptor.h"
 #endif
 
@@ -47,8 +47,8 @@ TcpListener::Impl::Impl(const EventLoopPtr &loop)
         acceptor_.reset(new OpAcceptor(loop));
     }
     else
-#elif defined(KUMA_OS_LINUX) && !defined(KUMA_OS_ANDROID)
-    if (loop->getPollType() == PollType::IOURING) {
+#elif defined(KUMA_HAS_IOURING)
+    if (loop->getPollType() == PollType::IORING) {
         acceptor_.reset(new OpAcceptor(loop));
     }
     else

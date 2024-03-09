@@ -74,7 +74,7 @@
 //# include "iocp/IocpSocket.h"
 # include "ioop/OpSocket.h"
 #endif
-#if defined(KUMA_OS_LINUX) && !defined(KUMA_OS_ANDROID)
+#if defined(KUMA_HAS_IOURING)
 # include "ioop/OpSocket.h"
 #endif
 #include "ssl/BioHandler.h"
@@ -682,8 +682,8 @@ bool TcpSocket::Impl::createSocket()
         socket_.reset(new OpSocket(loop));
     }
     else
-#elif defined(KUMA_OS_LINUX) && !defined(KUMA_OS_ANDROID)
-    if (loop->getPollType() == PollType::IOURING) {
+#elif defined(KUMA_HAS_IOURING)
+    if (loop->getPollType() == PollType::IORING) {
         socket_.reset(new OpSocket(loop));
     }
     else
@@ -708,7 +708,11 @@ bool TcpSocket::Impl::createSslHandler()
 {
     auto loop = eventLoop();
     if (loop) {
-        if (loop->getPollType() == PollType::IOCP) {
+        if (loop->getPollType() == PollType::IOCP
+#if defined(KUMA_HAS_IOURING)
+            || loop->getPollType() == PollType::IORING
+#endif
+        ) {
             auto bio_handler = new BioHandler();
             bio_handler->setSendFunc([this](const KMBuffer &buf) -> int {
                 return sendData(buf);

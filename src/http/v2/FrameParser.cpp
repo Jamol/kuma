@@ -162,7 +162,7 @@ FrameParser::ParseState FrameParser::parseFrame(const FrameHeader &hdr, const ui
             break;
             
         default:
-            KM_WARNTRACE("FrameParser::handleFrame, invalid frame, type="<<frame->type());
+            KM_WARNTRACE("FrameParser::handleFrame, invalid frame, type="<<hdr_.getType());
             break;
     }
     

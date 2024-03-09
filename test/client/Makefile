@@ -9,9 +9,8 @@ ROOTDIR = ..
 KUMADIR = ../..
 SRCDIR = $(ROOTDIR)/client
 
-BINDIR = $(KUMADIR)/bin/linux
-LIBDIR = $(ROOTDIR)/lib
-OBJDIR = $(ROOTDIR)/objs/client/linux
+BINDIR = $(KUMADIR)/bin/linux/x86_64/Debug
+OBJDIR = $(ROOTDIR)/objs/client/linux/x86_64/Debug
 TARGET = client
 
 #
@@ -30,7 +29,7 @@ LIBS = -L$(BINDIR) -lkuma
 CXX=g++
 
 CXXFLAGS = -g -std=c++14 -pipe -fPIC -Wall -Wextra -pedantic
-LDFLAGS = -lpthread -ldl -lssl -lcrypt -Wl,-rpath,.
+LDFLAGS = -lpthread -ldl -Wl,-rpath,.
 
 SRCS =  \
     LoopPool.cpp\
