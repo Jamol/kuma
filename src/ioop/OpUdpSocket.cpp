@@ -35,7 +35,7 @@ OpUdpSocket::OpUdpSocket(const EventLoopPtr &loop)
 {
     KM_SetObjKey("OpUdpSocket");
     //KM_INFOXTRACE("OpUdpSocket");
-    op_ctx_->setRecvCallback([this] (int res, KMBuffer buf) {
+    op_ctx_->setRecvCallback([this] (int res, const KMBuffer &buf) {
         onReceive(res, buf);
     });
 }

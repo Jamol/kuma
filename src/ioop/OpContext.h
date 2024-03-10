@@ -491,7 +491,6 @@ public:
         switch (base->oc)
         {
         case OpCode::CONNECT: {
-            auto *op = (ConnAcctOp*)base;
             delete base; // only once for connect op
             if (on_connect_) on_connect_(res);
             break;

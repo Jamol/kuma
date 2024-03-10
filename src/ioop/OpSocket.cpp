@@ -41,7 +41,7 @@ OpSocket::OpSocket(const EventLoopPtr &loop)
     op_ctx_->setSendCallback([this] (int res) {
         onSend(res);
     });
-    op_ctx_->setRecvCallback([this] (int res, KMBuffer buf) {
+    op_ctx_->setRecvCallback([this] (int res, const KMBuffer &buf) {
         onReceive(res, buf);
     });
 }
@@ -268,7 +268,7 @@ void OpSocket::onConnect(int res)
 #endif
     postRecvOp();
 
-    sockaddr_storage ss_local;
+    sockaddr_storage ss_local = {0};
     socklen_t len = sizeof(ss_local);
     char local_ip[128] = { 0 };
     uint16_t local_port = 0;

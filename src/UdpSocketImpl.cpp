@@ -60,6 +60,8 @@
 #include <stdarg.h>
 #include <errno.h>
 
+#include <memory>
+
 #include "EventLoopImpl.h"
 #include "UdpSocketImpl.h"
 #include "libkev/src/utils/utils.h"
@@ -79,17 +81,17 @@ UdpSocket::Impl::Impl(const EventLoopPtr &loop)
 #ifdef KUMA_OS_WIN
     if (loop->getPollType() == PollType::IOCP) {
         //socket_.reset(new IocpUdpSocket(loop));
-        socket_.reset(new OpUdpSocket(loop));
+        socket_ = std::make_unique<OpUdpSocket>(loop);
     }
     else
 #elif defined(KUMA_OS_LINUX)
     if (loop->getPollType() == PollType::IORING) {
-        socket_.reset(new OpUdpSocket(loop));
+        socket_ = std::make_unique<OpUdpSocket>(loop);
     }
     else
 #endif
     {
-        socket_.reset(new UdpSocketBase(loop));
+        socket_ = std::make_unique<UdpSocketBase>(loop);
     }
 }
 

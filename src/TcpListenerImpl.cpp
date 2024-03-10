@@ -24,6 +24,8 @@
 #include <stdarg.h>
 #include <errno.h>
 
+#include <memory>
+
 #include "EventLoopImpl.h"
 #include "TcpListenerImpl.h"
 #include "AcceptorBase.h"
@@ -44,17 +46,17 @@ TcpListener::Impl::Impl(const EventLoopPtr &loop)
 #ifdef KUMA_OS_WIN
     if (loop->getPollType() == PollType::IOCP) {
         //acceptor_.reset(new IocpAcceptor(loop));
-        acceptor_.reset(new OpAcceptor(loop));
+        acceptor_ = std::make_unique<OpAcceptor>(loop);
     }
     else
 #elif defined(KUMA_OS_LINUX)
     if (loop->getPollType() == PollType::IORING) {
-        acceptor_.reset(new OpAcceptor(loop));
+        acceptor_ = std::make_unique<OpAcceptor>(loop);
     }
     else
 #endif
     {
-        acceptor_.reset(new AcceptorBase(loop));
+        acceptor_ = std::make_unique<AcceptorBase>(loop);
     }
 }
 

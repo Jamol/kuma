@@ -236,7 +236,7 @@ void WSConnection_V1::handleUpgradeRequest()
             break;
         }
         sec_ws_key_ = sec_ws_key;
-    } while (0);
+    } while (false);
     
     if(handshake_cb_) {
         checkHandshake();

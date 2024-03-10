@@ -679,12 +679,12 @@ bool TcpSocket::Impl::createSocket()
 #ifdef KUMA_OS_WIN
     if (loop->getPollType() == PollType::IOCP) {
         //socket_.reset(new IocpSocket(loop));
-        socket_.reset(new OpSocket(loop));
+        socket_ = std::make_unique<OpSocket>(loop);
     }
     else
 #elif defined(KUMA_OS_LINUX)
     if (loop->getPollType() == PollType::IORING) {
-        socket_.reset(new OpSocket(loop));
+        socket_ = std::make_unique<OpSocket>(loop);
     }
     else
 #endif

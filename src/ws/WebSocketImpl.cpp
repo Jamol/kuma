@@ -26,6 +26,7 @@
 #include "WSConnection_v1.h"
 #include "WSConnection_v2.h"
 
+#include <memory>
 #include <sstream>
 
 using namespace kuma;
@@ -37,9 +38,9 @@ using namespace kuma::ws;
 WebSocket::Impl::Impl(const EventLoopPtr &loop, const std::string &http_ver)
 {
     if (kev::is_equal(http_ver, "HTTP/2.0")) {
-        ws_conn_.reset(new WSConnection_V2(loop));
+        ws_conn_ = std::make_unique<WSConnection_V2>(loop);
     } else {
-        ws_conn_.reset(new WSConnection_V1(loop));
+        ws_conn_ = std::make_unique<WSConnection_V1>(loop);
     }
     ws_conn_->setOpenCallback([this] (KMError err) {
         onWsOpen(err);
