@@ -74,7 +74,7 @@
 //# include "iocp/IocpSocket.h"
 # include "ioop/OpSocket.h"
 #endif
-#if defined(KUMA_HAS_IOURING)
+#if defined(KUMA_OS_LINUX)
 # include "ioop/OpSocket.h"
 #endif
 #include "ssl/BioHandler.h"
@@ -682,7 +682,7 @@ bool TcpSocket::Impl::createSocket()
         socket_.reset(new OpSocket(loop));
     }
     else
-#elif defined(KUMA_HAS_IOURING)
+#elif defined(KUMA_OS_LINUX)
     if (loop->getPollType() == PollType::IORING) {
         socket_.reset(new OpSocket(loop));
     }
@@ -709,7 +709,7 @@ bool TcpSocket::Impl::createSslHandler()
     auto loop = eventLoop();
     if (loop) {
         if (loop->getPollType() == PollType::IOCP
-#if defined(KUMA_HAS_IOURING)
+#if defined(KUMA_OS_LINUX)
             || loop->getPollType() == PollType::IORING
 #endif
         ) {

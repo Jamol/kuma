@@ -68,7 +68,7 @@
 //# include "iocp/IocpUdpSocket.h"
 # include "ioop/OpUdpSocket.h"
 #endif
-#if defined(KUMA_HAS_IOURING)
+#if defined(KUMA_OS_LINUX)
 # include "ioop/OpUdpSocket.h"
 #endif
 
@@ -82,7 +82,7 @@ UdpSocket::Impl::Impl(const EventLoopPtr &loop)
         socket_.reset(new OpUdpSocket(loop));
     }
     else
-#elif defined(KUMA_HAS_IOURING)
+#elif defined(KUMA_OS_LINUX)
     if (loop->getPollType() == PollType::IORING) {
         socket_.reset(new OpUdpSocket(loop));
     }

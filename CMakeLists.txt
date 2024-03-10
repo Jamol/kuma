@@ -114,9 +114,9 @@ if (CMAKE_SYSTEM_NAME MATCHES "Windows")
 elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
     
 elseif (CMAKE_SYSTEM_NAME MATCHES "Linux")
-    add_definitions(-DLINUX -DKUMA_HAS_IOURING)
+    add_definitions(-DLINUX)
 elseif (CMAKE_SYSTEM_NAME MATCHES "Android")
-    add_definitions(-DANDROID -DLINUX -DKUMA_HAS_IOURING)
+    add_definitions(-DANDROID -DLINUX)
 endif ()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
