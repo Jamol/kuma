@@ -43,6 +43,7 @@ file(GLOB KUMA_SOURCE_FILES ${PROJ_ROOT_DIR}/src/*.cpp
         ${PROJ_ROOT_DIR}/src/utils/*.cpp
         ${PROJ_ROOT_DIR}/src/ws/*.cpp
         ${PROJ_ROOT_DIR}/src/ws/exts/*.cpp
+        ${PROJ_ROOT_DIR}/src/ioop/*.cpp
         )
 set(SOURCE_FILES ${SOURCE_FILES} ${KUMA_SOURCE_FILES})
 
