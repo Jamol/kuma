@@ -77,6 +77,11 @@ protected:
     bool send_blocked_{false};
 
     KMBuffer recv_buf_;
+
+private:
+    using SocketBase::onConnect;
+    using SocketBase::onSend;
+    using SocketBase::onReceive;
 };
 
 KUMA_NS_END

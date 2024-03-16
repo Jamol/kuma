@@ -59,6 +59,9 @@ protected:
 
     int pending_recv_ops_{0};
     KMBuffer recv_buf_;
+
+private:
+    using UdpSocketBase::onReceive;
 };
 
 KUMA_NS_END
