@@ -470,7 +470,7 @@ public:
     {
         kev::Op op1;
         op1.oc = OpCode::CANCEL;
-        op1.addr = (sockaddr*)data;
+        op1.buf = data;
         op1.flags = 0;
         op1.data = nullptr;
         auto ret = toKMError(loop->submitOp(fd, op1));
