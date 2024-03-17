@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
     }
     
     RunLoopPool loop_pool;
-    if (!loop_pool.start(0)) {
+    if (!loop_pool.start(0, main_loop.getPollType())) {
         return -1;
     }
     if(strcmp(proto, "udp") == 0) {

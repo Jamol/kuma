@@ -35,7 +35,7 @@ public:
     using Ptr = std::shared_ptr<RunLoop>;
     using WPtr = std::weak_ptr<RunLoop>;
     
-    RunLoop();
+    RunLoop(kuma::PollType poll_type);
     ~RunLoop();
     
     bool start();

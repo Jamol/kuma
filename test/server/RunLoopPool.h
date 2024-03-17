@@ -13,7 +13,7 @@ public:
     RunLoopPool();
     ~RunLoopPool();
     
-    bool start(size_t count);
+    bool start(size_t count, kuma::PollType poll_type);
     void stop();
     
     RunLoop::Ptr getRunLoop();

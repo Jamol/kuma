@@ -2,7 +2,7 @@
 
 using namespace kmsvr;
 
-RunLoop::RunLoop() : loop_(std::make_shared<kuma::EventLoop>())
+RunLoop::RunLoop(kuma::PollType poll_type) : loop_(std::make_shared<kuma::EventLoop>(poll_type))
 {
     
 }

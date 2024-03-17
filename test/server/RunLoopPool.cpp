@@ -14,7 +14,7 @@ RunLoopPool::~RunLoopPool()
     
 }
 
-bool RunLoopPool::start(size_t count)
+bool RunLoopPool::start(size_t count, kuma::PollType poll_type)
 {
     if (count == 0) {
         count = std::thread::hardware_concurrency();
@@ -25,7 +25,7 @@ bool RunLoopPool::start(size_t count)
     
     std::lock_guard<std::mutex> g(runLoopMutex_);
     for (size_t i = 0; i < count; ++i) {
-        auto runLoop = std::make_shared<RunLoop>();
+        auto runLoop = std::make_shared<RunLoop>(poll_type);
         runLoop->start();
         runLoopList_.emplace_back(std::move(runLoop));
     }
