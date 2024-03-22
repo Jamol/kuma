@@ -1474,12 +1474,21 @@ void fini()
 
 void setLogCallback(LogCallback cb)
 {
+    static LogCallback s_log_cb = nullptr;
+    static auto kev_log_func = [] (int level, std::string &&msg) {
+        if (s_log_cb) {
+            s_log_cb(level, msg.c_str(), msg.size());
+        }
+    };
+    if (cb == s_log_cb) {
+        return ;
+    }
     if (cb) {
-        kev::setTraceFunc([cb{std::move(cb)}] (int level, std::string &&msg) {
-            cb(level, msg.c_str(), msg.size());
-        });
+        s_log_cb = std::move(cb);
+        kev::setTraceFunc(kev_log_func);
     } else {
         kev::setTraceFunc(nullptr);
+        s_log_cb = nullptr;
     }
 }
 
