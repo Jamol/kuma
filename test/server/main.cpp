@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 #elif defined(KUMA_OS_MAC)
     www_path += "../../../";
 #elif defined(KUMA_OS_LINUX)
-    www_path += "../../";
+    www_path += "../../../../";
 #endif
     www_path += "test/www";
     
