@@ -4,3 +4,6 @@
 [submodule "third_party/HPacker"]
 	path = third_party/HPacker
 	url = https://github.com/Jamol/HPacker.git
+[submodule "third_party/zlib"]
+	path = third_party/zlib
+	url = https://github.com/madler/zlib
