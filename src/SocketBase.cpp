@@ -108,7 +108,7 @@ KMError SocketBase::bind(const std::string &bind_host, uint16_t bind_port)
 {
     KM_INFOTRACE("bind, bind_host=" << bind_host << ", bind_port=" << bind_port);
     if (getState() != State::IDLE && getState() != State::CLOSED) {
-        KM_ERRXTRACE("bind, invalid state, state=" << getState());
+        KM_ERRXTRACE("bind, invalid state, state=" << (int)getState());
         return KMError::INVALID_STATE;
     }
     if (fd_ != INVALID_FD) {
@@ -139,7 +139,7 @@ KMError SocketBase::connect(const std::string &host, uint16_t port, EventCallbac
 {
     KM_INFOXTRACE("connect, host=" << host << ", port=" << port);
     if (getState() != State::IDLE && getState() != State::CLOSED) {
-        KM_ERRXTRACE("connect, invalid state, state=" << getState());
+        KM_ERRXTRACE("connect, invalid state, state=" << (int)getState());
         return KMError::INVALID_STATE;
     }
     connect_cb_ = std::move(cb);
@@ -157,7 +157,7 @@ KMError SocketBase::connect(const std::string &host, uint16_t port, EventCallbac
         if (DnsResolver::get().getAddress(host, port, ss_addr) == KMError::NOERR) {
             return connect_i(ss_addr, timeout_ms);
         }
-        setState(RESOLVING);
+        setState(State::RESOLVING);
         dns_token_ = DnsResolver::get().resolve(host, port, [this](KMError err, const sockaddr_storage &addr) {
             onResolved(err, addr);
         });
@@ -221,7 +221,7 @@ KMError SocketBase::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
     }
 
     KM_INFOXTRACE("connect_i, fd=" << fd_ << ", local_ip=" << local_ip
-        << ", local_port=" << local_port << ", state=" << getState());
+        << ", local_port=" << local_port << ", state=" << (int)getState());
 
     if (!registerFd(fd_)) {
         KM_ERRXTRACE("connect_i, failed to register fd");
@@ -235,10 +235,10 @@ KMError SocketBase::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
 KMError SocketBase::attachFd(SOCKET_FD fd)
 {
     if (getState() != State::IDLE && getState() != State::CLOSED) {
-        KM_ERRXTRACE("attachFd, invalid state, fd="<<fd<<", state=" << getState());
+        KM_ERRXTRACE("attachFd, invalid state, fd="<<fd<<", state=" << (int)getState());
         return KMError::INVALID_STATE;
     }
-    KM_INFOXTRACE("attachFd, fd=" << fd << ", state=" << getState());
+    KM_INFOXTRACE("attachFd, fd=" << fd << ", state=" << (int)getState());
 
     fd_ = fd;
     setSocketOption();
@@ -254,7 +254,7 @@ KMError SocketBase::attachFd(SOCKET_FD fd)
 
 KMError SocketBase::detachFd(SOCKET_FD &fd)
 {
-    KM_INFOXTRACE("detachFd, fd=" << fd_ << ", state=" << getState());
+    KM_INFOXTRACE("detachFd, fd=" << fd_ << ", state=" << (int)getState());
     unregisterFd(fd_, false);
     fd = fd_;
     fd_ = INVALID_FD;
@@ -297,7 +297,7 @@ void SocketBase::unregisterFd(SOCKET_FD fd, bool close_fd)
 int SocketBase::send(const void *data, size_t length)
 {
     if (!isReady()) {
-        KM_WARNXTRACE("send, invalid state=" << getState());
+        KM_WARNXTRACE("send, invalid state=" << (int)getState());
         return 0;
     }
 
@@ -335,7 +335,7 @@ int SocketBase::send(const void *data, size_t length)
 int SocketBase::send(const iovec *iovs, int count)
 {
     if (!isReady()) {
-        KM_WARNXTRACE("send 2, invalid state=" << getState());
+        KM_WARNXTRACE("send 2, invalid state=" << (int)getState());
         return 0;
     }
 
@@ -430,7 +430,7 @@ int SocketBase::receive(void *data, size_t length)
 
 KMError SocketBase::close()
 {
-    KM_INFOXTRACE("close, state=" << getState());
+    KM_INFOXTRACE("close, state=" << (int)getState());
     if (getState() != State::CLOSED) {
         auto loop = loop_.lock();
         if (loop && !loop->stopped()) {
@@ -528,7 +528,7 @@ void SocketBase::onResolved(KMError err, const sockaddr_storage &addr)
 
 void SocketBase::onConnect(KMError err)
 {
-    KM_INFOXTRACE("onConnect, err=" << int(err) << ", state=" << getState());
+    KM_INFOXTRACE("onConnect, err=" << int(err) << ", state=" << (int)getState());
     timer_.reset();
     if (KMError::NOERR == err) {
         setState(State::OPEN);
@@ -554,7 +554,7 @@ void SocketBase::onReceive(KMError err)
 
 void SocketBase::onClose(KMError err)
 {
-    KM_INFOXTRACE("onClose, err=" << int(err) << ", state=" << getState());
+    KM_INFOXTRACE("onClose, err=" << int(err) << ", state=" << (int)getState());
     cleanup();
     setState(State::CLOSED);
     if (error_cb_) error_cb_(err);

@@ -50,6 +50,7 @@ KUMA_NS_BEGIN
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 // class EventLoop
+#define EVENTLOOP_PTR(loop) EventLoopHelper::implPtr(loop->pimpl())
 using EventLoopHelper = ImplHelper<EventLoop::Impl>;
 EventLoop::EventLoop(PollType poll_type)
 : pimpl_(EventLoopHelper::create(poll_type))
@@ -85,7 +86,7 @@ bool EventLoop::init()
     return pimpl_->init();
 }
 
-EventLoop::Token EventLoop::createToken()
+EventLoop::Token EventLoop::createToken() const
 {
     Token t;
     if (!t.pimpl_) { // lazy initialize token pimpl
@@ -145,7 +146,7 @@ void EventLoop::reset()
     pimpl_->reset();
 }
 
-EventLoop::Impl* EventLoop::pimpl()
+EventLoop::Impl* EventLoop::pimpl() const
 {
     return pimpl_;
 }
@@ -222,14 +223,14 @@ void EventLoop::Token::reset()
     }
 }
 
-EventLoop::Token::Impl* EventLoop::Token::pimpl()
+EventLoop::Token::Impl* EventLoop::Token::pimpl() const
 {
     return pimpl_;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 TcpSocket::TcpSocket(EventLoop *loop)
-: pimpl_(new Impl(EventLoopHelper::implPtr(loop->pimpl())))
+: pimpl_(new Impl(EVENTLOOP_PTR(loop)))
 {
 
 }
@@ -393,14 +394,14 @@ SOCKET_FD TcpSocket::getFd() const
     return pimpl_->getFd();
 }
 
-TcpSocket::Impl* TcpSocket::pimpl()
+TcpSocket::Impl* TcpSocket::pimpl() const
 {
     return pimpl_;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 TcpListener::TcpListener(EventLoop *loop)
-: pimpl_(new Impl(EventLoopHelper::implPtr(loop->pimpl())))
+: pimpl_(new Impl(EVENTLOOP_PTR(loop)))
 {
 
 }
@@ -457,14 +458,9 @@ void TcpListener::setErrorCallback(ErrorCallback cb)
     pimpl_->setErrorCallback(std::move(cb));
 }
 
-TcpListener::Impl* TcpListener::pimpl()
-{
-    return pimpl_;
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 UdpSocket::UdpSocket(EventLoop* loop)
-: pimpl_(new Impl(EventLoopHelper::implPtr(loop->pimpl())))
+: pimpl_(new Impl(EVENTLOOP_PTR(loop)))
 {
     
 }
@@ -560,11 +556,6 @@ void UdpSocket::setErrorCallback(EventCallback cb)
     pimpl_->setErrorCallback(std::move(cb));
 }
 
-UdpSocket::Impl* UdpSocket::pimpl()
-{
-    return pimpl_;
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Timer::Timer(EventLoop* loop)
@@ -604,11 +595,6 @@ bool Timer::schedule(uint32_t delay_ms, Mode mode, TimerCallback cb)
 void Timer::cancel()
 {
     pimpl_->cancel();
-}
-
-Timer::Impl* Timer::pimpl()
-{
-    return pimpl_;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -766,7 +752,7 @@ void HttpParser::setEventCallback(EventCallback cb)
     pimpl_->setEventCallback(std::move(cb));
 }
 
-HttpParser::Impl* HttpParser::pimpl()
+HttpParser::Impl* HttpParser::pimpl() const
 {
     return pimpl_;
 }
@@ -774,7 +760,7 @@ HttpParser::Impl* HttpParser::pimpl()
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 HttpRequest::HttpRequest(EventLoop* loop, const char* ver)
 {
-    auto loop_ptr = EventLoopHelper::implPtr(loop->pimpl());
+    auto loop_ptr = EVENTLOOP_PTR(loop);
     if (is_equal(ver, VersionHTTP2_0)) {
         pimpl_ = new Http2Request(loop_ptr, ver);
     } else {
@@ -911,7 +897,7 @@ void HttpRequest::setResponseCompleteCallback(HttpEventCallback cb)
     pimpl_->setResponseCompleteCallback(std::move(cb));
 }
 
-HttpRequest::Impl* HttpRequest::pimpl()
+HttpRequest::Impl* HttpRequest::pimpl() const
 {
     return pimpl_;
 }
@@ -920,7 +906,7 @@ HttpRequest::Impl* HttpRequest::pimpl()
 
 HttpResponse::HttpResponse(EventLoop* loop, const char* ver)
 {
-    auto loop_ptr = EventLoopHelper::implPtr(loop->pimpl());
+    auto loop_ptr = EVENTLOOP_PTR(loop);
     if (is_equal(ver, VersionHTTP2_0)) {
         pimpl_ = new Http2Response(loop_ptr, ver);
     } else {
@@ -969,7 +955,7 @@ KMError HttpResponse::attachSocket(TcpSocket &&tcp, HttpParser &&parser, const K
 
 KMError HttpResponse::attachStream(uint32_t stream_id, H2Connection *conn)
 {
-    return pimpl_->attachStream(stream_id, conn->pimpl());
+    return pimpl_->attachStream(stream_id, conn->pimpl()->ptr());
 }
 
 KMError HttpResponse::addHeader(const char* name, const char* value)
@@ -1080,15 +1066,10 @@ void HttpResponse::setResponseCompleteCallback(HttpEventCallback cb)
     pimpl_->setResponseCompleteCallback(std::move(cb));
 }
 
-HttpResponse::Impl* HttpResponse::pimpl()
-{
-    return pimpl_;
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 WebSocket::WebSocket(EventLoop* loop, const char *http_ver)
-: pimpl_(new Impl(EventLoopHelper::implPtr(loop->pimpl()), http_ver))
+: pimpl_(new Impl(EVENTLOOP_PTR(loop), http_ver))
 {
     
 }
@@ -1198,7 +1179,7 @@ KMError WebSocket::attachSocket(TcpSocket &&tcp, HttpParser &&parser, const KMBu
 
 KMError WebSocket::attachStream(uint32_t stream_id, H2Connection *conn, HandshakeCallback cb)
 {
-    return pimpl_->attachStream(stream_id, conn->pimpl(), std::move(cb));
+    return pimpl_->attachStream(stream_id, conn->pimpl()->ptr(), std::move(cb));
 }
 
 int WebSocket::send(const void* data, size_t len, bool is_text, bool is_fin, uint32_t flags)
@@ -1253,14 +1234,9 @@ void WebSocket::setErrorCallback(EventCallback cb)
     pimpl_->setErrorCallback(std::move(cb));
 }
 
-WebSocket::Impl* WebSocket::pimpl()
-{
-    return pimpl_;
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 ProxyConnection::ProxyConnection(EventLoop* loop)
-: pimpl_(new Impl(EventLoopHelper::implPtr(loop->pimpl())))
+: pimpl_(new Impl(EVENTLOOP_PTR(loop)))
 {
     
 }
@@ -1382,7 +1358,7 @@ bool ProxyConnection::sendBufferEmpty() const
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////
 H2Connection::H2Connection(EventLoop* loop)
-: pimpl_(new Impl(EventLoopHelper::implPtr(loop->pimpl())))
+: pimpl_(new Impl(EVENTLOOP_PTR(loop)))
 {
     
 }
@@ -1402,7 +1378,6 @@ H2Connection& H2Connection::operator=(H2Connection &&other)
 {
     if (this != &other) {
         if (pimpl_) {
-            pimpl_->close();
             delete pimpl_;
         }
         pimpl_ = std::exchange(other.pimpl_, nullptr);
@@ -1413,7 +1388,7 @@ H2Connection& H2Connection::operator=(H2Connection &&other)
 
 KMError H2Connection::setSslFlags(uint32_t ssl_flags)
 {
-    return pimpl_->setSslFlags(ssl_flags);
+    return pimpl_->ptr()->setSslFlags(ssl_flags);
 }
 /*
 KMError H2Connection::connect(const char* host, uint16_t port, ConnectCallback cb)
@@ -1421,37 +1396,51 @@ KMError H2Connection::connect(const char* host, uint16_t port, ConnectCallback c
     if (!host) {
         return KMError::INVALID_PARAM;
     }
-    return pimpl_->connect(host, port, cb);
+    return pimpl_->ptr()->connect(host, port, cb);
 }
 */
 KMError H2Connection::attachFd(SOCKET_FD fd, const KMBuffer *init_buf)
 {
-    return pimpl_->attachFd(fd, init_buf);
+    return pimpl_->ptr()->attachFd(fd, init_buf);
 }
 
 KMError H2Connection::attachSocket(TcpSocket &&tcp, HttpParser &&parser, const KMBuffer *init_buf)
 {
-    return pimpl_->attachSocket(std::move(*tcp.pimpl()), std::move(*parser.pimpl()), init_buf);
+    return pimpl_->ptr()->attachSocket(std::move(*tcp.pimpl()), std::move(*parser.pimpl()), init_buf);
 }
 
 KMError H2Connection::close()
 {
-    return pimpl_->close();
+    return pimpl_->ptr()->close();
 }
 
 void H2Connection::setAcceptCallback(AcceptCallback cb)
 {
-    pimpl_->setAcceptCallback(std::move(cb));
+    pimpl_->ptr()->setAcceptCallback(std::move(cb));
 }
 
 void H2Connection::setErrorCallback(ErrorCallback cb)
 {
-    pimpl_->setErrorCallback(std::move(cb));
+    pimpl_->ptr()->setErrorCallback(std::move(cb));
 }
 
-H2Connection::Impl* H2Connection::pimpl()
+H2Connection::Impl* H2Connection::pimpl() const
 {
     return pimpl_;
+}
+
+bool H2Connection::getConnection(const HttpRequest& http, H2Connection& conn)
+{
+    if (!http.pimpl()->isHttp2()) {
+        return false;
+    }
+    auto* http2 = static_cast<Http2Request*>(http.pimpl());
+    auto ptr = http2->getConnection();
+    if (!ptr) {
+        return false;
+    }
+    conn.pimpl()->ptr(std::move(ptr));
+    return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////

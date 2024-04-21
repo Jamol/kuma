@@ -28,17 +28,24 @@
 using namespace kuma;
 
 //////////////////////////////////////////////////////////////////////////
-H2Stream::H2Stream(uint32_t stream_id, H2Connection::Impl* conn, uint32_t init_local_window_size, uint32_t init_remote_window_size)
+H2Stream::H2Stream(uint32_t stream_id, H2ConnectionImpl* conn, uint32_t init_local_window_size, uint32_t init_remote_window_size)
 : stream_id_(stream_id), conn_(conn), flow_ctrl_(stream_id, [this] (uint32_t w) { sendWindowUpdate(w); })
 {
     flow_ctrl_.initLocalWindowSize(init_local_window_size);
     flow_ctrl_.initRemoteWindowSize(init_remote_window_size);
     flow_ctrl_.setLocalWindowStep(init_local_window_size);
+
+    loop_ = conn_->eventLoop();
     
     if (stream_id == 1 && !conn->sslEnabled()) { // upgrade stream, set state to HALF_CLOSED_L
         endStreamSent();
     }
     KM_SetObjKey("H2Stream_"<<stream_id);
+}
+
+H2Stream::~H2Stream()
+{
+    close();
 }
 
 KMError H2Stream::sendPushPromise(const HeaderVector &headers, size_t headers_size, uint32_t stream_id)
@@ -83,7 +90,7 @@ KMError H2Stream::sendHeaders(const HeaderVector &headers, size_t headers_size, 
 
 int H2Stream::sendData(const void *data, size_t len, bool end_stream)
 {
-    if (getState() == State::HALF_CLOSED_L || getState() == State::CLOSED) {
+    if (getState() == State::HALF_CLOSED_L || isInCloseState()) {
         return -1;
     }
     if (write_blocked_) {
@@ -129,7 +136,7 @@ int H2Stream::sendData(const void *data, size_t len, bool end_stream)
 
 int H2Stream::sendData(const KMBuffer &buf, bool end_stream)
 {
-    if (getState() == State::HALF_CLOSED_L || getState() == State::CLOSED) {
+    if (getState() == State::HALF_CLOSED_L || isInCloseState()) {
         return -1;
     }
     if (write_blocked_) {
@@ -182,7 +189,7 @@ int H2Stream::sendData(const KMBuffer &buf, bool end_stream)
 
 KMError H2Stream::sendWindowUpdate(uint32_t delta)
 {
-    if (getState() == State::CLOSED || getState() == State::HALF_CLOSED_R) {
+    if (isInCloseState() || getState() == State::HALF_CLOSED_R) {
         return KMError::INVALID_STATE;
     }
     WindowUpdateFrame frame;
@@ -193,10 +200,22 @@ KMError H2Stream::sendWindowUpdate(uint32_t delta)
 
 void H2Stream::close()
 {
-    if (getState() == State::CLOSED || getState() == State::IDLE) {
+    if (getState() == State::IDLE || getState() == State::CLOSED) {
         return;
     }
-    streamError(H2Error::CANCEL);
+    auto loop = loop_.lock();
+    if (loop) {
+        loop->sync([this] { close_i(); });
+    }
+    else {
+        close_i();
+    }
+}
+
+void H2Stream::close_i()
+{// on conn_ thread
+    streamError(H2Error::CANCELLED);
+    setState(State::CLOSED);
     if (conn_) {
         conn_->removeStream(getStreamId());
     }
@@ -206,7 +225,7 @@ void H2Stream::endStreamSent()
 {
     end_stream_sent_ = true;
     if (getState() == State::HALF_CLOSED_R) {
-        setState(State::CLOSED);
+        setState(State::CLOSING);
     } else {
         setState(State::HALF_CLOSED_L);
     }
@@ -216,7 +235,7 @@ void H2Stream::endStreamReceived()
 {
     end_stream_received_ = true;
     if (getState() == State::HALF_CLOSED_L) {
-        setState(State::CLOSED);
+        setState(State::CLOSING);
     } else {
         setState(State::HALF_CLOSED_R);
     }
@@ -268,8 +287,10 @@ void H2Stream::connectionError(H2Error err)
 
 void H2Stream::streamError(H2Error err)
 {
-    setState(State::CLOSED);
-    sendRSTStream(err);
+    if (!isInCloseState()) {
+        setState(State::CLOSING);
+        sendRSTStream(err);
+    }
 }
 
 bool H2Stream::handleDataFrame(DataFrame *frame)
@@ -351,7 +372,7 @@ bool H2Stream::handleRSTStreamFrame(RSTStreamFrame *frame)
     if (!verifyFrame(frame)) {
         return false;
     }
-    if (getState() == State::CLOSED) {
+    if (isInCloseState()) {
         return true;
     }
     rst_stream_received_ = true;
@@ -381,7 +402,7 @@ bool H2Stream::handleWindowUpdateFrame(WindowUpdateFrame *frame)
     if (!verifyFrame(frame)) {
         return false;
     }
-    if (getState() == State::CLOSED) {
+    if (isInCloseState()) {
         return true;
     }
     if (frame->getWindowSizeIncrement() == 0) {
@@ -480,6 +501,7 @@ bool H2Stream::verifyFrame(H2Frame *frame)
             }
             break;
             
+        case State::CLOSING:
         case State::CLOSED:
             if (rst_stream_received_ && frame->type() != H2FrameType::PRIORITY) {
                 streamError(H2Error::STREAM_CLOSED);
@@ -502,7 +524,7 @@ void H2Stream::setState(State state)
     if (conn_) {
         if (!isInOpenState(state_) && isInOpenState(state)) {
             conn_->streamOpened(stream_id_);
-        } else if (isInOpenState(state_) && state == State::CLOSED) {
+        } else if (isInOpenState(state_) && isInCloseState(state)) {
             conn_->streamClosed(stream_id_);
         }
     }
@@ -514,6 +536,16 @@ bool H2Stream::isInOpenState(State state)
     return (state == State::OPEN ||
             state == State::HALF_CLOSED_L ||
             state == State::HALF_CLOSED_R);
+}
+
+bool H2Stream::isInCloseState(State state)
+{
+    return state == State::CLOSING || state == State::CLOSED;
+}
+
+bool H2Stream::isInCloseState() const
+{
+    return state_ == State::CLOSING || state_ == State::CLOSED;
 }
 
 void H2Stream::onWrite()

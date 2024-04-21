@@ -69,7 +69,7 @@ public:
     void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
 
 protected:
-    enum State {
+    enum class State {
         IDLE,
         RESOLVING,
         CONNECTING,

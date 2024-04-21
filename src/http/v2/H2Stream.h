@@ -30,8 +30,11 @@
 #include "h2defs.h"
 #include "H2Frame.h"
 #include "FlowControl.h"
+#include "EventLoopImpl.h"
 
 KUMA_NS_BEGIN
+
+class H2ConnectionImpl;
 
 // H2Stream works on H2Connection thread
 class H2Stream : public kev::KMObject
@@ -44,7 +47,8 @@ public:
     using WriteCallback = std::function<void(void)>;
     
 public:
-    H2Stream(uint32_t stream_id, H2Connection::Impl* conn, uint32_t init_local_window_size, uint32_t init_remote_window_size);
+    H2Stream(uint32_t stream_id, H2ConnectionImpl* conn, uint32_t init_local_window_size, uint32_t init_remote_window_size);
+    ~H2Stream();
     
     uint32_t getStreamId() { return stream_id_; }
     
@@ -74,6 +78,8 @@ public:
     void onError(int err);
     void updateRemoteWindowSize(long delta);
     void streamError(H2Error err);
+
+    EventLoopPtr eventLoop() const { return loop_.lock(); }
     
     enum State {
         IDLE,
@@ -82,13 +88,17 @@ public:
         OPEN,
         HALF_CLOSED_L,
         HALF_CLOSED_R,
+        CLOSING,
         CLOSED
     };
     State getState() const { return state_; }
     
 protected:
     void setState(State state);
-    bool isInOpenState(State state);
+    static bool isInOpenState(State state);
+    static bool isInCloseState(State state);
+    bool isInCloseState() const;
+    void close_i();
     
     void endStreamSent();
     void endStreamReceived();
@@ -101,7 +111,8 @@ protected:
 
 protected:
     uint32_t stream_id_;
-    H2Connection::Impl * conn_;
+    EventLoopWeakPtr loop_;
+    H2ConnectionImpl* conn_;
     State state_ = State::IDLE;
     
     PromiseCallback promise_cb_;

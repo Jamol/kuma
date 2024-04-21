@@ -47,7 +47,7 @@ public:
     KMError setProxyInfo(const ProxyInfo &proxy_info);
     KMError addHeader(std::string name, std::string value);
     KMError sendRequest(std::string method, std::string url, uint32_t ssl_flags);
-    KMError attachStream(uint32_t stream_id, H2Connection::Impl* conn);
+    KMError attachStream(uint32_t stream_id, const H2ConnectionPtr &conn);
     KMError sendResponse(int status_code);
     int sendData(const void* data, size_t len);
     int sendData(const KMBuffer &buf);
@@ -62,7 +62,9 @@ public:
     const std::string& getMethod() const { return method_; }
     const std::string& getPath() const { return path_; }
     int getStatusCode() const { return status_code_; }
-    EventLoopPtr eventLoop() const { return loop_.lock(); }
+    EventLoopPtr eventLoop() const { return loop_token_.eventLoop(); }
+
+    H2ConnectionPtr getConnection() const { return conn_; }
     
     template<typename Runnable> // (void)
     bool runOnLoopThread(Runnable &&r, bool maybe_sync=true)
@@ -70,7 +72,7 @@ public:
         if (maybe_sync && is_same_loop_) {
             r();
             return true;
-        } else if (auto loop = loop_.lock()) {
+        } else if (auto loop = loop_token_.eventLoop()) {
             return loop->post([r = std::move(r)]{
                 r();
             }, &loop_token_) == kev::Result::OK;
@@ -153,7 +155,7 @@ protected:
         if (is_same_loop_) {
             r();
             return true;
-        } else if (auto loop = conn_loop_.lock()) {
+        } else if (auto loop = conn_token_.eventLoop()) {
             return loop->post([r = std::move(r)] {
                 r();
             }, &conn_token_) == kev::Result::OK;
@@ -175,8 +177,6 @@ protected:
     
 protected:
     State state_ = State::IDLE;
-    EventLoopWeakPtr loop_;
-    EventLoopWeakPtr conn_loop_;
     H2ConnectionPtr conn_;
     H2StreamPtr stream_;
     bool is_server_ = false;

@@ -66,7 +66,7 @@ public:
     KMError startSslHandshake(SslRole ssl_role, EventCallback cb) { return tcp_.startSslHandshake(ssl_role, std::move(cb)); }
 #endif
     
-    EventLoopPtr eventLoop() { return tcp_.eventLoop(); }
+    EventLoopPtr eventLoop() const { return tcp_.eventLoop(); }
     
 protected:
     KMError sendBufferedData();

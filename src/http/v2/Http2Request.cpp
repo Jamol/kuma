@@ -94,6 +94,11 @@ int Http2Request::getStatusCode() const
     }
 }
 
+H2ConnectionPtr Http2Request::getConnection() const
+{
+    return stream_->getConnection();
+}
+
 void Http2Request::checkResponseHeaders()
 {
     HttpRequest::Impl::checkResponseHeaders();
@@ -142,7 +147,7 @@ int Http2Request::sendBody(const KMBuffer &buf)
 KMError Http2Request::close()
 {
     if (getState() != State::CLOSED) {
-        KM_INFOXTRACE("close");
+        KM_INFOXTRACE("close, state=" << (int)getState());
         stream_->close();
         reset();
         setState(State::CLOSED);

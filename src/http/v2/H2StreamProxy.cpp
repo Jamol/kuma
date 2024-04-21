@@ -30,7 +30,6 @@
 using namespace kuma;
 
 H2StreamProxy::H2StreamProxy(const EventLoopPtr &loop)
-: loop_(loop)
 {
     loop_token_.eventLoop(loop);
     KM_SetObjKey("H2StreamProxy");
@@ -67,7 +66,7 @@ KMError H2StreamProxy::addHeader(std::string name, std::string value)
 KMError H2StreamProxy::sendRequest(std::string method, std::string url, uint32_t ssl_flags)
 {
     KM_INFOXTRACE("sendRequest, method=" << method << ", url=" << url << ", flags=" << ssl_flags);
-    auto loop = loop_.lock();
+    auto loop = eventLoop();
     if (!loop) {
         return KMError::INVALID_STATE;
     }
@@ -97,9 +96,7 @@ KMError H2StreamProxy::sendRequest(std::string method, std::string url, uint32_t
         KM_ERRXTRACE("sendRequest, failed to get H2Connection");
         return KMError::INVALID_PARAM;
     }
-    auto conn_loop = conn_->eventLoop();
-    conn_loop_ = conn_loop;
-    conn_token_.eventLoop(conn_loop);
+    conn_token_.eventLoop(conn_->eventLoop());
     is_same_loop_ = conn_->isInSameThread();
     if (is_same_loop_) {
         return sendRequest_i();
@@ -115,7 +112,7 @@ KMError H2StreamProxy::sendRequest(std::string method, std::string url, uint32_t
     return KMError::NOERR;
 }
 
-KMError H2StreamProxy::attachStream(uint32_t stream_id, H2Connection::Impl* conn)
+KMError H2StreamProxy::attachStream(uint32_t stream_id, const H2ConnectionPtr &conn)
 {
     if (!conn || !conn->eventLoop()) {
         return KMError::INVALID_STATE;
@@ -125,10 +122,9 @@ KMError H2StreamProxy::attachStream(uint32_t stream_id, H2Connection::Impl* conn
         return KMError::INVALID_STATE;
     }
     is_server_ = true;
+    conn_ = conn;
     is_same_loop_ = conn->isInSameThread();
-    auto conn_loop = conn->eventLoop();
-    conn_loop_ = conn_loop;
-    conn_token_.eventLoop(conn_loop);
+    conn_token_.eventLoop(conn->eventLoop());
     setState(State::CONNECTING);
     setupStreamCallbacks();
     
@@ -590,6 +586,9 @@ void H2StreamProxy::reset()
 
 KMError H2StreamProxy::close()
 {
+    if (getState() == State::IDLE || getState() == State::CLOSED) {
+        return KMError::NOERR;
+    }
     if (conn_) {
         conn_->sync([this] { close_i(); });
     } else {

@@ -102,7 +102,7 @@ KMError OpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_ms
     }
     setState(State::CONNECTING);
 
-    KM_INFOXTRACE("connect_i, fd=" << fd_ << ", state=" << getState());
+    KM_INFOXTRACE("connect_i, fd=" << fd_ << ", state=" << (int)getState());
 
     return KMError::NOERR;
 }
@@ -133,7 +133,7 @@ int OpSocket::send(const void* data, size_t length)
 int OpSocket::send(const iovec* iovs, int count)
 {
     if (!isReady()) {
-        KM_WARNXTRACE("send, invalid state=" << getState());
+        KM_WARNXTRACE("send, invalid state=" << (int)getState());
         return 0;
     }
     if (send_blocked_) {
@@ -159,7 +159,7 @@ int OpSocket::send(const iovec* iovs, int count)
 int OpSocket::send(const KMBuffer &buf)
 {
     if (!isReady()) {
-        KM_WARNXTRACE("send, invalid state=" << getState());
+        KM_WARNXTRACE("send, invalid state=" << (int)getState());
         return 0;
     }
     if (send_blocked_) {
@@ -277,7 +277,7 @@ void OpSocket::onConnect(int res)
     }
 
     KM_INFOXTRACE("onConnect, fd=" << fd_ << ", local_ip=" << local_ip
-        << ", local_port=" << local_port << ", state=" << getState() << ", res=" << res);
+        << ", local_port=" << local_port << ", state=" << (int)getState() << ", res=" << res);
     
     SocketBase::onConnect(KMError::NOERR);
 }
@@ -289,7 +289,7 @@ void OpSocket::onSend(int res)
         || res < 0
 #endif
     ) {
-        KM_WARNXTRACE("onSend, res=" << res << ", state=" << getState() << ", pending=" << pending_send_bytes_);
+        KM_WARNXTRACE("onSend, res=" << res << ", state=" << (int)getState() << ", pending=" << pending_send_bytes_);
         if (getState() == State::OPEN) {
             onClose(KMError::SOCK_ERROR);
         }
@@ -299,7 +299,7 @@ void OpSocket::onSend(int res)
         return;
     }
     if (getState() != State::OPEN) {
-        KM_WARNXTRACE("onSend, invalid state, state=" << getState() << ", res=" << res);
+        KM_WARNXTRACE("onSend, invalid state, state=" << (int)getState() << ", res=" << res);
     }
     pending_send_bytes_ -= (uint32_t)res;
     --pending_send_ops_;
@@ -316,7 +316,7 @@ void OpSocket::onReceive(int res, const KMBuffer &buf)
         || res < 0
 #endif
     ) {
-        KM_WARNXTRACE("onReceive, res=" << res << ", state=" << getState());
+        KM_WARNXTRACE("onReceive, res=" << res << ", state=" << (int)getState());
         if (getState() == State::OPEN) {
             onClose(KMError::SOCK_ERROR);
         }
@@ -326,7 +326,7 @@ void OpSocket::onReceive(int res, const KMBuffer &buf)
         return;
     }
     if (getState() != State::OPEN) {
-        KM_WARNXTRACE("onReceive, invalid state, state=" << getState() << ", res=" << res);
+        KM_WARNXTRACE("onReceive, invalid state, state=" << (int)getState() << ", res=" << res);
     }
     readable_ = buf.space() == 0;
     --pending_recv_ops_;

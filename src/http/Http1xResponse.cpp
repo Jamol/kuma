@@ -144,7 +144,7 @@ void Http1xResponse::reset()
 KMError Http1xResponse::close()
 {
     if (getState() != State::CLOSED) {
-        KM_INFOXTRACE("close");
+        KM_INFOXTRACE("close, state=" << (int)getState());
         cleanup();
         setState(State::CLOSED);
     }

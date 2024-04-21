@@ -59,7 +59,7 @@ public:
         void reset();
         
         class Impl;
-        Impl* pimpl();
+        Impl* pimpl() const;
         
     private:
         Impl* pimpl_;
@@ -103,7 +103,7 @@ public:
      * then token is no need, otherwise the caller should cancel the tasks queued in loop
      * before the resources are unavailable
      */
-    Token createToken();
+    Token createToken() const;
     
     /* run the task in loop thread and wait untill task is executed.
      * the task will be executed at once if called on loop thread
@@ -229,7 +229,7 @@ public:
     void reset();
     
     class Impl;
-    Impl* pimpl();
+    Impl* pimpl() const;
 
 private:
     Impl* pimpl_;
@@ -280,7 +280,7 @@ public:
     SOCKET_FD getFd() const;
     
     class Impl;
-    Impl* pimpl();
+    Impl* pimpl() const;
     
 private:
     Impl* pimpl_;
@@ -308,8 +308,6 @@ public:
     void setErrorCallback(ErrorCallback cb);
     
     class Impl;
-    Impl* pimpl();
-    
 private:
     Impl* pimpl_;
 };
@@ -343,8 +341,6 @@ public:
     void setErrorCallback(EventCallback cb);
     
     class Impl;
-    Impl* pimpl();
-    
 private:
     Impl* pimpl_;
 };
@@ -387,8 +383,6 @@ public:
     void cancel();
     
     class Impl;
-    Impl* pimpl();
-    
 private:
     Impl* pimpl_;
 };
@@ -444,7 +438,7 @@ public:
     void setEventCallback(EventCallback cb);
     
     class Impl;
-    Impl* pimpl();
+    Impl* pimpl() const;
     
 private:
     Impl* pimpl_;
@@ -498,8 +492,8 @@ public:
     void setResponseCompleteCallback(HttpEventCallback cb);
     
     class Impl;
-    Impl* pimpl();
-    
+    Impl* pimpl() const;
+
 private:
     Impl* pimpl_;
 };
@@ -552,8 +546,6 @@ public:
     void setResponseCompleteCallback(HttpEventCallback cb);
     
     class Impl;
-    Impl* pimpl();
-    
 private:
     Impl* pimpl_;
 };
@@ -628,8 +620,6 @@ public:
     void setErrorCallback(EventCallback cb);
     
     class Impl;
-    Impl* pimpl();
-    
 private:
     Impl* pimpl_;
 };
@@ -673,8 +663,6 @@ public:
     bool sendBufferEmpty() const;
     
     class Impl;
-    Impl* pimpl();
-    
 private:
     Impl* pimpl_;
 };
@@ -702,9 +690,11 @@ public:
     
     void setAcceptCallback(AcceptCallback cb);
     void setErrorCallback(ErrorCallback cb);
+
+    static bool getConnection(const HttpRequest &http, H2Connection &conn);
     
     class Impl;
-    Impl* pimpl();
+    Impl* pimpl() const;
     
 private:
     Impl* pimpl_;

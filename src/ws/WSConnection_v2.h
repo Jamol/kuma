@@ -45,7 +45,7 @@ public:
     KMError addHeader(std::string name, std::string value) override;
     KMError addHeader(std::string name, uint32_t value) override;
     KMError connect(const std::string& ws_url) override;
-    KMError attachStream(uint32_t stream_id, H2Connection::Impl* conn, HandshakeCallback cb);
+    KMError attachStream(uint32_t stream_id, const H2ConnectionPtr& conn, HandshakeCallback cb);
     int send(const iovec* iovs, int count) override;
     KMError close() override;
     bool canSendData() const override;

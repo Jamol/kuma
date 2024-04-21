@@ -95,7 +95,7 @@ KMError WebSocket::Impl::setProxyInfo(const ProxyInfo &proxy_info)
 KMError WebSocket::Impl::connect(const std::string& ws_url)
 {
     if(getState() != State::IDLE && getState() != State::CLOSED) {
-        KM_ERRXTRACE("connect, invalid state, state="<<getState());
+        KM_ERRXTRACE("connect, invalid state, state=" << (int)getState());
         return KMError::INVALID_STATE;
     }
     ws_handler_.setMode(WSMode::CLIENT);
@@ -134,7 +134,7 @@ KMError WebSocket::Impl::attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& 
     });
 }
 
-KMError WebSocket::Impl::attachStream(uint32_t stream_id, H2Connection::Impl* conn, HandshakeCallback cb)
+KMError WebSocket::Impl::attachStream(uint32_t stream_id, const H2ConnectionPtr& conn, HandshakeCallback cb)
 {
     auto *ws_conn_v2 = dynamic_cast<WSConnection_V2*>(ws_conn_.get());
     if (!ws_conn_v2) {
@@ -213,7 +213,7 @@ int WebSocket::Impl::send(const KMBuffer &buf, bool is_text, bool is_fin, uint32
 
 KMError WebSocket::Impl::close()
 {
-    KM_INFOXTRACE("close");
+    KM_INFOXTRACE("close, state=" << (int)getState());
     if (getState() == State::OPEN) {
         //sendCloseFrame(1000);
     }
@@ -241,7 +241,7 @@ void WebSocket::Impl::onWsData(KMBuffer &buf)
             }
         }
     } else {
-        KM_WARNXTRACE("onWsData, invalid state: "<<getState());
+        KM_WARNXTRACE("onWsData, invalid state: " << (int)getState());
     }
 }
 

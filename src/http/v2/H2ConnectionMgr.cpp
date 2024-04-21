@@ -57,7 +57,7 @@ H2ConnectionPtr H2ConnectionMgr::getConnection(const std::string &host, uint16_t
     if (it != conn_map_.end()) {
         return it->second;
     }
-    H2ConnectionPtr conn(new H2Connection::Impl(loop));
+    auto conn = std::make_shared<H2ConnectionImpl>(loop);
     conn->setConnectionKey(key);
     conn->setSslFlags(ssl_flags);
     conn->setProxyInfo(proxy_info);
