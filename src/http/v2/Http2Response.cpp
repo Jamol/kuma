@@ -51,7 +51,7 @@ Http2Response::Http2Response(const EventLoopPtr &loop, std::string ver)
     KM_SetObjKey("Http2Response");
 }
 
-KMError Http2Response::attachStream(uint32_t stream_id, H2Connection::Impl* conn)
+KMError Http2Response::attachStream(uint32_t stream_id, const H2ConnectionPtr& conn)
 {
     setState(State::RECVING_REQUEST);
     return stream_->attachStream(stream_id, conn);
@@ -85,7 +85,7 @@ int Http2Response::sendBody(const KMBuffer &buf)
 KMError Http2Response::close()
 {
     if (getState() != State::CLOSED) {
-        KM_INFOXTRACE("close");
+        KM_INFOXTRACE("close, state=" << (int)getState());
         stream_->close();
         setState(State::CLOSED);
     }

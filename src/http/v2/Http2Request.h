@@ -59,6 +59,8 @@ public:
     
     int getStatusCode() const override;
     const std::string& getVersion() const override { return VersionHTTP2_0; }
+
+    H2ConnectionPtr getConnection() const;
     
 protected:
     KMError sendRequest() override;

@@ -29,13 +29,15 @@
 
 KUMA_NS_BEGIN
 
+class H2ConnectionImpl;
+
 class PushClient final
 {
 public:
     PushClient();
     ~PushClient();
     
-    KMError attachStream(H2Connection::Impl* conn, H2StreamPtr &stream);
+    KMError attachStream(H2ConnectionImpl* conn, H2StreamPtr &stream);
     bool isHeaderComplete() const { return header_complete_; }
     bool isComplete() const { return complete_; }
     
@@ -60,7 +62,7 @@ protected:
     
 protected:
     H2StreamPtr stream_;
-    H2Connection::Impl* conn_ = nullptr;
+    H2ConnectionImpl* conn_ = nullptr;
     uint32_t push_id_ = 0;
     
     std::string req_method_;

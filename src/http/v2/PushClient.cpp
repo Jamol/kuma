@@ -54,7 +54,7 @@ void PushClient::releaseSelf()
     }
 }
 
-KMError PushClient::attachStream(H2Connection::Impl* conn, H2StreamPtr &stream)
+KMError PushClient::attachStream(H2ConnectionImpl* conn, H2StreamPtr &stream)
 {
     stream_ = stream;
     if (!stream_) {

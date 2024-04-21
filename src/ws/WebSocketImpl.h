@@ -41,6 +41,8 @@ WS_NS_END
 
 KUMA_NS_BEGIN
 
+class H2ConnectionImpl;
+
 class WebSocket::Impl : public kev::KMObject, public kev::DestroyDetector
 {
 public:
@@ -71,7 +73,7 @@ public:
     KMError connect(const std::string& ws_url);
     KMError attachFd(SOCKET_FD fd, const KMBuffer *init_buf, HandshakeCallback cb);
     KMError attachSocket(TcpSocket::Impl&& tcp, HttpParser::Impl&& parser, const KMBuffer *init_buf, HandshakeCallback cb);
-    KMError attachStream(uint32_t stream_id, H2Connection::Impl* conn, HandshakeCallback cb);
+    KMError attachStream(uint32_t stream_id, const std::shared_ptr<H2ConnectionImpl> &conn, HandshakeCallback cb);
     int send(const void* data, size_t len, bool is_text, bool is_fin, uint32_t flags);
     int send(const KMBuffer &buf, bool is_text, bool is_fin, uint32_t flags);
     KMError close();
@@ -100,7 +102,7 @@ public:
     void setErrorCallback(EventCallback cb) { error_cb_ = std::move(cb); }
     
 private:
-    enum State {
+    enum class State {
         IDLE,
         HANDSHAKE,
         OPEN,

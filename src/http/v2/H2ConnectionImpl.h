@@ -22,7 +22,7 @@
 #ifndef __H2ConnectionImpl_H__
 #define __H2ConnectionImpl_H__
 
-#include "kmdefs.h"
+#include "kmapi.h"
 #include "FrameParser.h"
 #include "HPacker/src/HPacker.h"
 #include "H2Stream.h"
@@ -43,15 +43,15 @@ KUMA_NS_BEGIN
 
 class H2Handshake;
 
-class H2Connection::Impl : public kev::KMObject, public kev::DestroyDetector, public FrameCallback
+class H2ConnectionImpl final : public kev::KMObject, public kev::DestroyDetector, public FrameCallback
 {
 public:
     using ConnectCallback = std::function<void(KMError)>;
     using AcceptCallback = H2Connection::AcceptCallback;
     using ErrorCallback = H2Connection::ErrorCallback;
     
-    Impl(const EventLoopPtr &loop);
-	~Impl();
+    H2ConnectionImpl(const EventLoopPtr &loop);
+    ~H2ConnectionImpl();
     
     KMError setSslFlags(uint32_t ssl_flags) { return tcp_conn_.setSslFlags(ssl_flags); }
     uint32_t getSslFlags() const { return tcp_conn_.getSslFlags(); }
@@ -89,7 +89,7 @@ public:
     bool sync(EventLoop::Task task);
     bool async(EventLoop::Task task, EventLoopToken *token=nullptr);
     bool isInSameThread() const { return std::this_thread::get_id() == thread_id_; }
-    EventLoopPtr eventLoop() { return tcp_conn_.eventLoop(); }
+    EventLoopPtr eventLoop() const { return tcp_conn_.eventLoop(); }
     
     void connectionError(H2Error err);
     void streamError(uint32_t stream_id, H2Error err);
@@ -131,7 +131,7 @@ private:
     void onHandshakeComplete(SettingsFrame *frame);
     void onHandshakeError(KMError err);
     
-    enum State {
+    enum class State {
         IDLE,
         CONNECTING,
         HANDSHAKE,
@@ -144,6 +144,7 @@ private:
     void onStateOpen();
     void cleanup();
     void cleanupAndRemove();
+    void close_i();
     
     void onConnectError(KMError err);
     void notifyBlockedStreams();
@@ -202,8 +203,25 @@ protected:
     EventLoopToken loop_token_;
 };
 
-using H2ConnectionPtr = std::shared_ptr<H2Connection::Impl>;
-using H2ConnectionWeakPtr = std::weak_ptr<H2Connection::Impl>;
+using H2ConnectionPtr = std::shared_ptr<H2ConnectionImpl>;
+using H2ConnectionWeakPtr = std::weak_ptr<H2ConnectionImpl>;
+
+class H2Connection::Impl
+{
+public:
+    Impl(const H2ConnectionPtr &conn_ptr) : conn_ptr_(conn_ptr) {}
+    Impl(const EventLoopPtr &loop) : conn_ptr_(std::make_shared<H2ConnectionImpl>(loop)) {}
+
+    H2ConnectionPtr ptr() const noexcept {
+        return conn_ptr_;
+    }
+    void ptr(H2ConnectionPtr p) {
+        conn_ptr_ = std::move(p);
+    }
+
+private:
+    std::shared_ptr<H2ConnectionImpl> conn_ptr_;
+};
 
 KUMA_NS_END
 

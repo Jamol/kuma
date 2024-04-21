@@ -111,7 +111,7 @@ KMError WSConnection_V2::connect(const std::string& ws_url)
     return stream_->sendRequest(kWsMethod, ws_url, ssl_flags_);
 }
 
-KMError WSConnection_V2::attachStream(uint32_t stream_id, H2Connection::Impl* conn, HandshakeCallback cb)
+KMError WSConnection_V2::attachStream(uint32_t stream_id, const H2ConnectionPtr& conn, HandshakeCallback cb)
 {
     handshake_cb_ = std::move(cb);
     setState(State::UPGRADING);

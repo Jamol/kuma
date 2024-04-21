@@ -101,7 +101,7 @@ KMError IocpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_
     }
 
     KM_INFOXTRACE("connect_i, fd=" << fd_ << ", local_ip=" << local_ip
-        << ", local_port=" << local_port << ", state=" << getState());
+        << ", local_port=" << local_port << ", state=" << (int)getState());
 
     return KMError::NOERR;
 }
@@ -134,7 +134,7 @@ int IocpSocket::send(const void* data, size_t length)
 int IocpSocket::send(const iovec* iovs, int count)
 {
     if (!isReady()) {
-        KM_WARNXTRACE("send, invalid state=" << getState());
+        KM_WARNXTRACE("send, invalid state=" << (int)getState());
         return 0;
     }
     if (sendPending()) {
@@ -258,7 +258,7 @@ void IocpSocket::onConnect(KMError err)
 void IocpSocket::onSend(size_t io_size)
 {
     if (io_size == 0) {
-        KM_WARNXTRACE("onSend, io_size=0, state=" << getState() << ", pending=" << hasPendingOperation());
+        KM_WARNXTRACE("onSend, io_size=0, state=" << (int)getState() << ", pending=" << hasPendingOperation());
         if (getState() == State::OPEN) {
             onClose(KMError::SOCK_ERROR);
         }
@@ -268,7 +268,7 @@ void IocpSocket::onSend(size_t io_size)
         return;
     }
     if (getState() != State::OPEN) {
-        KM_WARNXTRACE("onSend, invalid state, state=" << getState() << ", io_size=" << io_size);
+        KM_WARNXTRACE("onSend, invalid state, state=" << (int)getState() << ", io_size=" << io_size);
     }
     SocketBase::onSend(KMError::NOERR);
 }
@@ -276,7 +276,7 @@ void IocpSocket::onSend(size_t io_size)
 void IocpSocket::onReceive(size_t io_size)
 {
     if (io_size == 0) {
-        KM_WARNXTRACE("onReceive, io_size=0, state=" << getState() << ", pending=" << hasPendingOperation());
+        KM_WARNXTRACE("onReceive, io_size=0, state=" << (int)getState() << ", pending=" << hasPendingOperation());
         if (getState() == State::OPEN) {
             onClose(KMError::SOCK_ERROR);
         }
@@ -286,7 +286,7 @@ void IocpSocket::onReceive(size_t io_size)
         return;
     }
     if (getState() != State::OPEN) {
-        KM_WARNXTRACE("onReceive, invalid state, state=" << getState() << ", io_size=" << io_size);
+        KM_WARNXTRACE("onReceive, invalid state, state=" << (int)getState() << ", io_size=" << io_size);
     }
     readable_ = recvBuffer().space() == 0;
     if (!paused_) {
