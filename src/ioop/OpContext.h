@@ -66,43 +66,9 @@ struct OpBase
         }
 #endif
     }
-    void onComplete(int res);
+    virtual void onComplete(int res);
 };
 
-struct SendRecvOp : public OpBase
-{
-    KMBuffer        buf;
-    iovec           iovs[3];
-    iovec*          p_iovs{ nullptr };
-    int             n_iovs{ 0 };
-
-    ~SendRecvOp()
-    {
-        if (p_iovs && p_iovs != iovs) {
-            delete[] p_iovs;
-        }
-    }
-
-    void prepare(OpCode oc, OpContext* ctx)
-    {
-        this->oc = oc;
-        this->ctx = ctx;
-        if (p_iovs && p_iovs != iovs) {
-            delete[] p_iovs;
-            p_iovs = nullptr;
-        }
-        if (oc == OpCode::WRITEV) {
-            p_iovs = iovs;
-            n_iovs = to_iovecs(buf, iovs, ARRAY_SIZE(iovs), &p_iovs);
-        }
-        else if (oc == OpCode::READV) {
-            iovs[0].iov_base = (char*)buf.writePtr();
-            iovs[0].iov_len = (unsigned long)buf.space();
-            p_iovs = iovs;
-            n_iovs = 1;
-        }
-    }
-};
 
 struct ConnAcctOp : public OpBase
 {
@@ -119,7 +85,66 @@ struct ConnAcctOp : public OpBase
     }
 };
 
-struct SendRecvMsgOp : public OpBase
+struct SendOp : public OpBase
+{
+    SOCKET_FD       fd{ INVALID_FD };
+    KMBuffer        buf;
+    iovec           iovs[3];
+    iovec*          p_iovs{ nullptr };
+    int             n_iovs{ 0 };
+#if defined(KUMA_OS_LINUX)
+    bool            poll_out{ false };
+    size_t          bytes_sent{ 0 };
+#endif
+
+    ~SendOp()
+    {
+        if (p_iovs && p_iovs != iovs) {
+            delete[] p_iovs;
+        }
+    }
+
+    void prepare(OpCode oc, SOCKET_FD fd, OpContext* ctx)
+    {
+        this->fd = fd;
+        this->oc = oc;
+        this->ctx = ctx;
+        if (p_iovs && p_iovs != iovs) {
+            delete[] p_iovs;
+            p_iovs = nullptr;
+        }
+        p_iovs = iovs;
+        n_iovs = to_iovecs(buf, iovs, ARRAY_SIZE(iovs), &p_iovs);
+#if defined(KUMA_OS_LINUX)
+        poll_out = false;
+        bytes_sent = 0;
+#endif
+    }
+
+    void onComplete(int res) override;
+};
+
+struct RecvOp : public OpBase
+{
+    KMBuffer        buf;
+    iovec           iovs[1];
+    iovec*          p_iovs{ nullptr };
+    int             n_iovs{ 0 };
+
+    void prepare(OpCode oc, OpContext* ctx)
+    {
+        this->oc = oc;
+        this->ctx = ctx;
+        iovs[0].iov_base = (char*)buf.writePtr();
+        iovs[0].iov_len = (unsigned long)buf.space();
+        p_iovs = iovs;
+        n_iovs = 1;
+    }
+
+    void onComplete(int res) override;
+};
+
+struct SendMsgOp : public OpBase
 {
     KMBuffer        buf;
 #if defined(KUMA_OS_WIN)
@@ -132,7 +157,7 @@ struct SendRecvMsgOp : public OpBase
     iovec*          p_iovs{ nullptr };
     int             n_iovs{ 0 };
 
-    ~SendRecvMsgOp()
+    ~SendMsgOp()
     {
         if (p_iovs && p_iovs != iovs) {
             delete[] p_iovs;
@@ -147,57 +172,77 @@ struct SendRecvMsgOp : public OpBase
             delete[] p_iovs;
             p_iovs = nullptr;
         }
-        if (oc == OpCode::SENDMSG) {
-            p_iovs = iovs;
-            n_iovs = to_iovecs(buf, iovs, ARRAY_SIZE(iovs), &p_iovs);
+        p_iovs = iovs;
+        n_iovs = to_iovecs(buf, iovs, ARRAY_SIZE(iovs), &p_iovs);
 #if defined(KUMA_OS_WIN)
-            msg.lpBuffers = (WSABUF*)p_iovs;
-            msg.dwBufferCount = n_iovs;
-            msg.Control.buf = nullptr;
-            msg.Control.len = 0;
-            msg.dwFlags = flags;
-            if (addr) {
-                this->addr = *addr;
-                msg.name = (sockaddr*)&this->addr;
-                msg.namelen = (int)kev::km_get_addr_length(this->addr);
-            }
-#else
-            msg.msg_iov = p_iovs;
-            msg.msg_iovlen = n_iovs;
-            msg.msg_control = nullptr;
-            msg.msg_controllen = 0;
-            msg.msg_flags = flags;
-            if (addr) {
-                this->addr = *addr;
-                msg.msg_name = &this->addr;
-                msg.msg_namelen = kev::km_get_addr_length(this->addr);
-            }
-#endif
-        }
-        else if (oc == OpCode::RECVMSG) {
-            iovs[0].iov_base = (char*)buf.writePtr();
-            iovs[0].iov_len = (unsigned long)buf.space();
-            p_iovs = iovs;
-            n_iovs = 1;
-#if defined(KUMA_OS_WIN)
-            msg.lpBuffers = (WSABUF*)p_iovs;
-            msg.dwBufferCount = n_iovs;
-            msg.Control.buf = nullptr;
-            msg.Control.len = 0;
-            msg.dwFlags = flags;
+        msg.lpBuffers = (WSABUF*)p_iovs;
+        msg.dwBufferCount = n_iovs;
+        msg.Control.buf = nullptr;
+        msg.Control.len = 0;
+        msg.dwFlags = flags;
+        if (addr) {
+            this->addr = *addr;
             msg.name = (sockaddr*)&this->addr;
-            msg.namelen = sizeof(this->addr);
-#else
-            msg.msg_iov = p_iovs;
-            msg.msg_iovlen = n_iovs;
-            msg.msg_control = nullptr;
-            msg.msg_controllen = 0;
-            msg.msg_flags = flags;
-            msg.msg_name = &this->addr;
-            msg.msg_namelen = sizeof(this->addr);
-#endif
+            msg.namelen = (int)kev::km_get_addr_length(this->addr);
         }
+#else
+        msg.msg_iov = p_iovs;
+        msg.msg_iovlen = n_iovs;
+        msg.msg_control = nullptr;
+        msg.msg_controllen = 0;
+        msg.msg_flags = flags;
+        if (addr) {
+            this->addr = *addr;
+            msg.msg_name = &this->addr;
+            msg.msg_namelen = kev::km_get_addr_length(this->addr);
+        }
+#endif
     }
+
+    void onComplete(int res) override;
+};
+
+struct RecvMsgOp : public OpBase
+{
+    KMBuffer        buf;
+#if defined(KUMA_OS_WIN)
+    WSAMSG          msg;
+#else
+    msghdr          msg;
+#endif
+    sockaddr_storage addr;
+    iovec           iovs[1];
+    iovec*          p_iovs{ nullptr };
+    int             n_iovs{ 0 };
+
+    void prepare(OpCode oc, OpContext* ctx, const sockaddr_storage *addr, int flags)
+    {
+        this->oc = oc;
+        this->ctx = ctx;
+        iovs[0].iov_base = (char*)buf.writePtr();
+        iovs[0].iov_len = (unsigned long)buf.space();
+        p_iovs = iovs;
+        n_iovs = 1;
+#if defined(KUMA_OS_WIN)
+        msg.lpBuffers = (WSABUF*)p_iovs;
+        msg.dwBufferCount = n_iovs;
+        msg.Control.buf = nullptr;
+        msg.Control.len = 0;
+        msg.dwFlags = flags;
+        msg.name = (sockaddr*)&this->addr;
+        msg.namelen = sizeof(this->addr);
+#else
+        msg.msg_iov = p_iovs;
+        msg.msg_iovlen = n_iovs;
+        msg.msg_control = nullptr;
+        msg.msg_controllen = 0;
+        msg.msg_flags = flags;
+        msg.msg_name = &this->addr;
+        msg.msg_namelen = sizeof(this->addr);
+#endif
+    }
+
+    void onComplete(int res) override;
 };
 
 // OpContext holds the structs and buffers used by IOCP it can only be deleted
@@ -247,7 +292,7 @@ public:
         op1.buf = nullptr;
         op1.buflen = 0;
         op1.data = nullptr;
-        auto ret = toKMError(loop->submitOp(fd, op1));
+        auto ret = submitOp(loop, fd, op1);
         if (ret != KMError::NOERR) {
             return  false;
         }
@@ -264,7 +309,6 @@ public:
         }
         if (loop && isPending()) {
             closing_ = true;
-            loop_ = loop;
             loop->appendPendingObject(this);
 
             // wait until all pending operations are completed, or loop exit
@@ -300,7 +344,7 @@ public:
         op1.flags = 0;
         op1.data = &op->data;
         increment();
-        auto ret = toKMError(loop->submitOp(fd, op1));
+        auto ret = submitOp(loop, fd, op1);
         if (ret != KMError::NOERR) {
             removePendingOp(op);
             appendFreeOp(op);
@@ -347,7 +391,7 @@ public:
         op1.flags = 0;
         op1.data = &op->data;
         increment();
-        auto ret = toKMError(loop->submitOp(fd, op1));
+        auto ret = submitOp(loop, fd, op1);
         if (ret != KMError::NOERR) {
             kev::SKUtils::close(op->data.fd);
             op->data.fd = INVALID_FD;
@@ -363,10 +407,9 @@ public:
         if (!loop) {
             return KMError::INVALID_STATE;
         }
-        auto *op = static_cast<SendRecvOp*>(getFreeOp(OpCode::WRITEV));
+        auto *op = static_cast<SendOp*>(getFreeOp(OpCode::WRITEV));
         op->buf = buf;
-        op->prepare(OpCode::WRITEV, this);
-        op->pending = true;
+        op->prepare(OpCode::WRITEV, fd, this);
         appendPendingOp(op);
 
         kev::Op op1;
@@ -376,7 +419,7 @@ public:
         op1.flags = 0;
         op1.data = &op->data;
         increment();
-        auto ret = toKMError(loop->submitOp(fd, op1));
+        auto ret = submitOp(loop, fd, op1);
         if (ret != KMError::NOERR) {
             KM_ERRTRACE("postSendOp, fd=" << fd << ", ret=" << int(ret));
             removePendingOp(op);
@@ -391,7 +434,7 @@ public:
         if (!loop) {
             return KMError::INVALID_STATE;
         }
-        auto *op = static_cast<SendRecvOp*>(getFreeOp(OpCode::READV));
+        auto *op = static_cast<RecvOp*>(getFreeOp(OpCode::READV));
         op->buf = buf;
         op->prepare(OpCode::READV, this);
         appendPendingOp(op);
@@ -403,7 +446,7 @@ public:
         op1.flags = 0;
         op1.data = &op->data;
         increment();
-        auto ret = toKMError(loop->submitOp(fd, op1));
+        auto ret = submitOp(loop, fd, op1);
         if (ret != KMError::NOERR) {
             KM_ERRTRACE("postRecvOp, fd=" << fd << ", ret=" << int(ret));
             removePendingOp(op);
@@ -418,10 +461,9 @@ public:
         if (!loop) {
             return KMError::INVALID_STATE;
         }
-        auto *op = static_cast<SendRecvMsgOp*>(getFreeOp(OpCode::SENDMSG));
+        auto *op = static_cast<SendMsgOp*>(getFreeOp(OpCode::SENDMSG));
         op->buf = buf;
         op->prepare(OpCode::SENDMSG, this, &addr, 0);
-        op->pending = true;
         appendPendingOp(op);
 
         kev::Op op1;
@@ -431,7 +473,7 @@ public:
         op1.flags = 0;
         op1.data = &op->data;
         increment();
-        auto ret = toKMError(loop->submitOp(fd, op1));
+        auto ret = submitOp(loop, fd, op1);
         if (ret != KMError::NOERR) {
             removePendingOp(op);
             appendFreeOp(op);
@@ -445,7 +487,7 @@ public:
         if (!loop) {
             return KMError::INVALID_STATE;
         }
-        auto *op = static_cast<SendRecvMsgOp*>(getFreeOp(OpCode::RECVMSG));
+        auto *op = static_cast<RecvMsgOp*>(getFreeOp(OpCode::RECVMSG));
         op->buf = buf;
         op->prepare(OpCode::RECVMSG, this, nullptr, 0);
         appendPendingOp(op);
@@ -457,7 +499,7 @@ public:
         op1.flags = 0;
         op1.data = &op->data;
         increment();
-        auto ret = toKMError(loop->submitOp(fd, op1));
+        auto ret = submitOp(loop, fd, op1);
         if (ret != KMError::NOERR) {
             removePendingOp(op);
             appendFreeOp(op);
@@ -473,8 +515,22 @@ public:
         op1.buf = data;
         op1.flags = 0;
         op1.data = nullptr;
-        auto ret = toKMError(loop->submitOp(fd, op1));
+        auto ret = submitOp(loop, fd, op1);
         return ret;
+    }
+
+    KMError submitOp(const EventLoopPtr &loop, SOCKET_FD fd, kev::Op op1)
+    {
+        return toKMError(loop->submitOp(fd, op1));
+    }
+
+    KMError submitOp(SOCKET_FD fd, kev::Op op1)
+    {
+        auto loop = loop_.lock();
+        if (loop) {
+            return toKMError(loop->submitOp(fd, op1));
+        }
+        return KMError::INVALID_STATE;
     }
 
     void onOpComplete(OpBase* base, int res)
@@ -508,42 +564,24 @@ public:
             break;
         }
         case OpCode::WRITEV: {
-            auto *op = (SendRecvOp*)base;
-            if (res != op->buf.chainLength()) {
-                KM_ERRTRACE("send op error, res=" << res << ", buffer=" << op->buf.chainLength());
-            }
-            op->buf.reset();
             appendFreeOp(base);
             if (on_send_) on_send_(res);
             break;
         }
         case OpCode::READV: {
-            auto *op = (SendRecvOp*)base;
-            if (res > (int)op->buf.space()) {
-                KM_ERRTRACE("recv op error, res=" << res << ", space=" << op->buf.space());
-            }
-            op->buf.bytesWritten(res);
+            auto *op = (RecvOp*)base;
             auto buf = std::move(op->buf);
             appendFreeOp(base);
             if (on_recv_) on_recv_(res, std::move(buf));
             break;
         }
         case OpCode::SENDMSG: {
-            auto *op = (SendRecvMsgOp*)base;
-            if (res != op->buf.chainLength()) {
-                KM_ERRTRACE("sendmsg op error, res=" << res << ", buffer=" << op->buf.chainLength());
-            }
-            op->buf.reset();
             appendFreeOp(base);
             if (on_send_) on_send_(res);
             break;
         }
         case OpCode::RECVMSG: {
-            auto *op = (SendRecvMsgOp*)base;
-            if (res > (int)op->buf.space()) {
-                KM_ERRTRACE("recvmsg op error, res=" << res << ", space=" << op->buf.space());
-            }
-            op->buf.bytesWritten(res);
+            auto *op = (RecvMsgOp*)base;
             addr_ = op->addr;
             auto buf = std::move(op->buf);
             appendFreeOp(base);
@@ -590,36 +628,37 @@ public:
         }
     };
     using Ptr = std::unique_ptr<OpContext, Deleter>;
-    static Ptr create()
+    static Ptr create(const EventLoopPtr &loop)
     {
-        auto *p = new OpContext();
+        auto *p = new OpContext(loop);
         p->increment();
         return Ptr(p);
     }
 
 protected:
-    OpContext() = default;
-    virtual ~OpContext() {
+    OpContext(const EventLoopPtr &loop) : loop_(loop) {}
+    virtual ~OpContext()
+    {
         if (pending_fd_ != INVALID_FD) {
             kev::SKUtils::close(pending_fd_);
             pending_fd_ = INVALID_FD;
         }
         assert(pending_ops_ == nullptr);
-        while (free_ca_ops_) {
-            auto *op = free_ca_ops_;
-            free_ca_ops_ = op->next;
-            delete op;
+
+#define CLEAR_CTX_OP_LIST(op_head) \
+        while (op_head) {          \
+            auto *op = op_head;    \
+            op_head = op->next;    \
+            delete op;             \
         }
-        while (free_rwv_ops_) {
-            auto *op = free_rwv_ops_;
-            free_rwv_ops_ = op->next;
-            delete op;
-        }
-        while (free_srm_ops_) {
-            auto *op = free_srm_ops_;
-            free_srm_ops_ = op->next;
-            delete op;
-        }
+
+        CLEAR_CTX_OP_LIST(free_ca_ops_);
+        CLEAR_CTX_OP_LIST(free_wv_ops_);
+        CLEAR_CTX_OP_LIST(free_rv_ops_);
+        CLEAR_CTX_OP_LIST(free_sm_ops_);
+        CLEAR_CTX_OP_LIST(free_rm_ops_);
+
+#undef CLEAR_CTX_OP_LIST
     }
 
     void increment()
@@ -673,70 +712,48 @@ protected:
         removeOp(op, &pending_ops_);
     }
 
-    void appendFreeOp(OpBase* op)
+    OpBase** getFreeOpList(OpCode oc)
     {
-        OpBase** free_ops = nullptr;
-        switch (op->oc)
+        switch (oc)
         {
         case OpCode::CONNECT:
         case OpCode::ACCEPT:
-            free_ops = &free_ca_ops_;
-            break;
+            return &free_ca_ops_;
         case OpCode::WRITEV:
+            return &free_wv_ops_;
         case OpCode::READV:
-            free_ops = &free_rwv_ops_;
-            break;
+            return &free_rv_ops_;
         case OpCode::SENDMSG:
+            return &free_sm_ops_;
         case OpCode::RECVMSG:
-            free_ops = &free_srm_ops_;
-            break;
+            return &free_rm_ops_;
         default:
-            return ;
+            return nullptr;
+        }
+    }
+
+    void appendFreeOp(OpBase* op)
+    {
+        OpBase** free_ops = getFreeOpList(op->oc);
+        if (!free_ops) {
+            return;
         }
         appendOp(op, free_ops);
     }
 
     void removeFreeOp(OpBase* op)
     {
-        OpBase** free_ops = nullptr;
-        switch (op->oc)
-        {
-        case OpCode::CONNECT:
-        case OpCode::ACCEPT:
-            free_ops = &free_ca_ops_;
-            break;
-        case OpCode::WRITEV:
-        case OpCode::READV:
-            free_ops = &free_rwv_ops_;
-            break;
-        case OpCode::SENDMSG:
-        case OpCode::RECVMSG:
-            free_ops = &free_srm_ops_;
-            break;
-        default:
-            return ;
+        OpBase** free_ops = getFreeOpList(op->oc);
+        if (!free_ops) {
+            return;
         }
         removeOp(op, free_ops);
     }
 
     OpBase* getFreeOp(OpCode oc)
     {
-        OpBase** free_ops = nullptr;
-        switch (oc)
-        {
-        case OpCode::CONNECT:
-        case OpCode::ACCEPT:
-            free_ops = &free_ca_ops_;
-            break;
-        case OpCode::WRITEV:
-        case OpCode::READV:
-            free_ops = &free_rwv_ops_;
-            break;
-        case OpCode::SENDMSG:
-        case OpCode::RECVMSG:
-            free_ops = &free_srm_ops_;
-            break;
-        default:
+        OpBase** free_ops = getFreeOpList(oc);
+        if (!free_ops) {
             return nullptr;
         }
         if (*free_ops != nullptr) {
@@ -750,11 +767,13 @@ protected:
         case OpCode::ACCEPT:
             return new ConnAcctOp();
         case OpCode::WRITEV:
+            return new SendOp();
         case OpCode::READV:
-            return new SendRecvOp();
+            return new RecvOp();
         case OpCode::SENDMSG:
+            return new SendMsgOp();
         case OpCode::RECVMSG:
-            return new SendRecvMsgOp();
+            return new RecvMsgOp();
         default:
             return nullptr;
         }
@@ -795,8 +814,10 @@ protected:
 
     OpBase*             pending_ops_{ nullptr };
     OpBase*             free_ca_ops_{ nullptr };
-    OpBase*             free_rwv_ops_{ nullptr };
-    OpBase*             free_srm_ops_{ nullptr };
+    OpBase*             free_wv_ops_{ nullptr };
+    OpBase*             free_rv_ops_{ nullptr };
+    OpBase*             free_sm_ops_{ nullptr };
+    OpBase*             free_rm_ops_{ nullptr };
     sockaddr_storage    addr_;
 
     std::atomic_long    refcount_{ 0 };

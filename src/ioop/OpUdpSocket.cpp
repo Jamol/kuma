@@ -31,7 +31,7 @@ const int kMaxPendingRecvOps = 1;
 const size_t kUDPRecvPacketSize = 64 * 1024;
 
 OpUdpSocket::OpUdpSocket(const EventLoopPtr &loop)
-    : UdpSocketBase(loop), op_ctx_(OpContext::create())
+    : UdpSocketBase(loop), op_ctx_(OpContext::create(loop))
 {
     KM_SetObjKey("OpUdpSocket");
     //KM_INFOXTRACE("OpUdpSocket");

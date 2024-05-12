@@ -21,6 +21,10 @@
 
 #include "OpContext.h"
 
+#if defined(KUMA_OS_LINUX)
+# include <sys/poll.h>
+#endif
+
 KUMA_NS_USING
 
 void OpBase::onComplete(int res)
@@ -28,4 +32,89 @@ void OpBase::onComplete(int res)
     if (ctx) {
         ctx->onOpComplete(this, res);
     }
+}
+
+void SendOp::onComplete(int res)
+{
+#if defined(KUMA_OS_LINUX)
+    if (poll_out) {
+        poll_out = false;
+
+        // prepare
+        if (p_iovs && p_iovs != iovs) {
+            delete[] p_iovs;
+            p_iovs = nullptr;
+        }
+        p_iovs = iovs;
+        n_iovs = to_iovecs(buf, iovs, ARRAY_SIZE(iovs), &p_iovs);
+
+        kev::Op op1;
+        op1.oc = this->oc;
+        op1.iovs = p_iovs;
+        op1.count = n_iovs;
+        op1.flags = 0;
+        op1.data = &data;
+        auto ret = ctx->submitOp(fd, op1);
+        if (ret != KMError::NOERR) {
+            KM_ERRTRACE("failed to submit send op, fd=" << fd);
+            buf.reset();
+            OpBase::onComplete(-1);
+        }
+        return;
+    }
+    if (res == EAGAIN || res == EWOULDBLOCK || (res > 0 && res < (int)buf.chainLength())) {
+        KM_WARNTRACE("send op error, res=" << res << ", buffer=" << buf.chainLength());
+        if (res > 0 && res < (int)buf.chainLength()) {
+            buf.bytesRead(res);
+            bytes_sent += res;
+        }
+        kev::Op op1;
+        op1.oc = OpCode::POLL_ADD;
+        op1.buflen = 0; // one shot
+        op1.flags = POLLOUT;
+        op1.data = &data;
+        poll_out = true;
+        auto ret = ctx->submitOp(fd, op1);
+        if (ret != KMError::NOERR) {
+            KM_ERRTRACE("failed to submit poll add op, fd=" << fd);
+            buf.reset();
+            OpBase::onComplete(-1);
+        }
+        return;
+    }
+    if (res > 0) {
+        res += (int)bytes_sent;
+    }
+#endif
+    buf.reset();
+    OpBase::onComplete(res);
+}
+
+void RecvOp::onComplete(int res)
+{
+    if (res > (int)buf.space()) {
+        KM_ERRTRACE("recv op error, res=" << res << ", space=" << buf.space());
+        res = (int)buf.space();
+    }
+    buf.bytesWritten(res);
+    OpBase::onComplete(res);
+}
+
+void SendMsgOp::onComplete(int res)
+{
+    if (res != buf.chainLength()) {
+        KM_ERRTRACE("sendmsg op error, res=" << res << ", buffer=" << buf.chainLength());
+    }
+    buf.reset();
+    OpBase::onComplete(res);
+}
+
+void RecvMsgOp::onComplete(int res)
+{
+    if (res > (int)buf.space()) {
+        KM_ERRTRACE("recvmsg op error, res=" << res << ", space=" << buf.space());
+        res = (int)buf.space();
+    }
+    buf.bytesWritten(res);
+    OpBase::onComplete(res);
 }

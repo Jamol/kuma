@@ -30,7 +30,7 @@
 using namespace kuma;
 
 OpAcceptor::OpAcceptor(const EventLoopPtr &loop)
-: AcceptorBase(loop), op_ctx_(OpContext::create())
+: AcceptorBase(loop), op_ctx_(OpContext::create(loop))
 {
     KM_SetObjKey("OpAcceptor");
     op_ctx_->setAcceptCallback([this] (int res, SOCKET_FD fd, sockaddr_storage &peer_addr) {

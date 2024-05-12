@@ -33,7 +33,7 @@ KUMA_NS_BEGIN
 class OpSocket : public SocketBase
 {
 public:
-    OpSocket(const EventLoopPtr &loop);
+    OpSocket(const EventLoopPtr &loop, int max_send_ops);
     ~OpSocket();
 
     KMError attachFd(SOCKET_FD fd) override;
@@ -75,6 +75,7 @@ protected:
     int pending_send_ops_{0};
     int pending_recv_ops_{0};
     bool send_blocked_{false};
+    const int max_pending_send_ops_;
 
     KMBuffer recv_buf_;
 

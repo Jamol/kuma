@@ -30,8 +30,9 @@ const size_t kMinPendingSendBytes = 32*1024;
 const int kMaxPendingRecvOps = 1;
 const size_t kTCPRecvPacketSize = 4 * 1024;
 
-OpSocket::OpSocket(const EventLoopPtr &loop)
-    : SocketBase(loop), op_ctx_(OpContext::create())
+OpSocket::OpSocket(const EventLoopPtr &loop, int max_send_ops)
+    : SocketBase(loop), op_ctx_(OpContext::create(loop))
+    , max_pending_send_ops_(max_send_ops)
 {
     KM_SetObjKey("OpSocket");
     //KM_INFOXTRACE("OpSocket");
@@ -101,6 +102,10 @@ KMError OpSocket::connect_i(const sockaddr_storage &ss_addr, uint32_t timeout_ms
         return op_ret;
     }
     setState(State::CONNECTING);
+    pending_send_bytes_ = 0;
+    pending_send_ops_ = 0;
+    pending_recv_ops_ = 0;
+    send_blocked_ = false;
 
     KM_INFOXTRACE("connect_i, fd=" << fd_ << ", state=" << (int)getState());
 
@@ -111,6 +116,10 @@ KMError OpSocket::attachFd(SOCKET_FD fd)
 {
     auto ret = SocketBase::attachFd(fd);
     if (ret == KMError::NOERR) {
+        pending_send_bytes_ = 0;
+        pending_send_ops_ = 0;
+        pending_recv_ops_ = 0;
+        send_blocked_ = false;
         postRecvOp();
     }
     return ret;
@@ -179,6 +188,9 @@ int OpSocket::send(const KMBuffer &buf)
     pending_send_bytes_ += bytes_total;
     ++pending_send_ops_;
     if (pending_send_bytes_ >= kMaxPendingSendBytes) {
+        send_blocked_ = true;
+    }
+    else if (max_pending_send_ops_ > 0 && pending_send_ops_ >= max_pending_send_ops_) {
         send_blocked_ = true;
     }
     return static_cast<int>(bytes_total);
@@ -303,7 +315,8 @@ void OpSocket::onSend(int res)
     }
     pending_send_bytes_ -= (uint32_t)res;
     --pending_send_ops_;
-    if (send_blocked_ && pending_send_bytes_ < kMinPendingSendBytes) {
+    if (send_blocked_ && pending_send_bytes_ < kMinPendingSendBytes &&
+        (max_pending_send_ops_ > 0 && pending_send_ops_ < max_pending_send_ops_)) {
         send_blocked_ = false;
         SocketBase::onSend(KMError::NOERR);
     }
