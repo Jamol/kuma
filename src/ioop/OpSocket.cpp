@@ -320,7 +320,7 @@ void OpSocket::onSend(int res)
     pending_send_bytes_ -= (uint32_t)res;
     --pending_send_ops_;
     if (send_blocked_ && pending_send_bytes_ < kMinPendingSendBytes &&
-        (max_pending_send_ops_ > 0 && pending_send_ops_ < max_pending_send_ops_)) {
+        (max_pending_send_ops_ <= 0 || pending_send_ops_ < max_pending_send_ops_)) {
         send_blocked_ = false;
         SocketBase::onSend(KMError::NOERR);
     }
