@@ -148,6 +148,11 @@ int OpSocket::send(const iovec* iovs, int count)
     if (send_blocked_) {
         return 0;
     }
+    if (pending_send_bytes_ >= kMaxPendingSendBytes ||
+        (max_pending_send_ops_ > 0 && pending_send_ops_ >= max_pending_send_ops_)) {
+        send_blocked_ = true;
+        return 0;
+    }
 
     size_t bytes_total = 0;
     for (int i = 0; i < count; ++i) {
@@ -174,6 +179,11 @@ int OpSocket::send(const KMBuffer &buf)
     if (send_blocked_) {
         return 0;
     }
+    if (pending_send_bytes_ >= kMaxPendingSendBytes ||
+        (max_pending_send_ops_ > 0 && pending_send_ops_ >= max_pending_send_ops_)) {
+        send_blocked_ = true;
+        return 0;
+    }
 
     size_t bytes_total = buf.chainLength();
     if (bytes_total == 0) {
@@ -187,12 +197,6 @@ int OpSocket::send(const KMBuffer &buf)
     }
     pending_send_bytes_ += bytes_total;
     ++pending_send_ops_;
-    if (pending_send_bytes_ >= kMaxPendingSendBytes) {
-        send_blocked_ = true;
-    }
-    else if (max_pending_send_ops_ > 0 && pending_send_ops_ >= max_pending_send_ops_) {
-        send_blocked_ = true;
-    }
     return static_cast<int>(bytes_total);
 }
 

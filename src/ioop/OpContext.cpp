@@ -39,6 +39,12 @@ void SendOp::onComplete(int res)
 #if defined(KUMA_OS_LINUX)
     if (poll_out) {
         poll_out = false;
+        if (res & (POLLERR | POLLHUP | POLLNVAL)) {
+            KM_ERRTRACE("send op poll error, fd=" << fd << ", res=" << res);
+            buf.reset();
+            OpBase::onComplete(-1);
+            return;
+        }
 
         // prepare
         if (p_iovs && p_iovs != iovs) {
@@ -63,7 +69,7 @@ void SendOp::onComplete(int res)
         return;
     }
     if (res == EAGAIN || res == EWOULDBLOCK || (res > 0 && res < (int)buf.chainLength())) {
-        KM_WARNTRACE("send op error, res=" << res << ", buffer=" << buf.chainLength());
+        //KM_WARNTRACE("send op error, res=" << res << ", buffer=" << buf.chainLength());
         if (res > 0 && res < (int)buf.chainLength()) {
             buf.bytesRead(res);
             bytes_sent += res;
@@ -71,7 +77,7 @@ void SendOp::onComplete(int res)
         kev::Op op1;
         op1.oc = OpCode::POLL_ADD;
         op1.buflen = 0; // one shot
-        op1.flags = POLLOUT;
+        op1.flags = POLLOUT | POLLERR | POLLHUP | POLLNVAL;
         op1.data = &data;
         poll_out = true;
         auto ret = ctx->submitOp(fd, op1);
