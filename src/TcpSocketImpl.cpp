@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2017, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2014-2025, Fengping Bao <jamol@live.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -108,7 +108,6 @@ TcpSocket::Impl& TcpSocket::Impl::operator= (Impl &&other) noexcept
         }
         cleanup();
         loop_ = std::move(other.loop_);
-        ssl_flags_ = other.ssl_flags_;
         socket_ = std::move(other.socket_);
         if (socket_) {
             socket_->setReadCallback([this](KMError err) {
@@ -122,6 +121,7 @@ TcpSocket::Impl& TcpSocket::Impl::operator= (Impl &&other) noexcept
             });
         }
 #ifdef KUMA_HAS_OPENSSL
+        ssl_flags_ = other.ssl_flags_;
         is_bio_handler_ = other.is_bio_handler_;
         ssl_handler_ = std::move(other.ssl_handler_);
         if (ssl_handler_) {
@@ -208,7 +208,11 @@ KMError TcpSocket::Impl::connect(const std::string &host, uint16_t port, EventCa
 
 KMError TcpSocket::Impl::attachFd(SOCKET_FD fd)
 {
+#ifdef KUMA_HAS_OPENSSL
     KM_INFOXTRACE("attachFd, fd=" << fd << ", flags=" << ssl_flags_);
+#else
+    KM_INFOXTRACE("attachFd, fd=" << fd);
+#endif
     if (!createSocket()) {
         return KMError::INVALID_STATE;
     }
@@ -253,7 +257,6 @@ KMError TcpSocket::Impl::attach(Impl &&other)
         KM_ERRXTRACE("attach, invalid socket");
         return KMError::INVALID_PARAM;
     }
-    ssl_flags_ = other.ssl_flags_;
     socket_ = std::move(other.socket_);
     socket_->setReadCallback([this](KMError err) {
         onReceive(err);
@@ -265,6 +268,7 @@ KMError TcpSocket::Impl::attach(Impl &&other)
         onClose(err);
     });
 #ifdef KUMA_HAS_OPENSSL
+    ssl_flags_ = other.ssl_flags_;
     is_bio_handler_ = other.is_bio_handler_;
     ssl_handler_ = std::move(other.ssl_handler_);
     if (ssl_handler_) {

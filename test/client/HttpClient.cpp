@@ -63,7 +63,7 @@ void HttpClient::onSend(KMError err)
         int ret = http_request_.sendData(buf1);
         if (ret < 0) {
             break;
-        } else if (ret < buf1.chainLength()) {
+        } else if (ret < (int)buf1.chainLength()) {
             // should buffer remain data
             break;
         }

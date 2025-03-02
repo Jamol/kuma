@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2024, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2014-2025, Fengping Bao <jamol@live.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -56,7 +56,7 @@ public:
     {
         other.base_ptr_ = nullptr;
     }
-    _SharedBasePtr(_SharedBase *ptr)
+    explicit _SharedBasePtr(_SharedBase *ptr)
     {
         *this = ptr;
     }
@@ -92,9 +92,9 @@ public:
         base_ptr_ = ptr;
         return *this;
     }
-    operator bool () const
+    explicit operator bool () const noexcept
     {
-        return base_ptr_;
+        return get() != nullptr;
     }
     
     void reset()
@@ -104,6 +104,18 @@ public:
     void reset(_SharedBase *ptr)
     {
         *this = ptr;
+    }
+    _SharedBase* get() const noexcept
+    {
+        return base_ptr_;
+    }
+    _SharedBase& operator*() const noexcept
+    {
+        return *get();
+    }
+    _SharedBase* operator->() const noexcept
+    {
+        return get();
     }
 };
 
@@ -233,21 +245,10 @@ public:
     template<typename Allocator>
     bool allocBuffer(size_t size, Allocator &a)
     {
-        using AllocatorTraits = std::allocator_traits<Allocator>;
         shared_data_.reset();
-        static auto null_deleter = [](void*, size_t){};
-        auto deleter = [a](void *ptr, size_t size) mutable {
-            AllocatorTraits::deallocate(a, (typename AllocatorTraits::pointer)ptr, size);
-        };
-        using _MySharedData = _SharedData<decltype(deleter), decltype(null_deleter)>;
-        size_t shared_size = sizeof(_MySharedData);
-        size_t alloc_size = size + shared_size;
-        auto buf = AllocatorTraits::allocate(a, alloc_size);
-        auto data = buf + shared_size;
-        auto *sd = new (buf) _MySharedData(data, size, alloc_size, deleter, null_deleter);
-        shared_data_ = sd;
+        shared_data_ = createSharedData(size, a);
         
-        begin_ptr_ = static_cast<char*>(data);
+        begin_ptr_ = static_cast<char*>(shared_data_->data());
         end_ptr_ = begin_ptr_ + size;
         rd_ptr_ = wr_ptr_ = begin_ptr_;
         
@@ -518,6 +519,28 @@ public:
         begin_ptr_ = end_ptr_ = nullptr;
         rd_ptr_ = wr_ptr_ = nullptr;
     }
+
+    void coalesce()
+    {
+        if (isChained()) {
+            std::allocator<char> a;
+            auto size = chainLength();
+            auto* sd = createSharedData(size, a);
+            auto* data = sd->data();
+
+            readChained(data, size);
+
+            while (next_ != this) {
+                next_->destroySelf();
+            }
+
+            shared_data_ = sd;
+            begin_ptr_ = static_cast<char*>(data);
+            end_ptr_ = begin_ptr_ + size;
+            rd_ptr_ = begin_ptr_;
+            wr_ptr_ = begin_ptr_ + size;
+        }
+    }
     
     void unlink()
     {
@@ -553,7 +576,7 @@ public:
         using _MySharedData = _SharedData<decltype(deleter), DataDeleterType>;
         size_t shared_size = sizeof(_MySharedData);
         size_t alloc_size = shared_size;
-        auto buf = a.allocate(alloc_size);
+        auto *buf = a.allocate(alloc_size);
         auto *sd = new (buf) _MySharedData(data, capacity, alloc_size, deleter,
                                            std::forward<DataDeleterType>(dd));
         shared_data_ = sd;
@@ -647,6 +670,24 @@ private:
         if(storage_type_ != StorageType::AUTO) {
             delete this;
         }
+    }
+
+    template<typename Allocator>
+    auto* createSharedData(size_t size, Allocator& a)
+    {
+        using AllocatorTraits = std::allocator_traits<Allocator>;
+        static auto null_deleter = [](void*, size_t) {};
+        auto deleter = [a](void* ptr, size_t size) mutable {
+            AllocatorTraits::deallocate(a, (typename AllocatorTraits::pointer)ptr, size);
+        };
+        using _MySharedData = _SharedData<decltype(deleter), decltype(null_deleter)>;
+        size_t shared_size = sizeof(_MySharedData);
+        size_t alloc_size = size + shared_size;
+        auto* buf = AllocatorTraits::allocate(a, alloc_size);
+        auto* data = buf + shared_size;
+        auto* sd = new (buf) _MySharedData(data, size, alloc_size, deleter, null_deleter);
+
+        return sd;
     }
 
 private:

@@ -163,7 +163,7 @@ int main(int argc, char *argv[])
                         }
                     } else if (strcmp(argv[i] + 2, "bw") == 0) {
                         if(++i < argc) {
-                            g_bandwidth = atoll(argv[i]);
+                            g_bandwidth = static_cast<size_t>(atoll(argv[i]));
                         } else {
                             printUsage();
                             return -1;

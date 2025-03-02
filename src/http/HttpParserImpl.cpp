@@ -251,7 +251,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parse(const char* data, size_t le
         return PARSE_STATE_DONE;
     }
     if(HTTP_READ_BODY == read_state_ && !is_chunked_ && !has_content_length_)
-    {// return directly, read untill EOF
+    {// return directly, read until EOF
         total_bytes_read_ += len;
         *bytes_read = static_cast<int>(len);
         DESTROY_DETECTOR_SETUP();
@@ -356,7 +356,7 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(const char*& cur_pos, c
                 return PARSE_STATE_DONE;
             }
             else
-            {// need more data, or read untill EOF
+            {// need more data, or read until EOF
                 char* notify_data = const_cast<char*>(cur_pos);
                 total_bytes_read_ += cur_len;
                 cur_pos = end;

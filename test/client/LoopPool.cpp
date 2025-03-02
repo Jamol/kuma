@@ -22,7 +22,7 @@ void LoopPool::cleanup()
 TestLoop* LoopPool::getNextLoop()
 {
     TestLoop* loop = loops_[next_loop_];
-    if(++next_loop_ >= loops_.size()) {
+    if(++next_loop_ >= (int)loops_.size()) {
         next_loop_ = 0;
     }
     return loop;

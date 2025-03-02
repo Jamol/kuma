@@ -1,4 +1,4 @@
-/* Copyright (c) 2014, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2014-2025, Fengping Bao <jamol@live.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -131,6 +131,11 @@ void EventLoop::loop(uint32_t max_wait_ms)
     pimpl_->loop(max_wait_ms);
 }
 
+void EventLoop::start()
+{
+    pimpl_->start();
+}
+
 void EventLoop::stop()
 {
     pimpl_->stop();
@@ -139,11 +144,6 @@ void EventLoop::stop()
 bool EventLoop::stopped() const
 {
     return pimpl_->stopped();
-}
-
-void EventLoop::reset()
-{
-    pimpl_->reset();
 }
 
 EventLoop::Impl* EventLoop::pimpl() const

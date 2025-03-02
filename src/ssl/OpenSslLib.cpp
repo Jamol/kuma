@@ -105,7 +105,10 @@ bool OpenSslLib::doInit(const InitConfig &config)
 {
     certs_path_ = config.cert_path && config.cert_path[0] != '\0' ?
                   config.cert_path : kev::getExecutablePath();
-    certs_path_ += "/cert";
+    if (certs_path_.back() != PATH_SEPARATOR) {
+        certs_path_ += PATH_SEPARATOR;
+    }
+    certs_path_ += "cert";
     if (config.ca_certs) {
         ca_certs_ = config.ca_certs;
     }

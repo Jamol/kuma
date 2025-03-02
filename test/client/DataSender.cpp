@@ -58,7 +58,7 @@ void DataSender::doSendData()
     auto time_diff = duration_cast<milliseconds>(now_time - last_send_time_).count();
     auto token_budget = bandwidth_ * time_diff / 1000 / 8;
     last_send_time_ = now_time;
-    sendData(token_budget);
+    sendData(static_cast<size_t>(token_budget));
 }
 
 void DataSender::onTimer()

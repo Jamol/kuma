@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2017, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2014-2025, Fengping Bao <jamol@live.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -122,10 +122,10 @@ private:
 private:
     EventLoopWeakPtr    loop_;
     EventLoopToken      token_;
-    uint32_t            ssl_flags_{ SSL_NONE };
     
     std::unique_ptr<SocketBase> socket_;
 #ifdef KUMA_HAS_OPENSSL
+    uint32_t            ssl_flags_{ SSL_NONE };
     bool                is_bio_handler_ = false;
     std::unique_ptr<SslHandler> ssl_handler_;
     AlpnProtos          alpn_protos_;
