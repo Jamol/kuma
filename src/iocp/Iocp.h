@@ -425,6 +425,7 @@ public:
                 increment();
                 return 0;
             }
+            KM_ERRTRACE("postRecvOperation, fd=" << fd << ", err=" << kev::SKUtils::getLastError());
             return -1;
         }
         else if (ret == 0) {

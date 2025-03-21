@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2017, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2014-2025, Fengping Bao <jamol@live.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -44,6 +44,7 @@ public:
     UdpSocketBase(const EventLoopPtr &loop);
     virtual ~UdpSocketBase();
     
+    virtual KMError init(int addr_family, int sock_type, int ipproto);
     virtual KMError bind(const std::string &bind_host, uint16_t bind_port, uint32_t udp_flags);
     virtual KMError connect(const std::string &host, uint16_t port);
     virtual int send(const void *data, size_t length, const std::string &host, uint16_t port);
@@ -66,10 +67,11 @@ protected:
     virtual void onReceive(KMError err);
     virtual void onClose(KMError err);
     virtual void onSocketInitialized() {}
+    void onSocketReady();
     bool initSocket(int ss_family);
     void printSocket() const;
     void cleanup();
-    virtual SOCKET_FD createFd(int addr_family);
+    virtual SOCKET_FD createFd(int addr_family, int sock_type, int ipproto);
     virtual bool registerFd(SOCKET_FD fd);
     virtual void unregisterFd(SOCKET_FD fd, bool close_fd);
     virtual void ioReady(KMEvent events, void *ol, size_t io_size);
@@ -82,7 +84,11 @@ protected:
     EventLoopWeakPtr    loop_;
     bool                registered_{ false };
     bool                connected_{ false };
+    bool                sock_ready_{ false };
     uint32_t            flags_{ 0 };
+    int                 sock_family_{ 2/*AF_INET*/};
+    int                 sock_type_{ 2/*SOCK_DGRAM*/ };
+    int                 sock_proto_{ 0 };
     
     EventCallback       read_cb_;
     EventCallback       error_cb_;

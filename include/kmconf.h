@@ -7,6 +7,8 @@
 # define KUMA_OS_LINUX
 # if defined(__ANDROID__)
 #  define KUMA_OS_ANDROID
+# elif defined(__OHOS__)
+#  define KUMA_OS_OHOS
 # endif
 #elif defined(macintosh) || defined(__APPLE__) || defined(__APPLE_CC__)
 # define KUMA_OS_MAC

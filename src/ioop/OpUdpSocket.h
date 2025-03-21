@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2024, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2014-2025, Fengping Bao <jamol@live.com>
 *
 * Permission is hereby granted, free of charge, to any person obtaining a copy
 * of this software and associated documentation files (the "Software"), to deal
@@ -40,7 +40,7 @@ public:
     
 protected:
 #if defined(KUMA_OS_WIN)
-    SOCKET_FD createFd(int addr_family) override;
+    SOCKET_FD createFd(int addr_family, int sock_type, int ipproto) override;
 #endif
     bool registerFd(SOCKET_FD fd) override;
     void unregisterFd(SOCKET_FD fd, bool close_fd) override;

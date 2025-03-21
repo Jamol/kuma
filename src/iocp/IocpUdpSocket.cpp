@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2017, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2014-2025, Fengping Bao <jamol@live.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -78,9 +78,9 @@ IocpUdpSocket::~IocpUdpSocket()
     cleanup();
 }
 
-SOCKET_FD IocpUdpSocket::createFd(int addr_family)
+SOCKET_FD IocpUdpSocket::createFd(int addr_family, int sock_type, int ipproto)
 {
-    return WSASocketW(addr_family, SOCK_DGRAM, IPPROTO_IP, NULL, 0, WSA_FLAG_OVERLAPPED);
+    return WSASocketW(addr_family, sock_type, ipproto, NULL, 0, WSA_FLAG_OVERLAPPED);
 }
 
 bool IocpUdpSocket::registerFd(SOCKET_FD fd)

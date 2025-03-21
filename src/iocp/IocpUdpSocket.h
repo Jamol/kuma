@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2017, Fengping Bao <jamol@live.com>
+/* Copyright (c) 2014-2025, Fengping Bao <jamol@live.com>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -41,7 +41,7 @@ protected:
     void onSocketInitialized() override;
     void onReceive(size_t io_size);
 
-    SOCKET_FD createFd(int addr_family) override;
+    SOCKET_FD createFd(int addr_family, int sock_type, int ipproto) override;
     bool registerFd(SOCKET_FD fd) override;
     void unregisterFd(SOCKET_FD fd, bool close_fd) override;
 
