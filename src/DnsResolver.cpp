@@ -189,9 +189,6 @@ void DnsResolver::dnsProc()
 
         sockaddr_storage addr = { 0 };
         auto ret = doResolve(host, addr);
-        char ip[128] = { 0 };
-        kev::km_get_sock_addr((struct sockaddr*)&addr, sizeof(addr), ip, sizeof(ip), nullptr);
-        KM_INFOTRACE("DNS resolved, host="<<host<<", ip="<<ip);
         for (auto &slot : slots) {
             if (slot) {
                 (*slot)(ret, addr);
@@ -226,11 +223,14 @@ KMError DnsResolver::doResolve(const std::string &host, sockaddr_storage &addr)
         return KMError::FAILED;
     }
     addr = addr_list[0];
+    char ip[128] = { 0 };
+    kev::km_get_sock_addr((struct sockaddr*)&addr, sizeof(addr), ip, sizeof(ip), nullptr);
+    KM_INFOTRACE("DNS resolved, host=" << host << ", ip=" << ip << ", sz=" << addr_list.size());
     DnsRecord dr;
     dr.host = host;
     dr.time = steady_clock::now();
     dr.addr_list = std::move(addr_list);
-    addRecord(dr);
+    addRecord(std::move(dr));
     return KMError::NOERR;
 }
 

@@ -177,6 +177,7 @@
     <ClCompile Include="..\..\src\compr\compr.cpp" />
     <ClCompile Include="..\..\src\compr\compr_zlib.cpp" />
     <ClCompile Include="..\..\src\DnsResolver.cpp" />
+    <ClCompile Include="..\..\src\heb\HebConnector.cpp" />
     <ClCompile Include="..\..\src\http\H1xStream.cpp" />
     <ClCompile Include="..\..\src\http\Http1xRequest.cpp" />
     <ClCompile Include="..\..\src\http\Http1xResponse.cpp" />
@@ -259,6 +260,8 @@
     <ClInclude Include="..\..\src\compr\compr_zlib.h" />
     <ClInclude Include="..\..\src\DnsResolver.h" />
     <ClInclude Include="..\..\src\EventLoopImpl.h" />
+    <ClInclude Include="..\..\src\heb\HebConnector.h" />
+    <ClInclude Include="..\..\src\heb\hebdefs.h" />
     <ClInclude Include="..\..\src\http\H1xStream.h" />
     <ClInclude Include="..\..\src\http\Http1xRequest.h" />
     <ClInclude Include="..\..\src\http\Http1xResponse.h" />

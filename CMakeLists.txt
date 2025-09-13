@@ -33,6 +33,7 @@ file(GLOB SOURCE_FILES
   ${PROJ_ROOT_DIR}/src/ws/*.cpp
   ${PROJ_ROOT_DIR}/src/ws/exts/*.cpp
   ${PROJ_ROOT_DIR}/src/compr/*.cpp
+  ${PROJ_ROOT_DIR}/src/heb/*.cpp
   ${PROJ_ROOT_DIR}/src/proxy/BasicAuthenticator.cpp
   ${PROJ_ROOT_DIR}/src/proxy/ProxyAuthenticator.cpp
   ${PROJ_ROOT_DIR}/src/proxy/ProxyConnectionImpl.cpp)

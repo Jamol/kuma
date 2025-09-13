@@ -77,6 +77,7 @@
 #if defined(KUMA_OS_LINUX)
 # include "ioop/OpSocket.h"
 #endif
+#include "heb/HebConnector.h"
 #include "ssl/BioHandler.h"
 #include "ssl/SioHandler.h"
 #include "utils/utils.h"
@@ -153,6 +154,7 @@ void TcpSocket::Impl::cleanup()
         socket_->close();
         socket_.reset();
     }
+    heb_connector_.reset();
 #ifdef KUMA_HAS_OPENSSL
     ssl_handler_.reset();
 #endif
@@ -202,11 +204,39 @@ KMError TcpSocket::Impl::bind(const std::string &bind_host, uint16_t bind_port)
 KMError TcpSocket::Impl::connect(const std::string &host, uint16_t port, EventCallback cb, uint32_t timeout_ms)
 {
     connect_cb_ = std::move(cb);
+    if (!kev::km_is_ip_address(host.c_str())) {
 #ifdef KUMA_HAS_OPENSSL
-    if (!kev::km_is_ip_address(host.c_str()) && sslEnabled()) {
-        ssl_host_name_ = host;
-    }
+        if (sslEnabled()) {
+            ssl_host_name_ = host;
+        }
 #endif
+        if (enable_heb_) {
+            if (!heb_connector_) {
+                heb_connector_ = std::make_unique<HebConnector>(eventLoop());
+            }
+            HebConfig config;
+            config.timeout_ms = timeout_ms;
+            return heb_connector_->start(host, port, config,
+                [this] (KMError err, std::unique_ptr<SocketBase> socket) {
+                    if (socket_) {
+                        socket_->close();
+                    }
+                    socket_ = std::move(socket);
+                    if (err == KMError::NOERR && socket_) {
+                        socket_->setReadCallback([this](KMError err) {
+                            onReceive(err);
+                        });
+                        socket_->setWriteCallback([this](KMError err) {
+                            onSend(err);
+                        });
+                        socket_->setErrorCallback([this](KMError err) {
+                            onClose(err);
+                        });
+                    }
+                    onConnect(err);
+                });
+        }
+    }
     if (!socket_ && !createSocket()) {
         return KMError::INVALID_STATE;
     }

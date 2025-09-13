@@ -73,6 +73,9 @@
     <Filter Include="Header Files\utils">
       <UniqueIdentifier>{7c11836c-7761-4c7a-8d0e-c8f661e4e03b}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\heb">
+      <UniqueIdentifier>{122a9b09-74fd-454e-a8aa-e7359054781b}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\kmapi.cpp">
@@ -297,6 +300,9 @@
     <ClCompile Include="..\..\src\ioop\OpUdpSocket.cpp">
       <Filter>Source Files\ioop</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\heb\HebConnector.cpp">
+      <Filter>Source Files\heb</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\EventLoopImpl.h">
@@ -520,6 +526,12 @@
     </ClInclude>
     <ClInclude Include="..\..\src\utils\utils.h">
       <Filter>Header Files\utils</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\heb\HebConnector.h">
+      <Filter>Source Files\heb</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\heb\hebdefs.h">
+      <Filter>Source Files\heb</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

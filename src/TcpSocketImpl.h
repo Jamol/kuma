@@ -43,6 +43,7 @@
 
 KUMA_NS_BEGIN
 class SocketBase;
+class HebConnector;
 
 class TcpSocket::Impl : public kev::KMObject
 {
@@ -137,6 +138,9 @@ private:
     EventCallback       read_cb_;
     EventCallback       write_cb_;
     EventCallback       error_cb_;
+
+    bool enable_heb_{ true };
+    std::unique_ptr<HebConnector> heb_connector_;
 };
 
 KUMA_NS_END
