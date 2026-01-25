@@ -94,15 +94,15 @@ public:
     /* NOTE: cb must be valid until unregisterFd called
      * this API is thread-safe
      */
-    KMError registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb);
+    KMError registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb, IOEventData &data);
     /*
      * this API is thread-safe
      */
-    KMError updateFd(SOCKET_FD fd, uint32_t events);
+    KMError updateFd(SOCKET_FD fd, uint32_t events, IOEventData data);
     /*
      * this API is thread-safe
      */
-    KMError unregisterFd(SOCKET_FD fd, bool close_fd);
+    KMError unregisterFd(SOCKET_FD fd, bool close_fd, IOEventData &data);
     
     PollType getPollType() const;
     bool isPollLT() const; // level trigger

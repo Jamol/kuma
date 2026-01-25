@@ -106,19 +106,19 @@ bool EventLoop::isPollLT() const
     return  pimpl_->isPollLT();
 }
 
-KMError EventLoop::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb)
+KMError EventLoop::registerFd(SOCKET_FD fd, uint32_t events, IOCallback cb, IOEventData &data)
 {
-    return toKMError(pimpl_->registerFd(fd, events, std::move(cb)));
+    return toKMError(pimpl_->registerFd(fd, events, std::move(cb), data));
 }
 
-KMError EventLoop::updateFd(SOCKET_FD fd, uint32_t events)
+KMError EventLoop::updateFd(SOCKET_FD fd, uint32_t events, IOEventData data)
 {
-    return toKMError(pimpl_->updateFd(fd, events));
+    return toKMError(pimpl_->updateFd(fd, events, data));
 }
 
-KMError EventLoop::unregisterFd(SOCKET_FD fd, bool close_fd)
+KMError EventLoop::unregisterFd(SOCKET_FD fd, bool close_fd, IOEventData &data)
 {
-    return toKMError(pimpl_->unregisterFd(fd, close_fd));
+    return toKMError(pimpl_->unregisterFd(fd, close_fd, data));
 }
 
 void EventLoop::loopOnce(uint32_t max_wait_ms)

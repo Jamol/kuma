@@ -110,6 +110,7 @@ protected:
     State               state_{ State::IDLE };
     bool                registered_{ false };
     DnsResolver::Token  dns_token_;
+    kev::IOEventData    event_data_{ nullptr };
 
     EventCallback       connect_cb_;
     EventCallback       read_cb_;

@@ -216,6 +216,12 @@ endif ()
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     target_compile_options(kuma PRIVATE /W3 /WX)
+    # Ensure DYNAMIC_ANNOTATIONS_ENABLED is set consistently for all configurations
+    target_compile_definitions(kuma PRIVATE
+        $<$<CONFIG:Debug>:DYNAMIC_ANNOTATIONS_ENABLED=1>
+        $<$<CONFIG:Debug>:WTF_USE_DYNAMIC_ANNOTATIONS=1>
+        $<$<OR:$<CONFIG:Release>,$<CONFIG:RelWithDebInfo>>:DYNAMIC_ANNOTATIONS_ENABLED=0>
+    )
 else ()
     target_compile_options(kuma PRIVATE -Werror)
 endif ()

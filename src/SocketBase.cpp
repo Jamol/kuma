@@ -282,7 +282,7 @@ bool SocketBase::registerFd(SOCKET_FD fd)
             ioReady(ev, ol, io_size);
         };
         registered_ = true;
-        if (loop->registerFd(fd, kEventNetwork, std::move(cb)) != kev::Result::OK) {
+        if (loop->registerFd(fd, kEventNetwork, std::move(cb), event_data_) != kev::Result::OK) {
             registered_ = false;
         }
     }
@@ -295,7 +295,7 @@ void SocketBase::unregisterFd(SOCKET_FD fd, bool close_fd)
         registered_ = false;
         auto loop = loop_.lock();
         if (loop && fd != INVALID_FD) {
-            loop->unregisterFd(fd, close_fd);
+            loop->unregisterFd(fd, close_fd, event_data_);
             return;
         }
     }
@@ -461,7 +461,7 @@ KMError SocketBase::pause()
 {
     auto loop = loop_.lock();
     if (loop && isReady()) {
-        return toKMError(loop->updateFd(fd_, kEventError));
+        return toKMError(loop->updateFd(fd_, kEventError, event_data_));
     }
     return KMError::INVALID_STATE;
 }
@@ -470,7 +470,7 @@ KMError SocketBase::resume()
 {
     auto loop = loop_.lock();
     if (loop && isReady()) {
-        return toKMError(loop->updateFd(fd_, kEventNetwork));
+        return toKMError(loop->updateFd(fd_, kEventNetwork, event_data_));
     }
     return KMError::INVALID_STATE;
 }
@@ -509,7 +509,7 @@ void SocketBase::notifySendBlocked()
 {
     auto loop = loop_.lock();
     if (loop && loop->isPollLT()) {
-        loop->updateFd(fd_, kEventNetwork);
+        loop->updateFd(fd_, kEventNetwork, event_data_);
     }
 }
 
@@ -517,7 +517,7 @@ void SocketBase::notifySendReady()
 {
     auto loop = loop_.lock();
     if (loop && loop->isPollLT() && fd_ != INVALID_FD) {
-        loop->updateFd(fd_, kEventRead | kEventError);
+        loop->updateFd(fd_, kEventRead | kEventError, event_data_);
     }
 }
 

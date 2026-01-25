@@ -144,7 +144,7 @@ bool AcceptorBase::registerFd(SOCKET_FD fd)
             ioReady(ev, ol, sz);
         };
         registered_ = true;
-        if (loop->registerFd(fd, kEventNetwork, std::move(cb)) != kev::Result::OK) {
+        if (loop->registerFd(fd, kEventNetwork, std::move(cb), event_data_) != kev::Result::OK) {
             registered_ = false;
         }
     }
@@ -157,7 +157,7 @@ void AcceptorBase::unregisterFd(SOCKET_FD fd, bool close_fd)
         registered_ = false;
         auto loop = loop_.lock();
         if (loop && fd != INVALID_FD) {
-            loop->unregisterFd(fd, close_fd);
+            loop->unregisterFd(fd, close_fd, event_data_);
             return;
         }
     }

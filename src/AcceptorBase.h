@@ -79,6 +79,8 @@ protected:
     
     AcceptCallback      accept_cb_;
     ErrorCallback       error_cb_;
+
+    kev::IOEventData    event_data_{ nullptr };
 };
 
 KUMA_NS_END

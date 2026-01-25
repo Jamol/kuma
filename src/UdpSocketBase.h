@@ -105,6 +105,8 @@ protected:
 
     std::string         host_dest_;
     sockaddr_storage    host_addr_{};
+
+    kev::IOEventData    event_data_{ nullptr };
 };
 
 KUMA_NS_END

@@ -21,6 +21,7 @@
 #include "libkev/src/utils/kmtrace.h"
 #include "utils/utils.h"
 #include "libkev/src/utils/skutils.h"
+#include "libkev/src/utils/kmilist.h"
 #include "libkev/include/kevops.h"
 #include "EventLoopImpl.h"
 
@@ -40,14 +41,12 @@ extern int to_iovecs(const KMBuffer &buf, iovec* iovs, int sz, iovec** new_iovs)
 
 class OpContext;
 
-struct OpBase
+struct OpBase : public kev::inode<OpBase>
 {
     OpCode          oc = OpCode::CANCEL;
     OpContext*      ctx{nullptr};
     bool            pending{false};
     kev::OpData     data;
-    OpBase*         prev = nullptr;
-    OpBase*         next = nullptr;
 
     OpBase()
     {
@@ -69,7 +68,7 @@ struct OpBase
     }
     virtual void onComplete(int res);
 };
-
+using OpList = kev::ilist<kev::inode<OpBase>>;
 
 struct ConnAcctOp : public OpBase
 {
@@ -258,7 +257,7 @@ public:
 
     bool isPending() const override
     {
-        return !!pending_ops_;
+        return !pending_ops_.empty();
     }
 
     void onLoopExit() override
@@ -275,10 +274,8 @@ public:
             postCalcelOp(loop, fd, nullptr);
         }
 #else
-        auto* op = pending_ops_;
-        while(op) {
-            postCalcelOp(loop, fd, &op->data);
-            op = op->next;
+        for (auto &op : pending_ops_) {
+            postCalcelOp(loop, fd, &op.data);
         }
 #endif
     }
@@ -644,13 +641,13 @@ protected:
             kev::SKUtils::close(pending_fd_);
             pending_fd_ = INVALID_FD;
         }
-        assert(pending_ops_ == nullptr);
+        assert(pending_ops_.empty());
 
-#define CLEAR_CTX_OP_LIST(op_head) \
-        while (op_head) {          \
-            auto *op = op_head;    \
-            op_head = op->next;    \
-            delete op;             \
+#define CLEAR_CTX_OP_LIST(ops) \
+        while(!ops.empty()) { \
+            auto *op = &ops.front(); \
+            ops.pop_front(); \
+            delete op; \
         }
 
         CLEAR_CTX_OP_LIST(free_ca_ops_);
@@ -676,44 +673,29 @@ protected:
         return false;
     }
 
-    void appendOp(OpBase* op, OpBase** op_head)
+    void appendOp(OpBase* op, OpList &ops)
     {
-        if (*op_head == nullptr) {
-            *op_head = op;
-        } else {
-            op->next = *op_head;
-            (*op_head)->prev = op;
-            *op_head = op;
-        }
+        ops.push_back(op);
     }
 
-    void removeOp(OpBase* op, OpBase** op_head)
+    void removeOp(OpBase* op, OpList &ops)
     {
-        if (op->next) {
-            op->next->prev = op->prev;
-        }
-        if (op->prev) {
-            op->prev->next = op->next;
-        }
-        if (op == *op_head) {
-            *op_head = op->next;
-        }
-        op->next = op->prev = nullptr;
+        ops.remove(op);
     }
 
     void appendPendingOp(OpBase* op)
     {
         op->pending = true;
-        appendOp(op, &pending_ops_);
+        appendOp(op, pending_ops_);
     }
 
     void removePendingOp(OpBase* op)
     {
         op->pending = false;
-        removeOp(op, &pending_ops_);
+        removeOp(op, pending_ops_);
     }
 
-    OpBase** getFreeOpList(OpCode oc)
+    OpList* getFreeOpList(OpCode oc)
     {
         switch (oc)
         {
@@ -735,31 +717,31 @@ protected:
 
     void appendFreeOp(OpBase* op)
     {
-        OpBase** free_ops = getFreeOpList(op->oc);
+        OpList* free_ops = getFreeOpList(op->oc);
         if (!free_ops) {
             return;
         }
-        appendOp(op, free_ops);
+        appendOp(op, *free_ops);
     }
 
     void removeFreeOp(OpBase* op)
     {
-        OpBase** free_ops = getFreeOpList(op->oc);
-        if (!free_ops) {
+        OpList* free_ops = getFreeOpList(op->oc);
+        if (!free_ops || free_ops->empty()) {
             return;
         }
-        removeOp(op, free_ops);
+        removeOp(op, *free_ops);
     }
 
     OpBase* getFreeOp(OpCode oc)
     {
-        OpBase** free_ops = getFreeOpList(oc);
+        OpList* free_ops = getFreeOpList(oc);
         if (!free_ops) {
             return nullptr;
         }
-        if (*free_ops != nullptr) {
-            auto *op = *free_ops;
-            removeOp(op, free_ops);
+        if (!free_ops->empty()) {
+            auto *op = &free_ops->front();
+            free_ops->pop_front();
             return op;
         }
         switch (oc)
@@ -782,9 +764,10 @@ protected:
 
     void resetPending()
     {
-        while (pending_ops_) {
-            auto* op = pending_ops_;
-            removePendingOp(op);
+        while (!pending_ops_.empty()) {
+            auto* op = &pending_ops_.front();
+            pending_ops_.pop_front();
+            op->pending = false;
             if (op->oc != OpCode::CANCEL) {
                 appendFreeOp(op);
                 if (decrement()) return;
@@ -813,12 +796,12 @@ protected:
     SendCallback        on_send_;
     RecvCallback        on_recv_;
 
-    OpBase*             pending_ops_{ nullptr };
-    OpBase*             free_ca_ops_{ nullptr };
-    OpBase*             free_wv_ops_{ nullptr };
-    OpBase*             free_rv_ops_{ nullptr };
-    OpBase*             free_sm_ops_{ nullptr };
-    OpBase*             free_rm_ops_{ nullptr };
+    OpList              pending_ops_;
+    OpList              free_ca_ops_;
+    OpList              free_wv_ops_;
+    OpList              free_rv_ops_;
+    OpList              free_sm_ops_;
+    OpList              free_rm_ops_;
     sockaddr_storage    addr_;
 
     std::atomic_long    refcount_{ 0 };

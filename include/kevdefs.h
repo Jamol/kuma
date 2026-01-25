@@ -44,6 +44,8 @@ const SOCKET_FD INVALID_FD = ((SOCKET_FD)-1);
 
 using KMEvent = uint32_t;
 using IOCallback = std::function<void(SOCKET_FD, KMEvent, void*, size_t)>;
+struct IOPollData;
+using IOEventData = IOPollData*;
 
 const uint32_t kEventRead       = 1;
 const uint32_t kEventWrite      = (1 << 1);
@@ -91,7 +93,6 @@ enum class PollType {
     WSAEV, // WSA Event
     STLCV = 15, // none IO event loop
 };
-
 
 #ifdef KUMA_OS_WIN
 struct iovec {

@@ -47,6 +47,7 @@ KUMA_NS_BEGIN
 
 using PollType = kev::PollType;
 using IOCallback = kev::IOCallback;
+using IOEventData = kev::IOEventData;
 using KMEvent = kev::KMEvent;
 using SOCKET_FD = kev::SOCKET_FD;
 #ifdef KUMA_OS_WIN

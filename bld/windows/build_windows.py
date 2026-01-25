@@ -18,6 +18,8 @@ def get_generator(msvc, arch):
         return ' "Visual Studio 17 2022" ' + opt
     if msvc == 'vs2019' or msvc == '2019':
         return ' "Visual Studio 16 2019" ' + opt
+    if msvc == 'vs2026' or msvc == '2026':
+        return ' "Visual Studio 18 2026" ' + opt
     return ' "Visual Studio 15 2017" ' + opt
 
 def build_one_arch(workingPath, arch, option):
