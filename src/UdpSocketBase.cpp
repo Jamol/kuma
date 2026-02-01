@@ -548,7 +548,7 @@ int UdpSocketBase::send(const void *data, size_t length, const std::string &host
     }
     if(0 == ret) {
         KM_ERRXTRACE("send, peer closed, err="<<kev::SKUtils::getLastError()<<", host="<<host<<", port="<<port);
-        ret = -1;
+        ret = (int)KMError::PEER_CLOSED;
     } else if(ret < 0) {
         if(EAGAIN == kev::SKUtils::getLastError() ||
 #ifdef KUMA_OS_WIN
@@ -610,7 +610,7 @@ int UdpSocketBase::send(const iovec *iovs, int count, const std::string &host, u
     }
     if(0 == ret) {
         KM_ERRXTRACE("send, peer closed, err: "<<kev::SKUtils::getLastError()<<", host="<<host<<", port="<<port);
-        ret = -1;
+        ret = (int)KMError::PEER_CLOSED;
     } else if(ret < 0) {
         if(EAGAIN == kev::SKUtils::getLastError() ||
 #ifdef WIN32
@@ -666,7 +666,7 @@ int UdpSocketBase::receive(void *data, size_t length, char *ip, size_t ip_len, u
     }
     if(0 == ret) {
         KM_ERRXTRACE("recv, peer closed, err"<<kev::SKUtils::getLastError());
-        ret = -1;
+        ret = (int)KMError::PEER_CLOSED;
     } else if(ret < 0) {
         auto err = kev::SKUtils::getLastError();
         if(EAGAIN == err ||

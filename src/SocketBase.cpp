@@ -315,7 +315,7 @@ int SocketBase::send(const void *data, size_t length)
     auto ret = kev::SKUtils::send(fd_, data, length, 0);
     if (0 == ret) {
         KM_WARNXTRACE("send, peer closed, err=" << kev::SKUtils::getLastError());
-        ret = -1;
+        ret = (int)KMError::PEER_CLOSED;
     }
     else if (ret < 0) {
         if (kev::SKUtils::getLastError() == EAGAIN ||
@@ -361,7 +361,7 @@ int SocketBase::send(const iovec *iovs, int count)
     auto ret = kev::SKUtils::send(fd_, iovs, count);
     if (0 == ret) {
         KM_WARNXTRACE("send 2, peer closed");
-        ret = -1;
+        ret = (int)KMError::PEER_CLOSED;
     }
     else if (ret < 0) {
         if (EAGAIN == kev::SKUtils::getLastError() ||
@@ -413,7 +413,7 @@ int SocketBase::receive(void *data, size_t length)
     auto ret = kev::SKUtils::recv(fd_, data, length, 0);
     if (0 == ret) {
         KM_WARNXTRACE("receive, peer closed, err=" << kev::SKUtils::getLastError());
-        ret = -1;
+        ret = (int)KMError::PEER_CLOSED;
     }
     else if (ret < 0) {
         if (EAGAIN == kev::SKUtils::getLastError() ||
