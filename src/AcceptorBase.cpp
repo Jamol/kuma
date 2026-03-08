@@ -204,7 +204,7 @@ void AcceptorBase::onAccept()
     SOCKET_FD fd = INVALID_FD;
     auto loop = loop_.lock();
     sockaddr_storage ss_addr = { 0 };
-    while(!closed_ && !loop->stopped()) {
+    while(!closed_ && loop && !loop->stopped()) {
         socklen_t ss_len = sizeof(ss_addr);
         fd = ::accept(fd_, (sockaddr*)&ss_addr, &ss_len);
         if(INVALID_FD == fd) {

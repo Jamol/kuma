@@ -185,7 +185,7 @@ void HebConnector::onConnect(KMError err, const std::string &ip)
         sockets_.erase(ip);
         if (sockets_.empty()) {
             auto ip = getNextIp();
-            if (ip.empty()) {
+            if (!ip.empty()) {
                 connect(ip);
             } else {
                 onError(KMError::FAILED);

@@ -550,16 +550,17 @@ int UdpSocketBase::send(const void *data, size_t length, const std::string &host
         KM_ERRXTRACE("send, peer closed, err="<<kev::SKUtils::getLastError()<<", host="<<host<<", port="<<port);
         ret = (int)KMError::PEER_CLOSED;
     } else if(ret < 0) {
-        if(EAGAIN == kev::SKUtils::getLastError() ||
+        auto last_err = kev::SKUtils::getLastError();
+        if(EAGAIN == last_err ||
 #ifdef KUMA_OS_WIN
            WSAEWOULDBLOCK
 #else
            EWOULDBLOCK
 #endif
-           == kev::SKUtils::getLastError()) {
+           == last_err) {
             ret = 0;
         } else {
-            KM_ERRXTRACE("send, failed, err: "<<kev::SKUtils::getLastError()<<", host="<<host<<", port="<<port);
+            KM_ERRXTRACE("send, failed, err: "<<last_err<<", host="<<host<<", port="<<port);
         }
     }
     
@@ -612,16 +613,17 @@ int UdpSocketBase::send(const iovec *iovs, int count, const std::string &host, u
         KM_ERRXTRACE("send, peer closed, err: "<<kev::SKUtils::getLastError()<<", host="<<host<<", port="<<port);
         ret = (int)KMError::PEER_CLOSED;
     } else if(ret < 0) {
-        if(EAGAIN == kev::SKUtils::getLastError() ||
-#ifdef WIN32
-           WSAEWOULDBLOCK == kev::SKUtils::getLastError() || WSA_IO_PENDING
+        auto last_err = kev::SKUtils::getLastError();
+        if(EAGAIN == last_err ||
+#ifdef KUMA_OS_WIN
+           WSAEWOULDBLOCK == last_err || WSA_IO_PENDING
 #else
            EWOULDBLOCK
 #endif
-           == kev::SKUtils::getLastError()) {
+           == last_err) {
             ret = 0;
         } else {
-            KM_ERRXTRACE("sendto 2, failed, err="<<kev::SKUtils::getLastError());
+            KM_ERRXTRACE("sendto 2, failed, err="<<last_err);
         }
     }
     
@@ -670,7 +672,7 @@ int UdpSocketBase::receive(void *data, size_t length, char *ip, size_t ip_len, u
     } else if(ret < 0) {
         auto err = kev::SKUtils::getLastError();
         if(EAGAIN == err ||
-#ifdef WIN32
+#ifdef KUMA_OS_WIN
            WSAEWOULDBLOCK
 #else
            EWOULDBLOCK

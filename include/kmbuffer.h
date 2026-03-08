@@ -79,13 +79,15 @@ public:
     }
     _SharedBasePtr& operator=(_SharedBase *ptr)
     {
-        if (ptr) {
-            ptr->increment();
+        if (base_ptr_ != ptr) {
+            if (ptr) {
+                ptr->increment();
+            }
+            if (base_ptr_) {
+                base_ptr_->decrement();
+            }
+            base_ptr_ = ptr;
         }
-        if (base_ptr_) {
-            base_ptr_->decrement();
-        }
-        base_ptr_ = ptr;
         return *this;
     }
     explicit operator bool () const noexcept

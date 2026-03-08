@@ -214,8 +214,8 @@ KMError DnsResolver::doResolve(const std::string &host, sockaddr_storage &addr)
     std::vector<sockaddr_storage> addr_list;
     for (auto *rp = ai; rp; rp = rp->ai_next) {
         sockaddr_storage ss_addr;
-        size_t sz = (std::min)(sizeof(ss_addr), (size_t)ai->ai_addrlen);
-        memcpy(&ss_addr, ai->ai_addr, sz);
+        size_t sz = (std::min)(sizeof(ss_addr), (size_t)rp->ai_addrlen);
+        memcpy(&ss_addr, rp->ai_addr, sz);
         addr_list.emplace_back(ss_addr);
     }
     freeaddrinfo(ai);

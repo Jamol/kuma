@@ -318,17 +318,18 @@ int SocketBase::send(const void *data, size_t length)
         ret = (int)KMError::PEER_CLOSED;
     }
     else if (ret < 0) {
-        if (kev::SKUtils::getLastError() == EAGAIN ||
+        auto last_err = kev::SKUtils::getLastError();
+        if (last_err == EAGAIN ||
 #ifdef KUMA_OS_WIN
             WSAEWOULDBLOCK
 #else
             EWOULDBLOCK
 #endif
-            == kev::SKUtils::getLastError()) {
+            == last_err) {
             ret = 0;
         }
         else {
-            KM_ERRXTRACE("send, failed, err=" << kev::SKUtils::getLastError());
+            KM_ERRXTRACE("send, failed, err=" << last_err);
         }
     }
 
@@ -364,17 +365,18 @@ int SocketBase::send(const iovec *iovs, int count)
         ret = (int)KMError::PEER_CLOSED;
     }
     else if (ret < 0) {
-        if (EAGAIN == kev::SKUtils::getLastError() ||
+        auto last_err = kev::SKUtils::getLastError();
+        if (EAGAIN == last_err ||
 #ifdef KUMA_OS_WIN
-            WSAEWOULDBLOCK == kev::SKUtils::getLastError() || WSA_IO_PENDING
+            WSAEWOULDBLOCK == last_err || WSA_IO_PENDING
 #else
             EWOULDBLOCK
 #endif
-            == kev::SKUtils::getLastError()) {
+            == last_err) {
             ret = 0;
         }
         else {
-            KM_ERRXTRACE("send 2, fail, err=" << kev::SKUtils::getLastError());
+            KM_ERRXTRACE("send 2, fail, err=" << last_err);
         }
     }
 
@@ -416,17 +418,18 @@ int SocketBase::receive(void *data, size_t length)
         ret = (int)KMError::PEER_CLOSED;
     }
     else if (ret < 0) {
-        if (EAGAIN == kev::SKUtils::getLastError() ||
-#ifdef WIN32
+        auto last_err = kev::SKUtils::getLastError();
+        if (EAGAIN == last_err ||
+#ifdef KUMA_OS_WIN
             WSAEWOULDBLOCK
 #else
             EWOULDBLOCK
 #endif
-            == kev::SKUtils::getLastError()) {
+            == last_err) {
             ret = 0;
         }
         else {
-            KM_ERRXTRACE("receive, failed, err=" << kev::SKUtils::getLastError());
+            KM_ERRXTRACE("receive, failed, err=" << last_err);
         }
     }
 
