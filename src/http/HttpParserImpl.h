@@ -90,7 +90,7 @@ public:
     void setVersion(std::string ver);
     void setStatusCode(int status_code);
     void addParamValue(std::string name, std::string value);
-    void addHeaderValue(std::string name, std::string value);
+    bool addHeaderValue(std::string name, std::string value);
     
 private:
     typedef enum{

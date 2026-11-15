@@ -21,6 +21,7 @@
 
 #include "H1xStream.h"
 #include "libkev/src/utils/kmtrace.h"
+#include "utils/utils.h"
 
 
 using namespace kuma;
@@ -88,7 +89,12 @@ KMError H1xStream::sendRequest(const std::string &method, const std::string &url
             ssl_flags = SSL_ENABLE | tcp_conn_.getSslFlags();
         }
         if(!str_port.empty()) {
-            port = std::stoi(str_port);
+            uint64_t port_num = 0;
+            if (!to_uint64(str_port, port_num) || port_num == 0 || port_num > 65535) {
+                KM_ERRTRACE("H1xStream::sendRequest, invalid port: " << str_port);
+                return KMError::INVALID_PARAM;
+            }
+            port = static_cast<uint16_t>(port_num);
         }
         tcp_conn_.setSslFlags(ssl_flags);
         return tcp_conn_.connect(uri_.getHost(), port, [this] (KMError err) {

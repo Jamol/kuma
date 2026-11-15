@@ -21,6 +21,8 @@
 
 #include "ProxyConnectionImpl.h"
 #include "libkev/src/utils/kmtrace.h"
+#include "libkev/src/utils/utils.h"
+#include "utils/utils.h"
 #include "http/Uri.h"
 
 
@@ -54,9 +56,18 @@ KMError ProxyConnection::Impl::setProxyInfo(const ProxyInfo &proxy_info)
     if (!uri.parse(proxy_info.url)) {
         return KMError::INVALID_PARAM;
     }
+    uint16_t port = kev::is_equal("https", uri.getScheme()) ? 443 : 80;
+    if (!uri.getPort().empty()) {
+        uint64_t port_num = 0;
+        if (!to_uint64(uri.getPort(), port_num) || port_num == 0 || port_num > 65535) {
+            KM_ERRTRACE("ProxyConnection::setProxyInfo, invalid port: " << uri.getPort());
+            return KMError::INVALID_PARAM;
+        }
+        port = static_cast<uint16_t>(port_num);
+    }
     proxy_info_ = proxy_info;
     proxy_addr_ = uri.getHost();
-    proxy_port_ = static_cast<uint16_t>(std::stoi(uri.getPort()));
+    proxy_port_ = port;
     return KMError::NOERR;
 }
 

@@ -47,6 +47,8 @@ const std::string strProxyConnection = "Proxy-Connection";
 
 const size_t kMinCompressSize = 200;
 
+const uint64_t kMaxContentLength = (sizeof(size_t) >= 8) ? (uint64_t(1) << 40) : 0x7FFFFFFFull;
+
 using KeyValuePair = std::pair<std::string, std::string>;
 using KeyValueList = std::vector<KeyValuePair>;
 using HeaderVector = KeyValueList;

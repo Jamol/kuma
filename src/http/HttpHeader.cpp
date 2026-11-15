@@ -20,12 +20,64 @@
  */
 
 #include "HttpHeader.h"
+#include "libkev/src/utils/kmtrace.h"
 #include "libkev/src/utils/utils.h"
+#include "utils/utils.h"
 
 #include <sstream>
 #include <algorithm>
 
 using namespace kuma;
+
+namespace {
+
+bool parse_content_length(const std::string &value, uint64_t &out)
+{
+    const char *data = value.data();
+    size_t len = value.size();
+    auto trim_ows = [](const char *&s, size_t &l) {
+        while (l > 0 && (*s == ' ' || *s == '\t')) {
+            ++s;
+            --l;
+        }
+        while (l > 0 && (s[l - 1] == ' ' || s[l - 1] == '\t')) {
+            --l;
+        }
+    };
+
+    bool found = false;
+    uint64_t result = 0;
+    size_t pos = 0;
+    for (;;) {
+        size_t comma = pos;
+        while (comma < len && data[comma] != ',') {
+            ++comma;
+        }
+        const char *seg = data + pos;
+        size_t seg_len = comma - pos;
+        trim_ows(seg, seg_len);
+        uint64_t val = 0;
+        if (!to_uint64(seg, seg_len, val)) {
+            return false;
+        }
+        if (found && val != result) {
+            return false;
+        }
+        result = val;
+        found = true;
+        if (comma >= len) {
+            break;
+        }
+        pos = comma + 1;
+    }
+    if (!found) {
+        return false;
+    }
+    out = result;
+    return true;
+}
+
+}
 
 
 HttpHeader::HttpHeader(bool is_outgoing, bool is_http2)
@@ -41,8 +93,20 @@ KMError HttpHeader::addHeader(std::string name, std::string value)
     }
     
     if (kev::is_equal(name, strContentLength)) {
+        uint64_t c_len = 0;
+        if (!parse_content_length(value, c_len) || c_len > kMaxContentLength) {
+            KM_ERRTRACE(std::string("HttpHeader::addHeader, invalid Content-Length: ") << value);
+            return KMError::INVALID_PARAM;
+        }
+        // RFC 7230 3.3.2: conflicting duplicates are a request smuggling vector,
+        // only identical repeats may be collapsed.
+        if (has_content_length_ && c_len != content_length_) {
+            KM_ERRTRACE(std::string("HttpHeader::addHeader, conflicting Content-Length: ")
+                        << content_length_ << " vs " << c_len);
+            return KMError::INVALID_PARAM;
+        }
         has_content_length_ = true;
-        content_length_ = std::stol(value);
+        content_length_ = static_cast<size_t>(c_len);
         if (is_outgoing_ && is_chunked_) {
             return KMError::NOERR;
         }

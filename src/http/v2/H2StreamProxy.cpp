@@ -23,6 +23,7 @@
 #include "H2ConnectionMgr.h"
 #include "libkev/src/utils/kmtrace.h"
 #include "libkev/src/utils/utils.h"
+#include "utils/utils.h"
 #include "h2utils.h"
 
 #include <string>
@@ -78,8 +79,6 @@ KMError H2StreamProxy::sendRequest(std::string method, std::string url, uint32_t
     method_ = std::move(method);
     ssl_flags_ = ssl_flags;
     
-    setState(State::CONNECTING);
-    
     uint16_t port = 80;
     ssl_flags = SSL_NONE;
     if (kev::is_equal("https", uri_.getScheme()) || kev::is_equal("wss", uri_.getScheme())) {
@@ -87,8 +86,15 @@ KMError H2StreamProxy::sendRequest(std::string method, std::string url, uint32_t
         port = 443;
     }
     if(!uri_.getPort().empty()) {
-        port = std::stoi(uri_.getPort());
+        uint64_t port_num = 0;
+        if (!to_uint64(uri_.getPort(), port_num) || port_num == 0 || port_num > 65535) {
+            KM_ERRXTRACE("sendRequest, invalid port: " << uri_.getPort());
+            return KMError::INVALID_PARAM;
+        }
+        port = static_cast<uint16_t>(port_num);
     }
+    
+    setState(State::CONNECTING);
     
     auto &conn_mgr = H2ConnectionMgr::getRequestConnMgr(ssl_flags != SSL_NONE);
     conn_ = conn_mgr.getConnection(uri_.getHost(), port, ssl_flags, loop, proxy_info_);
