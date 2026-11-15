@@ -22,6 +22,7 @@
 #include "HttpCache.h"
 #include "libkev/src/utils/kmtrace.h"
 #include "libkev/src/utils/utils.h"
+#include "utils/utils.h"
 
 KUMA_NS_USING
 
@@ -107,7 +108,13 @@ int HttpCache::getMaxAgeOfCache(const HeaderVector &headers)
                 auto p = d.find("max-age=");
                 if (p != std::string::npos) {
                     auto s = d.substr(p + 8);
-                    max_age = std::stoi(s);
+                    int64_t age = 0;
+                    if (to_int64(s, age) && age > 0) {
+                        max_age = static_cast<int>(age > std::numeric_limits<int>::max()
+                                                   ? std::numeric_limits<int>::max() : age);
+                    } else {
+                        KM_WARNTRACE("HttpCache::getMaxAgeOfCache, invalid max-age=" << s);
+                    }
                     return false;
                 }
                 return true;

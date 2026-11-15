@@ -5,8 +5,78 @@
 #include "libkev/src/utils/utils.h"
 
 #include <string>
+#include <limits>
 
 KUMA_NS_BEGIN
+
+inline bool to_int64(const char *str, size_t len, int64_t &out)
+{
+    if (!str || len == 0) {
+        return false;
+    }
+    bool negative = false;
+    size_t pos = 0;
+    if (str[0] == '+' || str[0] == '-') {
+        negative = (str[0] == '-');
+        pos = 1;
+        if (len == 1) {
+            return false;
+        }
+    }
+    const int64_t min_val = std::numeric_limits<int64_t>::min();
+    int64_t val = 0;
+    for (; pos < len; ++pos) {
+        unsigned char c = static_cast<unsigned char>(str[pos]);
+        if (c < '0' || c > '9') {
+            return false;
+        }
+        int64_t digit = c - '0';
+        if (val < (min_val + digit) / 10) {
+            return false;
+        }
+        val = val * 10 - digit;
+    }
+    if (!negative) {
+        if (val == min_val) {
+            return false;
+        }
+        val = -val;
+    }
+    out = val;
+    return true;
+}
+
+inline bool to_uint64(const char *str, size_t len, uint64_t &out)
+{
+    if (!str || len == 0) {
+        return false;
+    }
+    const uint64_t max_val = std::numeric_limits<uint64_t>::max();
+    uint64_t val = 0;
+    for (size_t pos = 0; pos < len; ++pos) {
+        unsigned char c = static_cast<unsigned char>(str[pos]);
+        if (c < '0' || c > '9') {
+            return false;
+        }
+        uint64_t digit = c - '0';
+        if (val > (max_val - digit) / 10) {
+            return false;
+        }
+        val = val * 10 + digit;
+    }
+    out = val;
+    return true;
+}
+
+inline bool to_int64(const std::string &str, int64_t &out)
+{
+    return to_int64(str.data(), str.size(), out);
+}
+
+inline bool to_uint64(const std::string &str, uint64_t &out)
+{
+    return to_uint64(str.data(), str.size(), out);
+}
 
 inline uint32_t decode_u32(const uint8_t *src)
 {

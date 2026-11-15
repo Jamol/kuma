@@ -20,6 +20,7 @@
  */
 
 #include "h2utils.h"
+#include "libkev/src/utils/kmtrace.h"
 #include "utils/utils.h"
 
 KUMA_NS_BEGIN
@@ -72,7 +73,12 @@ bool processH2ResponseHeaders(const HeaderVector &h2_headers, int &status_code, 
     if (!kev::is_equal(h2_headers[0].first, H2HeaderStatus)) {
         return false;
     }
-    status_code = std::stoi(h2_headers[0].second);
+    int64_t status = 0;
+    if (!to_int64(h2_headers[0].second, status) || status < 100 || status > 999) {
+        KM_ERRTRACE(std::string("processH2ResponseHeaders, invalid :status=") << h2_headers[0].second);
+        return false;
+    }
+    status_code = static_cast<int>(status);
     std::string str_cookie;
     for (auto const &kv : h2_headers) {
         auto const &name = kv.first;

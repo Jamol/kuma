@@ -22,6 +22,7 @@
 #include "HttpParserImpl.h"
 #include "libkev/src/utils/kmtrace.h"
 #include "libkev/src/utils/utils.h"
+#include "utils/utils.h"
 #include "Uri.h"
 
 #include <algorithm>
@@ -325,7 +326,10 @@ HttpParser::Impl::ParseState HttpParser::Impl::parseHttp(const char*& cur_pos, c
                 }
                 break;
             }
-            parseHeaderLine(line, line_end);
+            if(!parseHeaderLine(line, line_end)) {
+                read_state_ = HTTP_READ_ERROR;
+                return PARSE_STATE_ERROR;
+            }
         }
         if(HTTP_READ_HEAD == read_state_)
         {// need more data
@@ -402,7 +406,12 @@ bool HttpParser::Impl::parseStartLine(const char* line, const char* line_end)
         version_.swap(str);
         p = std::find(p_line, p_end, ' ');
         str.assign(p_line, p);
-        status_code_ = std::stoi(str);
+        int64_t status_code = 0;
+        if (str.size() != 3 || !to_int64(str, status_code) || status_code < 100) {
+            KM_ERRTRACE("HttpParser::parseStartLine, invalid status code: " << str);
+            return false;
+        }
+        status_code_ = static_cast<int>(status_code);
     }
     clearBuffer();
     return true;
@@ -422,15 +431,15 @@ bool HttpParser::Impl::parseHeaderLine(const char* line, const char* line_end)
     std::string str_value;
     const char* p = std::find(p_line, p_end, ':');
     if(p == p_end) {
+        KM_WARNTRACE("HttpParser::parseHeaderLine, malformed header line ignored");
         clearBuffer();
-        return false;
+        return true;
     }
     str_name.assign(p_line, p);
     p_line = p + 1;
     str_value.assign(p_line, p_end);
     clearBuffer();
-    addHeaderValue(std::move(str_name), std::move(str_value));
-    return true;
+    return addHeaderValue(std::move(str_name), std::move(str_value));
 }
 
 HttpParser::Impl::ParseState HttpParser::Impl::parseChunk(const char*& cur_pos, const char* end)
@@ -657,15 +666,16 @@ void HttpParser::Impl::addParamValue(std::string name, std::string value)
     }
 }
 
-void HttpParser::Impl::addHeaderValue(std::string name, std::string value)
+bool HttpParser::Impl::addHeaderValue(std::string name, std::string value)
 {
     kev::trim_left(name, ' ');
     kev::trim_right(name, ' ');
     kev::trim_left(value, ' ');
     kev::trim_right(value, ' ');
     if(!name.empty()) {
-        HttpHeader::addHeader(std::move(name), std::move(value));
+        return HttpHeader::addHeader(std::move(name), std::move(value)) == KMError::NOERR;
     }
+    return true;
 }
 
 const std::string& HttpParser::Impl::getParamValue(const std::string& name) const

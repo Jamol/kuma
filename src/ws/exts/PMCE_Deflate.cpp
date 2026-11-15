@@ -22,9 +22,24 @@
 #include "PMCE_Deflate.h"
 #include "compr/compr_zlib.h"
 #include "libkev/src/utils/utils.h"
+#include "utils/utils.h"
 
 using namespace kuma;
 using namespace kuma::ws;
+
+namespace {
+
+bool parse_window_bits(const std::string &value, int &bits)
+{
+    int64_t v = 0;
+    if (!to_int64(value, v) || v < 8 || v > 15) {
+        return false;
+    }
+    bits = static_cast<int>(v);
+    return true;
+}
+
+}
 
 
 PMCE_Deflate::PMCE_Deflate()
@@ -128,8 +143,8 @@ KMError PMCE_Deflate::negotiateAnswer(const std::string &answer)
     for (; it != param_list.end(); ++it) {
         if (it->first == "client_max_window_bits") {
             if (!it->second.empty()) {
-                auto client_max_window_bits = std::stoi(it->second);
-                if (client_max_window_bits < 8 || client_max_window_bits > 15) {
+                int client_max_window_bits = 0;
+                if (!parse_window_bits(it->second, client_max_window_bits)) {
                     return KMError::INVALID_PARAM;
                 }
                 c_max_window_bits = client_max_window_bits;
@@ -138,8 +153,8 @@ KMError PMCE_Deflate::negotiateAnswer(const std::string &answer)
             if (it->second.empty()) {
                 return KMError::INVALID_PARAM;
             }
-            auto server_max_window_bits = std::stoi(it->second);
-            if (server_max_window_bits < 8 || server_max_window_bits > 15) {
+            int server_max_window_bits = 0;
+            if (!parse_window_bits(it->second, server_max_window_bits)) {
                 return KMError::INVALID_PARAM;
             }
             d_max_window_bits = server_max_window_bits;
@@ -170,8 +185,8 @@ KMError PMCE_Deflate::negotiateOffer(const std::string &offer, std::string &answ
     for (; it != param_list.end(); ++it) {
         if (it->first == "client_max_window_bits") {
             if (!it->second.empty()) {
-                auto client_max_window_bits = std::stoi(it->second);
-                if (client_max_window_bits < 8 || client_max_window_bits > 15) {
+                int client_max_window_bits = 0;
+                if (!parse_window_bits(it->second, client_max_window_bits)) {
                     return KMError::INVALID_PARAM;
                 }
                 d_max_window_bits = client_max_window_bits;
@@ -180,8 +195,8 @@ KMError PMCE_Deflate::negotiateOffer(const std::string &offer, std::string &answ
             if (it->second.empty()) {
                 return KMError::INVALID_PARAM;
             }
-            auto server_max_window_bits = std::stoi(it->second);
-            if (server_max_window_bits < 8 || server_max_window_bits > 15) {
+            int server_max_window_bits = 0;
+            if (!parse_window_bits(it->second, server_max_window_bits)) {
                 return KMError::INVALID_PARAM;
             }
             c_max_window_bits = server_max_window_bits;
